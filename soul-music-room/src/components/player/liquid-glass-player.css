@@ -1,0 +1,969 @@
+:root {
+  --player-accent: rgba(245, 247, 249, 0.96);
+}
+
+.liquid-player-shell {
+  position: fixed;
+  z-index: var(--z-player);
+  left: 50%;
+  right: auto;
+  bottom: var(--player-bottom-gap);
+  width: min(calc(100vw - clamp(48px, 6vw, 112px)), 1120px);
+  max-width: none;
+  margin: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.liquid-player__notice {
+  width: max-content;
+  max-width: min(620px, calc(100vw - 32px));
+  margin: 0 auto 10px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--glass-radius-pill);
+  color: rgba(246, 247, 249, 0.82);
+  background: rgba(7, 14, 21, 0.76);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 var(--glass-inner-highlight);
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+  font-size: 0.72rem;
+  line-height: 1.25;
+  text-align: center;
+  pointer-events: auto;
+  animation: liquid-player-notice-in 180ms ease-out both;
+}
+
+.liquid-player {
+  width: 100%;
+  height: 106px;
+  min-width: 0;
+  padding: 11px 24px 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  overflow: visible;
+  color: rgba(248, 249, 250, 0.96);
+  background:
+    linear-gradient(
+      108deg,
+      rgba(235, 249, 253, 0.055),
+      rgba(255, 255, 255, 0.012) 27%,
+      rgba(2, 8, 13, 0.012) 61%,
+      rgba(158, 221, 239, 0.03)
+    ),
+    rgba(7, 12, 17, 0.038);
+  box-shadow:
+    0 22px 58px rgba(0, 0, 0, 0.25),
+    0 4px 14px rgba(0, 0, 0, 0.12),
+    0 0 28px rgba(147, 211, 232, 0.035),
+    0 0 0 0.65px rgba(210, 239, 248, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    inset 0 -1px 0 rgba(152, 216, 235, 0.03);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: auto;
+  animation: liquid-player-enter 280ms cubic-bezier(0.22, 0.78, 0.22, 1) both;
+}
+
+.liquid-player::before {
+  opacity: 0.25;
+}
+
+.liquid-player > .liquid-glass-surface__tint {
+  background:
+    radial-gradient(circle at var(--glass-pointer-x, 18%) var(--glass-pointer-y, 0%), rgba(255, 255, 255, 0.11), transparent 30%),
+    linear-gradient(125deg, rgba(255, 255, 255, 0.035), transparent 35%, rgba(110, 218, 238, 0.02));
+  opacity: 0.34;
+}
+
+.liquid-player > .liquid-glass-surface__content > :not(.liquid-player__artwork-wash) {
+  min-width: 0;
+  position: relative;
+  z-index: 4;
+}
+
+.liquid-player__artwork-wash {
+  display: none;
+}
+
+.liquid-player__left-rail,
+.liquid-player__right-rail,
+.liquid-player__center-rail {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.liquid-player__left-rail {
+  justify-self: stretch;
+  gap: 12px;
+}
+
+.liquid-player__center-rail {
+  width: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.liquid-player__right-rail {
+  justify-self: end;
+  justify-content: flex-end;
+  gap: 13px;
+}
+
+/* ── Song Info Partition (Level 2 Glass) ── */
+.liquid-player__song-zone {
+  min-width: 150px;
+  max-width: 280px;
+  flex: 1 1 220px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.liquid-player__playback-zone,
+.liquid-player__progress-zone {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* ── Secondary & Function Action Groups (Level 2 Glass Partitions) ── */
+.player-secondary-actions,
+.player-function-actions,
+.liquid-player__volume-zone {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  justify-content: center;
+  gap: 13px;
+}
+
+.song-info {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.song-info__details {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 12px;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.song-info__details:disabled {
+  cursor: default;
+}
+
+.song-info__cover {
+  width: 52px;
+  height: 52px;
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: rgba(234, 237, 241, 0.45);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  animation: liquid-player-track-in 220ms ease-out both;
+}
+
+.song-info__cover img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.song-info__copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  animation: liquid-player-copy-in 220ms ease-out both;
+}
+
+.song-info__copy strong,
+.song-info__copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.song-info__copy strong {
+  color: rgba(250, 250, 251, 0.96);
+  font-size: 0.86rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.song-info__copy small {
+  color: rgba(215, 216, 220, 0.46);
+  font-size: 0.66rem;
+  font-weight: 470;
+}
+
+.liquid-player .glass-icon-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  position: relative;
+  border: 0;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: rgba(226, 227, 230, 0.66);
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+
+.liquid-player .glass-icon-button::before {
+  display: none;
+}
+
+.liquid-player .glass-icon-button:hover:not(:disabled) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+.liquid-player .glass-icon-button:active:not(:disabled) {
+  transform: scale(0.92);
+  transition-duration: 80ms;
+}
+
+.liquid-player .glass-icon-button:focus-visible,
+.liquid-player .song-info__details:focus-visible,
+.liquid-player .player-range:focus-visible {
+  outline: 2px solid rgba(242, 244, 247, 0.9);
+  outline-offset: 3px;
+}
+
+.liquid-player .glass-icon-button:disabled {
+  opacity: 0.26;
+  cursor: default;
+}
+
+.liquid-player .glass-icon-button.is-active,
+.liquid-player .play-mode-button.is-active {
+  color: #fff;
+  background: transparent;
+  box-shadow: none;
+}
+
+.liquid-player .glass-icon-button--liked,
+.liquid-player .glass-button--liked {
+  color: #f1f2f4;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.liquid-player .glass-icon-button.is-muted {
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.liquid-player .glass-button--primary {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.038);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+.liquid-player .glass-button--primary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.065);
+  box-shadow:
+    0 14px 38px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    0 0 0 1px rgba(255, 255, 255, 0.09);
+}
+
+.liquid-player .glass-icon-button[data-tooltip]::after {
+  content: attr(data-tooltip);
+  width: max-content;
+  max-width: 190px;
+  padding: 6px 9px;
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  color: rgba(248, 248, 249, 0.94);
+  background: rgba(8, 8, 10, 0.96);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+  font-size: 0.65rem;
+  font-weight: 520;
+  line-height: 1.2;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.liquid-player .glass-icon-button[data-tooltip]:hover::after,
+.liquid-player .glass-icon-button[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.playback-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+}
+
+.playback-controls__play-icon {
+  transform: translateX(1px);
+}
+
+.playback-controls__loader {
+  animation: liquid-player-spin 850ms linear infinite;
+}
+
+.liquid-player .player-progress {
+  width: 100%;
+  min-width: 0;
+  height: 16px;
+  position: relative;
+  display: block;
+}
+
+.liquid-player .player-progress__time-display {
+  width: 86px;
+  height: 36px;
+  position: absolute;
+  top: 32px;
+  right: -78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: rgba(222, 223, 226, 0.42);
+  font-size: 0.58rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
+}
+
+.liquid-player .player-range {
+  --player-range-progress: 0%;
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.liquid-player .player-range:disabled {
+  cursor: default;
+  opacity: 0.32;
+}
+
+.liquid-player .player-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--glass-radius-pill);
+  background: linear-gradient(
+    to right,
+    rgba(245, 246, 247, 0.88) 0 var(--player-range-progress),
+    rgba(255, 255, 255, 0.094) var(--player-range-progress) 100%
+  );
+}
+
+.liquid-player .player-range::-moz-range-track {
+  height: 4px;
+  border-radius: var(--glass-radius-pill);
+  background: rgba(255, 255, 255, 0.094);
+}
+
+.liquid-player .player-range::-moz-range-progress {
+  height: 4px;
+  border-radius: var(--glass-radius-pill);
+  background: rgba(245, 246, 247, 0.86);
+}
+
+.liquid-player .player-range::-webkit-slider-thumb {
+  width: 10px;
+  height: 10px;
+  margin-top: -3px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.42);
+  opacity: 0.72;
+  transform: scale(0.86);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.liquid-player .player-range::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.72;
+}
+
+.liquid-player .player-range:hover::-webkit-slider-thumb,
+.liquid-player .player-range:focus-visible::-webkit-slider-thumb,
+.liquid-player .player-range:active::-webkit-slider-thumb,
+.liquid-player .player-range:hover::-moz-range-thumb,
+.liquid-player .player-range:focus-visible::-moz-range-thumb,
+.liquid-player .player-range:active::-moz-range-thumb {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.player-function-actions__queue {
+  position: relative;
+}
+
+.player-actions__badge {
+  display: none;
+  min-width: 15px;
+  height: 15px;
+  padding-inline: 3px;
+  position: absolute;
+  top: -4px;
+  right: -5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--glass-radius-pill);
+  display: grid;
+  place-items: center;
+  color: rgba(250, 250, 251, 0.92);
+  background: rgba(22, 22, 25, 0.96);
+  font-size: 0.5rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.liquid-player .volume-control {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.liquid-player .volume-control__popover {
+  width: 190px;
+  min-height: 72px;
+  padding: 12px;
+  position: absolute;
+  z-index: 6;
+  right: 0;
+  bottom: calc(100% + 18px);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 22px;
+  color: rgba(246, 247, 248, 0.92);
+  background: rgba(13, 13, 15, 0.94);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.48);
+  animation: liquid-player-popover-in 170ms ease-out both;
+}
+
+.liquid-player .volume-control__heading,
+.liquid-player .volume-control__adjustment {
+  display: flex;
+  align-items: center;
+}
+
+.liquid-player .volume-control__heading {
+  margin-bottom: 8px;
+  justify-content: space-between;
+  color: rgba(226, 227, 230, 0.55);
+  font-size: 0.64rem;
+  font-weight: 560;
+}
+
+.liquid-player .volume-control__heading output {
+  color: rgba(246, 247, 248, 0.88);
+  font-variant-numeric: tabular-nums;
+}
+
+.liquid-player .volume-control__adjustment {
+  gap: 8px;
+}
+
+.liquid-player .volume-control__mute {
+  width: 30px;
+  height: 30px;
+}
+
+.liquid-player .volume-control__range {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .liquid-player,
+  .liquid-player__notice,
+  .liquid-player .volume-control__popover {
+    background: rgba(10, 10, 12, 0.98);
+  }
+
+  .liquid-player__artwork-wash {
+    display: none;
+  }
+}
+
+@media (max-width: 1280px) and (min-width: 841px) {
+  .liquid-player-shell {
+    width: calc(100vw - 48px);
+  }
+
+  .liquid-player {
+    padding-inline: 18px;
+    gap: 14px;
+  }
+
+  .liquid-player__center-rail {
+    width: auto;
+  }
+
+  .liquid-player__song-zone {
+    min-width: 150px;
+  }
+
+  .song-info__cover {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+  }
+
+  .song-info__copy small,
+  .player-secondary-actions__add,
+  .player-function-actions__fullscreen {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1040px) and (min-width: 841px) {
+  .player-secondary-actions {
+    display: none;
+  }
+
+  .liquid-player__left-rail {
+    gap: 0;
+  }
+
+  .liquid-player__right-rail {
+    gap: 2px;
+  }
+
+  .player-function-actions__lyrics,
+  .player-function-actions__fullscreen {
+    display: none !important;
+  }
+
+  .liquid-player .glass-icon-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .liquid-player .glass-button--primary {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+@media (max-width: 840px) {
+  .liquid-player-shell {
+    width: calc(100vw - 24px);
+    bottom: calc(62px + max(10px, env(safe-area-inset-bottom)));
+  }
+
+  .liquid-player {
+    height: 84px;
+    padding: 9px 11px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    border-radius: 28px;
+  }
+
+  .liquid-player__left-rail {
+    min-width: 0;
+  }
+
+  .liquid-player__song-zone {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .liquid-player__center-rail {
+    width: auto;
+  }
+
+  .liquid-player__right-rail,
+  .player-secondary-actions,
+  .liquid-player__progress-zone,
+  .playback-controls__previous,
+  .playback-controls__next {
+    display: none;
+  }
+
+  .song-info__details {
+    gap: 10px;
+  }
+
+  .song-info__cover {
+    width: 62px;
+    height: 62px;
+    border-radius: 19px;
+  }
+
+  .song-info__copy strong {
+    font-size: 0.8rem;
+  }
+
+  .song-info__copy small {
+    font-size: 0.62rem;
+  }
+
+  .liquid-player .glass-button--primary {
+    width: 52px;
+    height: 52px;
+  }
+
+  .liquid-player__artwork-wash {
+    width: 58%;
+    opacity: 0.055;
+  }
+}
+
+@media (max-width: 420px) {
+  .liquid-player-shell {
+    width: calc(100vw - 16px);
+  }
+
+  .liquid-player {
+    padding-inline: 8px;
+  }
+
+  .song-info__cover {
+    width: 56px;
+    height: 56px;
+    border-radius: 17px;
+  }
+
+  .song-info__copy small {
+    display: none;
+  }
+}
+
+@keyframes liquid-player-enter {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes liquid-player-notice-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes liquid-player-track-in {
+  from { opacity: 0.45; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes liquid-player-copy-in {
+  from { opacity: 0; transform: translateX(-5px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes liquid-player-popover-in {
+  from { opacity: 0; transform: translateY(7px) scale(0.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes liquid-player-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-player,
+  .liquid-player__notice,
+  .song-info__cover,
+  .song-info__copy,
+  .playback-controls__loader,
+  .liquid-player .volume-control__popover {
+    animation: none;
+  }
+
+  .liquid-player .glass-icon-button {
+    transition: none;
+  }
+}
+
+/* Desktop dock is centered inside the content column and never crosses the
+   sidebar. The page viewport reserves this same vertical space. */
+@media (min-width: 841px) {
+  .liquid-player-shell {
+    left: calc(var(--shell-edge) + var(--sidebar-width) + var(--shell-gap));
+    right: var(--shell-edge);
+    width: auto;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: none;
+  }
+
+  .liquid-player {
+    width: min(100%, 1120px);
+  }
+}
+
+/* The dock owns the full Mineradio-derived optical path. Its content grid is a
+   separate crisp layer above the backdrop refraction. */
+.liquid-player.is-mineradio-liquid {
+  padding: 0;
+  display: block;
+  overflow: visible;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: var(--saved-panel-glass-shadow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.liquid-player.is-mineradio-liquid > .liquid-glass-surface__content {
+  height: 100%;
+  padding: 11px 24px 14px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: 16px 62px;
+  align-items: center;
+  column-gap: 18px;
+  row-gap: 3px;
+  overflow: visible;
+}
+
+.liquid-player.is-mineradio-liquid > .liquid-glass-surface__content > :not(.liquid-player__artwork-wash) {
+  min-width: 0;
+  position: relative;
+  z-index: 4;
+}
+
+.liquid-player.is-mineradio-liquid .liquid-player__progress-zone {
+  width: calc(100% - 156px);
+  min-width: 0;
+  grid-column: 1 / -1;
+  grid-row: 1;
+  justify-self: center;
+  align-self: center;
+}
+
+.liquid-player.is-mineradio-liquid .liquid-player__left-rail {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.liquid-player.is-mineradio-liquid .liquid-player__center-rail {
+  width: auto;
+  position: relative;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.liquid-player.is-mineradio-liquid .liquid-player__right-rail {
+  padding-right: 98px;
+  box-sizing: border-box;
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.liquid-player.is-mineradio-liquid .player-queue-action {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 13px);
+  transform: translateY(-50%);
+}
+
+.liquid-player.is-mineradio-liquid .player-queue-action:hover:not(:disabled),
+.liquid-player.is-mineradio-liquid .player-queue-action:active:not(:disabled),
+.liquid-player.is-mineradio-liquid .player-queue-action:focus-visible {
+  transform: translateY(-50%);
+}
+
+.liquid-player.is-mineradio-liquid .player-function-actions {
+  display: contents;
+}
+
+.liquid-player.is-mineradio-liquid .player-function-actions__lyrics {
+  order: 1;
+}
+
+.liquid-player.is-mineradio-liquid .liquid-player__volume-zone {
+  order: 2;
+}
+
+.liquid-player.is-mineradio-liquid .player-function-actions__fullscreen {
+  order: 3;
+}
+
+.liquid-player.is-mineradio-liquid > .liquid-glass-surface__optics > .liquid-glass-surface__highlight {
+  background: linear-gradient(
+    132deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.012) 36%,
+    transparent 68%,
+    rgba(160, 220, 237, 0.018)
+  );
+  opacity: 0.34;
+}
+
+.liquid-player .glass-icon-button.is-liquid-button,
+.liquid-player .glass-icon-button.is-liquid-button:hover:not(:disabled),
+.liquid-player .glass-icon-button.is-liquid-button.is-active,
+.liquid-player .glass-icon-button.is-liquid-button[aria-pressed='true'],
+.liquid-player .glass-button--primary.is-liquid-button,
+.liquid-player .glass-button--primary.is-liquid-button:hover:not(:disabled) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.liquid-player .glass-icon-button:not(.glass-button--primary) .liquid-glass-button__optics {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.liquid-player .glass-icon-button:not(.glass-button--primary):hover:not(:disabled) .liquid-glass-button__optics,
+.liquid-player .glass-icon-button:not(.glass-button--primary):focus-visible .liquid-glass-button__optics {
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: none;
+}
+
+.liquid-player .glass-icon-button:not(.glass-button--primary).is-active .liquid-glass-button__optics,
+.liquid-player .glass-icon-button:not(.glass-button--primary)[aria-pressed='true'] .liquid-glass-button__optics {
+  background: transparent;
+  box-shadow: none;
+}
+
+.liquid-player .player-actions__badge {
+  display: none;
+}
+
+.liquid-player .glass-icon-button.is-liquid-button:hover:not(:disabled) {
+  transform: scale(1.025);
+}
+
+.liquid-player .glass-icon-button.is-liquid-button:active:not(:disabled) {
+  transform: scale(0.95);
+  transition-duration: 150ms;
+}
+
+.liquid-player .glass-button--primary.is-liquid-button .liquid-glass-button__optics {
+  background: rgba(0, 0, 0, 0.055);
+  box-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.34),
+    inset 0 0 11px 4px rgba(255, 255, 255, 0.13),
+    0 12px 32px rgba(0, 0, 0, 0.22);
+}
+
+.liquid-player .volume-control__popover.is-mineradio-liquid {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: var(--saved-panel-glass-shadow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.liquid-player .volume-control__popover.is-mineradio-liquid > .liquid-glass-surface__content {
+  display: block;
+}
+
+@media (max-width: 1280px) and (min-width: 841px) {
+  .liquid-player.is-mineradio-liquid > .liquid-glass-surface__content {
+    padding-inline: 18px;
+    gap: 14px;
+  }
+
+  .liquid-player.is-mineradio-liquid .liquid-player__progress-zone {
+    width: calc(100% - 96px);
+  }
+
+  .liquid-player .player-progress__time-display {
+    right: -48px;
+  }
+
+  .liquid-player.is-mineradio-liquid .liquid-player__right-rail {
+    padding-right: 70px;
+  }
+}
+
+@media (max-width: 840px) {
+  .liquid-player.is-mineradio-liquid > .liquid-glass-surface__content {
+    padding: 9px 11px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 66px;
+    gap: 8px;
+  }
+
+  .liquid-player.is-mineradio-liquid .liquid-player__left-rail {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .liquid-player.is-mineradio-liquid .liquid-player__center-rail {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .liquid-player .player-progress__time-display {
+    display: none;
+  }
+
+  .liquid-player.is-mineradio-liquid .player-queue-action {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .liquid-player.is-mineradio-liquid > .liquid-glass-surface__content {
+    padding-inline: 8px;
+  }
+}

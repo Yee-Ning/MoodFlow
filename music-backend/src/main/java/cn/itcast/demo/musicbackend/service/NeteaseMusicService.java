@@ -1,0 +1,484 @@
+package cn.itcast.demo.musicbackend.service;
+
+import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.StringJoiner;
+
+import cn.itcast.demo.musicbackend.dto.PlaylistData;
+import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
+import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
+import cn.itcast.demo.musicbackend.dto.SongData;
+import cn.itcast.demo.musicbackend.dto.SongLyricsData;
+import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
+import cn.itcast.demo.musicbackend.dto.UserProfileData;
+import cn.itcast.demo.musicbackend.exception.BadRequestException;
+import cn.itcast.demo.musicbackend.exception.NeteaseApiException;
+import cn.itcast.demo.musicbackend.exception.NeteaseApiTimeoutException;
+import cn.itcast.demo.musicbackend.exception.NotFoundException;
+import cn.itcast.demo.musicbackend.exception.UnauthorizedException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+
+@Service
+public class NeteaseMusicService {
+
+    private static final int PLAYLIST_LIMIT = 1000;
+
+    private final RestClient neteaseRestClient;
+
+    public NeteaseMusicService(RestClient neteaseRestClient) {
+        this.neteaseRestClient = neteaseRestClient;
+    }
+
+    public UserProfileData getCurrentUserProfile(HttpServletRequest request) {
+        return getProfile(requireCookie(request));
+    }
+
+    public List<PlaylistData> getCurrentUserPlaylists(HttpServletRequest request) {
+        String cookie = requireCookie(request);
+        UserProfileData profile = getProfile(cookie);
+        List<PlaylistData> playlists = new ArrayList<>();
+        int offset = 0;
+        boolean hasMore;
+
+        do {
+            Map<String, Object> response = get("/user/playlist", Map.of(
+                    "uid", profile.userId(),
+                    "limit", PLAYLIST_LIMIT,
+                    "offset", offset), cookie);
+            List<Map<String, Object>> page = requiredList(response, "playlist");
+            page.stream().map(this::toPlaylist).forEach(playlists::add);
+            hasMore = Boolean.TRUE.equals(response.get("more")) && !page.isEmpty();
+            offset += page.size();
+        } while (hasMore);
+
+        return List.copyOf(playlists);
+    }
+
+    public List<SongData> searchSongs(String keyword, int limit) {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
+        if (normalizedKeyword.isBlank()) {
+            throw new BadRequestException("搜索关键词不能为空");
+        }
+        if (limit < 1 || limit > 50) {
+            throw new BadRequestException("limit 必须在 1 到 50 之间");
+        }
+
+        Map<String, Object> response = get("/cloudsearch", Map.of(
+                "keywords", normalizedKeyword,
+                "type", 1,
+                "limit", limit));
+        Map<String, Object> result = requiredMap(response, "result");
+        if (!result.containsKey("songs") && optionalLong(result, "songCount") == 0) {
+            return Collections.emptyList();
+        }
+
+        return requiredList(result, "songs").stream()
+                .map(this::toSong)
+                .toList();
+    }
+
+    public SongData getSongDetail(long songId) {
+        if (songId <= 0) {
+            throw new BadRequestException("歌曲 id 必须大于 0");
+        }
+
+        Map<String, Object> response = get(
+                "/song/detail",
+                Map.of("ids", songId));
+        List<Map<String, Object>> songs = requiredList(response, "songs");
+        if (songs.isEmpty()) {
+            throw new NotFoundException("歌曲不存在");
+        }
+        return toSong(songs.getFirst());
+    }
+
+    public PlaylistDetailData getPlaylistDetail(long playlistId, HttpServletRequest request) {
+        if (playlistId <= 0) {
+            throw new BadRequestException("歌单 id 必须大于 0");
+        }
+
+        String cookie = requireCookie(request);
+        Map<String, Object> detailResponse = get(
+                "/playlist/detail",
+                Map.of("id", playlistId),
+                cookie);
+        Map<String, Object> playlistSource = requiredMap(detailResponse, "playlist");
+        PlaylistData playlist = toPlaylist(playlistSource);
+
+        List<SongData> songs = getAllSongs(playlistId, playlist.trackCount(), cookie);
+
+        return new PlaylistDetailData(
+                playlist,
+                optionalString(playlistSource, "description"),
+                songs);
+    }
+
+    public SongPlaybackData getSongPlaybackUrl(long songId, HttpServletRequest request) {
+        if (songId <= 0) {
+            throw new BadRequestException("歌曲 id 必须大于 0");
+        }
+
+        String cookie = requireCookie(request);
+        Map<String, Object> response = get(
+                "/song/url/v1",
+                Map.of("id", songId, "level", "standard"),
+                cookie);
+        List<Map<String, Object>> data = requiredList(response, "data");
+
+        if (data.isEmpty()) {
+            return unavailablePlayback(songId);
+        }
+
+        Map<String, Object> source = data.getFirst();
+        String url = optionalString(source, "url");
+        if (url.isBlank()) {
+            return unavailablePlayback(songId);
+        }
+
+        return new SongPlaybackData(songId, url, true, "");
+    }
+
+    public SongLyricsData getSongLyrics(long songId, HttpServletRequest request) {
+        if (songId <= 0) {
+            throw new BadRequestException("歌曲 id 必须大于 0");
+        }
+
+        String cookie = requireCookie(request);
+        Map<String, Object> response = get(
+                "/lyric",
+                Map.of("id", songId),
+                cookie);
+
+        if (Boolean.TRUE.equals(response.get("nolyric"))) {
+            return new SongLyricsData("", "", "instrumental");
+        }
+
+        Map<String, Object> lyricSource = optionalMap(response, "lrc");
+        String lyric = optionalString(lyricSource, "lyric");
+        if (Boolean.TRUE.equals(response.get("uncollected")) || lyric.isBlank()) {
+            return new SongLyricsData("", "", "unavailable");
+        }
+
+        String translation = optionalString(optionalMap(response, "tlyric"), "lyric");
+        return new SongLyricsData(lyric, translation, "available");
+    }
+
+    public PlaylistMutationData addSongToPlaylist(
+            long playlistId,
+            long songId,
+            HttpServletRequest request) {
+        if (playlistId <= 0) {
+            throw new BadRequestException("歌单 id 必须大于 0");
+        }
+        if (songId <= 0) {
+            throw new BadRequestException("歌曲 id 必须大于 0");
+        }
+
+        String cookie = requireCookie(request);
+        UserProfileData profile = getProfile(cookie);
+        Map<String, Object> detailResponse = get(
+                "/playlist/detail",
+                Map.of("id", playlistId),
+                cookie);
+        Map<String, Object> playlist = requiredMap(detailResponse, "playlist");
+        Map<String, Object> creator = requiredMap(playlist, "creator");
+        long creatorId = requiredLong(creator, "userId");
+
+        if (creatorId != profile.userId() || Boolean.TRUE.equals(playlist.get("subscribed"))) {
+            return new PlaylistMutationData("forbidden", "该歌单不可编辑");
+        }
+
+        if (playlistContainsSong(playlist, songId)) {
+            return new PlaylistMutationData("duplicate", "歌曲已在该歌单中");
+        }
+
+        get(
+                "/playlist/tracks",
+                Map.of("op", "add", "pid", playlistId, "tracks", songId),
+                cookie);
+        return new PlaylistMutationData("added", "已添加到歌单");
+    }
+
+    private SongPlaybackData unavailablePlayback(long songId) {
+        return new SongPlaybackData(
+                songId,
+                "",
+                false,
+                "该歌曲可能因版权、会员或地区限制暂时无法播放");
+    }
+
+    private boolean playlistContainsSong(Map<String, Object> playlist, long songId) {
+        Object value = playlist.get("trackIds");
+        if (!(value instanceof List<?> trackIds)) {
+            return false;
+        }
+
+        for (Object item : trackIds) {
+            if (item instanceof Map<?, ?> track
+                    && track.get("id") instanceof Number id
+                    && id.longValue() == songId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private UserProfileData getProfile(String cookie) {
+        Map<String, Object> response = get("/user/account", Map.of(), cookie);
+        Object profileValue = response.get("profile");
+        if (!(profileValue instanceof Map<?, ?>)) {
+            throw new UnauthorizedException("网易云登录已失效，请重新扫码登录");
+        }
+        Map<String, Object> profile = requiredMap(response, "profile");
+        return new UserProfileData(
+                requiredLong(profile, "userId"),
+                requiredString(profile, "nickname"),
+                optionalString(profile, "avatarUrl"));
+    }
+
+    private List<SongData> getAllSongs(long playlistId, int trackCount, String cookie) {
+        if (trackCount <= 0) {
+            return Collections.emptyList();
+        }
+
+        List<SongData> songs = new ArrayList<>(trackCount);
+        int offset = 0;
+        while (offset < trackCount) {
+            int limit = Math.min(PLAYLIST_LIMIT, trackCount - offset);
+            Map<String, Object> tracksResponse = get(
+                    "/playlist/track/all",
+                    Map.of("id", playlistId, "limit", limit, "offset", offset),
+                    cookie);
+            List<Map<String, Object>> page = requiredList(tracksResponse, "songs");
+            page.stream().map(this::toSong).forEach(songs::add);
+            if (page.size() < limit) {
+                break;
+            }
+            offset += page.size();
+        }
+        return List.copyOf(songs);
+    }
+
+    private PlaylistData toPlaylist(Map<String, Object> source) {
+        Map<String, Object> creator = requiredMap(source, "creator");
+        return new PlaylistData(
+                requiredLong(source, "id"),
+                requiredString(source, "name"),
+                optionalString(source, "coverImgUrl"),
+                optionalInt(source, "trackCount"),
+                requiredString(creator, "nickname"),
+                Boolean.TRUE.equals(source.get("subscribed")));
+    }
+
+    private SongData toSong(Map<String, Object> source) {
+        List<String> artists = requiredList(source, "ar").stream()
+                .map(artist -> requiredString(artist, "name"))
+                .toList();
+        Map<String, Object> album = requiredMap(source, "al");
+
+        return new SongData(
+                requiredLong(source, "id"),
+                requiredString(source, "name"),
+                artists,
+                optionalString(album, "name"),
+                optionalString(album, "picUrl"),
+                optionalLong(source, "dt"));
+    }
+
+    private String requireCookie(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        Object value = session == null ? null : session.getAttribute(AuthService.NETEASE_COOKIE);
+        if (value instanceof String cookie && !cookie.isBlank()) {
+            return cookie;
+        }
+        throw new UnauthorizedException("请先登录网易云音乐");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> get(
+            String path,
+            Map<String, Object> queryParams) {
+        return get(path, queryParams, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> get(
+            String path,
+            Map<String, Object> queryParams,
+            String cookie) {
+        try {
+            var requestSpec = neteaseRestClient.get()
+                    .uri(uriBuilder -> {
+                        uriBuilder.path(path);
+                        queryParams.forEach(uriBuilder::queryParam);
+                        return uriBuilder
+                                .queryParam("timestamp", System.currentTimeMillis())
+                                .build();
+                    });
+            if (cookie != null && !cookie.isBlank()) {
+                requestSpec.header(HttpHeaders.COOKIE, normalizeCookieHeader(cookie));
+            }
+
+            Map<String, Object> response = requestSpec.retrieve()
+                    .body(Map.class);
+            if (response == null) {
+                throw new NeteaseApiException("网易云 API 返回空响应");
+            }
+            validateResponseCode(response);
+            return response;
+        } catch (ResourceAccessException exception) {
+            if (hasCause(exception, SocketTimeoutException.class)
+                    || hasCause(exception, HttpTimeoutException.class)) {
+                throw new NeteaseApiTimeoutException("网易云 API 请求超时", exception);
+            }
+            throw new NeteaseApiException("无法连接网易云 API", exception);
+        } catch (RestClientException exception) {
+            throw new NeteaseApiException("网易云 API 响应异常", exception);
+        }
+    }
+
+    private void validateResponseCode(Map<String, Object> response) {
+        Object value = response.get("code");
+        if (!(value instanceof Number number)) {
+            throw invalidResponse("code");
+        }
+        if (number.intValue() == 301) {
+            throw new UnauthorizedException("网易云登录已失效，请重新扫码登录");
+        }
+        if (number.intValue() != 200) {
+            String message = optionalString(response, "message");
+            if (message.isBlank()) {
+                message = optionalString(response, "msg");
+            }
+            throw new NeteaseApiException(message.isBlank()
+                    ? "网易云 API 请求失败，状态码: " + number.intValue()
+                    : message);
+        }
+    }
+
+    private String normalizeCookieHeader(String rawCookie) {
+        StringJoiner normalized = new StringJoiner("; ");
+        for (String segment : rawCookie.split(";")) {
+            String item = segment.trim();
+            int separator = item.indexOf('=');
+            if (separator <= 0) {
+                continue;
+            }
+
+            String name = item.substring(0, separator).trim();
+            if (isCookieAttribute(name)) {
+                continue;
+            }
+            normalized.add(name + "=" + item.substring(separator + 1).trim());
+        }
+
+        String result = normalized.toString();
+        if (result.isBlank()) {
+            throw new UnauthorizedException("网易云登录 Cookie 无效，请重新扫码登录");
+        }
+        return result;
+    }
+
+    private boolean isCookieAttribute(String name) {
+        return switch (name.toLowerCase(Locale.ROOT)) {
+            case "path", "max-age", "expires", "domain", "samesite", "priority" -> true;
+            default -> false;
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> requiredMap(Map<String, Object> source, String name) {
+        Object value = source.get(name);
+        if (value instanceof Map<?, ?> map) {
+            return (Map<String, Object>) map;
+        }
+        throw invalidResponse(name);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> optionalMap(Map<String, Object> source, String name) {
+        Object value = source.get(name);
+        if (value instanceof Map<?, ?> map) {
+            return (Map<String, Object>) map;
+        }
+        return Collections.emptyMap();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> requiredList(Map<String, Object> source, String name) {
+        Object value = source.get(name);
+        if (!(value instanceof List<?> list)) {
+            throw invalidResponse(name);
+        }
+        if (list.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>(list.size());
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> map)) {
+                throw invalidResponse(name);
+            }
+            result.add((Map<String, Object>) map);
+        }
+        return result;
+    }
+
+    private String requiredString(Map<String, Object> source, String name) {
+        String value = optionalString(source, name);
+        if (!value.isBlank()) {
+            return value;
+        }
+        throw invalidResponse(name);
+    }
+
+    private String optionalString(Map<String, Object> source, String name) {
+        Object value = source.get(name);
+        return value instanceof String stringValue ? stringValue : "";
+    }
+
+    private long requiredLong(Map<String, Object> source, String name) {
+        Object value = source.get(name);
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        throw invalidResponse(name);
+    }
+
+    private long optionalLong(Map<String, Object> source, String name) {
+        Object value = source.get(name);
+        return value instanceof Number number ? number.longValue() : 0;
+    }
+
+    private int optionalInt(Map<String, Object> source, String name) {
+        Object value = source.get(name);
+        return value instanceof Number number ? number.intValue() : 0;
+    }
+
+    private NeteaseApiException invalidResponse(String fieldName) {
+        return new NeteaseApiException("网易云 API 响应缺少有效字段: " + fieldName);
+    }
+
+    private boolean hasCause(Throwable throwable, Class<? extends Throwable> causeType) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (causeType.isInstance(current)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+}

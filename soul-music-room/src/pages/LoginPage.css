@@ -1,0 +1,460 @@
+.login-page {
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  padding: clamp(20px, 3.2vw, 48px);
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  color: #f4f9fc;
+  background: #061724;
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, rgba(4, 17, 28, 0.06) 16%, rgba(2, 10, 17, 0.4) 100%),
+    linear-gradient(180deg, rgba(3, 15, 25, 0.2), rgba(1, 8, 14, 0.48));
+}
+
+.login-page__ocean-background {
+  position: absolute;
+  inset: -5%;
+  z-index: -3;
+  pointer-events: none;
+  background-image: url('/images/ocean-bg-generated-hd.webp');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  filter: brightness(0.58) contrast(1.08) saturate(0.88);
+  transform: scale(1.045);
+}
+
+.login-page__ambient {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(100px);
+}
+
+.login-page__ambient--one {
+  width: min(58vw, 760px);
+  aspect-ratio: 1;
+  top: -38%;
+  right: -12%;
+  background: rgba(78, 166, 203, 0.11);
+}
+
+.login-page__ambient--two {
+  width: min(42vw, 540px);
+  aspect-ratio: 1;
+  bottom: -34%;
+  left: -7%;
+  background: rgba(74, 151, 145, 0.075);
+}
+
+.login-page__center {
+  width: min(92vw, 1040px);
+  position: relative;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  transform: translateY(-1.5vh);
+}
+
+.login-page__eyebrow {
+  margin: 0 0 clamp(18px, 2.6vw, 32px);
+  color: rgba(139, 203, 230, 0.56);
+  font-size: clamp(0.56rem, 0.75vw, 0.68rem);
+  font-weight: 680;
+  letter-spacing: 0.26em;
+}
+
+.login-page__center h1 {
+  margin: 0;
+  color: rgba(246, 251, 253, 0.98);
+  font-size: clamp(4.8rem, 13vw, 11.5rem);
+  font-weight: 280;
+  letter-spacing: -0.082em;
+  line-height: 0.78;
+  text-shadow: 0 18px 62px rgba(102, 176, 205, 0.08);
+}
+
+.flowing-welcome {
+  width: min(92vw, 780px);
+  min-height: 3.2em;
+  margin: clamp(34px, 5vw, 64px) 0 0;
+  color: rgba(211, 231, 240, 0.58);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1rem, 1.65vw, 1.38rem);
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.6;
+}
+
+.flowing-welcome__cursor {
+  width: 1px;
+  height: 1.05em;
+  margin-left: 5px;
+  display: inline-block;
+  vertical-align: -0.12em;
+  background: rgba(183, 227, 242, 0.82);
+  box-shadow: 0 0 9px rgba(142, 211, 234, 0.32);
+  animation: flowing-cursor-blink 900ms steps(1, end) infinite;
+}
+
+.login-page__account {
+  min-height: 46px;
+  padding: 2px 5px;
+  position: absolute;
+  top: clamp(20px, 3vw, 42px);
+  right: clamp(20px, 3.2vw, 48px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.login-page__account button,
+.login-page__account-status,
+.login-page__account-checking {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(235, 247, 252, 0.76);
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.73rem;
+}
+
+.login-page__account button {
+  font: inherit;
+  cursor: pointer;
+  transition: color 200ms ease, border-color 200ms ease, background-color 200ms ease, transform 200ms ease;
+}
+
+.login-page__account button:hover {
+  color: #fff;
+  border-color: rgba(218, 242, 251, 0.3);
+  background: rgba(220, 242, 251, 0.105);
+  transform: translateY(-1px);
+}
+
+.login-page__account button:focus-visible,
+.netease-login__reload:focus-visible,
+.login-modal__close:focus-visible {
+  outline: 2px solid rgba(190, 232, 249, 0.85);
+  outline-offset: 3px;
+}
+
+.login-page__account-status {
+  color: rgba(172, 229, 215, 0.83);
+  border-color: rgba(120, 211, 190, 0.19);
+  background: rgba(88, 181, 160, 0.075);
+}
+
+.login-page__account-checking svg {
+  animation: login-spin 1s linear infinite;
+}
+
+.login-page__account small {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  color: rgba(232, 166, 166, 0.88);
+  font-size: 0.64rem;
+  white-space: nowrap;
+}
+
+.login-modal {
+  padding: 20px;
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  background: rgba(0, 6, 11, 0.68);
+  backdrop-filter: blur(13px) saturate(120%);
+  -webkit-backdrop-filter: blur(13px) saturate(120%);
+}
+
+.login-modal__panel {
+  width: min(100%, 430px);
+  min-height: 560px;
+  max-height: calc(100svh - 40px);
+  padding: 38px;
+  position: relative;
+  isolation: isolate;
+  border: 0;
+  border-radius: 32px;
+  color: #f5fafc;
+  overflow-y: auto;
+  background: transparent;
+  box-shadow: none;
+}
+
+.login-modal__liquid {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+}
+
+.login-modal__close {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+  border: 1px solid rgba(215, 239, 249, 0.14);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: rgba(235, 247, 252, 0.65);
+  background: rgba(222, 242, 250, 0.055);
+  cursor: pointer;
+}
+
+.netease-login {
+  min-height: 484px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.netease-login__heading {
+  width: 100%;
+  padding-right: 40px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.netease-login__mark {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(207, 237, 249, 0.17);
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  color: rgba(225, 246, 254, 0.76);
+  background: rgba(216, 241, 252, 0.07);
+}
+
+.netease-login__heading p {
+  margin: 0 0 4px;
+  color: rgba(139, 202, 229, 0.58);
+  font-size: 0.52rem;
+  font-weight: 680;
+  letter-spacing: 0.17em;
+}
+
+.netease-login__heading h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 510;
+  letter-spacing: -0.025em;
+}
+
+.netease-login__qr-stage {
+  width: 224px;
+  aspect-ratio: 1;
+  margin-top: 38px;
+  position: relative;
+  border: 1px solid rgba(216, 240, 249, 0.15);
+  border-radius: 25px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: rgba(221, 241, 249, 0.55);
+  background: rgba(239, 249, 252, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 20px 48px rgba(0, 4, 8, 0.22);
+}
+
+.netease-login__qr-stage img {
+  width: 194px;
+  height: 194px;
+  border-radius: 16px;
+  display: block;
+  object-fit: contain;
+  background: #fff;
+  transition: opacity 180ms ease, filter 180ms ease;
+}
+
+.netease-login__qr-stage img.is-muted {
+  opacity: 0.2;
+  filter: blur(1px) grayscale(1);
+}
+
+.netease-login__spinner {
+  animation: login-spin 1s linear infinite;
+}
+
+.netease-login__qr-overlay {
+  width: 64px;
+  height: 64px;
+  position: absolute;
+  border: 1px solid rgba(217, 241, 251, 0.18);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: rgba(237, 249, 253, 0.85);
+  background: rgba(6, 18, 28, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.netease-login__status {
+  min-height: 44px;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: rgba(222, 238, 245, 0.62);
+  text-align: center;
+}
+
+.netease-login__status p {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.netease-login__status-icon {
+  display: grid;
+  place-items: center;
+  color: rgba(158, 215, 237, 0.78);
+}
+
+.netease-login--waitingConfirm .netease-login__status-icon { color: #e7c28f; }
+.netease-login--success .netease-login__status-icon { color: #8de0c9; }
+.netease-login--expired .netease-login__status-icon,
+.netease-login--error .netease-login__status-icon { color: #e3a5a5; }
+.netease-login--loading .netease-login__status-icon svg { animation: login-spin 1s linear infinite; }
+
+.netease-login__reload {
+  min-height: 42px;
+  margin-top: 10px;
+  padding: 0 18px;
+  border: 1px solid rgba(211, 238, 249, 0.18);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(240, 249, 252, 0.82);
+  background: rgba(220, 242, 251, 0.07);
+  cursor: pointer;
+}
+
+.netease-login__hint {
+  margin: auto 0 0;
+  color: rgba(202, 224, 233, 0.31);
+  font-size: 0.61rem;
+}
+
+@keyframes flowing-cursor-blink {
+  0%, 46% { opacity: 1; }
+  47%, 100% { opacity: 0; }
+}
+
+@keyframes login-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .login-page {
+    padding: 18px;
+  }
+
+  .login-page__account {
+    top: 18px;
+    right: 18px;
+  }
+
+  .login-page__account button,
+  .login-page__account-status,
+  .login-page__account-checking {
+    min-height: 38px;
+    padding: 0 13px;
+    font-size: 0.68rem;
+  }
+
+  .login-page__center {
+    transform: translateY(1vh);
+  }
+
+  .login-page__center h1 {
+    font-size: clamp(4.2rem, 23vw, 7rem);
+    line-height: 0.84;
+  }
+
+  .flowing-welcome {
+    min-height: 4.8em;
+    margin-top: 34px;
+    padding: 0 6px;
+    font-size: clamp(0.95rem, 4.6vw, 1.15rem);
+  }
+
+  .login-modal {
+    padding: 10px;
+  }
+
+  .login-modal__panel {
+    min-height: min(580px, calc(100svh - 20px));
+    padding: 30px 22px 24px;
+    border-radius: 27px;
+  }
+
+  .netease-login__qr-stage {
+    width: 210px;
+    margin-top: 32px;
+  }
+
+  .netease-login__qr-stage img {
+    width: 182px;
+    height: 182px;
+  }
+}
+
+@media (max-height: 620px) and (min-width: 601px) {
+  .login-page__center {
+    transform: none;
+  }
+
+  .login-page__center h1 {
+    font-size: clamp(4.5rem, 18vh, 8.5rem);
+  }
+
+  .flowing-welcome {
+    margin-top: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-page *,
+  .login-modal * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .flowing-welcome__cursor {
+    opacity: 0.8;
+    animation: none !important;
+  }
+}

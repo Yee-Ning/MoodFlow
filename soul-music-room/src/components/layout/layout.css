@@ -1,0 +1,215 @@
+.sidebar {
+  min-height: 0;
+  padding: 0;
+  position: relative;
+  z-index: var(--z-sidebar);
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.sidebar__surface {
+  width: 100%;
+  height: 100%;
+  padding: 12px 9px 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar__brand {
+  min-width: 0;
+  padding: 5px 5px 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.sidebar__brand-mark {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--glass-radius-small);
+  display: grid;
+  place-items: center;
+  color: #d9f4ff;
+  background: var(--glass-bg-button);
+  box-shadow:
+    inset 0 1px 0 var(--glass-inner-highlight),
+    inset 0 -1px 0 var(--glass-inner-shadow);
+}
+
+.sidebar__brand span:last-child { min-width: 0; display: grid; gap: 3px; }
+.sidebar__brand strong { font-size: 1rem; font-weight: 500; letter-spacing: -0.035em; }
+.sidebar__brand small { color: rgba(214, 233, 242, 0.4); font-size: 0.47rem; font-weight: 640; letter-spacing: 0.1em; white-space: nowrap; }
+
+.sidebar__nav { display: grid; gap: 5px; }
+
+.sidebar__item {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(221, 235, 242, 0.57);
+  font-size: 0.78rem;
+  font-weight: 520;
+  text-decoration: none;
+  transition: color 190ms ease, background-color 190ms ease, box-shadow 190ms ease, transform 190ms ease;
+}
+
+.sidebar__item:hover { color: #f5fbff; background: rgba(235, 248, 253, 0.055); transform: scale(1.012); }
+.sidebar__item.is-active {
+  color: #f5fbff;
+  background: linear-gradient(110deg, rgba(235, 248, 253, 0.105), rgba(169, 224, 225, 0.035));
+  box-shadow: inset 0 1px 0 var(--glass-inner-highlight), 0 10px 28px rgba(113, 196, 195, 0.055);
+}
+.sidebar__item:focus-visible, .mobile-nav__item:focus-visible { outline: 2px solid rgba(208, 241, 255, 0.8); outline-offset: 2px; }
+
+.sidebar__slow-note {
+  margin-top: auto;
+  padding: 16px 12px 2px;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: rgba(210, 229, 238, 0.3);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.68rem;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.topbar {
+  min-width: 0;
+  min-height: var(--header-height);
+  padding: 0;
+  position: relative;
+  z-index: var(--z-header);
+}
+
+.topbar__surface {
+  width: 100%;
+  height: var(--header-height);
+  min-height: var(--header-height);
+  padding: 4px 8px;
+  display: grid;
+  grid-template-columns: auto minmax(220px, 460px) auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.topbar button {
+  padding: 0;
+  border: 0;
+  display: grid;
+  place-items: center;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.topbar__history { display: flex; gap: 8px; }
+.topbar__history button, .topbar__profile {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  color: rgba(235, 248, 253, 0.76);
+  background: var(--glass-bg-button);
+  box-shadow:
+    inset 0 1px 0 var(--glass-inner-highlight),
+    inset 0 -1px 0 var(--glass-inner-shadow);
+  transition: color 190ms ease, border-color 190ms ease, background-color 190ms ease, transform 190ms ease;
+}
+.topbar__profile { position: relative; }
+.topbar__profile > img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: cover;
+  filter: saturate(0.86) brightness(0.94);
+}
+.topbar__profile.is-authenticated {
+  color: #e9fbff;
+  background: rgba(92, 185, 174, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 16px rgba(123, 216, 195, 0.08);
+}
+.topbar__profile-status {
+  width: 8px;
+  height: 8px;
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  border: 2px solid #08141d;
+  border-radius: 50%;
+  background: #7bd8c3;
+  box-shadow: 0 0 10px rgba(123, 216, 195, 0.7);
+}
+.topbar__history button:hover, .topbar__profile:hover {
+  color: #fff;
+  background: rgba(235, 248, 253, 0.085);
+  transform: translateY(-1px) scale(1.035);
+}
+.topbar__history button:active, .topbar__profile:active { transform: scale(0.94); }
+
+.topbar__search {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: var(--glass-radius-pill);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(221, 240, 248, 0.45);
+  background: var(--glass-bg-secondary);
+  box-shadow:
+    inset 0 1px 0 var(--glass-inner-highlight),
+    inset 0 -1px 0 var(--glass-inner-shadow);
+  transition: border-color 190ms ease, background-color 190ms ease, box-shadow 190ms ease;
+}
+.topbar__search:focus-within { background: rgba(235, 248, 253, 0.075); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), 0 0 0 3px rgba(159, 212, 233, 0.05); }
+.topbar__search input { width: 100%; border: 0; outline: 0; color: #f6fbfd; background: transparent; font-size: 0.76rem; }
+.topbar__search input::placeholder { color: rgba(222, 240, 248, 0.38); }
+
+.mobile-nav { display: none; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sidebar__surface,
+  .topbar__surface,
+  .mobile-nav__surface {
+    background: rgba(6, 17, 25, 0.94);
+  }
+}
+
+@media (max-width: 840px) {
+  .sidebar { display: none; }
+  .mobile-nav {
+    padding: 4px 8px max(5px, env(safe-area-inset-bottom));
+    grid-column: 1;
+    grid-row: 2;
+    z-index: var(--z-sidebar);
+    display: block;
+  }
+  .mobile-nav__surface { height: 100%; padding: 2px; overflow: hidden; }
+  .mobile-nav__items { height: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+  .mobile-nav__item { min-width: 0; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: rgba(217, 234, 242, 0.45); font-size: 0.56rem; text-decoration: none; }
+  .mobile-nav__item.is-active { color: #f4fbff; background: rgba(220, 243, 253, 0.07); }
+  .topbar { min-height: 48px; padding: 0 10px; }
+  .topbar__surface { min-height: 48px; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; }
+  .topbar__history button { width: 34px; height: 34px; }
+  .topbar__history button:last-child { display: none; }
+  .topbar__profile { width: 34px; height: 34px; }
+  .topbar__search { min-height: 36px; padding: 0 12px; }
+  .topbar__search input { font-size: 0.7rem; }
+}
+
+@media (max-width: 430px) {
+  .topbar__search input::placeholder { color: transparent; }
+}

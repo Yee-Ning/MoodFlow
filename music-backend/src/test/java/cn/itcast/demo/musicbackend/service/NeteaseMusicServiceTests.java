@@ -1,0 +1,489 @@
+package cn.itcast.demo.musicbackend.service;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
+
+import cn.itcast.demo.musicbackend.dto.PlaylistData;
+import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
+import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
+import cn.itcast.demo.musicbackend.dto.SongData;
+import cn.itcast.demo.musicbackend.dto.SongLyricsData;
+import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
+import cn.itcast.demo.musicbackend.dto.UserProfileData;
+import cn.itcast.demo.musicbackend.exception.NotFoundException;
+import cn.itcast.demo.musicbackend.exception.UnauthorizedException;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
+
+class NeteaseMusicServiceTests {
+
+    private static final String COOKIE = "MUSIC_U=test-cookie; Max-Age=1296000; Path=/;;__csrf=test-csrf; Path=/;";
+    private static final String FORWARDED_COOKIE = "MUSIC_U=test-cookie; __csrf=test-csrf";
+
+    private MockRestServiceServer server;
+    private NeteaseMusicService musicService;
+
+    @BeforeEach
+    void setUp() {
+        RestClient.Builder builder = RestClient.builder().baseUrl("http://localhost:3000");
+        server = MockRestServiceServer.bindTo(builder).build();
+        musicService = new NeteaseMusicService(builder.build());
+    }
+
+    @Test
+    void shouldRequireExistingLoginSession() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+
+        UnauthorizedException exception = assertThrows(
+                UnauthorizedException.class,
+                () -> musicService.getCurrentUserProfile(request));
+
+        assertEquals("请先登录网易云音乐", exception.getMessage());
+        server.verify();
+    }
+
+    @Test
+    void shouldMapCurrentUserProfileAndForwardCookie() {
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/user/account");
+                    assertEquals(FORWARDED_COOKIE, request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "profile": {
+                            "userId": 42,
+                            "nickname": "Deep Tide",
+                            "avatarUrl": "https://img.test/avatar.jpg",
+                            "ignored": "not exposed"
+                          }
+                        }
+                        """, APPLICATION_JSON));
+
+        UserProfileData profile = musicService.getCurrentUserProfile(loggedInRequest());
+
+        assertEquals(42L, profile.userId());
+        assertEquals("Deep Tide", profile.nickname());
+        assertEquals("https://img.test/avatar.jpg", profile.avatarUrl());
+        server.verify();
+    }
+
+    @Test
+    void shouldSplitPlaylistsUsingSubscribedField() {
+        expectProfile();
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/user/playlist", "uid=42", "limit=1000", "offset=0");
+                    assertEquals(FORWARDED_COOKIE, request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "more": false,
+                          "playlist": [
+                            {
+                              "id": 101,
+                              "name": "Created Waves",
+                              "coverImgUrl": "https://img.test/created.jpg",
+                              "trackCount": 12,
+                              "creator": {"nickname": "Deep Tide"},
+                              "subscribed": false,
+                              "description": "not exposed"
+                            },
+                            {
+                              "id": 202,
+                              "name": "Collected Foam",
+                              "coverImgUrl": "https://img.test/collected.jpg",
+                              "trackCount": 8,
+                              "creator": {"nickname": "Another Listener"},
+                              "subscribed": true
+                            }
+                          ]
+                        }
+                        """, APPLICATION_JSON));
+
+        List<PlaylistData> playlists = musicService.getCurrentUserPlaylists(loggedInRequest());
+
+        assertEquals(2, playlists.size());
+        assertFalse(playlists.get(0).subscribed());
+        assertTrue(playlists.get(1).subscribed());
+        assertEquals("Another Listener", playlists.get(1).creator());
+        server.verify();
+    }
+
+    @Test
+    void shouldSearchSongsWithoutRequiringLoginSession() {
+        server.expect(request -> {
+                    assertRequest(
+                            request.getURI(),
+                            "/cloudsearch",
+                            "keywords=周杰伦",
+                            "type=1",
+                            "limit=2");
+                    assertNull(request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "result": {
+                            "songCount": 1,
+                            "songs": [
+                              {
+                                "id": 185809,
+                                "name": "晴天",
+                                "ar": [{"id": 6452, "name": "周杰伦"}],
+                                "al": {
+                                  "id": 18905,
+                                  "name": "叶惠美",
+                                  "picUrl": "https://img.test/qingtian.jpg"
+                                },
+                                "dt": 269000
+                              }
+                            ]
+                          }
+                        }
+                        """, APPLICATION_JSON));
+
+        List<SongData> songs = musicService.searchSongs(" 周杰伦 ", 2);
+
+        assertEquals(1, songs.size());
+        assertEquals(185809L, songs.getFirst().id());
+        assertEquals("晴天", songs.getFirst().name());
+        assertEquals(List.of("周杰伦"), songs.getFirst().artists());
+        assertEquals("叶惠美", songs.getFirst().album());
+        server.verify();
+    }
+
+    @Test
+    void shouldGetSongDetailWithoutRequiringLoginSession() {
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/song/detail", "ids=185809");
+                    assertNull(request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "songs": [
+                            {
+                              "id": 185809,
+                              "name": "晴天",
+                              "ar": [{"id": 6452, "name": "周杰伦"}],
+                              "al": {
+                                "id": 18905,
+                                "name": "叶惠美",
+                                "picUrl": "https://img.test/qingtian.jpg"
+                              },
+                              "dt": 269000
+                            }
+                          ]
+                        }
+                        """, APPLICATION_JSON));
+
+        SongData song = musicService.getSongDetail(185809);
+
+        assertEquals(185809L, song.id());
+        assertEquals("晴天", song.name());
+        assertEquals(List.of("周杰伦"), song.artists());
+        assertEquals("叶惠美", song.album());
+        assertEquals(269000L, song.duration());
+        server.verify();
+    }
+
+    @Test
+    void shouldReportMissingSongDetail() {
+        server.expect(request -> assertRequest(
+                        request.getURI(),
+                        "/song/detail",
+                        "ids=999999"))
+                .andRespond(withSuccess(
+                        "{\"code\":200,\"songs\":[]}",
+                        APPLICATION_JSON));
+
+        assertThrows(NotFoundException.class, () -> musicService.getSongDetail(999999));
+        server.verify();
+    }
+
+    @Test
+    void shouldMapPlaylistDetailAndSongs() {
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/playlist/detail", "id=101");
+                    assertEquals(FORWARDED_COOKIE, request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "playlist": {
+                            "id": 101,
+                            "name": "Created Waves",
+                            "coverImgUrl": "https://img.test/created.jpg",
+                            "trackCount": 2,
+                            "creator": {"nickname": "Deep Tide"},
+                            "subscribed": false,
+                            "description": "Songs for a quiet shoreline."
+                          }
+                        }
+                        """, APPLICATION_JSON));
+        server.expect(request -> {
+                    assertRequest(
+                            request.getURI(),
+                            "/playlist/track/all",
+                            "id=101",
+                            "limit=2",
+                            "offset=0");
+                    assertEquals(FORWARDED_COOKIE, request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "songs": [
+                            {
+                              "id": 9001,
+                              "name": "Blue Current",
+                              "ar": [{"id": 1, "name": "Low Moon"}, {"id": 2, "name": "Sea Glass"}],
+                              "al": {"id": 4, "name": "Night Water", "picUrl": "https://img.test/song.jpg"},
+                              "dt": 245000,
+                              "privilege": {"ignored": true}
+                            },
+                            {
+                              "id": 9002,
+                              "name": "Still Harbor",
+                              "ar": [{"id": 3, "name": "North Wind"}],
+                              "al": {"id": 5, "name": "Quiet Coast", "picUrl": "https://img.test/song-2.jpg"},
+                              "dt": 181000
+                            }
+                          ]
+                        }
+                        """, APPLICATION_JSON));
+
+        PlaylistDetailData detail = musicService.getPlaylistDetail(101, loggedInRequest());
+
+        assertEquals("Created Waves", detail.playlist().name());
+        assertEquals("Songs for a quiet shoreline.", detail.description());
+        assertEquals(2, detail.songs().size());
+        SongData firstSong = detail.songs().get(0);
+        assertEquals(9001L, firstSong.id());
+        assertEquals(List.of("Low Moon", "Sea Glass"), firstSong.artists());
+        assertEquals("Night Water", firstSong.album());
+        assertEquals("https://img.test/song.jpg", firstSong.coverUrl());
+        assertEquals(245000L, firstSong.duration());
+        server.verify();
+    }
+
+    @Test
+    void shouldMapPlayableSongUrlAndForwardCookie() {
+        server.expect(request -> {
+                    assertRequest(
+                            request.getURI(),
+                            "/song/url/v1",
+                            "id=9001",
+                            "level=standard");
+                    assertEquals(FORWARDED_COOKIE, request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "data": [
+                            {
+                              "id": 9001,
+                              "url": "https://music.test/blue-current.mp3",
+                              "type": "mp3"
+                            }
+                          ]
+                        }
+                        """, APPLICATION_JSON));
+
+        SongPlaybackData playback = musicService.getSongPlaybackUrl(9001, loggedInRequest());
+
+        assertEquals(9001L, playback.songId());
+        assertEquals("https://music.test/blue-current.mp3", playback.url());
+        assertTrue(playback.available());
+        assertEquals("", playback.message());
+        server.verify();
+    }
+
+    @Test
+    void shouldReturnFriendlyResultWhenSongHasNoPlaybackUrl() {
+        server.expect(request -> assertRequest(
+                        request.getURI(),
+                        "/song/url/v1",
+                        "id=9002",
+                        "level=standard"))
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "data": [{"id": 9002, "url": null}]
+                        }
+                        """, APPLICATION_JSON));
+
+        SongPlaybackData playback = musicService.getSongPlaybackUrl(9002, loggedInRequest());
+
+        assertEquals(9002L, playback.songId());
+        assertEquals("", playback.url());
+        assertFalse(playback.available());
+        assertTrue(playback.message().contains("无法播放"));
+        server.verify();
+    }
+
+    @Test
+    void shouldTreatMissingRemoteProfileAsExpiredLogin() {
+        server.expect(request -> assertRequest(request.getURI(), "/user/account"))
+                .andRespond(withSuccess(
+                        "{\"code\":200,\"account\":null,\"profile\":null}",
+                        APPLICATION_JSON));
+
+        UnauthorizedException exception = assertThrows(
+                UnauthorizedException.class,
+                () -> musicService.getCurrentUserProfile(loggedInRequest()));
+
+        assertEquals("网易云登录已失效，请重新扫码登录", exception.getMessage());
+        server.verify();
+    }
+
+    @Test
+    void shouldMapLyricsAndTranslation() {
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/lyric", "id=9001");
+                    assertEquals(FORWARDED_COOKIE, request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "lrc": {"lyric": "[00:01.00]Blue current"},
+                          "tlyric": {"lyric": "[00:01.00]蓝色潮汐"}
+                        }
+                        """, APPLICATION_JSON));
+
+        SongLyricsData lyrics = musicService.getSongLyrics(9001, loggedInRequest());
+
+        assertEquals("available", lyrics.status());
+        assertEquals("[00:01.00]Blue current", lyrics.lyric());
+        assertEquals("[00:01.00]蓝色潮汐", lyrics.translation());
+        server.verify();
+    }
+
+    @Test
+    void shouldIdentifyInstrumentalTrack() {
+        server.expect(request -> assertRequest(request.getURI(), "/lyric", "id=9002"))
+                .andRespond(withSuccess(
+                        "{\"code\":200,\"nolyric\":true}",
+                        APPLICATION_JSON));
+
+        SongLyricsData lyrics = musicService.getSongLyrics(9002, loggedInRequest());
+
+        assertEquals("instrumental", lyrics.status());
+        assertTrue(lyrics.lyric().isEmpty());
+        server.verify();
+    }
+
+    @Test
+    void shouldAddSongToOwnedPlaylist() {
+        expectProfile();
+        expectEditablePlaylist(101, 42, 9002);
+        server.expect(request -> {
+                    assertRequest(
+                            request.getURI(),
+                            "/playlist/tracks",
+                            "op=add",
+                            "pid=101",
+                            "tracks=9001");
+                    assertEquals(FORWARDED_COOKIE, request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("{\"code\":200}", APPLICATION_JSON));
+
+        PlaylistMutationData result = musicService.addSongToPlaylist(
+                101,
+                9001,
+                loggedInRequest());
+
+        assertEquals("added", result.status());
+        server.verify();
+    }
+
+    @Test
+    void shouldReturnDuplicateWithoutCallingMutationEndpoint() {
+        expectProfile();
+        expectEditablePlaylist(101, 42, 9001);
+
+        PlaylistMutationData result = musicService.addSongToPlaylist(
+                101,
+                9001,
+                loggedInRequest());
+
+        assertEquals("duplicate", result.status());
+        server.verify();
+    }
+
+    @Test
+    void shouldRejectPlaylistOwnedByAnotherUser() {
+        expectProfile();
+        expectEditablePlaylist(202, 99, 9002);
+
+        PlaylistMutationData result = musicService.addSongToPlaylist(
+                202,
+                9001,
+                loggedInRequest());
+
+        assertEquals("forbidden", result.status());
+        server.verify();
+    }
+
+    private void expectProfile() {
+        server.expect(request -> assertRequest(request.getURI(), "/user/account"))
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "profile": {
+                            "userId": 42,
+                            "nickname": "Deep Tide",
+                            "avatarUrl": "https://img.test/avatar.jpg"
+                          }
+                        }
+                        """, APPLICATION_JSON));
+    }
+
+    private void expectEditablePlaylist(long playlistId, long ownerId, long existingSongId) {
+        server.expect(request -> assertRequest(
+                        request.getURI(),
+                        "/playlist/detail",
+                        "id=" + playlistId))
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "playlist": {
+                            "id": %d,
+                            "subscribed": false,
+                            "creator": {"userId": %d},
+                            "trackIds": [{"id": %d}]
+                          }
+                        }
+                        """.formatted(playlistId, ownerId, existingSongId), APPLICATION_JSON));
+    }
+
+    private MockHttpServletRequest loggedInRequest() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.getSession(true).setAttribute(AuthService.NETEASE_COOKIE, COOKIE);
+        return request;
+    }
+
+    private void assertRequest(URI uri, String expectedPath, String... expectedQueryParts) {
+        assertEquals(expectedPath, uri.getPath());
+        List<String> queryParts = Arrays.asList(uri.getQuery().split("&"));
+        for (String expectedPart : expectedQueryParts) {
+            assertTrue(queryParts.contains(expectedPart), "Missing query part: " + expectedPart);
+        }
+        assertTrue(queryParts.stream().anyMatch(value -> value.startsWith("timestamp=")));
+    }
+}

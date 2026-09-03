@@ -1,0 +1,958 @@
+.jazz-page {
+  --jazz-ivory: #e7dfc9;
+  --jazz-paper: #cfc5ab;
+  --jazz-yellow: #c6ad69;
+  --jazz-green: #405c43;
+  --jazz-ink: #171b18;
+  --jazz-line: rgba(232, 224, 202, 0.24);
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+  overflow-y: auto;
+  color: var(--jazz-ivory);
+  background: #1c231d;
+  scroll-behavior: smooth;
+  scrollbar-color: rgba(217, 208, 181, 0.45) rgba(16, 20, 17, 0.65);
+}
+
+.jazz-page__background,
+.jazz-page__overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.jazz-page__background {
+  z-index: -3;
+  background-color: #2a3029;
+  background-image: url('/images/jazz-hiphop/jazz-wall.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: saturate(0.76) contrast(1.04) brightness(0.67);
+  transform: scale(1.012);
+}
+
+.jazz-page__overlay {
+  z-index: -2;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 18, 15, 0.35) 0%,
+      rgba(14, 17, 14, 0.6) 38%,
+      rgba(11, 14, 12, 0.8) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(15, 20, 16, 0.64) 0%,
+      rgba(26, 31, 25, 0.2) 48%,
+      rgba(10, 13, 11, 0.58) 100%
+    );
+}
+
+.jazz-page__content {
+  position: relative;
+  z-index: 1;
+}
+
+.jazz-nav {
+  width: min(calc(100% - 40px), 1240px);
+  min-height: 58px;
+  margin: 18px auto 0;
+  padding: 0 20px;
+  border: 1px solid rgba(239, 232, 211, 0.24);
+  border-radius: 999px;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: rgba(27, 32, 27, 0.42);
+  box-shadow:
+    0 14px 34px rgba(8, 10, 8, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(14px) saturate(112%);
+  -webkit-backdrop-filter: blur(14px) saturate(112%);
+  transform: translateX(-50%);
+}
+
+.jazz-nav button,
+.jazz-explore,
+.jazz-footer button {
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.jazz-nav button {
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 0.72rem;
+  font-weight: 570;
+  letter-spacing: 0.06em;
+}
+
+.jazz-nav p {
+  margin: 0;
+  color: rgba(231, 222, 197, 0.72);
+  font-size: 0.67rem;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.jazz-nav button,
+.jazz-explore,
+.jazz-footer button {
+  transition:
+    color 240ms ease,
+    transform 240ms ease,
+    opacity 240ms ease;
+}
+
+.jazz-nav button:hover,
+.jazz-explore:hover,
+.jazz-footer button:hover {
+  color: #fff8e8;
+}
+
+.jazz-nav button:hover,
+.jazz-footer button:hover {
+  transform: translateX(-4px);
+}
+
+.jazz-nav button:focus-visible,
+.jazz-explore:focus-visible,
+.jazz-footer button:focus-visible {
+  outline: 2px solid rgba(235, 220, 176, 0.85);
+  outline-offset: 6px;
+}
+
+.jazz-hero,
+.jazz-section,
+.jazz-footer {
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  padding-right: clamp(22px, 5vw, 72px);
+  padding-left: clamp(22px, 5vw, 72px);
+}
+
+.jazz-hero {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-top: clamp(140px, 20vh, 210px);
+  padding-bottom: clamp(62px, 9vh, 100px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.jazz-hero__edition {
+  margin-bottom: clamp(24px, 5vh, 54px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: rgba(229, 220, 195, 0.62);
+  font-size: 0.64rem;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+}
+
+.jazz-hero__edition::before {
+  content: '';
+  height: 1px;
+  position: absolute;
+  left: clamp(22px, 5vw, 72px);
+  right: clamp(22px, 5vw, 72px);
+  margin-top: 30px;
+  background: rgba(229, 220, 195, 0.24);
+}
+
+.jazz-hero__copy {
+  width: min(100%, 980px);
+  animation: jazz-hero-arrival 1.2s cubic-bezier(0.22, 0.72, 0.18, 1) both;
+}
+
+.jazz-kicker {
+  margin: 0 0 18px;
+  color: var(--jazz-yellow);
+  font-size: clamp(0.66rem, 0.9vw, 0.78rem);
+  font-weight: 680;
+  letter-spacing: 0.22em;
+}
+
+.jazz-hero h1 {
+  max-width: 100%;
+  margin: 0;
+  color: #ebe3cf;
+  font-family: 'Geist Variable', 'Arial Narrow', sans-serif;
+  font-size: clamp(5.2rem, 13.2vw, 11.4rem);
+  font-weight: 710;
+  letter-spacing: -0.078em;
+  line-height: 0.72;
+  text-transform: uppercase;
+  text-shadow: 0 12px 36px rgba(7, 9, 7, 0.27);
+}
+
+.jazz-hero h1 span {
+  display: block;
+}
+
+.jazz-hero h1 span:last-child {
+  margin-left: clamp(24px, 11vw, 155px);
+  color: transparent;
+  -webkit-text-stroke: 1.25px rgba(232, 222, 197, 0.9);
+}
+
+.jazz-hero__subtitle {
+  margin: clamp(28px, 4.5vh, 50px) 0 0 clamp(28px, 11vw, 158px);
+  color: var(--jazz-yellow);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.2rem, 2.2vw, 2rem);
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.jazz-hero__intro {
+  max-width: 37rem;
+  margin: 18px 0 0 clamp(28px, 11vw, 158px);
+  color: rgba(236, 228, 207, 0.78);
+  font-size: clamp(0.94rem, 1.35vw, 1.1rem);
+  font-weight: 420;
+  letter-spacing: 0.035em;
+  line-height: 1.9;
+}
+
+.jazz-explore {
+  width: fit-content;
+  margin-top: clamp(42px, 7vh, 74px);
+  gap: 14px;
+  padding: 11px 0 9px;
+  border-bottom: 1px solid rgba(232, 222, 197, 0.55);
+  color: rgba(239, 230, 207, 0.86);
+  font-size: 0.69rem;
+  font-weight: 650;
+  letter-spacing: 0.17em;
+}
+
+.jazz-explore:hover {
+  transform: translateY(3px);
+}
+
+.jazz-hero__side-note {
+  margin: 0;
+  position: absolute;
+  right: clamp(22px, 5vw, 72px);
+  bottom: clamp(66px, 10vh, 110px);
+  color: rgba(232, 223, 199, 0.4);
+  font-size: 0.58rem;
+  font-weight: 620;
+  letter-spacing: 0.21em;
+  line-height: 1.8;
+  text-align: right;
+  transform: rotate(-90deg) translateX(100%);
+  transform-origin: right bottom;
+}
+
+.jazz-section {
+  padding-top: clamp(105px, 14vw, 170px);
+  padding-bottom: clamp(105px, 14vw, 170px);
+  border-top: 1px solid var(--jazz-line);
+}
+
+.jazz-section__heading {
+  margin-bottom: clamp(50px, 7vw, 86px);
+}
+
+.jazz-section__heading--split {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.jazz-section__heading > p,
+.jazz-section__heading > div > p {
+  margin: 0 0 15px;
+  color: var(--jazz-yellow);
+  font-size: 0.63rem;
+  font-weight: 650;
+  letter-spacing: 0.19em;
+}
+
+.jazz-section__heading h2 {
+  margin: 0;
+  color: #e9e0c9;
+  font-size: clamp(2.7rem, 7vw, 6rem);
+  font-weight: 610;
+  letter-spacing: -0.066em;
+  line-height: 0.88;
+}
+
+.jazz-section__aside {
+  flex: 0 0 auto;
+  margin: 0;
+  color: rgba(228, 219, 194, 0.52);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.78rem;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+  text-align: right;
+}
+
+.jazz-introduction__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
+  gap: clamp(44px, 8vw, 110px);
+  align-items: start;
+}
+
+.jazz-introduction__lead {
+  margin: 0;
+  color: rgba(239, 231, 210, 0.94);
+  font-family: Georgia, 'Noto Serif SC', 'Songti SC', serif;
+  font-size: clamp(1.65rem, 3.15vw, 2.75rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.55;
+}
+
+.jazz-introduction__body {
+  padding-top: 10px;
+  border-top: 1px solid rgba(234, 225, 201, 0.35);
+}
+
+.jazz-introduction__body p {
+  margin: 18px 0 0;
+  color: rgba(231, 222, 198, 0.7);
+  font-size: 0.9rem;
+  letter-spacing: 0.025em;
+  line-height: 1.9;
+}
+
+.jazz-keywords {
+  margin-top: clamp(78px, 10vw, 126px);
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: clamp(28px, 5vw, 70px);
+  row-gap: 20px;
+  align-items: baseline;
+}
+
+.jazz-keywords span {
+  position: relative;
+  color: transparent;
+  font-size: clamp(1.25rem, 3vw, 2.7rem);
+  font-weight: 660;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  -webkit-text-stroke: 0.8px rgba(227, 217, 191, 0.48);
+}
+
+.jazz-keywords span::before {
+  content: attr(data-index);
+  margin-right: 9px;
+  color: rgba(205, 183, 116, 0.64);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  -webkit-text-stroke: 0;
+  vertical-align: top;
+}
+
+.jazz-artists__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: clamp(14px, 2vw, 26px);
+}
+
+.jazz-artist-card {
+  min-width: 0;
+  min-height: 360px;
+  border: 1px solid rgba(236, 226, 201, 0.2);
+  position: relative;
+  overflow: hidden;
+  background: #2e382f;
+  box-shadow: 0 20px 50px rgba(5, 7, 5, 0.24);
+  isolation: isolate;
+}
+
+.jazz-artist-card--primary,
+.jazz-artist-card--secondary {
+  min-height: 560px;
+  grid-column: span 6;
+  align-self: stretch;
+}
+
+.jazz-artist-card--primary .jazz-artist-card__image {
+  object-position: 58% 36%;
+}
+
+.jazz-artist-card--secondary .jazz-artist-card__image {
+  object-position: 64% 36%;
+}
+
+.jazz-artist-card--standard {
+  grid-column: span 4;
+}
+
+.jazz-artist-card--standard:nth-child(6),
+.jazz-artist-card--standard:nth-child(7) {
+  min-height: 410px;
+  grid-column: span 6;
+}
+
+.jazz-artist-card__image-wrap,
+.jazz-artist-card__shade {
+  position: absolute;
+  inset: 0;
+}
+
+.jazz-artist-card__image-wrap {
+  background-color: #354239;
+}
+
+.jazz-artist-card__image-wrap.is-missing,
+.jazz-album-card__cover.is-missing {
+  display: grid;
+  place-items: center;
+  background: #3a463b;
+}
+
+.jazz-artist-card__image-wrap.is-missing::after,
+.jazz-album-card__cover.is-missing::after {
+  content: 'IMAGE / ARCHIVE';
+  color: rgba(232, 223, 199, 0.55);
+  font-size: 0.6rem;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+}
+
+.jazz-artist-card__image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  filter: saturate(0.65) sepia(0.12) contrast(1.04) brightness(0.84);
+  transform: scale(1.01);
+  transition:
+    transform 700ms cubic-bezier(0.22, 0.72, 0.18, 1),
+    filter 700ms ease;
+}
+
+.jazz-artist-card__shade {
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 13, 11, 0.06) 30%,
+    rgba(9, 12, 10, 0.88) 100%
+  );
+}
+
+.jazz-artist-card__number {
+  width: 35px;
+  height: 35px;
+  border: 1px solid rgba(239, 229, 203, 0.4);
+  border-radius: 50%;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: rgba(243, 233, 208, 0.78);
+  background: rgba(19, 24, 20, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 0.59rem;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+}
+
+.jazz-artist-card__content {
+  padding: clamp(20px, 2.6vw, 32px);
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  transform: translateY(52px);
+  transition: transform 480ms cubic-bezier(0.22, 0.72, 0.18, 1);
+}
+
+.jazz-artist-card__location,
+.jazz-artist-card__role {
+  margin: 0;
+  color: var(--jazz-yellow);
+  font-size: 0.58rem;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.jazz-artist-card h3 {
+  margin: 8px 0 9px;
+  color: #f1e9d6;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.7rem, 3vw, 3.3rem);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.jazz-artist-card--standard h3 {
+  font-size: clamp(1.45rem, 2.2vw, 2.25rem);
+}
+
+.jazz-artist-card__role {
+  color: rgba(231, 221, 195, 0.63);
+}
+
+.jazz-artist-card__description {
+  max-width: 40rem;
+  margin: 17px 0 0;
+  color: rgba(239, 231, 210, 0.77);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  line-height: 1.75;
+  opacity: 0;
+  transition: opacity 420ms ease 80ms;
+}
+
+.jazz-artist-card:hover .jazz-artist-card__image {
+  filter: saturate(0.8) sepia(0.06) contrast(1.05) brightness(0.92);
+  transform: scale(1.055);
+}
+
+.jazz-artist-card:hover .jazz-artist-card__content {
+  transform: translateY(0);
+}
+
+.jazz-artist-card:hover .jazz-artist-card__description {
+  opacity: 1;
+}
+
+.jazz-albums__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(50px, 7vw, 86px) clamp(20px, 3.4vw, 44px);
+}
+
+.jazz-album-card {
+  min-width: 0;
+  transition: transform 360ms cubic-bezier(0.22, 0.72, 0.18, 1);
+}
+
+.jazz-album-card:nth-child(2),
+.jazz-album-card:nth-child(5) {
+  transform: translateY(46px);
+}
+
+.jazz-album-card__cover {
+  aspect-ratio: 1;
+  border: 1px solid rgba(236, 226, 202, 0.22);
+  position: relative;
+  overflow: hidden;
+  background: #3a463b;
+  box-shadow:
+    0 25px 46px rgba(5, 7, 5, 0.26),
+    11px 10px 0 rgba(178, 157, 103, 0.12);
+}
+
+.jazz-album-card__cover img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  filter: saturate(0.78) contrast(1.02) brightness(0.9);
+  transition:
+    transform 550ms cubic-bezier(0.22, 0.72, 0.18, 1),
+    filter 550ms ease;
+}
+
+.jazz-album-card__play {
+  width: 47px;
+  height: 47px;
+  border: 1px solid rgba(242, 232, 205, 0.52);
+  border-radius: 50%;
+  position: absolute;
+  right: 17px;
+  bottom: 17px;
+  display: grid;
+  place-items: center;
+  color: #f0e5c9;
+  background: rgba(25, 31, 26, 0.56);
+  box-shadow: 0 10px 24px rgba(4, 6, 4, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.jazz-album-card__meta {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(231, 220, 193, 0.28);
+}
+
+.jazz-album-card__meta > p:first-child {
+  margin: 0;
+  color: var(--jazz-yellow);
+  font-size: 0.61rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.jazz-album-card__meta > p:first-child span {
+  color: rgba(224, 214, 188, 0.5);
+}
+
+.jazz-album-card h3 {
+  margin: 9px 0 0;
+  color: #eee5d0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.4rem, 2.1vw, 2.1rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.jazz-album-card__description {
+  margin: 14px 0 0;
+  color: rgba(228, 218, 193, 0.65);
+  font-size: 0.76rem;
+  line-height: 1.75;
+}
+
+.jazz-album-card:hover {
+  transform: translateY(-6px);
+}
+
+.jazz-album-card:nth-child(2):hover,
+.jazz-album-card:nth-child(5):hover {
+  transform: translateY(40px);
+}
+
+.jazz-album-card:hover .jazz-album-card__cover img {
+  filter: saturate(0.9) contrast(1.03) brightness(0.96);
+  transform: scale(1.035);
+}
+
+.jazz-footer {
+  min-height: 84vh;
+  min-height: 84svh;
+  padding-top: clamp(120px, 17vw, 210px);
+  padding-bottom: clamp(70px, 10vw, 120px);
+  border-top: 1px solid var(--jazz-line);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.jazz-footer__eyebrow {
+  margin: 0 0 24px;
+  color: var(--jazz-yellow);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.2em;
+}
+
+.jazz-footer h2 {
+  max-width: 12ch;
+  margin: 0;
+  color: #e8dfc8;
+  font-size: clamp(3rem, 8.6vw, 7.9rem);
+  font-weight: 630;
+  letter-spacing: -0.073em;
+  line-height: 0.87;
+}
+
+.jazz-footer__note {
+  margin-top: clamp(44px, 7vw, 76px);
+}
+
+.jazz-footer__note p {
+  margin: 0;
+}
+
+.jazz-footer__note p:first-child {
+  color: var(--jazz-yellow);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-style: italic;
+}
+
+.jazz-footer__note p:last-child {
+  margin-top: 8px;
+  color: rgba(232, 222, 198, 0.65);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.jazz-footer button {
+  margin-top: clamp(48px, 7vw, 76px);
+  gap: 12px;
+  padding: 12px 0 10px;
+  border-bottom: 1px solid rgba(233, 222, 195, 0.48);
+  color: rgba(239, 229, 204, 0.84);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.17em;
+}
+
+.jazz-footer__folio {
+  margin: 0;
+  position: absolute;
+  right: clamp(22px, 5vw, 72px);
+  bottom: clamp(50px, 7vw, 80px);
+  color: rgba(230, 219, 192, 0.38);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+}
+
+@keyframes jazz-hero-arrival {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .jazz-hero__side-note {
+    display: none;
+  }
+
+  .jazz-introduction__layout {
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+
+  .jazz-introduction__body {
+    max-width: 42rem;
+  }
+
+  .jazz-artist-card--primary,
+  .jazz-artist-card--secondary {
+    min-height: 500px;
+    grid-column: span 6;
+  }
+
+  .jazz-artist-card--standard,
+  .jazz-artist-card--standard:nth-child(6),
+  .jazz-artist-card--standard:nth-child(7) {
+    grid-column: span 6;
+  }
+
+  .jazz-albums__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .jazz-album-card:nth-child(2),
+  .jazz-album-card:nth-child(5),
+  .jazz-album-card:nth-child(2):hover,
+  .jazz-album-card:nth-child(5):hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .jazz-page__background {
+    background-position: 58% center;
+    filter: saturate(0.72) contrast(1.03) brightness(0.6);
+  }
+
+  .jazz-nav {
+    width: calc(100% - 28px);
+    min-height: 52px;
+    margin-top: 12px;
+    padding: 0 14px;
+  }
+
+  .jazz-nav button {
+    font-size: 0.64rem;
+    letter-spacing: 0.03em;
+  }
+
+  .jazz-nav p {
+    font-size: 0.57rem;
+    letter-spacing: 0.1em;
+  }
+
+  .jazz-hero {
+    min-height: 100svh;
+    padding-top: 118px;
+    padding-bottom: 50px;
+  }
+
+  .jazz-hero__edition span:last-child {
+    display: none;
+  }
+
+  .jazz-hero h1 {
+    font-size: clamp(4.15rem, 23vw, 6.2rem);
+    letter-spacing: -0.083em;
+    line-height: 0.76;
+  }
+
+  .jazz-hero h1 span:last-child {
+    margin-left: 12px;
+  }
+
+  .jazz-hero__subtitle,
+  .jazz-hero__intro {
+    margin-left: 12px;
+  }
+
+  .jazz-hero__subtitle {
+    margin-top: 32px;
+  }
+
+  .jazz-hero__intro {
+    max-width: 28rem;
+    margin-top: 14px;
+    font-size: 0.9rem;
+    line-height: 1.75;
+  }
+
+  .jazz-explore {
+    margin-top: 42px;
+  }
+
+  .jazz-section__heading--split {
+    display: block;
+  }
+
+  .jazz-section__aside {
+    margin-top: 20px;
+    text-align: left;
+  }
+
+  .jazz-section__heading h2 {
+    font-size: clamp(2.6rem, 14.5vw, 4.2rem);
+    line-height: 0.92;
+  }
+
+  .jazz-introduction__lead {
+    font-size: 1.55rem;
+    line-height: 1.55;
+  }
+
+  .jazz-keywords {
+    margin-top: 68px;
+    display: grid;
+    gap: 17px;
+  }
+
+  .jazz-keywords span {
+    font-size: 1.52rem;
+  }
+
+  .jazz-artists__grid,
+  .jazz-albums__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .jazz-artist-card--primary,
+  .jazz-artist-card--secondary,
+  .jazz-artist-card--standard,
+  .jazz-artist-card--standard:nth-child(6),
+  .jazz-artist-card--standard:nth-child(7) {
+    width: 100%;
+    height: auto;
+    min-height: 430px;
+    grid-column: 1;
+  }
+
+  .jazz-artist-card--primary,
+  .jazz-artist-card--secondary {
+    min-height: 500px;
+  }
+
+  .jazz-artist-card__content {
+    transform: none;
+  }
+
+  .jazz-artist-card__description {
+    opacity: 1;
+  }
+
+  .jazz-albums__grid {
+    gap: 62px;
+  }
+
+  .jazz-album-card,
+  .jazz-album-card:hover {
+    transform: none;
+  }
+
+  .jazz-album-card__cover {
+    box-shadow:
+      0 20px 40px rgba(5, 7, 5, 0.23),
+      7px 7px 0 rgba(178, 157, 103, 0.11);
+  }
+
+  .jazz-footer {
+    min-height: 80svh;
+  }
+
+  .jazz-footer h2 {
+    font-size: clamp(3rem, 17vw, 5.2rem);
+  }
+
+  .jazz-footer__note p:last-child {
+    max-width: 28ch;
+    line-height: 1.6;
+  }
+}
+
+@media (hover: none) {
+  .jazz-artist-card__content {
+    transform: none;
+  }
+
+  .jazz-artist-card__description {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jazz-page {
+    scroll-behavior: auto;
+  }
+
+  .jazz-hero__copy {
+    animation: none;
+  }
+
+  .jazz-artist-card__image,
+  .jazz-artist-card__content,
+  .jazz-artist-card__description,
+  .jazz-album-card,
+  .jazz-album-card__cover img,
+  .jazz-nav button,
+  .jazz-explore,
+  .jazz-footer button {
+    transition: none;
+  }
+}

@@ -1,0 +1,190 @@
+/* Library ready state: content sits directly on the starfield. Glass is used
+   only for independent cards, never as a frame around another glass surface. */
+.music-library-page--library {
+  width: 100%;
+  min-height: 100%;
+  padding: clamp(18px, 2vw, 30px) clamp(20px, 3.2vw, 52px) 48px;
+  background: transparent;
+}
+
+.music-library-page--library .music-library-page__ambient {
+  display: none;
+}
+
+.music-library-page--library .library-profile,
+.music-library-page--library .library-section {
+  width: min(100%, 1480px);
+}
+
+.music-library-page--library .library-profile {
+  min-height: 0;
+  margin: 0 auto clamp(42px, 5vw, 66px);
+  padding: clamp(12px, 1.5vw, 22px) clamp(8px, 1.4vw, 20px);
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 3vw, 40px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.music-library-page--library .library-profile__avatar {
+  width: clamp(104px, 9vw, 132px);
+  border: 1px solid rgba(238, 249, 253, 0.11);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow:
+    0 24px 54px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+
+.music-library-page--library .library-profile p {
+  margin-bottom: 12px;
+  color: rgba(151, 205, 226, 0.66);
+  font-size: 0.58rem;
+  font-weight: 690;
+  letter-spacing: 0.19em;
+}
+
+.music-library-page--library .library-profile h1 {
+  max-width: min(13ch, 72vw);
+  margin-bottom: 12px;
+  color: rgba(248, 251, 252, 0.98);
+  font-size: clamp(2.7rem, 4.7vw, 4.65rem);
+  font-weight: 520;
+  letter-spacing: -0.065em;
+  line-height: 0.94;
+}
+
+.music-library-page--library .library-profile > div:last-child > span {
+  color: rgba(215, 228, 234, 0.48);
+  font-family: inherit;
+  font-size: 0.74rem;
+}
+
+.music-library-page--library .library-section {
+  margin: 0 auto clamp(50px, 5vw, 76px);
+  padding: 0 clamp(8px, 1.4vw, 20px);
+}
+
+.music-library-page--library .library-section__heading {
+  margin-bottom: 20px;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 18px;
+}
+
+.music-library-page--library .library-section__heading p {
+  margin-bottom: 9px;
+  color: rgba(151, 205, 226, 0.58);
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+}
+
+.music-library-page--library .library-section__heading h2 {
+  font-size: clamp(1.55rem, 2.25vw, 2rem);
+  font-weight: 450;
+}
+
+.music-library-page--library .library-section__heading > span {
+  padding-bottom: 5px;
+  color: rgba(214, 226, 232, 0.4);
+  font-size: 0.57rem;
+  letter-spacing: 0.08em;
+}
+
+.music-library-page--library .library-playlist-grid {
+  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+  gap: clamp(15px, 1.7vw, 24px);
+}
+
+.music-library-page--library .library-playlist-card {
+  padding: 10px 10px 14px;
+  border: 0;
+  border-radius: 24px;
+  background: rgba(10, 17, 23, 0.12);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 0 0 0.7px rgba(204, 232, 242, 0.045);
+  backdrop-filter: blur(5px) saturate(1.08);
+  -webkit-backdrop-filter: blur(5px) saturate(1.08);
+  transition:
+    transform 190ms ease,
+    background-color 190ms ease,
+    box-shadow 190ms ease;
+}
+
+.music-library-page--library .library-playlist-card:hover {
+  background: rgba(223, 242, 248, 0.052);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    inset 0 0 0 0.7px rgba(214, 239, 247, 0.065);
+  transform: translateY(-3px);
+}
+
+.music-library-page--library .library-playlist-card__cover {
+  border-radius: 19px;
+  background: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
+}
+
+.music-library-page--library .library-playlist-card__meta {
+  padding: 13px 3px 0;
+  gap: 5px;
+}
+
+.music-library-page--library .library-playlist-card__meta strong {
+  color: rgba(246, 249, 250, 0.9);
+  font-size: 0.78rem;
+  font-weight: 610;
+}
+
+.music-library-page--library .library-playlist-card__meta small {
+  color: rgba(210, 223, 230, 0.42);
+  font-size: 0.62rem;
+}
+
+@media (max-width: 840px) {
+  .music-library-page--library {
+    padding: 16px 12px 38px;
+  }
+
+  .music-library-page--library .library-profile {
+    margin-bottom: 40px;
+    padding-inline: 8px;
+    gap: 18px;
+  }
+
+  .music-library-page--library .library-profile__avatar {
+    width: clamp(88px, 24vw, 116px);
+    border-radius: 25px;
+  }
+
+  .music-library-page--library .library-profile h1 {
+    max-width: 58vw;
+    font-size: clamp(2.2rem, 10vw, 3.4rem);
+  }
+
+  .music-library-page--library .library-section {
+    padding-inline: 8px;
+  }
+
+  .music-library-page--library .library-playlist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .music-library-page--library .library-playlist-card {
+    padding: 8px 8px 12px;
+    border-radius: 20px;
+  }
+
+  .music-library-page--library .library-playlist-card__cover {
+    border-radius: 16px;
+  }
+}

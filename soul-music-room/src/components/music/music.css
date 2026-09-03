@@ -1,0 +1,141 @@
+.music-section {
+  width: min(calc(100% - clamp(40px, 8vw, 112px)), 1180px);
+  margin: 0 auto;
+  padding: clamp(78px, 10vw, 126px) 0;
+  border-top: 1px solid rgba(207, 233, 244, 0.08);
+}
+
+.music-section:first-child { border-top: 0; }
+
+.music-section__heading {
+  margin-bottom: clamp(30px, 4.8vw, 54px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.music-section__heading > div > p {
+  margin: 0 0 11px;
+  color: rgba(153, 211, 238, 0.68);
+  font-size: 0.58rem;
+  font-weight: 670;
+  letter-spacing: 0.18em;
+}
+
+.music-section__heading h2 {
+  margin: 0;
+  color: rgba(245, 251, 254, 0.96);
+  font-size: clamp(2.05rem, 4.8vw, 4.4rem);
+  font-weight: 360;
+  letter-spacing: -0.057em;
+  line-height: 0.98;
+}
+
+.music-section__heading > div > span {
+  margin-top: 14px;
+  display: block;
+  color: rgba(213, 232, 240, 0.45);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(0.78rem, 1vw, 0.9rem);
+  font-style: italic;
+}
+
+.music-section__heading > a {
+  flex: 0 0 auto;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(212, 238, 249, 0.24);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(224, 241, 248, 0.56);
+  font-size: 0.59rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  transition: color 200ms ease, border-color 200ms ease;
+}
+.music-section__heading > a:hover { color: #fff; border-color: rgba(231, 247, 253, 0.65); }
+.music-section__heading > a:focus-visible { outline: 2px solid rgba(216, 242, 253, 0.8); outline-offset: 5px; }
+
+.track-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(210, 235, 246, 0.1);
+  border-radius: 22px;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  background: rgba(208, 235, 247, 0.045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transition: transform 260ms ease, border-color 260ms ease, background-color 260ms ease;
+}
+.track-card:hover { border-color: rgba(212, 240, 252, 0.19); background: rgba(208, 235, 247, 0.07); transform: translateY(-3px); }
+.track-card__cover { aspect-ratio: 1; position: relative; overflow: hidden; border-radius: 16px; background: #13202a; }
+.track-card__cover img { width: 100%; height: 100%; display: block; object-fit: cover; filter: saturate(.8) brightness(.9); transition: transform 420ms ease, filter 420ms ease; }
+.track-card:hover img { filter: saturate(.95) brightness(.98); transform: scale(1.035); }
+.track-card__cover button, .album-card__cover button {
+  width: 34px; height: 34px; padding: 0; border: 1px solid rgba(239, 250, 255, .32); border-radius: 50%; position: absolute; right: 9px; bottom: 9px; display: grid; place-items: center; color: #07111a; background: rgba(240, 249, 252, .9); box-shadow: 0 8px 18px rgba(0,0,0,.24); cursor: pointer;
+}
+.track-card__copy { min-width: 0; padding: 8px 5px 6px 0; display: flex; flex-direction: column; justify-content: center; }
+.track-card__copy > span { overflow: hidden; color: rgba(153, 210, 235, .58); font-size: .52rem; font-weight: 660; letter-spacing: .12em; text-overflow: ellipsis; white-space: nowrap; }
+.track-card h3 { margin: 12px 0 4px; overflow: hidden; color: rgba(244, 250, 253, .94); font-size: 1.05rem; font-weight: 520; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
+.track-card p { margin: 0; color: rgba(213, 231, 239, .43); font-size: .7rem; }
+.track-card__progress { height: 3px; margin-top: auto; overflow: hidden; border-radius: 99px; background: rgba(219, 238, 247, .09); }
+.track-card__progress i { height: 100%; display: block; border-radius: inherit; background: rgba(193, 230, 247, .54); }
+
+.playlist-card { min-width: 0; }
+.playlist-card__cover { width: 100%; aspect-ratio: 1; padding: 0; border: 1px solid rgba(213, 237, 248, .12); border-radius: 24px; position: relative; overflow: hidden; display: block; background: #101b24; box-shadow: 0 20px 42px rgba(0, 4, 8, .2); cursor: default; }
+.playlist-card[data-linked='true'] .playlist-card__cover { cursor: pointer; }
+.playlist-card__cover img { width: 100%; height: 100%; display: block; object-fit: cover; filter: saturate(.72) contrast(1.02) brightness(.82); transition: transform 520ms cubic-bezier(.22,.72,.18,1), filter 520ms ease; }
+.playlist-card__cover::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 48%, rgba(2,7,11,.5)); }
+.playlist-card__play { width: 42px; height: 42px; border: 1px solid rgba(238,249,253,.28); border-radius: 50%; position: absolute; right: 14px; bottom: 14px; z-index: 1; display: grid; place-items: center; color: #07111a; background: rgba(239,248,251,.88); box-shadow: 0 10px 24px rgba(0,0,0,.28); }
+.playlist-card:hover .playlist-card__cover img { filter: saturate(.88) contrast(1.02) brightness(.92); transform: scale(1.04); }
+.playlist-card > p { margin: 18px 0 0; color: rgba(145, 206, 234, .61); font-size: .54rem; font-weight: 660; letter-spacing: .14em; }
+.playlist-card h3 { margin: 8px 0 7px; color: rgba(243,249,252,.94); font-size: clamp(1.05rem, 1.7vw, 1.35rem); font-weight: 500; letter-spacing: -.032em; }
+.playlist-card > span { color: rgba(209, 228, 237, .42); font-family: Georgia, 'Times New Roman', serif; font-size: .72rem; font-style: italic; line-height: 1.55; }
+
+.artist-card {
+  min-height: 190px;
+  padding: 20px;
+  border: 1px solid rgba(208, 235, 247, .1);
+  border-radius: 23px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: radial-gradient(circle at 90% 5%, rgba(106, 181, 214, .12), transparent 34%), rgba(205, 233, 246, .04);
+  transition: transform 260ms ease, border-color 260ms ease, background-color 260ms ease;
+}
+.artist-card::after { content: ''; width: 120px; height: 120px; border: 1px solid rgba(203, 235, 249, .06); border-radius: 50%; position: absolute; right: -54px; bottom: -56px; }
+.artist-card:hover { border-color: rgba(211, 239, 251, .19); background-color: rgba(205, 233, 246, .065); transform: translateY(-4px); }
+.artist-card__top { display: flex; align-items: center; justify-content: space-between; color: rgba(190, 224, 239, .38); }
+.artist-card__top span { font-size: .58rem; font-weight: 650; letter-spacing: .1em; }
+.artist-card p { margin: 0 0 8px; color: rgba(147, 207, 233, .58); font-size: .54rem; font-weight: 660; letter-spacing: .14em; }
+.artist-card h3 { max-width: 14ch; margin: 0 0 8px; color: rgba(244,250,253,.95); font-size: clamp(1.1rem, 2vw, 1.55rem); font-weight: 440; letter-spacing: -.04em; line-height: 1.05; }
+.artist-card > div > span { color: rgba(208,228,237,.42); font-family: Georgia, 'Times New Roman', serif; font-size: .7rem; font-style: italic; }
+.artist-card__arrow { position: absolute; right: 18px; bottom: 18px; color: rgba(209,235,247,.35); }
+
+.album-card { min-width: 0; }
+.album-card__cover { aspect-ratio: 1; position: relative; overflow: hidden; border: 1px solid rgba(211, 237, 248, .1); border-radius: 22px; background: #101a22; box-shadow: 0 20px 40px rgba(0,4,8,.2); }
+.album-card__cover img { width: 100%; height: 100%; display: block; object-fit: cover; filter: saturate(.76) brightness(.86); transition: filter 460ms ease, transform 460ms ease; }
+.album-card:hover .album-card__cover img { filter: saturate(.92) brightness(.95); transform: scale(1.035); }
+.album-card > p { margin: 17px 0 0; color: rgba(145,205,233,.57); font-size: .54rem; font-weight: 660; letter-spacing: .13em; }
+.album-card h3 { margin: 8px 0 5px; overflow: hidden; color: rgba(244,250,253,.94); font-size: 1rem; font-weight: 520; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
+.album-card > span { color: rgba(209,228,237,.41); font-size: .68rem; }
+
+.mood-home button:focus-visible, .playlist-card__cover:focus-visible { outline: 2px solid rgba(214, 242, 254, .82); outline-offset: 4px; }
+
+@media (max-width: 840px) {
+  .music-section { width: min(calc(100% - 32px), 680px); padding: 70px 0; }
+  .music-section__heading { align-items: flex-start; }
+  .music-section__heading > a { margin-top: 28px; }
+}
+
+@media (max-width: 620px) {
+  .music-section__heading { display: block; }
+  .music-section__heading > a { width: fit-content; margin-top: 20px; }
+  .track-card { grid-template-columns: 94px minmax(0, 1fr); }
+  .playlist-card__cover, .album-card__cover { border-radius: 20px; }
+}

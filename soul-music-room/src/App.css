@@ -1,0 +1,621 @@
+.intro-cover {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: clamp(12px, 4.1vw, 60px);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  background-color: #d7e2e9;
+  background-image: url('./assets/pearl-dawn-bg.png');
+  background-position: center;
+  background-size: cover;
+}
+
+.cover-leaving-background {
+  position: absolute;
+  inset: -5%;
+  z-index: 0;
+  pointer-events: none;
+  background-color: #d7e2e9;
+  background-image: url('./assets/pearl-dawn-bg.png');
+  background-position: center;
+  background-size: cover;
+  will-change: opacity, transform, filter;
+}
+
+.intro-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(224, 235, 241, 0.015);
+}
+
+.glass-room {
+  width: min(100%, 1260px);
+  height: calc(100vh - clamp(24px, 8.2vw, 120px));
+  height: calc(100svh - clamp(24px, 8.2vw, 120px));
+  min-height: min(720px, calc(100svh - 24px));
+  max-height: 920px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: clamp(30px, 4vw, 58px);
+  background: rgba(247, 250, 250, 0.08);
+  box-shadow:
+    0 28px 68px rgba(70, 94, 109, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px) saturate(140%) brightness(1.05);
+  -webkit-backdrop-filter: blur(18px) saturate(140%) brightness(1.05);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  will-change: opacity, transform;
+}
+
+.cover-content {
+  width: 100%;
+  height: 100%;
+  padding: clamp(28px, 5vh, 58px) clamp(24px, 5vw, 76px)
+    clamp(22px, 4vh, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.turntable {
+  width: min(63vw, 620px);
+  margin: clamp(-54px, -4.5vh, -28px) 0 clamp(-54px, -5.4vh, -30px);
+  position: relative;
+  flex: 0 1 auto;
+  animation: turntable-float 5.6s ease-in-out infinite;
+  filter: drop-shadow(0 30px 24px rgba(57, 70, 78, 0.2));
+}
+
+.turntable img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+#welcome-title {
+  min-height: 1.2em;
+  margin: 0;
+  color: #202426;
+  font-family:
+    'Avenir Next', Avenir, 'Segoe UI Variable Display', 'Segoe UI', sans-serif;
+  font-size: clamp(2rem, 4vw, 3.75rem);
+  font-weight: 350;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.type-caret {
+  width: 0.07em;
+  height: 0.8em;
+  margin-left: 0.09em;
+  display: inline-block;
+  border-radius: 99px;
+  vertical-align: -0.02em;
+  background: rgba(32, 36, 38, 0.62);
+  animation: caret-blink 0.9s steps(1, end) infinite;
+}
+
+.explore-area {
+  min-height: 160px;
+  margin-top: clamp(28px, 3.7vh, 42px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.airpods-button {
+  width: 154px;
+  height: 98px;
+  padding: 0;
+  border: 0;
+  border-radius: 38px;
+  position: relative;
+  perspective: 680px;
+  transform-style: preserve-3d;
+  color: #544b45;
+  background: transparent;
+  cursor: pointer;
+  transform: translateY(0);
+  transition:
+    transform 260ms ease,
+    filter 260ms ease;
+  filter: drop-shadow(0 18px 18px rgba(71, 77, 80, 0.2));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.case-body {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  border: 1px solid rgba(211, 211, 207, 0.9);
+  background: rgba(255, 255, 252, 0.94);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 1),
+    inset 0 -7px 14px rgba(202, 202, 198, 0.22);
+}
+
+.case-lid {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  top: 0;
+  height: 43px;
+  z-index: 3;
+  transform: translateY(0) rotateX(0deg);
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  transition: transform 680ms cubic-bezier(0.22, 0.86, 0.24, 1);
+}
+
+.case-lid-outer,
+.case-lid-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid rgba(211, 211, 207, 0.9);
+  border-radius: 38px 38px 17px 17px;
+  background: rgba(255, 255, 252, 0.96);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 1),
+    inset 0 -7px 14px rgba(202, 202, 198, 0.18);
+  transition: opacity 260ms ease;
+}
+
+.case-lid-inner {
+  border-color: rgba(199, 201, 198, 0.88);
+  background: rgba(248, 248, 245, 0.98);
+  box-shadow:
+    inset 0 -5px 13px rgba(160, 164, 163, 0.24),
+    inset 0 2px 4px rgba(255, 255, 255, 0.94);
+  opacity: 0;
+}
+
+.lid-cavity {
+  position: absolute;
+  inset: 8px 17px 6px;
+  border-radius: 24px 24px 12px 12px;
+  border: 1px solid rgba(210, 211, 207, 0.8);
+  background: rgba(241, 242, 239, 0.9);
+  box-shadow: inset 0 4px 8px rgba(150, 153, 151, 0.16);
+}
+
+.case-lid-seam {
+  width: 70px;
+  height: 3px;
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  border-radius: 99px;
+  background: rgba(158, 157, 153, 0.36);
+  transform: translateX(-50%);
+}
+
+.case-body {
+  bottom: 0;
+  height: 64px;
+  z-index: 1;
+  border-radius: 16px 16px 36px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  overflow: hidden;
+}
+
+.case-hinge {
+  width: 54px;
+  height: 4px;
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  z-index: 2;
+  border-radius: 0 0 5px 5px;
+  background: rgba(143, 145, 143, 0.5);
+  box-shadow: 0 1px 2px rgba(72, 75, 74, 0.16);
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 220ms ease 120ms;
+}
+
+.case-interior {
+  height: 30px;
+  position: absolute;
+  top: 3px;
+  left: 8px;
+  right: 8px;
+  z-index: 1;
+  border: 1px solid rgba(204, 206, 202, 0.9);
+  border-radius: 17px 17px 13px 13px;
+  background: rgba(237, 239, 237, 0.96);
+  box-shadow:
+    inset 0 5px 9px rgba(135, 141, 139, 0.18),
+    inset 0 -2px 3px rgba(255, 255, 255, 0.82);
+  opacity: 0;
+  transform: translateY(-4px) scaleY(0.76);
+  transform-origin: center top;
+  transition:
+    opacity 220ms ease 120ms,
+    transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1) 100ms;
+}
+
+.earbud-well {
+  width: 30px;
+  height: 20px;
+  position: absolute;
+  top: 4px;
+  border-radius: 50%;
+  background: rgba(222, 225, 222, 0.86);
+  box-shadow:
+    inset 0 3px 6px rgba(125, 132, 130, 0.2),
+    0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.earbud-well-left {
+  left: 28px;
+  transform: rotate(-7deg);
+}
+
+.earbud-well-right {
+  right: 28px;
+  transform: rotate(7deg);
+}
+
+.earbud-bud {
+  width: 14px;
+  height: 17px;
+  position: absolute;
+  top: 1px;
+  left: 8px;
+  border: 1px solid rgba(215, 216, 212, 0.9);
+  border-radius: 9px 9px 7px 7px;
+  background: rgba(255, 255, 252, 0.98);
+  box-shadow: 0 2px 3px rgba(118, 123, 121, 0.16);
+}
+
+.case-led {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #74bca8;
+  box-shadow: 0 0 8px rgba(88, 181, 154, 0.72);
+  position: relative;
+  z-index: 2;
+  transition: transform 400ms ease;
+}
+
+.case-label {
+  font-size: 0.67rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 2;
+  transition: transform 400ms ease;
+}
+
+.airpods-button:hover {
+  transform: translateY(-6px);
+  filter:
+    drop-shadow(0 22px 22px rgba(71, 77, 80, 0.22))
+    drop-shadow(0 0 20px rgba(255, 255, 255, 0.86));
+}
+
+.airpods-button:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.airpods-button:focus-visible {
+  outline: 2px solid rgba(70, 105, 126, 0.72);
+  outline-offset: 8px;
+}
+
+.airpods-button:disabled {
+  cursor: default;
+}
+
+.airpods-button.is-open .case-lid {
+  transform: translateY(-8px) rotateX(-76deg);
+}
+
+.airpods-button.is-open .case-lid-outer {
+  opacity: 0;
+}
+
+.airpods-button.is-open .case-lid-inner,
+.airpods-button.is-open .case-hinge,
+.airpods-button.is-open .case-interior {
+  opacity: 1;
+}
+
+.airpods-button.is-open .case-interior {
+  transform: translateY(0) scaleY(1);
+}
+
+.airpods-button.is-open .case-led,
+.airpods-button.is-open .case-label {
+  transform: translateY(10px);
+}
+
+.earbuds-flight {
+  width: 94px;
+  height: 68px;
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity 160ms ease;
+}
+
+.earbud-track {
+  width: 62px;
+  height: 62px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  filter: drop-shadow(0 10px 10px rgba(62, 73, 79, 0.2));
+}
+
+.earbud-track-left {
+  transform: translate(-14px, 36px) scale(0.35) rotate(-7deg);
+}
+
+.earbud-track-right {
+  transform: translate(48px, 36px) scale(0.35) rotate(7deg);
+}
+
+.earbud-asset {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.earbud-track-right .earbud-asset {
+  transform: scaleX(-1);
+}
+
+.airpods-button.is-open .earbuds-flight {
+  opacity: 1;
+}
+
+.airpods-button.is-open .earbud-track-left {
+  animation: earbud-rise-left 3s cubic-bezier(0.22, 0.82, 0.24, 1) 280ms
+    forwards;
+}
+
+.airpods-button.is-open .earbud-track-right {
+  animation: earbud-rise-right 3s cubic-bezier(0.22, 0.82, 0.24, 1) 380ms
+    forwards;
+}
+
+.opening-status {
+  margin: 18px 0 0;
+  color: rgba(39, 50, 56, 0.68);
+  font-size: 0.78rem;
+  font-weight: 560;
+  letter-spacing: 0.09em;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 320ms ease 260ms,
+    transform 320ms ease 260ms;
+}
+
+.opening-status.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+@keyframes turntable-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  52% {
+    opacity: 1;
+  }
+  53%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes earbud-rise-left {
+  0% {
+    opacity: 0;
+    transform: translate(-14px, 36px) scale(0.35) rotate(-7deg);
+  }
+  14% {
+    opacity: 1;
+  }
+  52% {
+    opacity: 1;
+    transform: translate(-14px, -42px) scale(0.92) rotate(-7deg);
+  }
+  78% {
+    transform: translate(-14px, -62px) scale(1.03) rotate(-7deg);
+  }
+  90% {
+    transform: translate(-14px, -55px) scale(0.99) rotate(-7deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-14px, -58px) scale(1) rotate(-7deg);
+  }
+}
+
+@keyframes earbud-rise-right {
+  0% {
+    opacity: 0;
+    transform: translate(48px, 36px) scale(0.35) rotate(7deg);
+  }
+  14% {
+    opacity: 1;
+  }
+  52% {
+    opacity: 1;
+    transform: translate(48px, -42px) scale(0.92) rotate(7deg);
+  }
+  78% {
+    transform: translate(48px, -62px) scale(1.03) rotate(7deg);
+  }
+  90% {
+    transform: translate(48px, -55px) scale(0.99) rotate(7deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(48px, -58px) scale(1) rotate(7deg);
+  }
+}
+
+@media (max-width: 720px) {
+  .intro-cover {
+    padding: 10px;
+  }
+
+  .glass-room {
+    width: 100%;
+    height: calc(100svh - 20px);
+    min-height: 620px;
+    border-radius: 30px;
+  }
+
+  .cover-content {
+    padding: 26px 18px 18px;
+  }
+
+  .turntable {
+    width: min(104vw, 520px);
+    margin-top: -46px;
+    margin-bottom: -35px;
+  }
+
+  #welcome-title {
+    max-width: 330px;
+    font-size: clamp(2rem, 9vw, 2.7rem);
+  }
+
+  .explore-area {
+    min-height: 142px;
+    margin-top: 27px;
+  }
+
+  .airpods-button {
+    width: 138px;
+    height: 88px;
+  }
+
+  .case-lid {
+    height: 39px;
+  }
+
+  .case-body {
+    height: 58px;
+  }
+
+  .earbud-track {
+    width: 56px;
+    height: 56px;
+  }
+
+}
+
+
+@media (max-height: 740px) and (min-width: 721px) {
+  .glass-room {
+    min-height: calc(100svh - 24px);
+  }
+
+  .cover-content {
+    padding-top: 18px;
+    padding-bottom: 12px;
+  }
+
+  .turntable {
+    width: min(49vw, 470px);
+    margin-top: -54px;
+    margin-bottom: -44px;
+  }
+
+  #welcome-title {
+    font-size: clamp(2.2rem, 3.5vw, 3rem);
+  }
+
+  .explore-area {
+    min-height: 126px;
+    margin-top: 20px;
+  }
+
+  .airpods-button {
+    width: 128px;
+    height: 82px;
+  }
+
+  .case-lid {
+    height: 36px;
+  }
+
+  .case-body {
+    height: 54px;
+  }
+
+  .opening-status {
+    margin-top: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .airpods-button.is-open .earbuds-flight {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+
+  .airpods-button.is-open .earbud-track-left {
+    opacity: 1;
+    transform: translate(-14px, -58px) scale(1) rotate(-7deg);
+  }
+
+  .airpods-button.is-open .earbud-track-right {
+    opacity: 1;
+    transform: translate(48px, -58px) scale(1) rotate(7deg);
+  }
+}
+
+

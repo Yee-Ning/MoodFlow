@@ -1,0 +1,135 @@
+.ambient-cover-visual {
+  --ambient-color-1: rgb(118 182 191);
+  --ambient-color-2: rgb(190 150 105);
+  --ambient-color-3: rgb(65 104 137);
+  --ambient-color-4: rgb(221 231 226);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: none;
+  background:
+    linear-gradient(145deg, rgb(3 10 15 / 0.74), rgb(3 9 14 / 0.9)),
+    #050d13;
+}
+
+.ambient-cover-visual__artwork {
+  position: absolute;
+  z-index: 0;
+  background-image: var(--ambient-artwork);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.ambient-cover-visual__artwork--primary {
+  width: 88vmax;
+  height: 88vmax;
+  left: -20vmax;
+  top: -28vmax;
+  filter: blur(72px) saturate(1.72) contrast(1.08) brightness(0.66);
+  mix-blend-mode: screen;
+  opacity: 0.52;
+  transform: rotate(-6deg) scale(1.04);
+}
+
+.ambient-cover-visual__artwork--echo {
+  width: 66vmax;
+  height: 66vmax;
+  right: -18vmax;
+  bottom: -26vmax;
+  background-position: 72% 48%;
+  filter: blur(94px) saturate(1.95) contrast(1.12) brightness(0.62);
+  mix-blend-mode: screen;
+  opacity: 0.37;
+  transform: rotate(9deg) scale(1.08);
+}
+
+.ambient-cover-visual__color-field {
+  position: absolute;
+  inset: -12%;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 18% 14%, color-mix(in srgb, var(--ambient-color-1) 30%, transparent), transparent 36%),
+    radial-gradient(ellipse at 72% 32%, color-mix(in srgb, var(--ambient-color-2) 24%, transparent), transparent 31%),
+    radial-gradient(ellipse at 64% 84%, color-mix(in srgb, var(--ambient-color-3) 32%, transparent), transparent 38%),
+    radial-gradient(ellipse at 35% 66%, color-mix(in srgb, var(--ambient-color-4) 12%, transparent), transparent 29%);
+  filter: blur(38px) saturate(1.38);
+  mix-blend-mode: screen;
+  opacity: 0.88;
+  transform: scale(1.05);
+}
+
+.ambient-cover-visual__particles {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.92;
+  filter: saturate(1.16) contrast(1.04);
+}
+
+.ambient-cover-visual__cinema-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background:
+    linear-gradient(90deg, rgb(1 6 10 / 0.58) 0%, transparent 27%, transparent 73%, rgb(1 6 10 / 0.5) 100%),
+    linear-gradient(180deg, rgb(1 7 11 / 0.34) 0%, transparent 23%, transparent 66%, rgb(1 6 10 / 0.72) 100%),
+    radial-gradient(ellipse at 50% 42%, transparent 12%, rgb(2 8 12 / 0.18) 68%, rgb(1 5 9 / 0.56) 100%);
+}
+
+.ambient-cover-visual.is-playing .ambient-cover-visual__artwork--primary {
+  animation: ambient-cover-primary 18s ease-in-out infinite alternate;
+}
+
+.ambient-cover-visual.is-playing .ambient-cover-visual__artwork--echo {
+  animation: ambient-cover-echo 22s ease-in-out infinite alternate;
+}
+
+@keyframes ambient-cover-primary {
+  from { transform: rotate(-6deg) translate3d(-1.5%, 0, 0) scale(1.04); opacity: 0.47; }
+  to { transform: rotate(-3deg) translate3d(2%, 1.5%, 0) scale(1.1); opacity: 0.58; }
+}
+
+@keyframes ambient-cover-echo {
+  from { transform: rotate(9deg) translate3d(1%, 1%, 0) scale(1.08); opacity: 0.31; }
+  to { transform: rotate(5deg) translate3d(-2%, -1.5%, 0) scale(1.14); opacity: 0.43; }
+}
+
+@supports not (background: color-mix(in srgb, white, transparent)) {
+  .ambient-cover-visual__color-field {
+    background:
+      radial-gradient(ellipse at 18% 14%, rgb(116 187 194 / 0.2), transparent 36%),
+      radial-gradient(ellipse at 72% 32%, rgb(202 160 104 / 0.14), transparent 31%),
+      radial-gradient(ellipse at 64% 84%, rgb(70 119 151 / 0.22), transparent 38%);
+  }
+}
+
+@media (max-width: 840px) {
+  .ambient-cover-visual__artwork--primary {
+    left: -42vmax;
+    top: -18vmax;
+    opacity: 0.44;
+  }
+
+  .ambient-cover-visual__artwork--echo {
+    right: -38vmax;
+    opacity: 0.28;
+  }
+
+  .ambient-cover-visual__particles {
+    opacity: 0.72;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-cover-visual__artwork,
+  .ambient-cover-visual__particles {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,487 @@
+.liquid-glass-surface {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--liquid-glass-radius, var(--glass-radius-large));
+  color: inherit;
+  background:
+    linear-gradient(
+      132deg,
+      rgba(236, 249, 253, 0.034),
+      rgba(255, 255, 255, 0.008) 34%,
+      rgba(99, 178, 205, 0.012) 72%,
+      rgba(229, 247, 252, 0.025)
+    ),
+    var(--glass-bg);
+  box-shadow:
+    0 20px 52px rgba(0, 0, 0, 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 0 0 0.55px rgba(194, 229, 240, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    inset 0 -1px 0 rgba(139, 205, 226, 0.025);
+  backdrop-filter: blur(8px) saturate(1.13) brightness(1.035);
+  -webkit-backdrop-filter: blur(8px) saturate(1.13) brightness(1.035);
+}
+
+/* One soft optical rim per surface. The highlight is intentionally incomplete,
+   so the edge reads as curved glass instead of a bright outlined card. */
+.liquid-glass-surface::before {
+  content: '';
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    142deg,
+    rgba(242, 252, 255, 0.3),
+    rgba(216, 241, 250, 0.09) 31%,
+    rgba(255, 255, 255, 0.025) 64%,
+    rgba(171, 224, 241, 0.13)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.44;
+}
+
+/* A broad moving reflection creates slow liquid drift without moving content. */
+.liquid-glass-surface::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  width: 62%;
+  height: 190%;
+  top: -54%;
+  left: -32%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse,
+    rgba(255, 255, 255, 0.095),
+    rgba(184, 224, 236, 0.026) 44%,
+    transparent 72%
+  );
+  filter: blur(24px);
+  mix-blend-mode: screen;
+  opacity: 0.4;
+  transform: translate3d(-8%, -3%, 0) rotate(-12deg);
+  animation: liquid-glass-drift 12s ease-in-out infinite alternate;
+}
+
+.liquid-glass-surface--panel,
+.liquid-glass-surface--dock,
+.liquid-glass-surface--overlay,
+.liquid-glass-level-1 {
+  background-color: var(--glass-bg);
+}
+
+.liquid-glass-surface--dock {
+  overflow: visible;
+  background:
+    linear-gradient(
+      108deg,
+      rgba(233, 248, 252, 0.075),
+      rgba(255, 255, 255, 0.016) 28%,
+      rgba(2, 8, 13, 0.025) 61%,
+      rgba(155, 219, 238, 0.04)
+    ),
+    rgba(7, 12, 17, 0.055);
+  box-shadow:
+    0 22px 58px rgba(0, 0, 0, 0.28),
+    0 5px 16px rgba(0, 0, 0, 0.15),
+    0 0 28px rgba(149, 211, 230, 0.055),
+    0 0 0 0.7px rgba(204, 235, 245, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    inset 0 -1px 0 rgba(158, 217, 234, 0.045);
+}
+
+.liquid-glass-surface--dock::after {
+  width: 52%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  border-radius: inherit;
+  filter: blur(18px);
+  opacity: 0.54;
+  animation-duration: 8.5s;
+}
+
+.liquid-glass-surface--overlay {
+  background: rgba(8, 13, 18, 0.28);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+}
+
+/* Control is reserved for a standalone selected row, never for partitions
+   inside another glass surface. */
+.liquid-glass-surface--control,
+.liquid-glass-level-2 {
+  background: rgba(225, 243, 249, 0.065);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(7px) saturate(1.16) brightness(1.045);
+  -webkit-backdrop-filter: blur(7px) saturate(1.16) brightness(1.045);
+}
+
+.liquid-glass-level-3 {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: color 180ms ease, background-color 180ms ease, transform 150ms ease;
+}
+
+.liquid-glass-level-3:hover {
+  background: rgba(255, 255, 255, 0.045);
+  transform: translateY(-1px);
+}
+
+.liquid-glass-surface__runtime,
+.liquid-glass-surface__tint,
+.liquid-glass-surface__rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.liquid-glass-surface__runtime {
+  z-index: 0;
+  overflow: hidden;
+}
+
+.liquid-glass-surface__runtime > div,
+.liquid-glass-surface__runtime > span {
+  pointer-events: none !important;
+}
+
+/* The runtime emits two black contrast helpers before the actual refracting
+   layer. They make transparent surfaces read like opaque black cards here. */
+.liquid-glass-surface__runtime > .bg-black {
+  display: none !important;
+}
+
+/* These are the two optical passes of the same outer boundary emitted by
+   liquid-glass-react. They are not child panels; together they supply the
+   pointer-reactive refraction that the static host rim cannot reproduce. */
+.liquid-glass-surface__runtime > span {
+  display: block !important;
+  z-index: 2;
+  opacity: 0.29 !important;
+}
+
+.liquid-glass-surface__runtime .glass {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  background: rgba(255, 255, 255, 0.003) !important;
+  box-shadow: none !important;
+}
+
+.liquid-glass-surface__runtime .glass > div:last-child,
+.liquid-glass-surface__refracted-fill {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.liquid-glass-surface__runtime .glass > div:last-child {
+  font: inherit !important;
+  text-shadow: none !important;
+}
+
+.liquid-glass-surface__tint {
+  z-index: 1;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.055), transparent 31%),
+    linear-gradient(122deg, rgba(255, 255, 255, 0.018), transparent 38%, rgba(117, 202, 224, 0.008));
+  opacity: calc(0.25 + var(--liquid-glass-intensity, 1) * 0.07);
+  transform: scale(1.08);
+  animation: liquid-glass-tint-flow 10s ease-in-out infinite alternate;
+}
+
+.liquid-glass-surface__rim {
+  display: none;
+}
+
+.liquid-glass-surface__content {
+  min-width: 0;
+  min-height: 0;
+  display: contents;
+}
+
+.liquid-glass-surface__content > * {
+  position: relative;
+  z-index: 3;
+}
+
+.liquid-glass-surface.is-runtime {
+  /* The nested .glass__warp already performs the real backdrop refraction.
+     A second host blur compounds it into a nearly opaque black slab. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.liquid-glass-surface.is-runtime::before {
+  opacity: 0.24;
+}
+
+@keyframes liquid-glass-drift {
+  0% { transform: translate3d(-9%, -4%, 0) rotate(-12deg) scale(0.96); }
+  55% { transform: translate3d(34%, 5%, 0) rotate(-7deg) scale(1.04); }
+  100% { transform: translate3d(76%, -1%, 0) rotate(-3deg) scale(0.99); }
+}
+
+@keyframes liquid-glass-tint-flow {
+  0% { transform: translate3d(-1.2%, -0.5%, 0) scale(1.08); }
+  100% { transform: translate3d(1.4%, 0.7%, 0) scale(1.11); }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .liquid-glass-surface {
+    background: rgba(8, 13, 18, 0.82);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .liquid-glass-surface__runtime {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass-surface {
+    background: rgba(8, 13, 18, 0.76);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .liquid-glass-surface__runtime,
+  .liquid-glass-surface__tint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-surface,
+  .liquid-glass-surface::after,
+  .liquid-glass-surface__tint,
+  .liquid-glass-surface * {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mineradio-derived refraction path. It is opt-in so the existing Sidebar,
+   TopBar, overlays, and cards keep their current rendering in this phase. */
+.liquid-glass-provider__defs,
+.liquid-glass-filter-svg {
+  width: 0;
+  height: 0;
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.liquid-glass-surface.is-mineradio-liquid {
+  --saved-panel-glass-bg: rgba(0, 0, 0, 0.10);
+  --saved-panel-glass-filter: blur(12px) saturate(1.8) brightness(1.16);
+  --saved-panel-glass-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.35),
+    inset 0 0 10px 4px rgba(255, 255, 255, 0.15),
+    0 4px 16px rgba(17, 17, 26, 0.05),
+    0 8px 24px rgba(17, 17, 26, 0.05),
+    0 16px 56px rgba(17, 17, 26, 0.05),
+    inset 0 4px 16px rgba(17, 17, 26, 0.05),
+    inset 0 8px 24px rgba(17, 17, 26, 0.05),
+    inset 0 16px 56px rgba(17, 17, 26, 0.05);
+  --liquid-glass-pointer-x: 0px;
+  --liquid-glass-pointer-y: 0px;
+  overflow: visible;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: var(--saved-panel-glass-shadow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.liquid-glass-surface.is-mineradio-liquid::before,
+.liquid-glass-surface.is-mineradio-liquid::after {
+  content: none;
+}
+
+.liquid-glass-surface.is-mineradio-liquid > .liquid-glass-surface__optics {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.liquid-glass-surface__refraction,
+.liquid-glass-surface__highlight {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.liquid-glass-surface__refraction {
+  z-index: 0;
+  background: var(--saved-panel-glass-bg);
+  backdrop-filter: var(--saved-panel-glass-filter);
+  -webkit-backdrop-filter: var(--saved-panel-glass-filter);
+  transform: translate3d(
+    var(--liquid-glass-pointer-x),
+    var(--liquid-glass-pointer-y),
+    0
+  ) scale(1.018);
+  transform-origin: center;
+  transition: transform 520ms cubic-bezier(0.22, 0.72, 0.2, 1);
+}
+
+html.liquid-glass-supported .is-mineradio-liquid.is-runtime .liquid-glass-surface__refraction {
+  backdrop-filter: var(--liquid-glass-svg-filter);
+  -webkit-backdrop-filter: var(--liquid-glass-svg-filter);
+  animation: liquid-glass-refraction-flow 12s ease-in-out infinite alternate;
+}
+
+.liquid-glass-surface__highlight {
+  z-index: 1;
+  background:
+    radial-gradient(
+      circle at calc(22% + var(--liquid-glass-pointer-x)) calc(8% + var(--liquid-glass-pointer-y)),
+      rgba(255, 255, 255, 0.12),
+      rgba(255, 255, 255, 0.018) 24%,
+      transparent 42%
+    ),
+    radial-gradient(circle at 84% 92%, rgba(102, 211, 237, 0.035), transparent 34%);
+  mix-blend-mode: screen;
+  opacity: calc(0.46 + var(--liquid-glass-intensity, 1) * 0.08);
+}
+
+.liquid-glass-surface.is-mineradio-liquid > .liquid-glass-surface__content {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  z-index: 3;
+  display: block;
+  filter: none;
+  transform: none;
+}
+
+.liquid-glass-surface.is-mineradio-liquid.liquid-glass-surface--control {
+  --saved-panel-glass-bg: rgba(0, 0, 0, 0.075);
+  --saved-panel-glass-filter: blur(9px) saturate(1.45) brightness(1.1);
+  --saved-panel-glass-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.22),
+    inset 0 0 8px 3px rgba(255, 255, 255, 0.075),
+    0 8px 24px rgba(0, 0, 0, 0.13);
+}
+
+@keyframes liquid-glass-refraction-flow {
+  0% {
+    transform: translate3d(
+      calc(var(--liquid-glass-pointer-x) - 1px),
+      calc(var(--liquid-glass-pointer-y) + 0.4px),
+      0
+    ) scale(1.018);
+  }
+  55% {
+    transform: translate3d(
+      calc(var(--liquid-glass-pointer-x) + 1.5px),
+      calc(var(--liquid-glass-pointer-y) - 0.8px),
+      0
+    ) scale(1.021);
+  }
+  100% {
+    transform: translate3d(
+      calc(var(--liquid-glass-pointer-x) - 0.3px),
+      calc(var(--liquid-glass-pointer-y) + 1px),
+      0
+    ) scale(1.019);
+  }
+}
+
+.liquid-glass-button {
+  isolation: isolate;
+  overflow: visible;
+}
+
+.liquid-glass-button__optics,
+.liquid-glass-button__content {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.liquid-glass-button__optics {
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.28),
+    inset 0 0 10px 4px rgba(255, 255, 255, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(12px) saturate(1.8) brightness(1.16);
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.16);
+  transition: background-color 170ms ease, box-shadow 170ms ease, filter 170ms ease;
+}
+
+.liquid-glass-button.is-liquid-button .liquid-glass-button__optics {
+  backdrop-filter: var(--liquid-glass-button-filter);
+  -webkit-backdrop-filter: var(--liquid-glass-button-filter);
+}
+
+.liquid-glass-button__content {
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: inherit;
+  filter: none;
+  transform: none;
+  pointer-events: none;
+}
+
+.liquid-glass-button:hover:not(:disabled) .liquid-glass-button__optics {
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.36),
+    inset 0 0 12px 5px rgba(255, 255, 255, 0.14),
+    0 12px 34px rgba(0, 0, 0, 0.22),
+    0 0 18px rgba(255, 255, 255, 0.045);
+  filter: brightness(1.035);
+}
+
+.liquid-glass-button.is-active .liquid-glass-button__optics,
+.liquid-glass-button[aria-pressed='true'] .liquid-glass-button__optics {
+  box-shadow:
+    inset 0 0 2px 1px rgba(202, 246, 250, 0.28),
+    inset 0 0 13px 5px rgba(78, 205, 220, 0.11),
+    0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.liquid-glass-supported .is-mineradio-liquid.is-runtime .liquid-glass-surface__refraction {
+    animation: none;
+  }
+
+  .liquid-glass-surface__refraction {
+    transform: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: music-backend
+
+netease:
+  api:
+    base-url: http://localhost:3000
+    connect-timeout: 3s
+    read-timeout: 10s

@@ -1,0 +1,30 @@
+.mineradio-particle-background,
+.background-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.mineradio-particle-background {
+  z-index: var(--z-background);
+  display: block;
+  background: #000;
+  contain: strict;
+}
+
+.background-overlay {
+  z-index: var(--z-background-overlay);
+  background:
+    radial-gradient(circle at 50% 42%, transparent 0 48%, rgb(0 0 0 / 0.12) 100%),
+    linear-gradient(180deg, rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.12));
+}
+
+@media (max-width: 840px) {
+  .background-overlay {
+    background:
+      radial-gradient(circle at 50% 38%, transparent 0 42%, rgb(0 0 0 / 0.16) 100%),
+      linear-gradient(180deg, rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.16));
+  }
+}

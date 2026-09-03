@@ -1,0 +1,68 @@
+.app-layout {
+  --layout-sidebar: var(--sidebar-width);
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  display: grid;
+  grid-template-columns: var(--layout-sidebar) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--shell-gap);
+  padding: var(--shell-edge);
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  color: #f5f9fc;
+  background: #010304;
+}
+
+.app-layout__main,
+.app-layout__viewport {
+  min-width: 0;
+  min-height: 0;
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  z-index: var(--z-content);
+  display: grid;
+  grid-template-rows: var(--header-height) minmax(0, 1fr);
+  gap: 16px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.app-layout__page {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin-bottom: var(--player-safe-area);
+  padding-bottom: 44px;
+  scroll-padding-bottom: 44px;
+  scrollbar-color: rgba(173, 208, 226, 0.35) transparent;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 840px) {
+  .app-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) 62px;
+  }
+
+  .app-layout__viewport {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .app-layout__main,
+  .app-layout__viewport {
+    grid-template-rows: 48px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .app-layout__page {
+    margin-bottom: var(--player-safe-area);
+    padding-bottom: 28px;
+    scroll-padding-bottom: 28px;
+  }
+}
