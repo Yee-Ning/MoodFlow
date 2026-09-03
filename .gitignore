@@ -1,0 +1,33 @@
+# ===== IntelliJ IDEA =====
+.idea/
+*.iml
+
+# ===== Java / Maven / Gradle =====
+target/
+build/
+out/
+*.class
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# ===== Node / React =====
+node_modules/
+dist/
+build/
+
+# ===== Logs =====
+*.log
+
+# ===== Environment / Secrets =====
+.env
+.env.*
+!.env.example
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
