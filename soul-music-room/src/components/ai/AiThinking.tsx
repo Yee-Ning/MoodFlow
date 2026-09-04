@@ -6,9 +6,19 @@ interface AiThinkingProps {
 }
 
 function AiThinking({ status }: AiThinkingProps) {
+  const label = {
+    sending: '正在发送',
+    'loading-context': '正在读取当前歌曲',
+    generating: '正在生成回答',
+    finalizing: '正在整理回答',
+    idle: '即将完成',
+    error: '暂时无法完成',
+  }[status]
+
   return (
-    <div className="ai-thinking" role="status" aria-label={status === 'sending' ? '正在发送' : 'MoodFlow AI 正在思考'}>
+    <div className="ai-thinking" role="status">
       <Sparkles size={13} strokeWidth={1.45} aria-hidden="true" />
+      <span>{label}</span>
       <span className="ai-thinking__dots" aria-hidden="true">
         <i />
         <i />
@@ -19,4 +29,3 @@ function AiThinking({ status }: AiThinkingProps) {
 }
 
 export default AiThinking
-

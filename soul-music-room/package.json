@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test:ai-stream": "node scripts/test-ai-chat-stream.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

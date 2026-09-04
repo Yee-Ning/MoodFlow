@@ -1,7 +1,14 @@
 import type { SongSummary } from './music'
 
 export type AiChatRole = 'user' | 'assistant'
-export type AiChatStatus = 'idle' | 'sending' | 'loading' | 'error'
+export type AiChatNode = 'load_song_context' | 'song_assistant'
+export type AiChatStatus =
+  | 'idle'
+  | 'sending'
+  | 'loading-context'
+  | 'generating'
+  | 'finalizing'
+  | 'error'
 
 export interface AiSongRecommendation extends SongSummary {
   reason: string

@@ -76,7 +76,7 @@ function AiChatPanel() {
                 refract
               >
                 <AiChatHeader
-                  resetDisabled={isSending || messages.length === 0}
+                  resetDisabled={!isSending && messages.length === 0}
                   onReset={clearConversation}
                   onClose={close}
                 />

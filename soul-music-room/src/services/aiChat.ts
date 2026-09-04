@@ -1,4 +1,4 @@
-import type { AiSongRecommendation } from '../types/aiChat'
+import type { AiChatNode, AiSongRecommendation } from '../types/aiChat'
 
 const AI_API_BASE_URL = (import.meta.env.VITE_AI_API_BASE_URL ?? '').replace(/\/$/, '')
 
@@ -17,6 +17,13 @@ export interface ChatResponse {
   conversation_id?: string
   recommendations?: AiSongRecommendation[]
 }
+
+export type AiChatStreamEvent =
+  | { type: 'message'; delta: string }
+  | { type: 'update'; node: AiChatNode; status: 'completed' }
+  | { type: 'final'; response: ChatResponse }
+  | { type: 'error'; message: string }
+  | { type: 'done' }
 
 export class AiChatApiError extends Error {
   readonly status: number
@@ -72,17 +79,64 @@ function parseResponse(payload: unknown): ChatResponse {
   }
 }
 
-export async function sendAiChatMessage(
+function parseSseEvent(block: string): AiChatStreamEvent | null {
+  let eventName = ''
+  const dataLines: string[] = []
+
+  for (const line of block.split('\n')) {
+    if (line.startsWith('event:')) {
+      eventName = line.slice(6).trim()
+    } else if (line.startsWith('data:')) {
+      dataLines.push(line.slice(5).trimStart())
+    }
+  }
+
+  if (!eventName) return null
+  let payload: unknown
+  try {
+    payload = JSON.parse(dataLines.join('\n') || '{}')
+  } catch {
+    throw new AiChatApiError('AI 返回了无法识别的流式数据')
+  }
+  const candidate = payload && typeof payload === 'object'
+    ? payload as Record<string, unknown>
+    : {}
+
+  if (eventName === 'message' && typeof candidate.delta === 'string') {
+    return { type: 'message', delta: candidate.delta }
+  }
+  if (
+    eventName === 'update'
+    && ['load_song_context', 'song_assistant'].includes(String(candidate.node))
+    && candidate.status === 'completed'
+  ) {
+    return {
+      type: 'update',
+      node: candidate.node as AiChatNode,
+      status: 'completed',
+    }
+  }
+  if (eventName === 'final') {
+    return { type: 'final', response: parseResponse(payload) }
+  }
+  if (eventName === 'error' && typeof candidate.message === 'string') {
+    return { type: 'error', message: candidate.message }
+  }
+  if (eventName === 'done') return { type: 'done' }
+  return null
+}
+
+export async function* streamAiChatMessage(
   request: ChatRequest,
   signal?: AbortSignal,
-): Promise<ChatResponse> {
+): AsyncGenerator<AiChatStreamEvent> {
   let response: Response
 
   try {
     response = await fetch(`${AI_API_BASE_URL}/api/ai/chat`, {
       method: 'POST',
       headers: {
-        Accept: 'application/json',
+        Accept: 'text/event-stream',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(request),
@@ -93,8 +147,8 @@ export async function sendAiChatMessage(
     throw new AiChatApiError('暂时无法连接 MoodFlow AI，请稍后再试')
   }
 
-  const payload = await response.json().catch(() => null) as unknown
   if (!response.ok) {
+    const payload = await response.json().catch(() => null) as unknown
     const rawDetail = payload && typeof payload === 'object' && 'detail' in payload
       ? (payload as { detail: unknown }).detail
       : null
@@ -106,5 +160,37 @@ export async function sendAiChatMessage(
     throw new AiChatApiError(detail, response.status)
   }
 
-  return parseResponse(payload)
+  if (!response.body) {
+    throw new AiChatApiError('AI 没有返回可读取的响应流')
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      buffer += decoder.decode(value, { stream: !done })
+      buffer = buffer.replace(/\r\n/g, '\n')
+
+      let separator = buffer.indexOf('\n\n')
+      while (separator >= 0) {
+        const block = buffer.slice(0, separator)
+        buffer = buffer.slice(separator + 2)
+        const event = parseSseEvent(block)
+        if (event) yield event
+        separator = buffer.indexOf('\n\n')
+      }
+
+      if (done) break
+    }
+
+    if (buffer.trim()) {
+      const event = parseSseEvent(buffer)
+      if (event) yield event
+    }
+  } finally {
+    reader.releaseLock()
+  }
 }
