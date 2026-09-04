@@ -1,5 +1,6 @@
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useEffect } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { useAiChatStore } from '../../store/aiChatStore'
 import { usePlayerStore } from '../../store/playerStore'
 import LiquidGlassSurface from '../liquid-glass/LiquidGlassSurface'
@@ -7,10 +8,24 @@ import AiChatHeader from './AiChatHeader'
 import AiChatInput from './AiChatInput'
 import AiChatTrigger from './AiChatTrigger'
 import AiMessageList from './AiMessageList'
+import {
+  calculateAiChatPanelPlacement,
+  type AiChatTriggerAnchor,
+} from './aiChatTriggerPosition'
 import './ai-chat.css'
 
 function getCurrentSongId() {
   return usePlayerStore.getState().currentSong?.id ?? null
+}
+
+function getViewportSize() {
+  if (typeof window === 'undefined') return { width: 1440, height: 900 }
+  return { width: window.innerWidth, height: window.innerHeight }
+}
+
+type AiChatPanelStyle = CSSProperties & {
+  '--ai-chat-panel-left': string
+  '--ai-chat-panel-top': string
 }
 
 function AiChatPanel() {
@@ -21,21 +36,35 @@ function AiChatPanel() {
     isSending,
     error,
     status,
-    toggleOpen,
+    open,
     close,
     clearConversation,
     sendMessage,
     retryLastMessage,
   } = useAiChatStore()
+  const [panelAnchor, setPanelAnchor] = useState<AiChatTriggerAnchor | null>(null)
+  const [viewport, setViewport] = useState(getViewportSize)
 
   useEffect(() => {
-    if (!isOpen) return
-    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') close()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [close, isOpen])
+    const handleResize = () => setViewport(getViewportSize())
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const handleOpen = useCallback((anchor: AiChatTriggerAnchor) => {
+    setPanelAnchor(anchor)
+    open()
+  }, [open])
+
+  const placement = useMemo(() => calculateAiChatPanelPlacement(
+    panelAnchor ?? { x: viewport.width - 44, y: viewport.height / 2 },
+    viewport,
+  ), [panelAnchor, viewport])
+  const panelStyle: AiChatPanelStyle = {
+    '--ai-chat-panel-left': `${placement.left}px`,
+    '--ai-chat-panel-top': `${placement.top}px`,
+    transformOrigin: `${placement.originX}px ${placement.originY}px`,
+  }
 
   const panelTransition = reduceMotion
     ? { duration: 0.01 }
@@ -43,60 +72,56 @@ function AiChatPanel() {
 
   return (
     <>
-      <AiChatTrigger isOpen={isOpen} onToggle={toggleOpen} />
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <motion.button
-              className="ai-chat-backdrop"
-              type="button"
-              aria-label="关闭 MoodFlow AI"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: reduceMotion ? 0.01 : 0.24 }}
-              onClick={close}
-            />
-            <motion.aside
-              className="ai-chat-panel-wrap"
-              role="dialog"
-              aria-modal="true"
-              aria-label="MoodFlow AI 音乐助手"
-              initial={{ opacity: 0, x: 42, scale: 0.975 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 34, scale: 0.985 }}
-              transition={panelTransition}
+      {!isOpen && <AiChatTrigger onOpen={handleOpen} />}
+      {isOpen && (
+        <>
+          <motion.div
+            className="ai-chat-backdrop"
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: reduceMotion ? 0.01 : 0.24 }}
+          />
+          <motion.aside
+            id="moodflow-ai-panel"
+            className="ai-chat-panel-wrap"
+            role="dialog"
+            aria-modal="true"
+            aria-label="MoodFlow AI 音乐助手"
+            style={panelStyle}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={panelTransition}
+          >
+            <LiquidGlassSurface
+              className="ai-chat-panel"
+              preset="overlay"
+              radius={34}
+              intensity={0.92}
+              interactive
+              refract
             >
-              <LiquidGlassSurface
-                className="ai-chat-panel"
-                preset="overlay"
-                radius={34}
-                intensity={0.92}
-                interactive
-                refract
-              >
-                <AiChatHeader
-                  resetDisabled={!isSending && messages.length === 0}
-                  onReset={clearConversation}
-                  onClose={close}
-                />
-                <AiMessageList
-                  messages={messages}
-                  status={status}
-                  isSending={isSending}
-                  error={error}
-                  onSuggestion={(suggestion) => void sendMessage(suggestion, getCurrentSongId())}
-                  onRetry={() => void retryLastMessage(getCurrentSongId())}
-                />
-                <AiChatInput
-                  disabled={isSending}
-                  onSend={(message) => void sendMessage(message, getCurrentSongId())}
-                />
-              </LiquidGlassSurface>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+              <AiChatHeader
+                resetDisabled={!isSending && messages.length === 0}
+                onReset={clearConversation}
+                onClose={close}
+              />
+              <AiMessageList
+                messages={messages}
+                status={status}
+                isSending={isSending}
+                error={error}
+                onSuggestion={(suggestion) => void sendMessage(suggestion, getCurrentSongId())}
+                onRetry={() => void retryLastMessage(getCurrentSongId())}
+              />
+              <AiChatInput
+                disabled={isSending}
+                onSend={(message) => void sendMessage(message, getCurrentSongId())}
+              />
+            </LiquidGlassSurface>
+          </motion.aside>
+        </>
+      )}
     </>
   )
 }

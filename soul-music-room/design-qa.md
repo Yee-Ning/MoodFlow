@@ -98,6 +98,55 @@ final result: blocked
 
 ---
 
+## AI Chat Anchor-based Opening
+
+Date: 2026-09-04
+
+### Evidence
+
+- Source visual truth: `C:/Users/33994/AppData/Local/Temp/codex-clipboard-0cbbb8f7-ea1a-4cf0-99e7-2476e009e004.png` (1077 × 1368 px, open desktop chat state).
+- Implementation URL: `http://127.0.0.1:5173/` (HTTP 200).
+- Implementation screenshot: unavailable because the authorized in-app browser bridge rejected the host connection.
+- Intended viewport/state: matching desktop open-chat state after dragging the trigger to center and edge positions; compact checks at 390 × 844 and 768 × 900 CSS px.
+- Density normalization: unavailable without browser-rendered implementation evidence.
+
+### Full-view and focused-region comparison evidence
+
+Blocked. The supplied screenshot was opened and inspected, but the implementation could not be captured. The focused comparison would cover the duplicate open-state trigger, panel placement relative to the trigger anchor, close-button hierarchy, and edge-safe panel geometry.
+
+### Required fidelity surfaces
+
+- Fonts and typography: unchanged by this interaction-only pass; rendered wrapping and antialiasing remain unverified.
+- Spacing and layout rhythm: desktop panel is centered on the trigger anchor and clamped to a 16 px viewport gap; compact layouts retain their existing 8 px/full-screen geometry. Runtime placement remains unverified.
+- Colors and visual tokens: unchanged from the previously approved implementation pass.
+- Image quality and asset fidelity: existing background and icon assets were preserved; the duplicate open-state trigger shown in the source issue is no longer rendered.
+- Copy and content: visible chat copy is unchanged. The panel header `X` remains the sole visible close control.
+
+### Findings
+
+- [P1] Browser-rendered anchor and close-path verification is unavailable.
+  Location: draggable AI trigger and chat panel.
+  Evidence: source screenshot is available, while browser capture and pointer control were rejected by the environment.
+  Impact: real pointer-to-panel alignment, opening transform origin, responsive compositing, focus behavior, and console state cannot be certified visually.
+  Fix: capture the local app after opening from left/top/center/right/bottom trigger positions, confirm the trigger is absent while open, confirm backdrop and Escape do not close, and confirm the header `X` closes and restores the trigger.
+
+### Comparison history
+
+- Initial issue evidence: open state displayed both the header close icon and a second floating `X`, while the panel remained fixed to the right.
+- Code iteration: trigger position is now passed as the panel anchor, the panel opens from that transform origin, and non-header close paths were removed.
+- Post-fix visual evidence: blocked because no authorized implementation capture is available.
+
+### Implementation checklist
+
+- Test drag-to-open from all viewport regions and confirm 16 px desktop edge clamping.
+- Confirm the trigger unmounts immediately after opening and returns after header `X` activation.
+- Confirm backdrop click and Escape leave the panel open.
+- Capture desktop and compact states and check the console before changing this result.
+
+final result: blocked
+
+---
+
 ## AI Chat Draggable Trigger and Panel Material
 
 Date: 2026-09-04

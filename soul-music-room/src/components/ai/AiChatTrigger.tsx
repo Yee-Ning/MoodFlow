@@ -1,4 +1,4 @@
-import { Sparkles, X } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import {
@@ -6,15 +6,15 @@ import {
   clampAiChatTriggerPosition,
   hasExceededDragThreshold,
   parseAiChatTriggerPosition,
+  type AiChatTriggerAnchor,
   type AiChatTriggerPosition,
 } from './aiChatTriggerPosition'
 
 interface AiChatTriggerProps {
-  isOpen: boolean
-  onToggle: () => void
+  onOpen: (anchor: AiChatTriggerAnchor) => void
 }
 
-function AiChatTrigger({ isOpen, onToggle }: AiChatTriggerProps) {
+function AiChatTrigger({ onOpen }: AiChatTriggerProps) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dragRef = useRef<{
     pointerId: number
@@ -138,17 +138,22 @@ function AiChatTrigger({ isOpen, onToggle }: AiChatTriggerProps) {
       event.preventDefault()
       return
     }
-    onToggle()
+    const rect = event.currentTarget.getBoundingClientRect()
+    onOpen({
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    })
   }
 
   return (
     <button
       ref={triggerRef}
-      className={`ai-chat-trigger${isOpen ? ' is-open' : ''}${position ? ' is-positioned' : ''}${isDragging ? ' is-dragging' : ''}`}
+      className={`ai-chat-trigger${position ? ' is-positioned' : ''}${isDragging ? ' is-dragging' : ''}`}
       type="button"
-      aria-label={`${isOpen ? '收起' : '打开'} MoodFlow AI，可拖动`}
-      aria-pressed={isOpen}
-      title={`拖动可调整位置，点击${isOpen ? '收起' : '打开'} AI`}
+      aria-label="打开 MoodFlow AI，可拖动"
+      aria-haspopup="dialog"
+      aria-controls="moodflow-ai-panel"
+      title="拖动可调整位置，点击打开 AI"
       style={position ? { left: position.x, top: position.y } : undefined}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -157,7 +162,7 @@ function AiChatTrigger({ isOpen, onToggle }: AiChatTriggerProps) {
       onClick={handleClick}
     >
       <span className="ai-chat-trigger__glow" aria-hidden="true" />
-      {isOpen ? <X size={19} strokeWidth={1.65} /> : <Sparkles size={20} strokeWidth={1.55} />}
+      <Sparkles size={20} strokeWidth={1.55} />
       <span className="ai-chat-trigger__label">AI</span>
     </button>
   )

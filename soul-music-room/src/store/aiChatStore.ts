@@ -12,7 +12,7 @@ interface AiChatState {
   conversationId: string | null
   error: string
   status: AiChatStatus
-  toggleOpen: () => void
+  open: () => void
   close: () => void
   clearConversation: () => void
   clearError: () => void
@@ -46,7 +46,7 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
   error: '',
   status: 'idle',
 
-  toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
+  open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
   clearConversation: () => {
     activeRequestId = null

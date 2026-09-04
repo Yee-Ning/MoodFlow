@@ -30,11 +30,9 @@
   transition: right 460ms cubic-bezier(0.22, 0.8, 0.22, 1), background-color 180ms ease;
 }
 
-.ai-chat-trigger.is-open { right: 454px; }
 .ai-chat-trigger:hover { transform: translateY(-50%) scale(1.04); }
 .ai-chat-trigger:active { transform: translateY(-50%) scale(0.94); }
-.ai-chat-trigger.is-positioned,
-.ai-chat-trigger.is-positioned.is-open { right: auto; transform: none; }
+.ai-chat-trigger.is-positioned { right: auto; transform: none; }
 .ai-chat-trigger.is-positioned:hover { transform: scale(1.04); }
 .ai-chat-trigger.is-positioned:active { transform: scale(0.94); }
 .ai-chat-trigger.is-dragging,
@@ -57,11 +55,11 @@
 
 .ai-chat-panel-wrap {
   width: min(422px, calc(100vw - 32px));
-  height: calc(100svh - 32px);
+  height: min(760px, calc(100svh - 32px));
   position: fixed;
   z-index: var(--z-modal);
-  top: 16px;
-  right: 16px;
+  top: var(--ai-chat-panel-top, 16px);
+  left: var(--ai-chat-panel-left, calc(100vw - 438px));
   color: rgba(244, 249, 251, 0.94);
 }
 
@@ -243,13 +241,11 @@
 }
 
 @media (max-width: 840px) {
-  .ai-chat-panel-wrap { width: calc(100vw - 16px); height: calc(100svh - 16px); top: 8px; right: 8px; }
+  .ai-chat-panel-wrap { width: calc(100vw - 16px); height: calc(100svh - 16px); }
   .ai-chat-panel { border-radius: 30px; }
   .ai-chat-trigger { top: 24px; right: 14px; width: 46px; height: 46px; border-radius: 17px; transform: none; }
   .ai-chat-trigger:hover { transform: scale(1.04); }
   .ai-chat-trigger:active { transform: scale(0.94); }
-  .ai-chat-trigger.is-open { right: 62px; }
-  .ai-chat-trigger.is-open .ai-chat-trigger__label { display: none; }
   .ai-chat-header { min-height: 72px; padding: 14px 14px 12px 18px; }
   .ai-chat-header__close { width: 40px; height: 40px; }
   .ai-message-list { padding-inline: 18px; }
@@ -258,10 +254,9 @@
 }
 
 @media (max-width: 430px) {
-  .ai-chat-panel-wrap { width: 100vw; height: 100svh; inset: 0; }
+  .ai-chat-panel-wrap { width: 100vw; height: 100svh; }
   .ai-chat-panel { border-radius: 0; }
   .ai-chat-trigger { top: 17px; right: 10px; }
-  .ai-chat-trigger.is-open { right: 58px; }
   .ai-message { max-width: 90%; }
   .ai-welcome__suggestions { display: grid; grid-template-columns: 1fr; }
   .ai-welcome__suggestions button { width: max-content; }
