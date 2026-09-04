@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import type { AiChatMessage, AiChatStatus } from '../../types/aiChat'
 import AiMessage from './AiMessage'
 import AiThinking from './AiThinking'
@@ -21,14 +21,38 @@ function AiMessageList({
   onSuggestion,
   onRetry,
 }: AiMessageListProps) {
-  const endRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const pinnedToBottomRef = useRef(true)
+  const previousMessageCountRef = useRef(messages.length)
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  useLayoutEffect(() => {
+    const list = listRef.current
+    if (!list) return
+
+    const hasNewExchange = messages.length > previousMessageCountRef.current
+      && messages.at(-2)?.role === 'user'
+    if (hasNewExchange) pinnedToBottomRef.current = true
+    if (pinnedToBottomRef.current) list.scrollTop = list.scrollHeight
+    previousMessageCountRef.current = messages.length
   }, [messages, isSending, error])
 
+  const handleScroll = () => {
+    const list = listRef.current
+    if (!list) return
+    const distanceToBottom = list.scrollHeight - list.scrollTop - list.clientHeight
+    pinnedToBottomRef.current = distanceToBottom < 72
+  }
+
   return (
-    <div className="ai-message-list" aria-live="polite">
+    <div
+      ref={listRef}
+      className="ai-message-list"
+      role="log"
+      aria-label="聊天记录"
+      aria-live="polite"
+      tabIndex={0}
+      onScroll={handleScroll}
+    >
       {messages.length === 0 && !isSending ? (
         <AiWelcome onSelect={onSuggestion} />
       ) : (
@@ -41,7 +65,6 @@ function AiMessageList({
               <button type="button" onClick={onRetry}>再试一次</button>
             </div>
           )}
-          <div ref={endRef} />
         </div>
       )}
     </div>
@@ -49,4 +72,3 @@ function AiMessageList({
 }
 
 export default AiMessageList
-
