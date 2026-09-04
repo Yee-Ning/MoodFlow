@@ -3,6 +3,7 @@ package cn.itcast.demo.musicbackend.controller;
 import java.util.List;
 
 import cn.itcast.demo.musicbackend.common.ApiResponse;
+import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
@@ -50,6 +51,11 @@ public class UserMusicController {
     @GetMapping("/songs/{id}")
     public ApiResponse<SongData> getSong(@PathVariable long id) {
         return ApiResponse.success(neteaseMusicService.getSongDetail(id));
+    }
+
+    @GetMapping("/songs/{id}/context")
+    public ApiResponse<CurrentSongContextData> getCurrentSongContext(@PathVariable long id) {
+        return ApiResponse.success(neteaseMusicService.getCurrentSongContext(id));
     }
 
     @GetMapping("/playlists/{id}")

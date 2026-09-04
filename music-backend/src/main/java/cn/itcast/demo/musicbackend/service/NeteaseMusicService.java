@@ -9,6 +9,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
 
+import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
+import cn.itcast.demo.musicbackend.dto.LyricsStatus;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
@@ -24,6 +26,8 @@ import cn.itcast.demo.musicbackend.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
@@ -33,6 +37,7 @@ import org.springframework.web.client.RestClientException;
 @Service
 public class NeteaseMusicService {
 
+    private static final Logger log = LoggerFactory.getLogger(NeteaseMusicService.class);
     private static final int PLAYLIST_LIMIT = 1000;
 
     private final RestClient neteaseRestClient;
@@ -104,6 +109,24 @@ public class NeteaseMusicService {
         return toSong(songs.getFirst());
     }
 
+    public CurrentSongContextData getCurrentSongContext(long songId) {
+        SongData song = getSongDetail(songId);
+
+        try {
+            SongLyricsData lyrics = fetchSongLyrics(songId, null);
+            LyricsStatus lyricsStatus = "available".equals(lyrics.status())
+                    ? LyricsStatus.AVAILABLE
+                    : LyricsStatus.NO_LYRICS;
+            return toCurrentSongContext(song, lyrics, lyricsStatus);
+        } catch (NeteaseApiException | NeteaseApiTimeoutException exception) {
+            log.warn("当前歌曲歌词暂时不可用: songId={}, reason={}", songId, exception.getMessage());
+            return toCurrentSongContext(
+                    song,
+                    new SongLyricsData("", "", "unavailable"),
+                    LyricsStatus.UNAVAILABLE);
+        }
+    }
+
     public PlaylistDetailData getPlaylistDetail(long playlistId, HttpServletRequest request) {
         if (playlistId <= 0) {
             throw new BadRequestException("歌单 id 必须大于 0");
@@ -155,7 +178,10 @@ public class NeteaseMusicService {
             throw new BadRequestException("歌曲 id 必须大于 0");
         }
 
-        String cookie = requireCookie(request);
+        return fetchSongLyrics(songId, requireCookie(request));
+    }
+
+    private SongLyricsData fetchSongLyrics(long songId, String cookie) {
         Map<String, Object> response = get(
                 "/lyric",
                 Map.of("id", songId),
@@ -173,6 +199,20 @@ public class NeteaseMusicService {
 
         String translation = optionalString(optionalMap(response, "tlyric"), "lyric");
         return new SongLyricsData(lyric, translation, "available");
+    }
+
+    private CurrentSongContextData toCurrentSongContext(
+            SongData song,
+            SongLyricsData lyrics,
+            LyricsStatus lyricsStatus) {
+        return new CurrentSongContextData(
+                song.id(),
+                song.name(),
+                String.join("、", song.artists()),
+                song.album(),
+                lyrics.lyric(),
+                lyrics.translation(),
+                lyricsStatus);
     }
 
     public PlaylistMutationData addSongToPlaylist(

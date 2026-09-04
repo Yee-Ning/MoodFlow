@@ -6,12 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
+import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
+import cn.itcast.demo.musicbackend.dto.LyricsStatus;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
@@ -213,6 +216,81 @@ class NeteaseMusicServiceTests {
                         APPLICATION_JSON));
 
         assertThrows(NotFoundException.class, () -> musicService.getSongDetail(999999));
+        server.verify();
+    }
+
+    @Test
+    void shouldAggregateSongContextWithOriginalLyrics() {
+        expectSongDetail(185809, "晴天", "周杰伦", "叶惠美");
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/lyric", "id=185809");
+                    assertNull(request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "lrc": {"lyric": "[00:01.00]故事的小黄花"}
+                        }
+                        """, APPLICATION_JSON));
+
+        CurrentSongContextData context = musicService.getCurrentSongContext(185809);
+
+        assertEquals(185809L, context.songId());
+        assertEquals("晴天", context.name());
+        assertEquals("周杰伦", context.artist());
+        assertEquals("叶惠美", context.album());
+        assertEquals("[00:01.00]故事的小黄花", context.originalLyrics());
+        assertEquals("", context.translatedLyrics());
+        assertEquals(LyricsStatus.AVAILABLE, context.lyricsStatus());
+        server.verify();
+    }
+
+    @Test
+    void shouldAggregateTranslatedLyrics() {
+        expectSongDetail(9001, "Blue Current", "Low Moon", "Night Water");
+        server.expect(request -> assertRequest(request.getURI(), "/lyric", "id=9001"))
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "lrc": {"lyric": "[00:01.00]Blue current"},
+                          "tlyric": {"lyric": "[00:01.00]蓝色潮汐"}
+                        }
+                        """, APPLICATION_JSON));
+
+        CurrentSongContextData context = musicService.getCurrentSongContext(9001);
+
+        assertEquals("[00:01.00]蓝色潮汐", context.translatedLyrics());
+        assertEquals(LyricsStatus.AVAILABLE, context.lyricsStatus());
+        server.verify();
+    }
+
+    @Test
+    void shouldIdentifySongContextWithoutLyrics() {
+        expectSongDetail(9002, "Still Harbor", "North Wind", "Quiet Coast");
+        server.expect(request -> assertRequest(request.getURI(), "/lyric", "id=9002"))
+                .andRespond(withSuccess(
+                        "{\"code\":200,\"nolyric\":true}",
+                        APPLICATION_JSON));
+
+        CurrentSongContextData context = musicService.getCurrentSongContext(9002);
+
+        assertEquals("", context.originalLyrics());
+        assertEquals("", context.translatedLyrics());
+        assertEquals(LyricsStatus.NO_LYRICS, context.lyricsStatus());
+        server.verify();
+    }
+
+    @Test
+    void shouldKeepSongContextWhenLyricsAreUnavailable() {
+        expectSongDetail(9003, "Far Signal", "Quiet Radio", "Static Sea");
+        server.expect(request -> assertRequest(request.getURI(), "/lyric", "id=9003"))
+                .andRespond(withServerError());
+
+        CurrentSongContextData context = musicService.getCurrentSongContext(9003);
+
+        assertEquals("Far Signal", context.name());
+        assertEquals(LyricsStatus.UNAVAILABLE, context.lyricsStatus());
+        assertTrue(context.originalLyrics().isEmpty());
         server.verify();
     }
 
@@ -452,6 +530,27 @@ class NeteaseMusicServiceTests {
                           }
                         }
                         """, APPLICATION_JSON));
+    }
+
+    private void expectSongDetail(long songId, String name, String artist, String album) {
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/song/detail", "ids=" + songId);
+                    assertNull(request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "songs": [
+                            {
+                              "id": %d,
+                              "name": "%s",
+                              "ar": [{"id": 1, "name": "%s"}],
+                              "al": {"id": 2, "name": "%s", "picUrl": ""},
+                              "dt": 200000
+                            }
+                          ]
+                        }
+                        """.formatted(songId, name, artist, album), APPLICATION_JSON));
     }
 
     private void expectEditablePlaylist(long playlistId, long ownerId, long existingSongId) {
