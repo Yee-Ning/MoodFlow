@@ -1,8 +1,9 @@
 # MoodFlow AI Service
 
-A minimal FastAPI service that accepts one user message and returns a strictly
-schema-constrained LLM answer. It uses DeepSeek V4 Flash through the Responses API
-with JSON Schema output, followed by local Pydantic validation.
+A FastAPI service whose current chat route runs a minimal LangGraph current-song
+assistant. It resolves trusted song metadata and lyrics through Spring Boot, then
+uses DeepSeek through the Responses API with JSON Schema output and local Pydantic
+validation.
 
 ## Setup
 
@@ -31,25 +32,26 @@ Invoke-RestMethod `
   -Method Post `
   -Uri http://127.0.0.1:8001/api/ai/chat `
   -ContentType 'application/json' `
-  -Body '{"message":"Recommend a song for a quiet evening."}'
+  -Body '{"message":"这首歌表达了什么？","thread_id":"demo-thread","current_song_id":185809}'
 ```
 
-The old message-only body remains valid. To let the agent resolve references
-such as “这首歌”, send lightweight application-state references:
+The old message-only and nested `context` bodies remain valid for compatibility.
+New clients should send the current song reference at the top level:
 
 ```powershell
 Invoke-RestMethod `
   -Method Post `
   -Uri http://127.0.0.1:8001/api/ai/chat `
   -ContentType 'application/json' `
-  -Body '{"message":"推荐几首和这首类似的歌","context":{"current_song_id":185809,"current_playlist_id":null,"page":"/library"}}'
+  -Body '{"message":"那第二段呢？","thread_id":"demo-thread","current_song_id":185809}'
 ```
 
-The AI service resolves `current_song_id` through Spring Boot
-`GET /api/songs/{id}` and injects the resulting song metadata as trusted runtime
-context. It does not call the NetEase API directly and does not load lyrics.
-Spring Boot timeouts, errors, invalid payloads, and missing songs degrade to an
-empty current-song context instead of failing the chat request.
+The graph is `START -> load_song_context -> song_assistant -> END`. Every invoke
+explicitly overwrites `current_song_id` and `song_context`, while an in-memory
+checkpointer retains message history by `thread_id`. The AI service resolves the
+song through Spring Boot `GET /api/songs/{id}/context`; it never calls NetEase or
+the music database directly. Lyrics are length-limited and treated as untrusted
+analysis data in the model prompt.
 
 ## Test
 
@@ -69,13 +71,9 @@ python -c "import asyncio; from app.tools.music import search_music; print(async
 ```
 
 The tool calls the Spring Boot endpoint `GET /api/music/search`; it never calls
-the NetEase API directly.
+the NetEase API directly. This direct command is only for isolated tool testing.
 
-Runtime context and tools share the same agent loop: the first model step sees
-the resolved system context and can then call `search_music` normally when it
-needs catalog data for a recommendation.
-
-## Tool Calling Agent Loop
+## Existing Tool Calling Agent Loop
 
 `search_music` is exposed to DeepSeek as a function definition generated from
 `SearchMusicArgs.model_json_schema()`. The agent validates returned arguments,
@@ -84,13 +82,6 @@ with the same `call_id` back to DeepSeek. DeepSeek is stateless, so the service
 resends the user input, every response output item, and every tool result on each
 step. The loop is capped at five steps.
 
-Start the NetEase and Spring Boot services, then send a concrete lookup request
-and watch the agent/tool logs:
-
-```powershell
-Invoke-RestMethod `
-  -Method Post `
-  -Uri http://127.0.0.1:8001/api/ai/chat `
-  -ContentType 'application/json' `
-  -Body '{"message":"请帮我搜索周杰伦的歌曲，返回 5 首"}'
-```
+This code is retained for a later module, but it is not connected to the current
+song graph or `/api/ai/chat`. The current Song Assistant calls the same base model
+without any tool definitions.

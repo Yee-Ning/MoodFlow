@@ -31,19 +31,20 @@ def run_get_song(handler: httpx.MockTransport, song_id: int = 185809):
 class MusicContextProviderTests(unittest.TestCase):
     def test_resolves_song_through_java_endpoint(self) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
-            self.assertEqual(request.url.path, "/api/songs/185809")
+            self.assertEqual(request.url.path, "/api/songs/185809/context")
             return httpx.Response(
                 200,
                 json={
                     "code": 200,
                     "message": "success",
                     "data": {
-                        "id": 185809,
+                        "songId": 185809,
                         "name": "晴天",
-                        "artists": ["周杰伦"],
+                        "artist": "周杰伦",
                         "album": "叶惠美",
-                        "coverUrl": "https://img.test/qingtian.jpg",
-                        "duration": 269000,
+                        "originalLyrics": "[00:01.00]故事的小黄花",
+                        "translatedLyrics": "",
+                        "lyricsStatus": "AVAILABLE",
                     },
                 },
             )
@@ -51,14 +52,43 @@ class MusicContextProviderTests(unittest.TestCase):
         song = run_get_song(httpx.MockTransport(handler))
 
         self.assertEqual(song.name, "晴天")
-        self.assertEqual(song.artists, ["周杰伦"])
-        self.assertEqual(song.duration_ms, 269000)
+        self.assertEqual(song.artist, "周杰伦")
+        self.assertEqual(song.original_lyrics, "[00:01.00]故事的小黄花")
+        self.assertEqual(song.lyrics_status, "AVAILABLE")
 
     def test_reports_java_not_found(self) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(404, json={"code": 404, "data": None})
 
         with self.assertRaisesRegex(MusicContextProviderError, "HTTP 404"):
+            run_get_song(httpx.MockTransport(handler))
+
+    def test_reports_spring_timeout(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            raise httpx.ReadTimeout("timed out", request=request)
+
+        with self.assertRaisesRegex(MusicContextProviderError, "timed out"):
+            run_get_song(httpx.MockTransport(handler))
+
+    def test_reports_unavailable_spring_service(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("connection refused", request=request)
+
+        with self.assertRaisesRegex(MusicContextProviderError, "Cannot connect"):
+            run_get_song(httpx.MockTransport(handler))
+
+    def test_rejects_invalid_song_context_response(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                json={
+                    "code": 200,
+                    "message": "success",
+                    "data": {"songId": 185809, "name": "晴天"},
+                },
+            )
+
+        with self.assertRaisesRegex(MusicContextProviderError, "invalid data"):
             run_get_song(httpx.MockTransport(handler))
 
 
@@ -85,11 +115,13 @@ class ContextBuilderTests(unittest.TestCase):
 
     def test_preserves_resolved_song(self) -> None:
         song = SongContext(
-            id=185809,
+            song_id=185809,
             name="晴天",
-            artists=["周杰伦"],
+            artist="周杰伦",
             album="叶惠美",
-            duration_ms=269000,
+            original_lyrics="[00:01.00]故事的小黄花",
+            translated_lyrics="",
+            lyrics_status="AVAILABLE",
         )
         provider = SimpleNamespace(get_song=AsyncMock(return_value=song))
 
@@ -105,11 +137,13 @@ class ContextFormatterTests(unittest.TestCase):
         formatted = format_runtime_context(
             ResolvedContext(
                 current_song=SongContext(
-                    id=185809,
+                    song_id=185809,
                     name="晴天",
-                    artists=["周杰伦"],
+                    artist="周杰伦",
                     album="叶惠美",
-                    duration_ms=269000,
+                    original_lyrics="[00:01.00]故事的小黄花",
+                    translated_lyrics="",
+                    lyrics_status="AVAILABLE",
                 ),
                 page="/library",
             )

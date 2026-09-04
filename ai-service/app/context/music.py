@@ -4,7 +4,7 @@ import httpx
 from pydantic import ValidationError
 
 from app.config.settings import get_settings
-from app.schemas.context import SongContext, SpringSongDetailResponse
+from app.schemas.context import SongContext, SpringCurrentSongContextResponse
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class MusicContextProvider:
         settings = get_settings()
         url = (
             f"{str(settings.spring_boot_base_url).rstrip('/')}"
-            f"/api/songs/{song_id}"
+            f"/api/songs/{song_id}/context"
         )
 
         try:
@@ -42,7 +42,7 @@ class MusicContextProvider:
             ) from exc
 
         try:
-            payload = SpringSongDetailResponse.model_validate(response.json())
+            payload = SpringCurrentSongContextResponse.model_validate(response.json())
         except (ValueError, ValidationError) as exc:
             raise MusicContextProviderError(
                 "Spring Boot song detail returned invalid data"
@@ -54,15 +54,12 @@ class MusicContextProvider:
             )
 
         song = payload.data
-        if song.id != song_id:
+        if song.song_id != song_id:
             raise MusicContextProviderError(
-                "Spring Boot song detail returned a mismatched song id"
+                "Spring Boot song context returned a mismatched song id"
             )
-        logger.info("Resolved current song through Spring Boot: song_id=%d", song.id)
-        return SongContext(
-            id=song.id,
-            name=song.name,
-            artists=song.artists,
-            album=song.album,
-            duration_ms=song.duration,
+        logger.info(
+            "Resolved current song through Spring Boot: song_id=%d",
+            song.song_id,
         )
+        return song

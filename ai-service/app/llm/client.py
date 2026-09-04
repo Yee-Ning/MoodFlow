@@ -47,8 +47,12 @@ OUTPUT_FORMAT = {
 }
 
 
-async def create_response(input_items: list[dict[str, Any]]) -> Response:
-    """Send one stateless Responses API request to DeepSeek."""
+async def _create_response(
+    input_items: list[dict[str, Any]],
+    *,
+    instructions: str,
+    enable_tools: bool,
+) -> Response:
     settings = get_settings()
 
     try:
@@ -57,16 +61,40 @@ async def create_response(input_items: list[dict[str, Any]]) -> Response:
             base_url=str(settings.base_url),
             timeout=settings.timeout_seconds,
         ) as client:
-            return await client.responses.create(
-                model=settings.model,
-                instructions=SYSTEM_PROMPT,
-                input=input_items,
-                reasoning={"effort": "none"},
-                max_output_tokens=settings.max_output_tokens,
-                text={"format": OUTPUT_FORMAT},
-                tools=MUSIC_TOOLS,
-                tool_choice="auto",
-            )
+            request: dict[str, Any] = {
+                "model": settings.model,
+                "instructions": instructions,
+                "input": input_items,
+                "reasoning": {"effort": "none"},
+                "max_output_tokens": settings.max_output_tokens,
+                "text": {"format": OUTPUT_FORMAT},
+            }
+            if enable_tools:
+                request["tools"] = MUSIC_TOOLS
+                request["tool_choice"] = "auto"
+
+            return await client.responses.create(**request)
     except OpenAIError:
         logger.exception("DeepSeek Responses API request failed")
         raise
+
+
+async def create_response(input_items: list[dict[str, Any]]) -> Response:
+    """Send the existing tool-enabled agent request to DeepSeek."""
+    return await _create_response(
+        input_items,
+        instructions=SYSTEM_PROMPT,
+        enable_tools=True,
+    )
+
+
+async def create_base_response(
+    input_items: list[dict[str, Any]],
+    instructions: str,
+) -> Response:
+    """Use the same model and schema without exposing any tool definitions."""
+    return await _create_response(
+        input_items,
+        instructions=instructions,
+        enable_tools=False,
+    )

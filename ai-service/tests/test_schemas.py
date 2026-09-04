@@ -10,6 +10,8 @@ class StructuredOutputSchemaTests(unittest.TestCase):
         request = ChatRequest.model_validate({"message": "Hello"})
 
         self.assertIsNone(request.context)
+        self.assertIsNone(request.thread_id)
+        self.assertIsNone(request.resolved_current_song_id())
 
     def test_chat_request_accepts_runtime_context_references(self) -> None:
         request = ChatRequest.model_validate(
@@ -26,6 +28,20 @@ class StructuredOutputSchemaTests(unittest.TestCase):
         self.assertEqual(request.context.current_song_id, 185809)
         self.assertEqual(request.context.current_playlist_id, 1001)
         self.assertEqual(request.context.page, "/library")
+        self.assertEqual(request.resolved_current_song_id(), 185809)
+
+    def test_top_level_song_id_explicitly_overrides_legacy_context(self) -> None:
+        request = ChatRequest.model_validate(
+            {
+                "message": "现在这首呢？",
+                "thread_id": " thread-1 ",
+                "current_song_id": None,
+                "context": {"current_song_id": 185809},
+            }
+        )
+
+        self.assertEqual(request.thread_id, "thread-1")
+        self.assertIsNone(request.resolved_current_song_id())
 
     def test_accepts_each_output_variant(self) -> None:
         cases = [

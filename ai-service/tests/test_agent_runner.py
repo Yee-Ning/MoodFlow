@@ -52,11 +52,13 @@ class AgentRunnerTests(unittest.TestCase):
         )
         resolved_context = ResolvedContext(
             current_song=SongContext(
-                id=185809,
+                song_id=185809,
                 name="晴天",
-                artists=["周杰伦"],
+                artist="周杰伦",
                 album="叶惠美",
-                duration_ms=269000,
+                original_lyrics="[00:01.00]故事的小黄花",
+                translated_lyrics="",
+                lyrics_status="AVAILABLE",
             )
         )
 

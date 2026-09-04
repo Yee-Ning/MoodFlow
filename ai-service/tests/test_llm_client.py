@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from pydantic import SecretStr
 
-from app.llm.client import create_response
+from app.llm.client import create_base_response, create_response
 
 
 class FakeResponse:
@@ -71,6 +71,25 @@ class CreateResponseTests(unittest.TestCase):
         self.assertEqual(output_format["type"], "json_schema")
         self.assertEqual(output_format["name"], "moodflow_ai_response")
         self.assertIn("oneOf", output_format["schema"])
+
+    def test_base_response_does_not_expose_tools(self) -> None:
+        with (
+            patch("app.llm.client.AsyncOpenAI", FakeAsyncOpenAI),
+            patch("app.llm.client.get_settings", fake_settings),
+        ):
+            asyncio.run(
+                create_base_response(
+                    [{"role": "user", "content": "分析这首歌"}],
+                    "current song assistant prompt",
+                )
+            )
+
+        request = FakeAsyncOpenAI.last_request
+        self.assertIsNotNone(request)
+        assert request is not None
+        self.assertEqual(request["instructions"], "current song assistant prompt")
+        self.assertNotIn("tools", request)
+        self.assertNotIn("tool_choice", request)
 
 
 if __name__ == "__main__":

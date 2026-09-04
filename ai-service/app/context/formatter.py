@@ -11,7 +11,7 @@ def format_runtime_context(context: ResolvedContext) -> str | None:
             [
                 "当前播放：",
                 f"歌曲：{song.name}",
-                f"歌手：{'、'.join(song.artists)}",
+                f"歌手：{song.artist}",
                 f"专辑：{song.album or '未知'}",
             ]
         )

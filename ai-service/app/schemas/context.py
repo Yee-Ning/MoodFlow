@@ -1,18 +1,29 @@
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.music import NonBlankText
 
 
 class SongContext(BaseModel):
-    """LLM-safe song metadata resolved through the Spring Boot backend."""
+    """Trusted current-song data aggregated by the Spring Boot backend."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    id: int = Field(gt=0)
+    song_id: int = Field(alias="songId", gt=0)
     name: NonBlankText
-    artists: list[NonBlankText] = Field(min_length=1)
+    artist: NonBlankText
     album: str
-    duration_ms: int = Field(ge=0)
+    original_lyrics: str = Field(alias="originalLyrics")
+    translated_lyrics: str = Field(alias="translatedLyrics")
+    lyrics_status: Literal["AVAILABLE", "NO_LYRICS", "UNAVAILABLE"] = Field(
+        alias="lyricsStatus"
+    )
+
+    @field_validator("album", "original_lyrics", "translated_lyrics")
+    @classmethod
+    def normalize_optional_text(cls, value: str) -> str:
+        return value.strip()
 
 
 class ResolvedContext(BaseModel):
@@ -25,21 +36,9 @@ class ResolvedContext(BaseModel):
     page: str | None = None
 
 
-class SpringSongData(BaseModel):
-    """Subset of the Java SongData response needed by runtime context."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    id: int = Field(gt=0)
-    name: NonBlankText
-    artists: list[NonBlankText] = Field(min_length=1)
-    album: str
-    duration: int = Field(ge=0)
-
-
-class SpringSongDetailResponse(BaseModel):
+class SpringCurrentSongContextResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     code: int
     message: str
-    data: SpringSongData
+    data: SongContext

@@ -25,6 +25,8 @@ class ChatRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     message: str = Field(min_length=1, max_length=4000)
+    thread_id: str | None = Field(default=None, min_length=1, max_length=128)
+    current_song_id: int | None = Field(default=None, gt=0)
     context: ChatContext | None = None
 
     @field_validator("message")
@@ -34,6 +36,22 @@ class ChatRequest(BaseModel):
         if not value:
             raise ValueError("message must not be blank")
         return value
+
+    @field_validator("thread_id")
+    @classmethod
+    def normalize_thread_id(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("thread_id must not be blank")
+        return normalized
+
+    def resolved_current_song_id(self) -> int | None:
+        """Prefer the new top-level field while keeping older clients compatible."""
+        if "current_song_id" in self.model_fields_set:
+            return self.current_song_id
+        return self.context.current_song_id if self.context is not None else None
 
 
 MessageText = Annotated[
