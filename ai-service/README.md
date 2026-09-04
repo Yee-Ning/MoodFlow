@@ -1,10 +1,6 @@
 # MoodFlow AI Service
 
-A FastAPI service whose current chat route runs a minimal LangGraph current-song
-assistant. It resolves trusted song metadata and lyrics through Spring Boot, then
-uses the existing DeepSeek/OpenAI-compatible settings through a tool-free
-LangChain chat model. The chat route streams model text and graph node updates as
-SSE, then deterministically wraps the final text in the existing Pydantic response.
+FastAPI + LangGraph 音乐 Agent。当前聊天路由会先通过 Spring Boot 解析正在播放的歌曲上下文，再让绑定真实业务工具的 LangChain ChatModel 自主决定直接回答或调用工具。
 
 ## Setup
 
@@ -15,8 +11,7 @@ py -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` and replace `LLM_API_KEY`. The demo expects
-`LLM_BASE_URL=https://api.deepseek.com` and `LLM_MODEL=deepseek-v4-flash`.
+复制 `.env.example` 为 `.env` 并设置 `LLM_API_KEY`。默认示例使用 OpenAI-compatible Chat Completions 接口。
 
 ## Run
 
@@ -24,65 +19,46 @@ Copy `.env.example` to `.env` and replace `LLM_API_KEY`. The demo expects
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
-## Try it
+## Agent Graph
+
+```text
+START
+  -> load_song_context
+  -> agent
+       -> tools -> agent  (最后一条 AIMessage 有 tool_calls)
+       -> END             (没有 tool_calls)
+```
+
+`MusicAgentState.messages` 继续使用 LangGraph 的 `add_messages` reducer，`InMemorySaver` 按 `thread_id` 保留 `HumanMessage`、`AIMessage(tool_calls)`、`ToolMessage` 和最终 `AIMessage`。每次 HTTP 请求只调用一次 `graph.astream`，并保持 `stream_mode=["messages", "updates"]`。
+
+工具调用最多执行 5 次。超过上限时，`agent` 返回友好终止消息。`ToolNode` 把校验、后端或网络异常转换为模型可理解的错误 `ToolMessage`，React 只接收节点名称与完成状态，不接收工具内部结果。
+
+## Tools
+
+- `search_music(keyword, limit=10)`：`GET /api/music/search`
+- `get_song_lyrics(song_id)`：`GET /api/songs/{song_id}/lyrics`
+- `get_user_playlists()`：`GET /api/user/playlists`
+- `add_song_to_playlist(playlist_id, song_id)`：`POST /api/playlists/{playlist_id}/songs/{song_id}`
+
+所有工具均只通过 Python `MusicServiceClient` 调用 Spring Boot，不直接访问网易云或数据库。搜索结果使用 `song_id/name/artists/album`，歌单结果使用 `playlist_id/name/editable`，便于后续工具继续使用真实 ID。
+
+需要登录的工具不接受 `user_id` 或 Cookie 参数。FastAPI 只从当前请求读取 `JSESSIONID`，通过 LangGraph `context_schema` 和 `ToolRuntime` 注入工具；Spring Boot 继续负责登录、歌单归属、参数和业务异常校验。
+
+## Streaming API
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8001/health
-
 curl.exe -N -X POST http://127.0.0.1:8001/api/ai/chat `
   -H "Content-Type: application/json" `
   -H "Accept: text/event-stream" `
-  -d '{"message":"这首歌表达了什么？","thread_id":"demo-thread","current_song_id":185809}'
+  -d '{"message":"搜索 Open Arms","thread_id":"demo-thread","current_song_id":null}'
 ```
 
-The old message-only and nested `context` bodies remain valid for compatibility.
-New clients should send the current song reference at the top level:
-
-```powershell
-curl.exe -N -X POST http://127.0.0.1:8001/api/ai/chat `
-  -H "Content-Type: application/json" `
-  -H "Accept: text/event-stream" `
-  -d '{"message":"那第二段呢？","thread_id":"demo-thread","current_song_id":185809}'
-```
-
-The SSE event names are `message`, `update`, `final`, `error`, and `done`. The
-graph is `START -> load_song_context -> song_assistant -> END` and each request
-executes it exactly once with `stream_mode=["messages", "updates"]`. Every request
-explicitly overwrites `current_song_id` and `song_context`, while an in-memory
-checkpointer retains message history by `thread_id`. The AI service resolves the
-song through Spring Boot `GET /api/songs/{id}/context`; it never calls NetEase or
-the music database directly. Lyrics are length-limited and treated as untrusted
-analysis data in the model prompt, and node updates never include that context.
+SSE 事件为 `message`、`update`、`final`、`error` 和 `done`。工具链请求的 `update` 通常依次出现 `load_song_context`、`agent`、`tools`、`agent`。
 
 ## Test
 
-The tests mock the model call and do not consume API quota.
+测试使用脚本化模型和 MockTransport，不消耗模型额度，也不会执行真实写操作。
 
 ```powershell
 python -m unittest discover -s tests -v
 ```
-
-## Try the music search tool
-
-Start the local NetEase API on port `3000` and the MoodFlow Spring Boot backend
-on port `8080`, then run:
-
-```powershell
-python -c "import asyncio; from app.tools.music import search_music; print(asyncio.run(search_music('周杰伦')).model_dump_json(indent=2))"
-```
-
-The tool calls the Spring Boot endpoint `GET /api/music/search`; it never calls
-the NetEase API directly. This direct command is only for isolated tool testing.
-
-## Existing Tool Calling Agent Loop
-
-`search_music` is exposed to DeepSeek as a function definition generated from
-`SearchMusicArgs.model_json_schema()`. The agent validates returned arguments,
-executes the registered Python function, and sends a JSON `function_call_output`
-with the same `call_id` back to DeepSeek. DeepSeek is stateless, so the service
-resends the user input, every response output item, and every tool result on each
-step. The loop is capped at five steps.
-
-This code is retained for a later module, but it is not connected to the current
-song graph or `/api/ai/chat`. The current Song Assistant calls a LangChain chat
-model built from the same settings without any tool definitions.

@@ -103,7 +103,7 @@ class MessageStreamEvent(BaseModel):
 
 class UpdateStreamEvent(BaseModel):
     type: Literal["update"] = "update"
-    node: Literal["load_song_context", "song_assistant"]
+    node: Literal["load_song_context", "agent", "tools"]
     status: Literal["completed"] = "completed"
 
 

@@ -41,7 +41,7 @@ class ApiTests(unittest.TestCase):
             yield UpdateStreamEvent(node="load_song_context")
             yield MessageStreamEvent(delta="你好")
             yield MessageStreamEvent(delta="，我是 MoodFlow AI。")
-            yield UpdateStreamEvent(node="song_assistant")
+            yield UpdateStreamEvent(node="agent")
             yield FinalStreamEvent(
                 response=ChatOutput(
                     type="chat",
@@ -75,6 +75,7 @@ class ApiTests(unittest.TestCase):
                 "message": "你好，你是谁？",
                 "thread_id": "thread-api-1",
                 "current_song_id": None,
+                "session_cookie": None,
             },
         )
 
@@ -106,23 +107,43 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(captured["current_song_id"], 185809)
+        self.assertIsNone(captured["session_cookie"])
         self.assertEqual(parse_sse(response.text)[-1][0], "done")
 
-    def test_chat_without_current_song_returns_friendly_final_event(self) -> None:
-        response = self.client.post(
-            "/api/ai/chat",
-            json={
-                "message": "分析一下这首歌",
-                "thread_id": "thread-no-song-api-stream",
-                "current_song_id": None,
-            },
-        )
+    def test_chat_forwards_only_spring_session_to_graph_runtime(self) -> None:
+        captured: dict[str, object] = {}
+
+        async def stream_graph(**kwargs):
+            captured.update(kwargs)
+            yield FinalStreamEvent(
+                response=ChatOutput(
+                    type="chat",
+                    message="可以继续处理音乐请求。",
+                    search_query=None,
+                )
+            )
+
+        with patch("app.api.chat.stream_current_song_assistant", stream_graph):
+            self.client.cookies.set("JSESSIONID", "spring-session")
+            self.client.cookies.set("tracking", "do-not-forward")
+            try:
+                response = self.client.post(
+                    "/api/ai/chat",
+                    json={
+                        "message": "列出我的歌单",
+                        "thread_id": "thread-auth",
+                        "current_song_id": None,
+                    },
+                )
+            finally:
+                self.client.cookies.clear()
 
         self.assertEqual(response.status_code, 200)
         events = parse_sse(response.text)
         final = next(data for event, data in events if event == "final")
-        self.assertIn("先播放一首歌曲", final["message"])
+        self.assertIn("继续处理", final["message"])
         self.assertEqual(events[-1], ("done", {}))
+        self.assertEqual(captured["session_cookie"], "JSESSIONID=spring-session")
 
     def test_streaming_failure_emits_error_and_done(self) -> None:
         async def failing_stream(**kwargs):

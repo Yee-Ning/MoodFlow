@@ -10,6 +10,7 @@ function AiThinking({ status }: AiThinkingProps) {
     sending: '正在发送',
     'loading-context': '正在读取当前歌曲',
     generating: '正在生成回答',
+    'using-tools': '正在调用音乐服务',
     finalizing: '正在整理回答',
     idle: '即将完成',
     error: '暂时无法完成',

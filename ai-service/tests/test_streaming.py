@@ -47,7 +47,30 @@ class CountingGraph:
             "type": "updates",
             "ns": (),
             "data": {
-                "song_assistant": {
+                "agent": {
+                    "response": None,
+                }
+            },
+        }
+        yield {
+            "type": "updates",
+            "ns": (),
+            "data": {
+                "tools": {
+                    "messages": [
+                        {
+                            "content": "不能发送到浏览器的工具结果",
+                            "session_cookie": "JSESSIONID=secret",
+                        }
+                    ]
+                }
+            },
+        }
+        yield {
+            "type": "updates",
+            "ns": (),
+            "data": {
+                "agent": {
                     "response": {
                         "type": "chat",
                         "message": "完成",
@@ -98,7 +121,7 @@ class StreamingTests(unittest.TestCase):
             [(event.node, event.status) for event in updates],
             [
                 ("load_song_context", "completed"),
-                ("song_assistant", "completed"),
+                ("agent", "completed"),
             ],
         )
         self.assertEqual(final.response.message, "分段流式回答")
@@ -131,6 +154,14 @@ class StreamingTests(unittest.TestCase):
         self.assertEqual(graph.stream_mode, ["messages", "updates"])
         self.assertEqual(graph.version, "v2")
         self.assertIsInstance(events[-1], FinalStreamEvent)
+        updates = [event for event in events if isinstance(event, UpdateStreamEvent)]
+        self.assertEqual(
+            [event.node for event in updates],
+            ["load_song_context", "agent", "tools", "agent"],
+        )
+        serialized = "".join(event.model_dump_json() for event in updates)
+        self.assertNotIn("工具结果", serialized)
+        self.assertNotIn("JSESSIONID", serialized)
 
 
 if __name__ == "__main__":

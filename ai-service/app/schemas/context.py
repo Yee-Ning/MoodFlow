@@ -1,8 +1,16 @@
+from dataclasses import dataclass
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.music import NonBlankText
+
+
+@dataclass(frozen=True)
+class MusicAgentContext:
+    """Per-request trusted dependencies that must never enter model tool args."""
+
+    session_cookie: str | None = None
 
 
 class SongContext(BaseModel):

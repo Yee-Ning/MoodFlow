@@ -1,12 +1,13 @@
 import type { SongSummary } from './music'
 
 export type AiChatRole = 'user' | 'assistant'
-export type AiChatNode = 'load_song_context' | 'song_assistant'
+export type AiChatNode = 'load_song_context' | 'agent' | 'tools'
 export type AiChatStatus =
   | 'idle'
   | 'sending'
   | 'loading-context'
   | 'generating'
+  | 'using-tools'
   | 'finalizing'
   | 'error'
 

@@ -42,11 +42,14 @@ try {
   globalThis.fetch = async (_url, init) => {
     requestBody = JSON.parse(String(init?.body))
     assert.equal(init?.headers.Accept, 'text/event-stream')
+    assert.equal(init?.credentials, 'include')
     return streamResponse([
       sse('update', { node: 'load_song_context', status: 'completed' }),
+      sse('update', { node: 'agent', status: 'completed' }),
+      sse('update', { node: 'tools', status: 'completed' }),
       sse('message', { delta: '逐步' }),
       sse('message', { delta: '生成回答' }),
-      sse('update', { node: 'song_assistant', status: 'completed' }),
+      sse('update', { node: 'agent', status: 'completed' }),
       sse('final', { type: 'chat', message: '逐步生成回答', search_query: null }),
       sse('done', {}),
     ])

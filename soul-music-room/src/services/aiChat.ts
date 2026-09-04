@@ -107,7 +107,7 @@ function parseSseEvent(block: string): AiChatStreamEvent | null {
   }
   if (
     eventName === 'update'
-    && ['load_song_context', 'song_assistant'].includes(String(candidate.node))
+    && ['load_song_context', 'agent', 'tools'].includes(String(candidate.node))
     && candidate.status === 'completed'
   ) {
     return {
@@ -135,6 +135,7 @@ export async function* streamAiChatMessage(
   try {
     response = await fetch(`${AI_API_BASE_URL}/api/ai/chat`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'text/event-stream',
         'Content-Type': 'application/json',

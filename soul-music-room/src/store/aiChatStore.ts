@@ -123,9 +123,11 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
           }))
         } else if (event.type === 'update') {
           set({
-            status: event.node === 'load_song_context'
-              ? 'generating'
-              : 'finalizing',
+            status: event.node === 'tools'
+              ? 'using-tools'
+              : event.node === 'agent'
+                ? 'finalizing'
+                : 'generating',
           })
         } else if (event.type === 'final') {
           receivedFinal = true
