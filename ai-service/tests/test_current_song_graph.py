@@ -22,7 +22,8 @@ def song(song_id: int, name: str) -> SongContext:
 
 
 async def invoke(graph, thread_id: str, message: str, song_id: int | None):
-    return await graph.ainvoke(
+    result = None
+    async for part in graph.astream(
         {
             "messages": [HumanMessage(content=message)],
             "current_song_id": song_id,
@@ -30,7 +31,13 @@ async def invoke(graph, thread_id: str, message: str, song_id: int | None):
             "response": None,
         },
         {"configurable": {"thread_id": thread_id}},
-    )
+        stream_mode="values",
+        version="v2",
+    ):
+        result = part["data"]
+    if result is None:
+        raise AssertionError("Graph did not return a final state")
+    return result
 
 
 class CurrentSongGraphTests(unittest.TestCase):

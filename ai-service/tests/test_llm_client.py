@@ -1,11 +1,11 @@
 import asyncio
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import sentinel, patch
 
 from pydantic import SecretStr
 
-from app.llm.client import create_base_response, create_response
+from app.llm.client import create_base_response, create_response, get_base_chat_model
 
 
 class FakeResponse:
@@ -46,6 +46,10 @@ def fake_settings() -> SimpleNamespace:
 class CreateResponseTests(unittest.TestCase):
     def setUp(self) -> None:
         FakeAsyncOpenAI.last_request = None
+        get_base_chat_model.cache_clear()
+
+    def tearDown(self) -> None:
+        get_base_chat_model.cache_clear()
 
     def test_sends_one_stateless_responses_api_request(self) -> None:
         input_items = [{"role": "user", "content": "你好"}]
@@ -90,6 +94,27 @@ class CreateResponseTests(unittest.TestCase):
         self.assertEqual(request["instructions"], "current song assistant prompt")
         self.assertNotIn("tools", request)
         self.assertNotIn("tool_choice", request)
+
+    def test_langchain_chat_model_reuses_existing_settings_without_tools(self) -> None:
+        with (
+            patch("app.llm.client.get_settings", fake_settings),
+            patch(
+                "app.llm.client.ChatOpenAI",
+                return_value=sentinel.chat_model,
+            ) as chat_openai,
+        ):
+            model = get_base_chat_model()
+
+        self.assertIs(model, sentinel.chat_model)
+        kwargs = chat_openai.call_args.kwargs
+        self.assertEqual(kwargs["api_key"].get_secret_value(), "test-key")
+        self.assertEqual(kwargs["base_url"], "https://api.deepseek.com")
+        self.assertEqual(kwargs["model"], "deepseek-v4-flash")
+        self.assertEqual(kwargs["timeout"], 60)
+        self.assertEqual(kwargs["max_completion_tokens"], 1024)
+        self.assertTrue(kwargs["streaming"])
+        self.assertFalse(kwargs["use_responses_api"])
+        self.assertNotIn("tools", kwargs)
 
 
 if __name__ == "__main__":

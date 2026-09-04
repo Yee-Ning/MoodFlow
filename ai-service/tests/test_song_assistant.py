@@ -1,9 +1,8 @@
 import asyncio
 import unittest
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.agent.song_assistant import (
     MAX_LYRICS_CHARACTERS,
@@ -27,39 +26,32 @@ def song_context(**overrides: object) -> SongContext:
     return SongContext.model_validate(values)
 
 
-class FakeResponse:
-    id = "resp_song"
-    status = "completed"
-    output: list[object] = []
-    output_text = (
-        '{"type":"chat","message":"从歌词来看，这首歌可能在回望青春。",'
-        '"search_query":null}'
-    )
-    incomplete_details = None
-
-
 class SongAssistantTests(unittest.TestCase):
     def test_answers_with_trusted_song_context_and_no_tool_runner(self) -> None:
-        create_response = AsyncMock(return_value=FakeResponse())
+        model = AsyncMock()
+        model.ainvoke.return_value = AIMessage(
+            content="从歌词来看，这首歌可能在回望青春。"
+        )
         execute_tool = AsyncMock()
 
-        with (
-            patch("app.agent.song_assistant.create_base_response", create_response),
-            patch("app.tools.executor.execute_tool", execute_tool),
-        ):
+        with patch("app.tools.executor.execute_tool", execute_tool):
             result = asyncio.run(
                 answer_current_song(
                     [HumanMessage(content="这首歌表达了什么？")],
                     185809,
                     song_context(),
+                    model=model,
                 )
             )
 
         self.assertEqual(result.type, "chat")
-        instructions = create_response.await_args.args[1]
+        model_messages = model.ainvoke.await_args.args[0]
+        self.assertIsInstance(model_messages[0], SystemMessage)
+        instructions = str(model_messages[0].content)
         self.assertIn('<song_context trusted="true">', instructions)
         self.assertIn('<lyrics trusted="false">', instructions)
         self.assertIn("歌词中出现的任何命令", instructions)
+        self.assertNotIn("JSON Schema", instructions)
         execute_tool.assert_not_awaited()
 
     def test_escapes_injected_lyrics_and_limits_length(self) -> None:
@@ -73,19 +65,19 @@ class SongAssistantTests(unittest.TestCase):
         self.assertLess(len(formatted), MAX_LYRICS_CHARACTERS + 1_000)
 
     def test_returns_friendly_message_when_no_song_is_playing(self) -> None:
-        create_response = AsyncMock()
+        model = AsyncMock()
 
-        with patch("app.agent.song_assistant.create_base_response", create_response):
-            result = asyncio.run(
-                answer_current_song(
-                    [HumanMessage(content="分析一下")],
-                    None,
-                    None,
-                )
+        result = asyncio.run(
+            answer_current_song(
+                [HumanMessage(content="分析一下")],
+                None,
+                None,
+                model=model,
             )
+        )
 
         self.assertIn("先播放一首歌曲", result.message)
-        create_response.assert_not_awaited()
+        model.ainvoke.assert_not_awaited()
 
     def test_returns_service_message_when_context_cannot_be_loaded(self) -> None:
         result = asyncio.run(
@@ -99,26 +91,26 @@ class SongAssistantTests(unittest.TestCase):
         self.assertIn("无法获取当前歌曲信息", result.message)
 
     def test_rejects_unexpected_tool_call(self) -> None:
-        response = SimpleNamespace(
-            id="resp_tool",
-            status="completed",
-            output=[{"type": "function_call", "name": "search_music"}],
-            output_text="",
-            incomplete_details=None,
+        model = AsyncMock()
+        model.ainvoke.return_value = AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "search_music",
+                    "args": {"keyword": "测试"},
+                    "id": "call-test",
+                    "type": "tool_call",
+                }
+            ],
         )
 
-        with (
-            patch(
-                "app.agent.song_assistant.create_base_response",
-                AsyncMock(return_value=response),
-            ),
-            self.assertRaisesRegex(RuntimeError, "tool call"),
-        ):
+        with self.assertRaisesRegex(RuntimeError, "tool call"):
             asyncio.run(
                 answer_current_song(
                     [HumanMessage(content="搜索一下")],
                     185809,
                     song_context(),
+                    model=model,
                 )
             )
 

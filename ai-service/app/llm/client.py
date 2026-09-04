@@ -1,6 +1,9 @@
 import logging
+from functools import lru_cache
 from typing import Any
 
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_openai import ChatOpenAI
 from openai import AsyncOpenAI, OpenAIError
 from openai.types.responses import Response
 
@@ -45,6 +48,22 @@ OUTPUT_FORMAT = {
     "name": "moodflow_ai_response",
     "schema": OUTPUT_SCHEMA,
 }
+
+
+@lru_cache
+def get_base_chat_model() -> BaseChatModel:
+    """Build the tool-free LangChain model from the existing LLM settings."""
+    settings = get_settings()
+    return ChatOpenAI(
+        api_key=settings.api_key,
+        base_url=str(settings.base_url),
+        model=settings.model,
+        timeout=settings.timeout_seconds,
+        max_completion_tokens=settings.max_output_tokens,
+        streaming=True,
+        stream_usage=False,
+        use_responses_api=False,
+    )
 
 
 async def _create_response(

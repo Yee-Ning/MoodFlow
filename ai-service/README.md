@@ -2,8 +2,9 @@
 
 A FastAPI service whose current chat route runs a minimal LangGraph current-song
 assistant. It resolves trusted song metadata and lyrics through Spring Boot, then
-uses DeepSeek through the Responses API with JSON Schema output and local Pydantic
-validation.
+uses the existing DeepSeek/OpenAI-compatible settings through a tool-free
+LangChain chat model. The chat route streams model text and graph node updates as
+SSE, then deterministically wraps the final text in the existing Pydantic response.
 
 ## Setup
 
@@ -28,30 +29,30 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8001/health
 
-Invoke-RestMethod `
-  -Method Post `
-  -Uri http://127.0.0.1:8001/api/ai/chat `
-  -ContentType 'application/json' `
-  -Body '{"message":"这首歌表达了什么？","thread_id":"demo-thread","current_song_id":185809}'
+curl.exe -N -X POST http://127.0.0.1:8001/api/ai/chat `
+  -H "Content-Type: application/json" `
+  -H "Accept: text/event-stream" `
+  -d '{"message":"这首歌表达了什么？","thread_id":"demo-thread","current_song_id":185809}'
 ```
 
 The old message-only and nested `context` bodies remain valid for compatibility.
 New clients should send the current song reference at the top level:
 
 ```powershell
-Invoke-RestMethod `
-  -Method Post `
-  -Uri http://127.0.0.1:8001/api/ai/chat `
-  -ContentType 'application/json' `
-  -Body '{"message":"那第二段呢？","thread_id":"demo-thread","current_song_id":185809}'
+curl.exe -N -X POST http://127.0.0.1:8001/api/ai/chat `
+  -H "Content-Type: application/json" `
+  -H "Accept: text/event-stream" `
+  -d '{"message":"那第二段呢？","thread_id":"demo-thread","current_song_id":185809}'
 ```
 
-The graph is `START -> load_song_context -> song_assistant -> END`. Every invoke
+The SSE event names are `message`, `update`, `final`, `error`, and `done`. The
+graph is `START -> load_song_context -> song_assistant -> END` and each request
+executes it exactly once with `stream_mode=["messages", "updates"]`. Every request
 explicitly overwrites `current_song_id` and `song_context`, while an in-memory
 checkpointer retains message history by `thread_id`. The AI service resolves the
 song through Spring Boot `GET /api/songs/{id}/context`; it never calls NetEase or
 the music database directly. Lyrics are length-limited and treated as untrusted
-analysis data in the model prompt.
+analysis data in the model prompt, and node updates never include that context.
 
 ## Test
 
@@ -83,5 +84,5 @@ resends the user input, every response output item, and every tool result on eac
 step. The loop is capped at five steps.
 
 This code is retained for a later module, but it is not connected to the current
-song graph or `/api/ai/chat`. The current Song Assistant calls the same base model
-without any tool definitions.
+song graph or `/api/ai/chat`. The current Song Assistant calls a LangChain chat
+model built from the same settings without any tool definitions.

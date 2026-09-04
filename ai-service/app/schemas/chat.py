@@ -94,3 +94,22 @@ StructuredOutput = Annotated[
 STRUCTURED_OUTPUT_ADAPTER = TypeAdapter(StructuredOutput)
 
 ChatResponse = StructuredOutput
+
+
+class MessageStreamEvent(BaseModel):
+    type: Literal["message"] = "message"
+    delta: str = Field(min_length=1)
+
+
+class UpdateStreamEvent(BaseModel):
+    type: Literal["update"] = "update"
+    node: Literal["load_song_context", "song_assistant"]
+    status: Literal["completed"] = "completed"
+
+
+class FinalStreamEvent(BaseModel):
+    type: Literal["final"] = "final"
+    response: StructuredOutput
+
+
+SongAssistantStreamEvent = MessageStreamEvent | UpdateStreamEvent | FinalStreamEvent

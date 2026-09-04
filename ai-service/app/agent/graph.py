@@ -1,4 +1,4 @@
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Any
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
@@ -12,7 +12,11 @@ from app.context.music import MusicContextProvider
 from app.schemas.chat import (
     STRUCTURED_OUTPUT_ADAPTER,
     ChatContext,
+    FinalStreamEvent,
+    MessageStreamEvent,
+    SongAssistantStreamEvent,
     StructuredOutput,
+    UpdateStreamEvent,
 )
 from app.schemas.context import SongContext
 
@@ -76,12 +80,15 @@ def create_current_song_graph(
 CURRENT_SONG_GRAPH = create_current_song_graph()
 
 
-async def run_current_song_assistant(
+async def stream_current_song_assistant(
     message: str,
     thread_id: str,
     current_song_id: int | None,
-) -> StructuredOutput:
-    result = await CURRENT_SONG_GRAPH.ainvoke(
+    *,
+    graph: Any | None = None,
+) -> AsyncIterator[SongAssistantStreamEvent]:
+    final_response: StructuredOutput | None = None
+    async for part in (graph or CURRENT_SONG_GRAPH).astream(
         {
             "messages": [HumanMessage(content=message)],
             "current_song_id": current_song_id,
@@ -89,8 +96,33 @@ async def run_current_song_assistant(
             "response": None,
         },
         {"configurable": {"thread_id": thread_id}},
-    )
-    response = result.get("response")
-    if response is None:
+        stream_mode=["messages", "updates"],
+        version="v2",
+    ):
+        if part["type"] == "messages":
+            message_chunk, metadata = part["data"]
+            if (
+                metadata.get("langgraph_node") != "song_assistant"
+                or metadata.get("ls_integration") != "langchain_chat_model"
+            ):
+                continue
+            delta = str(message_chunk.text)
+            if delta:
+                yield MessageStreamEvent(delta=delta)
+            continue
+
+        if part["type"] != "updates":
+            continue
+
+        for node, update in part["data"].items():
+            if node not in {"load_song_context", "song_assistant"}:
+                continue
+            yield UpdateStreamEvent(node=node, status="completed")
+            if node == "song_assistant" and isinstance(update, dict):
+                response = update.get("response")
+                if response is not None:
+                    final_response = STRUCTURED_OUTPUT_ADAPTER.validate_python(response)
+
+    if final_response is None:
         raise RuntimeError("Song assistant graph returned no response")
-    return STRUCTURED_OUTPUT_ADAPTER.validate_python(response)
+    yield FinalStreamEvent(response=final_response)
