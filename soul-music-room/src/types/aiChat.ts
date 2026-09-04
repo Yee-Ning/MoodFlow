@@ -14,10 +14,3 @@ export interface AiChatMessage {
   recommendations?: AiSongRecommendation[]
   createdAt: number
 }
-
-export interface AiChatContext {
-  current_song_id?: number | null
-  current_playlist_id?: number | null
-  page?: string | null
-}
-

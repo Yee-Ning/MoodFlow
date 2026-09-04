@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { sendAiChatMessage } from '../services/aiChat'
 import type {
-  AiChatContext,
   AiChatMessage,
   AiChatStatus,
 } from '../types/aiChat'
@@ -15,9 +14,10 @@ interface AiChatState {
   status: AiChatStatus
   toggleOpen: () => void
   close: () => void
+  clearConversation: () => void
   clearError: () => void
-  sendMessage: (message: string, context?: AiChatContext) => Promise<void>
-  retryLastMessage: (context?: AiChatContext) => Promise<void>
+  sendMessage: (message: string, currentSongId: number | null) => Promise<void>
+  retryLastMessage: (currentSongId: number | null) => Promise<void>
 }
 
 function createMessageId(prefix: string) {
@@ -35,20 +35,30 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
   messages: [],
   isOpen: false,
   isSending: false,
-  conversationId: null,
+  conversationId: createConversationId(),
   error: '',
   status: 'idle',
 
   toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
   close: () => set({ isOpen: false }),
+  clearConversation: () => {
+    if (get().isSending) return
+    set({
+      messages: [],
+      conversationId: createConversationId(),
+      error: '',
+      status: 'idle',
+    })
+  },
   clearError: () => set((state) => ({
     error: '',
     status: state.isSending ? state.status : 'idle',
   })),
 
-  sendMessage: async (rawMessage, context) => {
+  sendMessage: async (rawMessage, currentSongId) => {
     const message = rawMessage.trim()
     if (!message || get().isSending) return
+    const threadId = get().conversationId ?? createConversationId()
 
     const userMessage: AiChatMessage = {
       id: createMessageId('user'),
@@ -62,14 +72,18 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
       isSending: true,
       status: 'sending',
       error: '',
-      conversationId: state.conversationId ?? createConversationId(),
+      conversationId: state.conversationId ?? threadId,
     }))
 
     await Promise.resolve()
     if (get().isSending) set({ status: 'loading' })
 
     try {
-      const response = await sendAiChatMessage({ message, context })
+      const response = await sendAiChatMessage({
+        message,
+        thread_id: threadId,
+        current_song_id: currentSongId,
+      })
       const assistantMessage: AiChatMessage = {
         id: createMessageId('assistant'),
         role: 'assistant',
@@ -83,7 +97,6 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
         isSending: false,
         status: 'idle',
         error: '',
-        conversationId: response.conversation_id ?? state.conversationId,
       }))
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
@@ -95,7 +108,7 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
     }
   },
 
-  retryLastMessage: async (context) => {
+  retryLastMessage: async (currentSongId) => {
     if (get().isSending) return
     const messages = get().messages
     const lastUserIndex = messages.findLastIndex((message) => message.role === 'user')
@@ -106,7 +119,6 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
       error: '',
       status: 'idle',
     })
-    await get().sendMessage(lastUserMessage.content, context)
+    await get().sendMessage(lastUserMessage.content, currentSongId)
   },
 }))
-

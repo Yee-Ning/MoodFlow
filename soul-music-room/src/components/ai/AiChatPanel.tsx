@@ -1,6 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAiChatStore } from '../../store/aiChatStore'
 import { usePlayerStore } from '../../store/playerStore'
 import LiquidGlassSurface from '../liquid-glass/LiquidGlassSurface'
@@ -10,10 +9,12 @@ import AiChatTrigger from './AiChatTrigger'
 import AiMessageList from './AiMessageList'
 import './ai-chat.css'
 
+function getCurrentSongId() {
+  return usePlayerStore.getState().currentSong?.id ?? null
+}
+
 function AiChatPanel() {
-  const location = useLocation()
   const reduceMotion = Boolean(useReducedMotion())
-  const currentSongId = usePlayerStore((state) => state.currentSong?.id ?? null)
   const {
     messages,
     isOpen,
@@ -22,18 +23,10 @@ function AiChatPanel() {
     status,
     toggleOpen,
     close,
+    clearConversation,
     sendMessage,
     retryLastMessage,
   } = useAiChatStore()
-
-  const context = useMemo(() => {
-    const playlistMatch = location.pathname.match(/^\/playlist\/(\d+)/)
-    return {
-      current_song_id: currentSongId,
-      current_playlist_id: playlistMatch ? Number(playlistMatch[1]) : null,
-      page: location.pathname,
-    }
-  }, [currentSongId, location.pathname])
 
   useEffect(() => {
     if (!isOpen) return
@@ -82,18 +75,22 @@ function AiChatPanel() {
                 interactive
                 refract
               >
-                <AiChatHeader onClose={close} />
+                <AiChatHeader
+                  resetDisabled={isSending || messages.length === 0}
+                  onReset={clearConversation}
+                  onClose={close}
+                />
                 <AiMessageList
                   messages={messages}
                   status={status}
                   isSending={isSending}
                   error={error}
-                  onSuggestion={(suggestion) => void sendMessage(suggestion, context)}
-                  onRetry={() => void retryLastMessage(context)}
+                  onSuggestion={(suggestion) => void sendMessage(suggestion, getCurrentSongId())}
+                  onRetry={() => void retryLastMessage(getCurrentSongId())}
                 />
                 <AiChatInput
                   disabled={isSending}
-                  onSend={(message) => void sendMessage(message, context)}
+                  onSend={(message) => void sendMessage(message, getCurrentSongId())}
                 />
               </LiquidGlassSurface>
             </motion.aside>
@@ -105,4 +102,3 @@ function AiChatPanel() {
 }
 
 export default AiChatPanel
-

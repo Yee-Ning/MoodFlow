@@ -1,10 +1,11 @@
-import type { AiChatContext, AiSongRecommendation } from '../types/aiChat'
+import type { AiSongRecommendation } from '../types/aiChat'
 
 const AI_API_BASE_URL = (import.meta.env.VITE_AI_API_BASE_URL ?? '').replace(/\/$/, '')
 
 export interface ChatRequest {
   message: string
-  context?: AiChatContext
+  thread_id: string
+  current_song_id: number | null
 }
 
 export type AiResponseType = 'chat' | 'music_search' | 'music_recommendation'

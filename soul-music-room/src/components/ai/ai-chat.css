@@ -107,12 +107,14 @@
 .ai-chat-header__copy strong { font-size: 0.94rem; font-weight: 630; letter-spacing: -0.025em; }
 .ai-chat-header__copy small { display: flex; align-items: center; gap: 6px; color: rgba(215, 231, 237, 0.43); font-size: 0.65rem; font-weight: 490; }
 .ai-chat-header__copy i { width: 5px; height: 5px; border-radius: 50%; background: #8be0c9; box-shadow: 0 0 9px rgba(121, 223, 196, 0.68); }
+.ai-chat-header__actions { display: flex; align-items: center; gap: 8px; }
 .ai-chat-header__close,
 .ai-chat-input button,
 .ai-song-card button { padding: 0; border: 0; display: grid; place-items: center; color: inherit; cursor: pointer; }
 .ai-chat-header__close { width: 36px; height: 36px; border-radius: 14px; color: rgba(228, 239, 243, 0.57); background: rgba(255, 255, 255, 0.035); transition: color 160ms ease, background-color 160ms ease, transform 160ms ease; }
 .ai-chat-header__close:hover { color: #fff; background: rgba(255, 255, 255, 0.07); transform: scale(1.035); }
 .ai-chat-header__close:active { transform: scale(0.92); }
+.ai-chat-header__close:disabled { opacity: 0.34; cursor: default; transform: none; }
 
 .ai-message-list {
   min-height: 0;
