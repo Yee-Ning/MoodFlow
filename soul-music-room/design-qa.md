@@ -95,3 +95,55 @@ Blocked for the same reason. The intended focused regions were the right-side tr
 - Resolve any P0/P1/P2 findings, then repeat the comparison.
 
 final result: blocked
+
+---
+
+## AI Chat Draggable Trigger and Panel Material
+
+Date: 2026-09-04
+
+### Evidence
+
+- Source visual truth (closed trigger): `C:/Users/33994/AppData/Local/Temp/codex-clipboard-9b0a5e05-ea59-42cf-aa58-5ef20e13b7fc.png` (594 × 263 px, cropped desktop state).
+- Source visual truth (open panel readability issue): `C:/Users/33994/AppData/Local/Temp/codex-clipboard-ae2353c1-26cb-41a0-9126-5cc9ccb4c6cd.png` (954 × 1385 px, desktop open-chat state).
+- Implementation URL: `http://127.0.0.1:5173/` (HTTP 200).
+- Implementation screenshot: unavailable because the authorized in-app browser bridge rejected the current host connection.
+- Intended comparison viewport: the same desktop viewport and open/closed states represented by the supplied captures.
+- CSS size and device density normalization: unavailable without a browser-rendered implementation capture.
+
+### Full-view comparison evidence
+
+Blocked. Both supplied source captures were opened and inspected, but no implementation screenshot could be captured in an authorized browser surface. HTTP availability, static source checks, lint, and build results do not substitute for rendered comparison evidence.
+
+### Focused region comparison evidence
+
+Blocked. Intended focused regions were the draggable trigger at viewport edges, the trigger's pressed/open state, and the open panel over the detailed star-field background.
+
+### Required fidelity surfaces
+
+- Fonts and typography: visible font family, sizing, weight, and chat copy were intentionally unchanged; rendered wrapping and antialiasing remain unverified.
+- Spacing and layout rhythm: the 52 px desktop / 46 px responsive trigger dimensions and existing panel geometry were preserved; drag bounds enforce a 10 px viewport gap, but rendered edge placement remains unverified.
+- Colors and visual tokens: the existing near-black cyan glass palette was retained. Panel surface opacity changed from `rgba(4, 9, 13, 0.52)` to `rgba(4, 10, 14, 0.76)`, with lower highlight intensity and deeper existing-style shadows.
+- Image quality and asset fidelity: the existing page background and Lucide trigger icons were reused without raster substitution or new assets.
+- Copy and content: visible UI copy was preserved; only the trigger's accessible label and tooltip now explain that it can be dragged.
+
+### Findings
+
+- [P1] Browser-rendered interaction and material verification is unavailable.
+  Location: AI trigger and open chat panel.
+  Evidence: the local app responds with HTTP 200, but the browser bridge rejected capture and interaction control.
+  Impact: real pointer drag behavior, exact compositing against the animated background, responsive placement, and console state cannot be certified visually.
+  Fix: open the running local app in an authorized browser, drag the trigger to all four edges, distinguish drag from click, reload to verify persistence, and capture the open panel at the source viewport.
+
+### Comparison history
+
+- Initial pass: blocked before implementation capture. No visual pass is claimed from code inspection alone.
+
+### Implementation checklist
+
+- Capture closed trigger and open panel at the source desktop viewport.
+- Test mouse, touch/pointer, click suppression after drag, viewport-edge clamping, reload persistence, and resize clamping.
+- Inspect the panel over the animated star field and tune opacity only if the background is either still distracting or excessively hidden.
+- Check responsive trigger placement and browser console errors.
+
+final result: blocked

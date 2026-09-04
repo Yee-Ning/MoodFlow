@@ -17,6 +17,11 @@ assert.match(
   'message history must scroll vertically inside the constrained grid row',
 )
 assert.match(
+  css,
+  /--saved-panel-glass-bg:\s*rgba\(4,\s*10,\s*14,\s*0\.76\);/,
+  'chat panel must retain a sufficiently opaque dark glass surface over detailed backgrounds',
+)
+assert.match(
   messageList,
   /ref=\{listRef\}[\s\S]*onScroll=\{handleScroll\}/,
   'message history must track its own scroll position',

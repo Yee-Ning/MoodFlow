@@ -21,7 +21,11 @@
     inset 0 -1px 0 rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(18px) saturate(1.5) brightness(1.08);
   -webkit-backdrop-filter: blur(18px) saturate(1.5) brightness(1.08);
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: left, top, transform;
   transform: translateY(-50%);
   transition: right 460ms cubic-bezier(0.22, 0.8, 0.22, 1), background-color 180ms ease;
 }
@@ -29,6 +33,12 @@
 .ai-chat-trigger.is-open { right: 454px; }
 .ai-chat-trigger:hover { transform: translateY(-50%) scale(1.04); }
 .ai-chat-trigger:active { transform: translateY(-50%) scale(0.94); }
+.ai-chat-trigger.is-positioned,
+.ai-chat-trigger.is-positioned.is-open { right: auto; transform: none; }
+.ai-chat-trigger.is-positioned:hover { transform: scale(1.04); }
+.ai-chat-trigger.is-positioned:active { transform: scale(0.94); }
+.ai-chat-trigger.is-dragging,
+.ai-chat-trigger.is-positioned.is-dragging { cursor: grabbing; transform: scale(1.02); transition: none; }
 .ai-chat-trigger__label { position: absolute; bottom: 5px; font-size: 0.43rem; font-weight: 700; letter-spacing: 0.1em; opacity: 0.5; }
 .ai-chat-trigger__glow { width: 24px; height: 24px; position: absolute; border-radius: 50%; background: rgba(160, 230, 237, 0.15); filter: blur(9px); }
 .ai-chat-trigger svg { position: relative; transform: translateY(-3px); }
@@ -58,14 +68,15 @@
 .ai-chat-panel {
   width: 100%;
   height: 100%;
-  --saved-panel-glass-bg: rgba(4, 9, 13, 0.52);
-  --saved-panel-glass-filter: blur(28px) saturate(1.52) brightness(0.86);
+  --saved-panel-glass-bg: rgba(4, 10, 14, 0.76);
+  --saved-panel-glass-filter: blur(32px) saturate(1.32) brightness(0.78);
   --saved-panel-glass-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.48),
-    0 8px 28px rgba(0, 0, 0, 0.24),
-    0 0 0 0.65px rgba(222, 247, 252, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 0 rgba(114, 203, 225, 0.05);
+    0 34px 88px rgba(0, 0, 0, 0.56),
+    0 9px 30px rgba(0, 0, 0, 0.3),
+    0 0 0 0.75px rgba(222, 247, 252, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.17),
+    inset 0 -1px 0 rgba(114, 203, 225, 0.07),
+    inset 0 0 48px rgba(126, 207, 224, 0.025);
 }
 
 .liquid-glass-surface.ai-chat-panel.is-mineradio-liquid {
@@ -76,7 +87,7 @@
   background:
     radial-gradient(circle at 14% 2%, rgba(255, 255, 255, 0.18), transparent 27%),
     radial-gradient(circle at 96% 82%, rgba(114, 206, 226, 0.055), transparent 30%);
-  opacity: 0.72;
+  opacity: 0.58;
 }
 
 .liquid-glass-surface.ai-chat-panel.is-mineradio-liquid > .liquid-glass-surface__content {
