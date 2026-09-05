@@ -57,6 +57,38 @@ MainGraph 是唯一的持久化边界，复用共享的开发环境 `InMemorySav
 
 Rule Router 可以在同一输入中保留多个不重叠的 `IntentItem`。未被可靠规则覆盖的有效子句进入 `unresolved_text`，同时设置 `needs_semantic=true`，留给后续 Semantic Router；当前不会调用模型、Embedding、业务 Tool 或播放器操作，也尚未替换 MainGraph 的 `development_route`。
 
+## Model Router Dataset Foundation
+
+`app/agent/foundation/intent_dataset` 是未来监督微调 Model Router 的第一阶段数据基础设施。训练标签直接复用 `app.agent.foundation.routing.IntentType`；`UNKNOWN` 只作为运行时兜底，不进入 `label_mapping.json` 或训练样本。
+
+```text
+data/intent/
+  taxonomy.json
+  label_mapping.json
+  raw/manual_seeds.jsonl
+  raw/generated.jsonl
+  processed/cleaned.jsonl
+  processed/conflicts.jsonl
+  processed/rejected.jsonl
+  splits/manual_test.jsonl
+  splits/train.jsonl
+  splits/val.jsonl
+  splits/test.jsonl
+```
+
+在 `ai-service` 目录中依次执行：
+
+```powershell
+python scripts/intent/generate_dataset.py --seed 42
+python scripts/intent/clean_dataset.py
+python scripts/intent/split_dataset.py --seed 42
+python scripts/intent/validate_dataset.py
+```
+
+所有路径均可通过 CLI 参数覆盖。生成器只写 raw 数据，默认 adapter 做少量、可复现的表面形式扩展；也可通过 `--synthetic-input` 或 `--rule-bootstrap-input` 合并外部 adapter 的 raw JSONL，不会调用 MainGraph。清洗先隔离非法样本和标签冲突，再做 exact/normalized 去重。划分以 `provenance.seed_id` 为组执行 label-aware 分配，使同一 seed 的简单改写不会跨 split；只有全人工来源的数据组可被自动分到 test，synthetic 数据不会进入 test。存在 `splits/manual_test.jsonl` 时会保留该文件，并把人工样本固定纳入 `test.jsonl`。
+
+当前目录不包含 Encoder、Classification Head、训练循环、推理、ONNX、MainGraph 接入或 LLM Router。
+
 ## Tools
 
 - `search_music(keyword, limit=10)`：`GET /api/music/search`

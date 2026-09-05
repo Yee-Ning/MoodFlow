@@ -1,0 +1,6 @@
+{"id":"manual-test-current-001","text":"概括一下正在播放的歌曲想表达什么","labels":["CURRENT_SONG"],"source":"manual","is_multi_intent":false,"is_hard_case":false,"provenance":{"seed_id":"manual-test-current-001"}}
+{"id":"manual-test-general-001","text":"很高兴见到你","labels":["GENERAL_CHAT"],"source":"manual","is_multi_intent":false,"is_hard_case":false,"provenance":{"seed_id":"manual-test-general-001"}}
+{"id":"manual-test-hard-001","text":"如果音量太高请降低一点","labels":["TOOL_CALLING"],"source":"manual","is_multi_intent":false,"is_hard_case":true,"provenance":{"seed_id":"manual-test-hard-001"}}
+{"id":"manual-test-multi-001","text":"分析当前歌曲，再帮我点个喜欢","labels":["CURRENT_SONG","TOOL_CALLING"],"source":"manual","is_multi_intent":true,"is_hard_case":false,"provenance":{"seed_id":"manual-test-multi-001"}}
+{"id":"manual-test-tool-001","text":"请把当前歌曲加进歌单","labels":["TOOL_CALLING"],"source":"manual","is_multi_intent":false,"is_hard_case":false,"provenance":{"seed_id":"manual-test-tool-001"}}
+{"id":"manual-test-worldline-001","text":"要是陈奕迅没有成为歌手，华语乐坛可能会怎样","labels":["WORLDLINE"],"source":"manual","is_multi_intent":false,"is_hard_case":false,"provenance":{"seed_id":"manual-test-worldline-001"}}

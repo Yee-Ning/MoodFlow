@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "intent_enum": "app.agent.foundation.routing.IntentType",
+  "intents": [
+    {
+      "name": "CURRENT_SONG",
+      "value": "current_song",
+      "trainable": true,
+      "description": "分析、解释或理解当前正在播放歌曲的歌词、情绪、编曲或表达内容；仅提到当前歌曲但实际要求执行播放器操作时不属于此类。",
+      "examples": [
+        "分析一下这首歌",
+        "当前播放的这首歌表达了什么",
+        "解释一下歌词什么意思"
+      ]
+    },
+    {
+      "name": "TOOL_CALLING",
+      "value": "tool_calling",
+      "trainable": true,
+      "description": "要求执行明确的音乐或播放器操作，例如播放控制、收藏、调整音量、查看歌词、搜索歌曲或维护歌单。",
+      "examples": [
+        "暂停一下",
+        "帮我收藏这首歌",
+        "把音量调小一点"
+      ]
+    },
+    {
+      "name": "WORLDLINE",
+      "value": "worldline",
+      "trainable": true,
+      "description": "围绕歌手、乐队、歌曲、专辑或音乐史提出反事实、平行历史或假设世界推演。条件式播放器命令不属于此类。",
+      "examples": [
+        "如果周杰伦从未出道，华语流行会怎样",
+        "假如披头士没有解散，摇滚乐历史会如何变化",
+        "如果这张专辑从来没发行会怎样"
+      ]
+    },
+    {
+      "name": "GENERAL_CHAT",
+      "value": "general_chat",
+      "trainable": true,
+      "description": "不要求当前歌曲专项分析、不执行工具、也不进行音乐反事实推演的一般对话，包括问候、感谢与开放式音乐闲聊。",
+      "examples": [
+        "你好",
+        "谢谢",
+        "你觉得音乐为什么能影响情绪"
+      ]
+    },
+    {
+      "name": "UNKNOWN",
+      "value": "unknown",
+      "trainable": false,
+      "description": "路由层无法确定业务意图时使用的运行时兜底值，不是监督训练标签。",
+      "examples": []
+    }
+  ]
+}
