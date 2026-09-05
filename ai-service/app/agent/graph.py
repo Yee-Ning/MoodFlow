@@ -5,10 +5,10 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.tools import BaseTool
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
+from app.agent.checkpointing import create_memory_checkpointer
 from app.agent.song_assistant import (
     MAX_VISIBLE_RESPONSE_CHARACTERS,
     answer_current_song,
@@ -50,13 +50,6 @@ SongAssistant = Callable[
     [list[BaseMessage], int | None, SongContext | None],
     Awaitable[AIMessage],
 ]
-
-
-def create_memory_checkpointer() -> InMemorySaver:
-    serializer = JsonPlusSerializer(
-        allowed_msgpack_modules=[("app.schemas.context", "SongContext")]
-    )
-    return InMemorySaver(serde=serializer)
 
 
 def _final_output(message: AIMessage) -> ChatOutput:

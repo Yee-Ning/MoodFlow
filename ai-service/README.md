@@ -33,6 +33,24 @@ START
 
 工具调用最多执行 5 次。超过上限时，`agent` 返回友好终止消息。`ToolNode` 把校验、后端或网络异常转换为模型可理解的错误 `ToolMessage`，React 只接收节点名称与完成状态，不接收工具内部结果。
 
+## Graph Foundation V1
+
+`app/agent/foundation` 是下一阶段 MainGraph 的独立基础设施。目前它不会替换上面的生产 Chat 图，也不包含意图识别、RAG、真实工具循环或任何业务 Agent。
+
+```text
+START
+  -> prepare_context
+  -> development_route
+       -> one or more Stub SubGraphs
+  -> aggregate_results
+  -> final_response
+  -> END
+```
+
+`development_route` 只使用构建图时显式传入的路由列表，绝不根据用户输入分类。三个 Stub SubGraph 通过 adapter 接收共享输入，只把统一的 `TaskResult` 返回给 `MainState.task_results`；各自的 `song_context`、`rag_context`、`tool_calls`、`tool_results` 和 `worldline_plan` 均保留在子图本地。
+
+MainGraph 是唯一的持久化边界，复用共享的开发环境 `InMemorySaver`。调用方仍须通过 `configurable.thread_id` 提供线程标识，State 中不保存该运行配置。
+
 ## Tools
 
 - `search_music(keyword, limit=10)`：`GET /api/music/search`
