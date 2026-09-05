@@ -387,6 +387,52 @@ class IntentDatasetSplitTests(unittest.TestCase):
         test_samples = load_samples(output_dir / "test.jsonl")
         self.assertIn("reserved-manual-test", {sample.id for sample in test_samples})
 
+    def test_test_split_keeps_manual_seed_and_excludes_derived_variant(self) -> None:
+        paired_input = self.root / "paired.jsonl"
+        paired_samples: list[IntentDatasetSample] = []
+        labels = (
+            "CURRENT_SONG",
+            "TOOL_CALLING",
+            "WORLDLINE",
+            "GENERAL_CHAT",
+        )
+        for index in range(20):
+            seed_id = f"paired-seed-{index}"
+            label = labels[index % len(labels)]
+            paired_samples.extend(
+                [
+                    _sample(seed_id, f"人工样本 {index}", [label]),
+                    IntentDatasetSample(
+                        id=f"syn-{seed_id}",
+                        text=f"麻烦你，人工样本 {index}",
+                        labels=[label],
+                        source="synthetic",
+                        provenance={
+                            "seed_id": seed_id,
+                            "generation_method": "deterministic_surface_expansion_v1",
+                        },
+                    ),
+                ]
+            )
+        write_jsonl(paired_input, paired_samples)
+        output_dir = self.root / "paired-output"
+
+        summary = split_dataset(
+            paired_input,
+            output_dir,
+            train_ratio=0.6,
+            val_ratio=0.2,
+            test_ratio=0.2,
+            random_seed=42,
+        )
+
+        test_samples = load_samples(output_dir / "test.jsonl")
+        self.assertGreater(len(test_samples), 0)
+        self.assertTrue(
+            all(sample.source is DatasetSource.MANUAL for sample in test_samples)
+        )
+        self.assertGreater(summary["excluded_derived_samples"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

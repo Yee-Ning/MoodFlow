@@ -74,24 +74,40 @@ def _build_groups(samples: list[IntentDatasetSample]) -> list[_SampleGroup]:
     grouped: dict[str, list[IntentDatasetSample]] = defaultdict(list)
     for sample in samples:
         grouped[_group_key(sample)].append(sample)
-    groups: list[_SampleGroup] = []
-    for key, members in grouped.items():
-        label_counts: Counter[str] = Counter()
-        combinations: Counter[tuple[str, ...]] = Counter()
-        for sample in members:
-            label_counts.update(label.name for label in sample.labels)
-            combinations[label_signature(sample.labels)] += 1
-        groups.append(
-            _SampleGroup(
-                key=key,
-                samples=tuple(sorted(members, key=lambda sample: sample.id)),
-                label_counts=label_counts,
-                combination_counts=combinations,
-                multi_count=sum(sample.is_multi_intent for sample in members),
-                hard_count=sum(sample.is_hard_case for sample in members),
-            )
-        )
-    return groups
+    return [_make_group(key, members) for key, members in grouped.items()]
+
+
+def _make_group(
+    key: str,
+    samples: list[IntentDatasetSample] | tuple[IntentDatasetSample, ...],
+) -> _SampleGroup:
+    label_counts: Counter[str] = Counter()
+    combinations: Counter[tuple[str, ...]] = Counter()
+    for sample in samples:
+        label_counts.update(label.name for label in sample.labels)
+        combinations[label_signature(sample.labels)] += 1
+    return _SampleGroup(
+        key=key,
+        samples=tuple(sorted(samples, key=lambda sample: sample.id)),
+        label_counts=label_counts,
+        combination_counts=combinations,
+        multi_count=sum(sample.is_multi_intent for sample in samples),
+        hard_count=sum(sample.is_hard_case for sample in samples),
+    )
+
+
+def _project_group_for_split(
+    group: _SampleGroup,
+    split_name: str,
+) -> _SampleGroup | None:
+    if split_name != "test":
+        return group
+    manual_samples = [
+        sample for sample in group.samples if sample.source is DatasetSource.MANUAL
+    ]
+    if not manual_samples:
+        return None
+    return _make_group(group.key, manual_samples)
 
 
 def _apportion(
@@ -120,6 +136,50 @@ def _apportion(
     for name in ranked[:leftovers]:
         counts[name] += 1
     return counts
+
+
+def _effective_size_targets(
+    groups: list[_SampleGroup],
+    manual_test_count: int,
+    ratios: dict[str, float],
+) -> dict[str, int]:
+    raw_total = sum(group.size for group in groups) + manual_test_count
+    if ratios["test"] == 0:
+        return _apportion(raw_total, ratios)
+
+    projected_test_samples = 0
+    projected_loss = 0
+    for group in groups:
+        projected = _project_group_for_split(group, "test")
+        if projected is None:
+            continue
+        projected_test_samples += projected.size
+        projected_loss += group.size - projected.size
+    if projected_test_samples == 0 or projected_loss == 0:
+        return _apportion(raw_total, ratios)
+
+    average_loss = projected_loss / projected_test_samples
+    estimated_test_count = round(
+        ratios["test"]
+        * (raw_total + average_loss * manual_test_count)
+        / (1 + ratios["test"] * average_loss)
+    )
+    estimated_loss = average_loss * max(0, estimated_test_count - manual_test_count)
+    estimated_final_total = max(
+        manual_test_count,
+        round(raw_total - estimated_loss),
+    )
+    targets = _apportion(estimated_final_total, ratios)
+    if targets["test"] < manual_test_count:
+        shortfall = manual_test_count - targets["test"]
+        targets["test"] = manual_test_count
+        for split_name in ("train", "val"):
+            removable = min(shortfall, targets[split_name])
+            targets[split_name] -= removable
+            shortfall -= removable
+            if shortfall == 0:
+                break
+    return targets
 
 
 def _validate_unique_texts(samples: list[IntentDatasetSample], context: str) -> None:
@@ -163,10 +223,13 @@ def _choose_for_coverage(
         return None
 
     def preference(group: _SampleGroup) -> tuple[int, int, int, float]:
-        covers = len(group.labels & missing_labels)
-        co_covers_boundary = int(metrics.multi_count == 0 and group.multi_count > 0)
-        co_covers_hard = int(metrics.hard_count == 0 and group.hard_count > 0)
-        overflow = max(0, metrics.size + group.size - size_target)
+        projected = _project_group_for_split(group, split_name)
+        if projected is None:
+            raise AssertionError("coverage candidate must be eligible for split")
+        covers = len(projected.labels & missing_labels)
+        co_covers_boundary = int(metrics.multi_count == 0 and projected.multi_count > 0)
+        co_covers_hard = int(metrics.hard_count == 0 and projected.hard_count > 0)
+        overflow = max(0, metrics.size + projected.size - size_target)
         return (
             covers,
             co_covers_boundary + co_covers_hard,
@@ -178,9 +241,21 @@ def _choose_for_coverage(
 
 
 def _group_allowed_in_split(group: _SampleGroup, split_name: str) -> bool:
-    if split_name != "test":
-        return True
-    return all(sample.source is DatasetSource.MANUAL for sample in group.samples)
+    return _project_group_for_split(group, split_name) is not None
+
+
+def _assign_group(
+    group: _SampleGroup,
+    split_name: str,
+    split_samples: dict[str, list[IntentDatasetSample]],
+    metrics: dict[str, _SplitMetrics],
+) -> int:
+    projected = _project_group_for_split(group, split_name)
+    if projected is None:
+        raise ValueError(f"group {group.key} is not eligible for {split_name}")
+    split_samples[split_name].extend(projected.samples)
+    metrics[split_name].add_group(projected)
+    return group.size - projected.size
 
 
 def _assignment_cost(
@@ -303,7 +378,7 @@ def split_dataset(
     )
 
     all_samples = [*pool, *manual_test]
-    size_targets = _apportion(len(all_samples), ratios)
+    size_targets = _effective_size_targets(groups, len(manual_test), ratios)
     total_labels = Counter(
         label.name for sample in all_samples for label in sample.labels
     )
@@ -334,6 +409,7 @@ def split_dataset(
         name: _SplitMetrics.from_samples(split_samples[name]) for name in _SPLIT_NAMES
     }
     unassigned = list(groups)
+    excluded_derived_samples = 0
 
     labels_with_enough_groups = {
         label.name
@@ -357,8 +433,12 @@ def split_dataset(
             )
             if selected is None:
                 break
-            split_samples[split_name].extend(selected.samples)
-            metrics[split_name].add_group(selected)
+            excluded_derived_samples += _assign_group(
+                selected,
+                split_name,
+                split_samples,
+                metrics,
+            )
             unassigned.remove(selected)
             missing = labels_with_enough_groups - set(metrics[split_name].label_counts)
 
@@ -376,12 +456,21 @@ def split_dataset(
                 selected = min(
                     candidates,
                     key=lambda group: (
-                        max(0, metrics[split_name].size + group.size - size_targets[split_name]),
+                        max(
+                            0,
+                            metrics[split_name].size
+                            + _project_group_for_split(group, split_name).size
+                            - size_targets[split_name],
+                        ),
                         random_order[group.key],
                     ),
                 )
-                split_samples[split_name].extend(selected.samples)
-                metrics[split_name].add_group(selected)
+                excluded_derived_samples += _assign_group(
+                    selected,
+                    split_name,
+                    split_samples,
+                    metrics,
+                )
                 unassigned.remove(selected)
 
     if total_hard >= sum(ratio > 0 for ratio in ratios.values()):
@@ -398,12 +487,21 @@ def split_dataset(
                 selected = min(
                     candidates,
                     key=lambda group: (
-                        max(0, metrics[split_name].size + group.size - size_targets[split_name]),
+                        max(
+                            0,
+                            metrics[split_name].size
+                            + _project_group_for_split(group, split_name).size
+                            - size_targets[split_name],
+                        ),
                         random_order[group.key],
                     ),
                 )
-                split_samples[split_name].extend(selected.samples)
-                metrics[split_name].add_group(selected)
+                excluded_derived_samples += _assign_group(
+                    selected,
+                    split_name,
+                    split_samples,
+                    metrics,
+                )
                 unassigned.remove(selected)
 
     for group in unassigned:
@@ -416,7 +514,7 @@ def split_dataset(
             eligible_splits,
             key=lambda split_name: (
                 _assignment_cost(
-                    group,
+                    _project_group_for_split(group, split_name),
                     metrics[split_name],
                     size_targets[split_name],
                     label_targets[split_name],
@@ -427,8 +525,12 @@ def split_dataset(
                 random_order[group.key] + _SPLIT_NAMES.index(split_name) / 10,
             ),
         )
-        split_samples[selected_name].extend(group.samples)
-        metrics[selected_name].add_group(group)
+        excluded_derived_samples += _assign_group(
+            group,
+            selected_name,
+            split_samples,
+            metrics,
+        )
 
     for samples in split_samples.values():
         samples.sort(key=lambda sample: sample.id)
@@ -442,5 +544,6 @@ def split_dataset(
         "ratios": ratios,
         "counts": {name: len(split_samples[name]) for name in _SPLIT_NAMES},
         "manual_test_samples": len(manual_test),
+        "excluded_derived_samples": excluded_derived_samples,
         "group_count": len(groups),
     }
