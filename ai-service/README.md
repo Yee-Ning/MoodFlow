@@ -87,7 +87,33 @@ python scripts/intent/validate_dataset.py
 
 所有路径均可通过 CLI 参数覆盖。生成器只写 raw 数据，默认 adapter 做少量、可复现的表面形式扩展；也可通过 `--synthetic-input` 或 `--rule-bootstrap-input` 合并外部 adapter 的 raw JSONL，不会调用 MainGraph。清洗先隔离非法样本和标签冲突，再做 exact/normalized 去重。划分以 `provenance.seed_id` 为组执行 label-aware 分配，使同一 seed 的简单改写不会跨 split；seed 组被分到 test 时仅保留人工 Seed，并排除其 synthetic 变体，因此 synthetic 数据不会进入 test。存在 `splits/manual_test.jsonl` 时会保留该文件，并把人工样本固定纳入 `test.jsonl`。
 
-当前目录不包含 Encoder、Classification Head、训练循环、推理、ONNX、MainGraph 接入或 LLM Router。
+数据集可以进入独立的监督训练阶段；该阶段不会接入 Rule Router、MainGraph 或 LLM Router，也不包含 RAG、ONNX 和在线模型服务。
+
+## Supervised Model Router Training
+
+`app/agent/foundation/intent_model` 使用 `BAAI/bge-small-zh-v1.5` 的 Encoder，加一层 Dropout + Linear Head。模型直接输出 4 个 logits，训练损失为 `BCEWithLogitsLoss`；Sigmoid 只用于评估和预测。默认采用 CLS pooling，并以 validation Macro F1 选择最佳 epoch。
+
+在 `ai-service` 目录中执行：
+
+```powershell
+python scripts/intent/train_model.py --device auto --seed 42
+python scripts/intent/evaluate_model.py --input data/intent/splits/test.jsonl
+python scripts/intent/predict_intent.py --text "分析一下这首歌然后帮我收藏"
+```
+
+训练完成后，`artifacts/intent_model/` 包含：
+
+```text
+encoder/
+classifier_head.pt
+label_mapping.json
+thresholds.json
+training_config.json
+metrics.json
+error_analysis.jsonl
+```
+
+阈值仅使用 validation 概率调优；test 只进行一次最终评估。预测允许多个标签同时过阈值，也允许没有标签过阈值。空标签结果返回 `needs_llm=true`，但这里不会实现或调用 LLM Router。
 
 ## Tools
 
