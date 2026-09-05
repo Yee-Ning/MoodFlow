@@ -289,13 +289,23 @@ class RoutingSchemaTests(unittest.TestCase):
                 order=index,
             )
             for index, source in enumerate(
-                (IntentSource.RULE, IntentSource.SEMANTIC, IntentSource.LLM)
+                (
+                    IntentSource.RULE,
+                    IntentSource.MODEL,
+                    IntentSource.SEMANTIC,
+                    IntentSource.LLM,
+                )
             )
         ]
 
         self.assertEqual(
             [item.source for item in items],
-            [IntentSource.RULE, IntentSource.SEMANTIC, IntentSource.LLM],
+            [
+                IntentSource.RULE,
+                IntentSource.MODEL,
+                IntentSource.SEMANTIC,
+                IntentSource.LLM,
+            ],
         )
 
     def test_routing_context_is_read_only_and_consistent(self) -> None:

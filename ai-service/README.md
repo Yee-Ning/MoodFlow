@@ -115,6 +115,24 @@ error_analysis.jsonl
 
 阈值仅使用 validation 概率调优；test 只进行一次最终评估。预测允许多个标签同时过阈值，也允许没有标签过阈值。空标签结果返回 `needs_llm=true`，但这里不会实现或调用 LLM Router。
 
+## Model Router V1
+
+`app/agent/foundation/model_routing` 把底层 PyTorch 推理封装成长期复用的 `IntentClassifierRuntime`，并由 `ModelRouter` 将预测转换为共享的 `IntentItem`。模型、Tokenizer、label mapping 和 per-label thresholds 只在 Router 初始化时加载一次；每次 `route()` 仅执行推理，不访问 artifact 文件。
+
+```text
+RuleRouter.unresolved_text
+  -> ModelRouter.route(text)
+  -> IntentClassifierRuntime.predict(text)
+  -> IntentItem(source="model")[]
+  -> ModelRouteResult
+```
+
+当前没有把 Rule Router 与 Model Router 组合成生产 Hybrid Router，也没有接入 MainGraph。可使用已有 V1 artifact 独立验证：
+
+```powershell
+python scripts/intent/test_model_router.py --device auto
+```
+
 ## Tools
 
 - `search_music(keyword, limit=10)`：`GET /api/music/search`

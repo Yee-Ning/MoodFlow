@@ -33,7 +33,7 @@ def predict_text(
         and isinstance(value, torch.Tensor)
     }
     model.eval()
-    with torch.no_grad():
+    with torch.inference_mode():
         logits = model(**model_inputs)
         probabilities = torch.sigmoid(logits)[0].detach().cpu().numpy()
 

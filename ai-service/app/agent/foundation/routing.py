@@ -13,6 +13,7 @@ class IntentType(StrEnum):
 
 class IntentSource(StrEnum):
     RULE = "rule"
+    MODEL = "model"
     SEMANTIC = "semantic"
     LLM = "llm"
 
