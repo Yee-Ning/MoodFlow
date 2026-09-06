@@ -36,6 +36,13 @@ def create_subgraph_adapter(
             "answer": None,
             "task_result": None,
         }
+        if task.intent_orders:
+            decision = state["route_decision"]
+            selected = [decision.intents[order] for order in task.intent_orders]
+            # Each subgraph receives only the clauses assigned to this task.
+            evidence = list(dict.fromkeys(item.evidence for item in selected))
+            common_input["current_input"] = "；".join(evidence)
+            common_input["routing_intents"] = selected
 
         if route_key is RouteKey.CURRENT_SONG:
             common_input.update(song_context=None, rag_context=[])
@@ -48,6 +55,8 @@ def create_subgraph_adapter(
         result = output.get("task_result")
         if not isinstance(result, TaskResult):
             result = TaskResult.model_validate(result)
+        if result.task_id != task.task_id or result.route_key != route_key:
+            raise ValueError("SubGraph result does not match its assigned task")
         return {"task_results": [result]}
 
     return invoke_subgraph

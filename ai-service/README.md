@@ -35,7 +35,7 @@ START
 
 ## Graph Foundation V1
 
-`app/agent/foundation` 是下一阶段 MainGraph 的独立基础设施。目前它不会替换上面的生产 Chat 图，也不包含意图识别、RAG、真实工具循环或任何业务 Agent。
+`app/agent/foundation` 是独立的 MainGraph 基础设施，现已支持 Rule → Model → LLM → Merger 动态路由。它尚未替换上面的生产 Chat HTTP/SSE 图；业务子图仍为 Stub。
 
 ```text
 START
@@ -47,7 +47,7 @@ START
   -> END
 ```
 
-`development_route` 只使用构建图时显式传入的路由列表，绝不根据用户输入分类。三个 Stub SubGraph 通过 adapter 接收共享输入，只把统一的 `TaskResult` 返回给 `MainState.task_results`；各自的 `song_context`、`rag_context`、`tool_calls`、`tool_results` 和 `worldline_plan` 均保留在子图本地。
+上图为显式传入 `development_routes` 时的兼容开发模式。默认 `create_main_graph()` 改用动态路由；可传入 `intent_router` 注入测试或替代运行时。四个 Stub SubGraph（含 GeneralChat）通过 adapter 接收对应任务的证据文本及 `routing_intents`，只把统一的 `TaskResult` 返回给 `MainState.task_results`；各自的私有状态保留在子图本地。
 
 MainGraph 是唯一的持久化边界，复用共享的开发环境 `InMemorySaver`。调用方仍须通过 `configurable.thread_id` 提供线程标识，State 中不保存该运行配置。
 
@@ -55,7 +55,7 @@ MainGraph 是唯一的持久化边界，复用共享的开发环境 `InMemorySav
 
 `app/agent/foundation/rule_routing` 提供 Hybrid Multi-Intent Router 的第一层高精度规则路由。它依次执行轻量标准化、注册规则匹配、优先级与重叠 span 冲突处理、有效文本覆盖率计算，并返回可部分解析的 `RouteDecision`。
 
-Rule Router 可以在同一输入中保留多个不重叠的 `IntentItem`。未被可靠规则覆盖的有效子句进入 `unresolved_text`，同时设置 `needs_semantic=true`，留给后续 Semantic Router；当前不会调用模型、Embedding、业务 Tool 或播放器操作，也尚未替换 MainGraph 的 `development_route`。
+Rule Router 可以在同一输入中保留多个不重叠的 `IntentItem`。未覆盖子句以 `unresolved_segments` 保留原文 start/end，并提供兼容的拼接 `unresolved_text`。规则层自身不调用模型；HybridIntentRouter 将片段交给后续层。
 
 ## Model Router Dataset Foundation
 
@@ -127,11 +127,37 @@ RuleRouter.unresolved_text
   -> ModelRouteResult
 ```
 
-当前没有把 Rule Router 与 Model Router 组合成生产 Hybrid Router，也没有接入 MainGraph。可使用已有 V1 artifact 独立验证：
+ModelRouter 可独立运行，也已通过 HybridIntentRouter 接入 Foundation MainGraph。可使用已有 V1 artifact 独立验证：
 
 ```powershell
 python scripts/intent/test_model_router.py --device auto
 ```
+
+## LLM Router、Intent Merger 与动态 MainGraph
+
+默认流程：`prepare_context → intent_router → 按任务组顺序调用 SubGraph → aggregate_results → final_response`。意图无法确定时进入 `clarify → END`，不执行已识别的部分任务。SubGraph 返回失败时停止后续任务并给出失败提示；模型加载/LLM 网络/结构校验失败向调用方抛出异常，不伪装成澄清。
+
+`HybridIntentRouter` 对每个 Rule 未解决片段调用长期复用的 ModelRouter；默认只有拒识或 `needs_llm=true` 才调用 LLMRouter。可在工厂配置 `boundary_margin` 升级接近已保存阈值的标签，默认 0（关闭），不改写 `thresholds.json`。模型前向通过 `asyncio.to_thread` 执行。
+
+`LLMRouter` 复用现有 LLM settings/client，以独立 JSON Schema、无工具请求进行分类。taxonomy 从现有文件加载；输出必须引用当前片段的原文证据，局部 offset 通过代码转换成全局 offset。若精确引用仅出现一次，代码可纠正 LLM 字符计数错误；不存在或歧义引用拒绝。结构或证据无效只重试一次，网络错误不重试。缺少配置或 provider 不支持结构化响应时明确报错。LLM confidence 不与模型概率或规则分数直接竞争。
+
+`IntentMerger` 锁定 Rule 结果；LLM 结果只替换其负责片段的 Model 候选；相同 Intent + sub_intent + span 去重，不同位置或不同工具动作保留。全局按原文位置排序，重新生成连续 order。`RouteDecisionBuilder` 计算完成状态及分类证据覆盖率（不是业务执行成功率），按 RouteKey 分组生成任务，并用 `intent_orders` 引用原始 Intent。
+
+同一 RouteKey 当前只生成一个任务，组内保留全部 Intent；任务组按首次出现顺序执行。这不等同于完整依赖规划：例如 Tool → Song → Tool 会聚合为 Tool 组和 Song 组，未来真实业务执行器需处理跨组依赖。GeneralChat 与三个业务子图均为 Stub，当前输出仅验证路由和调度；不会实际暂停播放器、收藏歌曲或生成业务回答。
+
+模型工件与 taxonomy 路径可通过 `create_hybrid_router(model_dir=..., taxonomy_path=..., device=...)` 配置，再传给 `create_main_graph(intent_router=...)`。应用启动时构造一次图和运行时，重复请求只提交 `create_main_state(text, routing_context=...)`；checkpointer 继续通过 `configurable.thread_id` 隔离会话。
+
+```powershell
+# 真实 V1 BGE + 离线 LLM 澄清 fixture，不消耗 API 额度
+python scripts/intent/test_hybrid_router.py --device cpu
+
+# 真实 provider 调用，使用现有 LLM_* 配置；可能产生费用
+python scripts/intent/test_hybrid_router.py --device cpu --live-llm --text "当前电影可以吗"
+
+python -m unittest discover -s tests
+```
+
+离线 fixture 只用于验证升级/澄清流程，不是 LLM 识别准确率测试。换 V2 模型只需更换 artifact 或注入遵守现有接口的 Runtime；替换 LLM provider 只需更换 LLMIntentRuntime。
 
 ## Tools
 

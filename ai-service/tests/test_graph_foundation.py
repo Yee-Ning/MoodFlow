@@ -147,7 +147,7 @@ class StubSubGraphTests(unittest.TestCase):
 
 class MainGraphFoundationTests(unittest.TestCase):
     def test_main_graph_compiles(self) -> None:
-        graph = build_main_graph().compile()
+        graph = build_main_graph(development_routes=(RouteKey.CURRENT_SONG,)).compile()
 
         self.assertIsInstance(graph, CompiledStateGraph)
         self.assertIn("development_route", graph.get_graph().nodes)
@@ -218,7 +218,7 @@ class MainGraphFoundationTests(unittest.TestCase):
         self.assertTrue(private_fields.isdisjoint(result))
 
     def test_checkpointer_uses_configurable_thread_id(self) -> None:
-        graph = create_main_graph()
+        graph = create_main_graph(development_routes=(RouteKey.CURRENT_SONG,))
 
         async def scenario() -> tuple[dict, dict]:
             await graph.ainvoke(

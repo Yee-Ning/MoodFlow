@@ -36,12 +36,18 @@ class LLMRouter:
         segment = request.segment
         local = []
         for order, candidate in enumerate(output.intents):
-            if candidate.end > len(segment.text) or segment.text[candidate.start:candidate.end] != candidate.evidence:
-                raise ValueError("LLM evidence must match local span")
+            start, end = candidate.start, candidate.end
+            if end > len(segment.text) or segment.text[start:end] != candidate.evidence:
+                # LLMs can quote correctly but miscount Chinese characters. Correct only
+                # uniquely grounded exact quotations; never guess between repeated spans.
+                start = segment.text.find(candidate.evidence)
+                if start < 0 or segment.text.find(candidate.evidence, start + 1) >= 0:
+                    raise ValueError("LLM evidence must identify an unambiguous local span")
+                end = start + len(candidate.evidence)
             local.append(IntentItem(
                 intent=candidate.intent, confidence=candidate.confidence,
                 source=IntentSource.LLM, evidence=candidate.evidence,
-                start=candidate.start, end=candidate.end, order=order,
+                start=start, end=end, order=order,
             ))
         remaining = calculate_coverage(segment.text, local).unresolved_segments
         unresolved = [UnresolvedSegment(

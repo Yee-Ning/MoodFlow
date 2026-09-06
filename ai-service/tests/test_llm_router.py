@@ -87,6 +87,26 @@ class LLMRouterTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result.needs_clarification)
         self.assertEqual(result.unresolved_segments[0].text, "阿巴阿巴")
 
+    async def test_unique_quote_corrects_miscounted_chinese_offset(self):
+        request = request_for("谈谈配器并把它纳入我的歌单", prefix="")
+        raw = {"intents": [{"intent": "tool_calling", "confidence": 0.9,
+                           "evidence": "并把它纳入我的歌单", "start": 5, "end": 13}],
+               "needs_clarification": True}
+        runtime = SimpleNamespace(classify=AsyncMock(return_value=json.dumps(raw)))
+        result = await LLMRouter(TAXONOMY, runtime=runtime).route(request)
+        self.assertEqual(result.intents[0].start, 4)
+        self.assertEqual(result.intents[0].end, 13)
+        self.assertEqual(runtime.classify.await_count, 1)
+
+    async def test_repeated_quote_with_wrong_offset_is_not_guessed(self):
+        request = request_for("讲讲这首歌，讲讲这首歌", prefix="")
+        raw = {"intents": [{"intent": "current_song", "confidence": 0.8,
+                           "evidence": "讲讲这首歌", "start": 2, "end": 7}],
+               "needs_clarification": False}
+        runtime = SimpleNamespace(classify=AsyncMock(return_value=json.dumps(raw)))
+        with self.assertRaises(LLMRoutingError):
+            await LLMRouter(TAXONOMY, runtime=runtime).route(request)
+
     async def test_client_sends_routing_schema_without_tools(self):
         with patch("app.llm.client.AsyncOpenAI", FakeAsyncOpenAI), patch("app.llm.client.get_settings", fake_settings):
             await create_routing_response([{"role": "user", "content": "payload"}], "route", LLMStructuredOutput.model_json_schema())
