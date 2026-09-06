@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 
 from app.agent.foundation.rule_routing.rule_types import RuleMatch
-from app.agent.foundation.routing import UnresolvedSegment
+from app.agent.foundation.routing import IntentItem, UnresolvedSegment
 
 _PUNCTUATION = frozenset(",.!?;:，。！？；：、()（）[]【】{}“”‘’\"'")
 _IGNORABLE_TOKENS = (
@@ -84,7 +84,7 @@ def _segment_spans(text: str) -> list[tuple[int, int]]:
 
 def _unresolved_fragments(
     text: str,
-    matches: list[RuleMatch],
+    matches: list[RuleMatch] | list[IntentItem],
     unresolved_positions: set[int],
 ) -> list[UnresolvedSegment]:
     fragments: list[UnresolvedSegment] = []
@@ -110,7 +110,7 @@ def _unresolved_fragments(
     return fragments
 
 
-def calculate_coverage(text: str, matches: list[RuleMatch]) -> CoverageResult:
+def calculate_coverage(text: str, matches: list[RuleMatch] | list[IntentItem]) -> CoverageResult:
     effective = _effective_positions(text)
     covered: set[int] = set()
     for match in matches:

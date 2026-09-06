@@ -71,6 +71,7 @@ async def _create_response(
     *,
     instructions: str,
     enable_tools: bool,
+    output_format: dict[str, Any] | None = None,
 ) -> Response:
     settings = get_settings()
 
@@ -79,6 +80,7 @@ async def _create_response(
             api_key=settings.api_key.get_secret_value(),
             base_url=str(settings.base_url),
             timeout=settings.timeout_seconds,
+            max_retries=0 if output_format is not None else 2,
         ) as client:
             request: dict[str, Any] = {
                 "model": settings.model,
@@ -86,8 +88,10 @@ async def _create_response(
                 "input": input_items,
                 "reasoning": {"effort": "none"},
                 "max_output_tokens": settings.max_output_tokens,
-                "text": {"format": OUTPUT_FORMAT},
+                "text": {"format": output_format or OUTPUT_FORMAT},
             }
+            if output_format is not None:
+                request["temperature"] = 0
             if enable_tools:
                 request["tools"] = MUSIC_TOOLS
                 request["tool_choice"] = "auto"
@@ -116,4 +120,21 @@ async def create_base_response(
         input_items,
         instructions=instructions,
         enable_tools=False,
+    )
+
+
+async def create_routing_response(
+    input_items: list[dict[str, Any]],
+    instructions: str,
+    schema: dict[str, Any],
+) -> Response:
+    """Reuse provider settings with an independent tool-free routing schema."""
+    return await _create_response(
+        input_items,
+        instructions=instructions,
+        enable_tools=False,
+        output_format={
+            "type": "json_schema", "name": "intent_routing",
+            "schema": schema, "strict": True,
+        },
     )
