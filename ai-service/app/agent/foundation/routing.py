@@ -83,6 +83,7 @@ class RouteKey(StrEnum):
     CURRENT_SONG = "current_song"
     TOOL_CALLING = "tool_calling"
     WORLDLINE = "worldline"
+    GENERAL_CHAT = "general_chat"
 
 
 class RouteTask(BaseModel):
@@ -92,6 +93,7 @@ class RouteTask(BaseModel):
 
     task_id: str = Field(min_length=1, max_length=128)
     route_key: RouteKey
+    intent_orders: list[int] = Field(default_factory=list)
 
 
 class RouteDecision(BaseModel):
@@ -116,4 +118,21 @@ class RouteDecision(BaseModel):
         task_ids = [task.task_id for task in self.tasks]
         if len(task_ids) != len(set(task_ids)):
             raise ValueError("route task ids must be unique")
+        if len({task.route_key for task in self.tasks}) != len(self.tasks):
+            raise ValueError("route keys must be unique; group same-route intents")
+        if [item.order for item in self.intents] != list(range(len(self.intents))):
+            raise ValueError("intent orders must be contiguous from zero")
+        if self.is_complete and (
+            self.unresolved_text or self.unresolved_segments or self.needs_semantic
+            or self.needs_llm or self.needs_clarification
+        ):
+            raise ValueError("complete decisions cannot have unresolved routing work")
+        for task in self.tasks:
+            if len(set(task.intent_orders)) != len(task.intent_orders):
+                raise ValueError("task intent references must be unique")
+            for order in task.intent_orders:
+                if not 0 <= order < len(self.intents):
+                    raise ValueError("task references missing intent")
+                if self.intents[order].intent.value != task.route_key.value:
+                    raise ValueError("task route does not match referenced intent")
         return self
