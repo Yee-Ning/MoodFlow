@@ -87,6 +87,7 @@ class RuleRouter:
         return RouteDecision(
             intents=intents,
             unresolved_text=coverage.unresolved_text,
+            unresolved_segments=coverage.unresolved_segments,
             is_complete=is_complete,
             needs_semantic=not is_complete,
             needs_llm=False,

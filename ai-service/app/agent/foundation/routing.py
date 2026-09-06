@@ -62,6 +62,23 @@ class IntentItem(BaseModel):
         return self
 
 
+class UnresolvedSegment(BaseModel):
+    """An exact slice of the original query; offsets are never concatenated-text offsets."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    text: str = Field(min_length=1, max_length=4_000)
+    start: int = Field(ge=0)
+    end: int = Field(gt=0)
+    order: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def valid_slice(self) -> "UnresolvedSegment":
+        if not self.text.strip() or self.end - self.start != len(self.text):
+            raise ValueError("segment span must match nonblank text length")
+        return self
+
+
 class RouteKey(StrEnum):
     CURRENT_SONG = "current_song"
     TOOL_CALLING = "tool_calling"
@@ -84,6 +101,7 @@ class RouteDecision(BaseModel):
 
     intents: list[IntentItem] = Field(default_factory=list)
     unresolved_text: str = Field(default="", max_length=4_000)
+    unresolved_segments: list[UnresolvedSegment] = Field(default_factory=list)
     is_complete: bool = False
     needs_semantic: bool = False
     needs_llm: bool = False

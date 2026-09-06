@@ -2,6 +2,7 @@ import re
 from dataclasses import dataclass
 
 from app.agent.foundation.rule_routing.rule_types import RuleMatch
+from app.agent.foundation.routing import UnresolvedSegment
 
 _PUNCTUATION = frozenset(",.!?;:，。！？；：、()（）[]【】{}“”‘’\"'")
 _IGNORABLE_TOKENS = (
@@ -36,6 +37,7 @@ _CLAUSE_SEPARATOR = re.compile(
 @dataclass(frozen=True)
 class CoverageResult:
     unresolved_text: str
+    unresolved_segments: list[UnresolvedSegment]
     ratio: float
     is_fully_covered: bool
 
@@ -84,8 +86,8 @@ def _unresolved_fragments(
     text: str,
     matches: list[RuleMatch],
     unresolved_positions: set[int],
-) -> list[str]:
-    fragments: list[str] = []
+) -> list[UnresolvedSegment]:
+    fragments: list[UnresolvedSegment] = []
     for segment_start, segment_end in _segment_spans(text):
         boundaries = {segment_start, segment_end}
         for match in matches:
@@ -100,7 +102,11 @@ def _unresolved_fragments(
                 continue
             fragment = _trim_fragment(text[start:end])
             if fragment:
-                fragments.append(fragment)
+                offset = start + text[start:end].index(fragment)
+                fragments.append(UnresolvedSegment(
+                    text=fragment, start=offset, end=offset + len(fragment),
+                    order=len(fragments),
+                ))
     return fragments
 
 
@@ -114,7 +120,8 @@ def calculate_coverage(text: str, matches: list[RuleMatch]) -> CoverageResult:
     ratio = len(covered) / len(effective) if effective else 1.0
     fragments = _unresolved_fragments(text, matches, unresolved_positions)
     return CoverageResult(
-        unresolved_text="；".join(fragments),
+        unresolved_text="；".join(fragment.text for fragment in fragments),
+        unresolved_segments=fragments,
         ratio=ratio,
         is_fully_covered=not unresolved_positions,
     )
