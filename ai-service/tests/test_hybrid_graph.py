@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -190,7 +191,29 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_rejected_model_llm_multilabel_reaches_main_graph(self):
         async def classify(request, **kwargs):
-            return output_for(request, ("current_song", "tool_calling"))
+            tool_start = request.segment.text.index("把它")
+            return json.dumps(
+                {
+                    "intents": [
+                        {
+                            "intent": "current_song",
+                            "confidence": 0.8,
+                            "evidence": "谈谈配器并",
+                            "start": 0,
+                            "end": 5,
+                        },
+                        {
+                            "intent": "tool_calling",
+                            "confidence": 0.8,
+                            "evidence": request.segment.text[tool_start:],
+                            "start": tool_start,
+                            "end": len(request.segment.text),
+                        },
+                    ],
+                    "needs_clarification": False,
+                },
+                ensure_ascii=False,
+            )
         router, _, runtime = fixture_router(
             model=Mock(side_effect=lambda text: model_result(text, ())),
             classify=AsyncMock(side_effect=classify),
@@ -289,6 +312,41 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(policy.reason(model, thresholds), "near_threshold")
         self.assertIsNone(EscalationPolicy().reason(model, thresholds))
         self.assertEqual(thresholds["CURRENT_SONG"], 0.79)
+
+    async def test_multilabel_model_result_escalates_by_default(self):
+        model = model_result(
+            "暂停、聊天",
+            (IntentType.TOOL_CALLING, IntentType.GENERAL_CHAT),
+        )
+
+        self.assertEqual(
+            EscalationPolicy().reason(model, {}),
+            "multi_label_ambiguity",
+        )
+        self.assertIsNone(
+            EscalationPolicy(escalate_multilabel=False).reason(model, {})
+        )
+
+    async def test_negation_and_coordination_escalate_single_model_label(self):
+        model = model_result(
+            "不要暂停，只聊天",
+            (IntentType.TOOL_CALLING,),
+        )
+        policy = EscalationPolicy()
+
+        for text in ("不要暂停", "聊音乐并推荐歌曲", "play it then chat"):
+            with self.subTest(text=text):
+                self.assertEqual(
+                    policy.reason(model, {}, text),
+                    "semantic_complexity",
+                )
+
+        self.assertIsNone(policy.reason(model, {}, "分析这首歌"))
+        self.assertIsNone(
+            EscalationPolicy(
+                escalate_semantic_complexity=False
+            ).reason(model, {}, "不要暂停")
+        )
 
     async def test_invalid_input_never_calls_models(self):
         router, model, _ = fixture_router()

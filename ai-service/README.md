@@ -137,13 +137,13 @@ python scripts/intent/test_model_router.py --device auto
 
 默认流程：`prepare_context → intent_router → 按任务组顺序调用 SubGraph → aggregate_results → final_response`。意图无法确定时进入 `clarify → END`，不执行已识别的部分任务。SubGraph 返回失败时停止后续任务并给出失败提示；模型加载/LLM 网络/结构校验失败向调用方抛出异常，不伪装成澄清。
 
-`HybridIntentRouter` 对每个 Rule 未解决片段调用长期复用的 ModelRouter；默认只有拒识或 `needs_llm=true` 才调用 LLMRouter。可在工厂配置 `boundary_margin` 升级接近已保存阈值的标签，默认 0（关闭），不改写 `thresholds.json`。模型前向通过 `asyncio.to_thread` 执行。
+`HybridIntentRouter` 对每个 Rule 未解决片段调用长期复用的 ModelRouter。模型拒识、多标签命中，或片段包含否定、条件、并列和顺序表达时会升级给 LLMRouter，避免把“不要暂停”或“聊天并推荐歌曲”直接按单一模型标签派发。可通过 `escalate_multilabel`、`escalate_semantic_complexity` 调整这两类升级，并通过 `boundary_margin` 升级接近已保存阈值的标签；阈值文件不会被改写。模型前向通过 `asyncio.to_thread` 执行。
 
 `LLMRouter` 复用现有 LLM settings/client，以独立 JSON Schema、无工具请求进行分类。taxonomy 从现有文件加载；输出必须引用当前片段的原文证据，局部 offset 通过代码转换成全局 offset。若精确引用仅出现一次，代码可纠正 LLM 字符计数错误；不存在或歧义引用拒绝。结构或证据无效只重试一次，网络错误不重试。缺少配置或 provider 不支持结构化响应时明确报错。LLM confidence 不与模型概率或规则分数直接竞争。
 
 `IntentMerger` 锁定 Rule 结果；LLM 结果只替换其负责片段的 Model 候选；相同 Intent + sub_intent + span 去重，不同位置或不同工具动作保留。全局按原文位置排序，重新生成连续 order。`RouteDecisionBuilder` 计算完成状态及分类证据覆盖率（不是业务执行成功率），按 RouteKey 分组生成任务，并用 `intent_orders` 引用原始 Intent。
 
-RouteTask 明确携带分配文本、Intent 引用和前置任务 ID；未完成的 RouteDecision 不能派发任务，澄清决策必须携带面向用户的问题。当前任务按前置依赖串行执行。CurrentSong 和 WorldLine 仍是 Stub；ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作，GeneralChat 已提供无工具的普通对话能力。
+RouteTask 明确携带分配文本、Intent 引用和前置任务 ID；未完成的 RouteDecision 不能派发任务，澄清决策必须携带面向用户的问题。相邻且 RouteKey 相同的 Intent 合并为一个任务，路由类型被其他任务隔开的 Intent 保持独立，因此 `Tool → Chat → Tool` 会按三个任务和原文顺序执行。CurrentSong 和 WorldLine 仍是 Stub；ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作，GeneralChat 已提供无工具的普通对话能力。
 
 ## GeneralChat SubGraph
 

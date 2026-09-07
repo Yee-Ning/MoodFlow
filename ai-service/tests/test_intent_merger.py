@@ -2,10 +2,23 @@ import unittest
 
 from pydantic import ValidationError
 
-from app.agent.foundation.intent_merging import IntentMerger, RouteDecisionBuilder, SegmentResolution
+from app.agent.foundation.intent_merging import (
+    IntentMerger,
+    MergedIntentResult,
+    RouteDecisionBuilder,
+    SegmentResolution,
+)
 from app.agent.foundation.llm_routing.schemas import LLMRouteResult
 from app.agent.foundation.model_routing.schemas import ModelRouteResult
-from app.agent.foundation.routing import IntentItem, IntentSource, IntentType, RouteDecision, RouteTask, RouteKey
+from app.agent.foundation.routing import (
+    IntentItem,
+    IntentSource,
+    IntentType,
+    RouteDecision,
+    RouteKey,
+    RouteTask,
+    UnresolvedSegment,
+)
 from app.agent.foundation.rule_routing import RuleRouter
 
 
@@ -76,6 +89,31 @@ class IntentMergerTests(unittest.TestCase):
         self.assertFalse(decision.is_complete)
         self.assertEqual(decision.tasks, [])
         self.assertEqual(decision.intents[0].intent, IntentType.TOOL_CALLING)
+
+    def test_long_clarification_text_is_safely_bounded(self):
+        text = "不明确" * 1_000
+        segment = UnresolvedSegment(
+            text=text,
+            start=0,
+            end=len(text),
+            order=0,
+        )
+        merged = MergedIntentResult(
+            intents=[],
+            unresolved_segments=[segment],
+            needs_llm=False,
+            needs_clarification=True,
+        )
+
+        decision = RouteDecisionBuilder().build(
+            text,
+            merged,
+            run_id="long-clarification",
+        )
+
+        self.assertTrue(decision.needs_clarification)
+        self.assertLessEqual(len(decision.clarification_question), 1_000)
+        self.assertIn("…", decision.clarification_question)
 
     def test_multi_label_same_span_not_collapsed_and_general_chat_has_task(self):
         text = "阿巴阿巴"

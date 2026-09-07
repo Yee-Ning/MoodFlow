@@ -10,13 +10,16 @@ class RouteDecisionBuilder:
         pending = merged.needs_llm or bool(merged.unresolved_segments)
         clarification = merged.needs_clarification or (not merged.intents and not merged.needs_llm)
         complete = not pending and not clarification
-        groups: dict[RouteKey, list[int]] = {}
+        groups: list[tuple[RouteKey, list[int]]] = []
         for item in merged.intents:
             route = RouteKey(item.intent.value)
-            groups.setdefault(route, []).append(item.order)
+            if groups and groups[-1][0] is route:
+                groups[-1][1].append(item.order)
+            else:
+                groups.append((route, [item.order]))
         # V1 dispatch is all-or-nothing: preserve recognized intents while waiting for clarification.
         tasks: list[RouteTask] = []
-        for index, (route, orders) in enumerate(groups.items()):
+        for index, (route, orders) in enumerate(groups):
             task_id = f"{run_id}:{route.value}:{index}"
             evidence = list(dict.fromkeys(merged.intents[order].evidence for order in orders))
             tasks.append(RouteTask(
@@ -38,6 +41,8 @@ class RouteDecisionBuilder:
                 unresolved = "；".join(
                     segment.text for segment in merged.unresolved_segments
                 )
+                if len(unresolved) > 800:
+                    unresolved = unresolved[:799].rstrip() + "…"
                 clarification_question = (
                     f"我还不能确定“{unresolved}”具体希望我做什么，请补充说明。"
                 )

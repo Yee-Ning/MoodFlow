@@ -32,8 +32,29 @@ def output_for(request, labels=("current_song",), clarification=False):
 
 class LLMRouterTests(unittest.IsolatedAsyncioTestCase):
     async def test_multilabel_grounding_and_global_offsets(self):
-        request = request_for("说说它再点个喜欢")
-        runtime = SimpleNamespace(classify=AsyncMock(return_value=output_for(request, ("current_song", "tool_calling"))))
+        request = request_for("说说它，点个喜欢")
+        raw = {
+            "intents": [
+                {
+                    "intent": "current_song",
+                    "confidence": 0.8,
+                    "evidence": "说说它",
+                    "start": 0,
+                    "end": 3,
+                },
+                {
+                    "intent": "tool_calling",
+                    "confidence": 0.8,
+                    "evidence": "点个喜欢",
+                    "start": 4,
+                    "end": 8,
+                },
+            ],
+            "needs_clarification": False,
+        }
+        runtime = SimpleNamespace(
+            classify=AsyncMock(return_value=json.dumps(raw, ensure_ascii=False))
+        )
         result = await LLMRouter(TAXONOMY, runtime=runtime).route(request)
         self.assertEqual(len(result.intents), 2)
         self.assertFalse(result.needs_clarification)
@@ -41,6 +62,22 @@ class LLMRouterTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(item.source, IntentSource.LLM)
             self.assertEqual(request.original_text[item.start:item.end], item.evidence)
         self.assertEqual(runtime.classify.await_count, 1)
+
+    async def test_multilabel_with_identical_evidence_is_retried_then_rejected(self):
+        request = request_for("分析并收藏")
+        runtime = SimpleNamespace(
+            classify=AsyncMock(
+                return_value=output_for(
+                    request,
+                    ("current_song", "tool_calling"),
+                )
+            )
+        )
+
+        with self.assertRaisesRegex(LLMRoutingError, "evidence validation"):
+            await LLMRouter(TAXONOMY, runtime=runtime).route(request)
+
+        self.assertEqual(runtime.classify.await_count, 2)
 
     async def test_invalid_json_retries_once(self):
         request = request_for()

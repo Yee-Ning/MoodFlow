@@ -49,6 +49,16 @@ class LLMRouter:
                 source=IntentSource.LLM, evidence=candidate.evidence,
                 start=start, end=end, order=order,
             ))
+        for index, item in enumerate(local):
+            if any(
+                item.intent is not other.intent
+                and item.start == other.start
+                and item.end == other.end
+                for other in local[index + 1:]
+            ):
+                raise ValueError(
+                    "different intents must cite distinct evidence spans"
+                )
         remaining = calculate_coverage(segment.text, local).unresolved_segments
         unresolved = [UnresolvedSegment(
             text=item.text, start=item.start + segment.start, end=item.end + segment.start,

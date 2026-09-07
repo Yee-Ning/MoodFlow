@@ -1,4 +1,5 @@
 import asyncio
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -11,6 +12,12 @@ from app.agent.foundation.model_routing.schemas import ModelRouteResult
 from app.agent.foundation.routing import RouteDecision, RoutingContext
 from app.agent.foundation.rule_routing import RuleRouter
 
+_SEMANTIC_COMPLEXITY = re.compile(
+    r"(?:别|不要|不用|无需|并非|不是|如果|假如|要是|除非|否则|"
+    r"并|而且|顺便|同时|以及|然后|再|\b(?:do not|don't|if|unless|then)\b)",
+    re.IGNORECASE,
+)
+
 
 class ModelRoutingBackend(Protocol):
     def route(self, text: str) -> ModelRouteResult: ...
@@ -22,17 +29,28 @@ class AsyncIntentRouter(Protocol):
 
 @dataclass(frozen=True)
 class EscalationPolicy:
-    """Optional margin guard. V1 default uses the saved model's reject signal only."""
+    """Escalate rejected, ambiguous, or near-threshold model decisions."""
 
     boundary_margin: float = 0.0
+    escalate_multilabel: bool = True
+    escalate_semantic_complexity: bool = True
 
     def __post_init__(self):
         if not 0 <= self.boundary_margin < 1:
             raise ValueError("boundary_margin must be in [0, 1)")
 
-    def reason(self, result: ModelRouteResult, thresholds: dict[str, float]) -> str | None:
+    def reason(
+        self,
+        result: ModelRouteResult,
+        thresholds: dict[str, float],
+        text: str = "",
+    ) -> str | None:
         if result.needs_llm or not result.intents:
             return "model_rejected"
+        if self.escalate_multilabel and len(result.intents) > 1:
+            return "multi_label_ambiguity"
+        if self.escalate_semantic_complexity and _SEMANTIC_COMPLEXITY.search(text):
+            return "semantic_complexity"
         if self.boundary_margin and any(
             result.scores[label] - thresholds[label] <= self.boundary_margin
             for label in result.accepted_labels
@@ -68,7 +86,7 @@ class HybridIntentRouter:
         for segment in rule.unresolved_segments:
             # The CPU/GPU forward must not block the asynchronous graph's event loop.
             model = await asyncio.to_thread(self._model.route, segment.text)
-            reason = self._policy.reason(model, self._thresholds)
+            reason = self._policy.reason(model, self._thresholds, segment.text)
             llm = None
             if reason is not None:
                 model = model.model_copy(update={"needs_llm": True, "unresolved_text": segment.text})
@@ -85,6 +103,8 @@ class HybridIntentRouter:
 def create_hybrid_router(
     *, model_dir: Path | None = None, taxonomy_path: Path | None = None,
     device: str = "auto", boundary_margin: float = 0.0,
+    escalate_multilabel: bool = True,
+    escalate_semantic_complexity: bool = True,
 ) -> HybridIntentRouter:
     # The factory is called once when constructing the application graph.
     from app.agent.foundation.model_routing.runtime import IntentClassifierRuntime
@@ -94,5 +114,10 @@ def create_hybrid_router(
     return HybridIntentRouter(
         ModelRouter(runtime=runtime),
         LLMRouter(taxonomy_path or service_root / "data/intent/taxonomy.json"),
-        policy=EscalationPolicy(boundary_margin), thresholds=runtime.thresholds,
+        policy=EscalationPolicy(
+            boundary_margin=boundary_margin,
+            escalate_multilabel=escalate_multilabel,
+            escalate_semantic_complexity=escalate_semantic_complexity,
+        ),
+        thresholds=runtime.thresholds,
     )
