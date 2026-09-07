@@ -133,7 +133,31 @@ public class NeteaseMusicService {
         validateMusicEntityType(normalizedType);
 
         return switch (normalizedType) {
-            case "song" -> toSongEntity(fetchSongSource(entityId));
+            case "song" -> {
+                MusicEntityData song = toSongEntity(fetchSongSource(entityId));
+                List<MusicEntityReferenceData> related = new ArrayList<>(song.relatedEntities());
+                try {
+                    Map<String, Object> response = get("/simi/song", Map.of("id", entityId));
+                    optionalMapList(response, "songs").stream()
+                            .limit(5)
+                            .map(this::toSongReference)
+                            .forEach(related::add);
+                } catch (NeteaseApiException | NeteaseApiTimeoutException exception) {
+                    log.warn(
+                            "相似歌曲暂时不可用，继续返回基础实体: songId={}, reason={}",
+                            entityId,
+                            exception.getMessage());
+                }
+                yield new MusicEntityData(
+                        song.id(),
+                        song.entityType(),
+                        song.name(),
+                        song.artist(),
+                        song.album(),
+                        song.coverUrl(),
+                        song.metadata(),
+                        List.copyOf(related));
+            }
             case "artist" -> {
                 Map<String, Object> response = get("/artists", Map.of("id", entityId));
                 Map<String, Object> artist = requiredMap(response, "artist");

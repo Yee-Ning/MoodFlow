@@ -304,6 +304,38 @@ class NeteaseMusicServiceTests {
     }
 
     @Test
+    void shouldLoadSongEntityWithSimilarWorksForWorldLine() {
+        expectSongDetail(185809, "晴天", "周杰伦", "叶惠美");
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/simi/song", "id=185809");
+                    assertNull(request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "songs": [
+                            {
+                              "id": 186016,
+                              "name": "断了的弦",
+                              "ar": [{"id": 6452, "name": "周杰伦"}],
+                              "al": {"id": 18907, "name": "寻找周杰伦"}
+                            }
+                          ]
+                        }
+                        """, APPLICATION_JSON));
+
+        MusicEntityData song = musicService.getMusicEntityDetail("song", 185809);
+
+        assertEquals("song", song.entityType());
+        assertEquals(3, song.relatedEntities().size());
+        assertEquals("artist", song.relatedEntities().get(0).entityType());
+        assertEquals("album", song.relatedEntities().get(1).entityType());
+        assertEquals("song", song.relatedEntities().get(2).entityType());
+        assertEquals("断了的弦", song.relatedEntities().get(2).name());
+        server.verify();
+    }
+
+    @Test
     void shouldReportMissingSongDetail() {
         server.expect(request -> assertRequest(
                         request.getURI(),
