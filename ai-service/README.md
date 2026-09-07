@@ -35,7 +35,7 @@ START
 
 ## Graph Foundation V1
 
-`app/agent/foundation` 是独立的 MainGraph 基础设施，现已支持 Rule → Model → LLM → Merger 动态路由，并已实现 ToolCalling SubGraph。生产 Chat HTTP/SSE 默认继续使用旧图；设置 `AI_AGENT_GRAPH_MODE=foundation` 后可显式启用 Foundation 图进行联调。
+`app/agent/foundation` 是独立的 MainGraph 基础设施，现已支持 Rule → Model → LLM → Merger 动态路由，以及 CurrentSong、ToolCalling、GeneralChat 三个实际 SubGraph。生产 Chat HTTP/SSE 默认继续使用旧图；设置 `AI_AGENT_GRAPH_MODE=foundation` 后可显式启用 Foundation 图进行联调。
 
 ```text
 START
@@ -143,7 +143,13 @@ python scripts/intent/test_model_router.py --device auto
 
 `IntentMerger` 锁定 Rule 结果；LLM 结果只替换其负责片段的 Model 候选；相同 Intent + sub_intent + span 去重，不同位置或不同工具动作保留。全局按原文位置排序，重新生成连续 order。`RouteDecisionBuilder` 计算完成状态及分类证据覆盖率（不是业务执行成功率），按 RouteKey 分组生成任务，并用 `intent_orders` 引用原始 Intent。
 
-RouteTask 明确携带分配文本、Intent 引用和前置任务 ID；未完成的 RouteDecision 不能派发任务，澄清决策必须携带面向用户的问题。相邻且 RouteKey 相同的 Intent 合并为一个任务，路由类型被其他任务隔开的 Intent 保持独立，因此 `Tool → Chat → Tool` 会按三个任务和原文顺序执行。CurrentSong 和 WorldLine 仍是 Stub；ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作，GeneralChat 已提供无工具的普通对话能力。
+RouteTask 明确携带分配文本、Intent 引用和前置任务 ID；未完成的 RouteDecision 不能派发任务，澄清决策必须携带面向用户的问题。相邻且 RouteKey 相同的 Intent 合并为一个任务，路由类型被其他任务隔开的 Intent 保持独立，因此 `Tool → Chat → Tool` 会按三个任务和原文顺序执行。CurrentSong 已提供只读的当前歌曲分析，ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作，GeneralChat 已提供无工具的普通对话能力；WorldLine 仍是 Stub。
+
+## CurrentSong SubGraph
+
+`app/agent/foundation/subgraphs/current_song` 专门回答当前歌曲的歌词、主题、情绪、叙事和听感问题。子图先解析本任务应分析的歌曲：优先采用本轮前置 ToolCalling 任务产生的 `play_song` 目标，否则使用只读播放器快照中的当前歌曲 ID；若前置任务是上一首或下一首，则等待浏览器实际完成切歌，避免分析旧歌曲。
+
+解析到歌曲后，子图通过 Spring Boot 的歌曲上下文接口加载可信元数据和歌词，再把路由分配文本、播放器快照及最近 12 条对话历史交给无工具模型。模型不能发起播放、收藏、搜索等操作，也不能把歌词内容当作指令；缺少当前歌曲时返回 `NEEDS_INPUT`，上下文服务失败时返回不泄露内部异常的 `FAILED` 结果。成功结果只向 MainGraph 暴露必要歌曲元数据和分析正文，不保存歌词全文；当前尚未接入 RAG，结果会明确记录 `rag_used=false`。
 
 ## GeneralChat SubGraph
 

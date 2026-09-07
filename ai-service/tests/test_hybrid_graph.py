@@ -179,12 +179,18 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_rule_model_graph_dispatches_in_query_order_and_preserves_context(self):
         router, model, runtime = fixture_router()
-        graph = create_main_graph(intent_router=router)
+        graph = build_main_graph(
+            intent_router=router,
+            current_song_subgraph=successful_subgraph(
+                RouteKey.CURRENT_SONG,
+                "CurrentSong analysis fixture",
+            ),
+        ).compile(checkpointer=create_memory_checkpointer())
         state = create_main_state("暂停一下，然后讲讲这首歌", routing_context=RoutingContext(has_current_song=True, current_song_id=1))
         result = await graph.ainvoke(state, {"configurable": {"thread_id": "hybrid"}})
         self.assertEqual([r.route_key for r in result["task_results"]], [RouteKey.TOOL_CALLING, RouteKey.CURRENT_SONG])
         self.assertIn("暂停指令", result["final_response"])
-        self.assertIn("CurrentSong", result["final_response"])
+        self.assertIn("CurrentSong analysis fixture", result["final_response"])
         model.assert_called_once_with("讲讲这首歌")
         runtime.classify.assert_not_awaited()
         self.assertEqual(result["routing_context"], state["routing_context"])
@@ -221,6 +227,10 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
         # No rule match here: the fixture exercises one LLM-owned multi-intent segment.
         result = await build_main_graph(
             intent_router=router,
+            current_song_subgraph=successful_subgraph(
+                RouteKey.CURRENT_SONG,
+                "current-song fixture",
+            ),
             tool_calling_subgraph=successful_subgraph(
                 RouteKey.TOOL_CALLING,
                 "tool fixture",

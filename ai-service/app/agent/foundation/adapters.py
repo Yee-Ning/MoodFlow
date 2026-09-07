@@ -32,6 +32,22 @@ def _task_for_route(state: MainState, route_key: RouteKey) -> RouteTask:
     return matches[0]
 
 
+def _prior_task_results(
+    state: MainState,
+    task: RouteTask,
+) -> list[TaskResult]:
+    decision = state["route_decision"]
+    task_index = decision.tasks.index(task)
+    prior_task_ids = {
+        item.task_id for item in decision.tasks[:task_index]
+    }
+    return [
+        result
+        for result in state.get("task_results", [])
+        if result.task_id in prior_task_ids
+    ]
+
+
 def create_subgraph_adapter(
     route_key: RouteKey,
     subgraph: CompiledStateGraph,
@@ -58,7 +74,14 @@ def create_subgraph_adapter(
             common_input["routing_intents"] = selected
 
         if route_key is RouteKey.CURRENT_SONG:
-            common_input.update(song_context=None, rag_context=[])
+            common_input.update(
+                routing_context=state["routing_context"],
+                prior_task_results=_prior_task_results(state, task),
+                target_song_id=None,
+                target_source=None,
+                song_context=None,
+                rag_context=[],
+            )
         elif route_key is RouteKey.TOOL_CALLING:
             active_task_ids = {
                 item.task_id for item in state["route_decision"].tasks
@@ -86,18 +109,9 @@ def create_subgraph_adapter(
         elif route_key is RouteKey.WORLDLINE:
             common_input.update(rag_context=[], worldline_plan=None)
         elif route_key is RouteKey.GENERAL_CHAT:
-            task_index = state["route_decision"].tasks.index(task)
-            prior_task_ids = {
-                item.task_id
-                for item in state["route_decision"].tasks[:task_index]
-            }
             common_input.update(
                 routing_context=state["routing_context"],
-                prior_task_results=[
-                    result
-                    for result in state.get("task_results", [])
-                    if result.task_id in prior_task_ids
-                ],
+                prior_task_results=_prior_task_results(state, task),
             )
 
         output = await subgraph.ainvoke(common_input, context=runtime.context)

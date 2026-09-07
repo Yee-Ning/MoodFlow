@@ -132,7 +132,7 @@ def build_main_graph(
             )
         }
 
-    def select_stub_subgraphs(state: MainState) -> list[str]:
+    def select_subgraphs(state: MainState) -> list[str]:
         decision = state.get("route_decision")
         if decision is None:
             raise RuntimeError("development route produced no decision")
@@ -201,7 +201,7 @@ def build_main_graph(
     builder.add_edge("prepare_context", routing_node)
     if routes is not None:
         builder.add_conditional_edges(
-            routing_node, select_stub_subgraphs,
+            routing_node, select_subgraphs,
             {node_name: node_name for node_name in SUBGRAPH_NODES.values()},
         )
     else:

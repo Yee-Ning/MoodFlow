@@ -27,6 +27,9 @@ from app.agent.foundation.subgraphs import (
     create_worldline_subgraph,
 )
 from app.agent.foundation.subgraphs.base import SubGraphOutput
+from app.agent.foundation.subgraphs.current_song.graph import (
+    NO_CURRENT_SONG_MESSAGE,
+)
 from app.agent.foundation.subgraphs.general_chat import GeneralChatState
 
 
@@ -173,7 +176,14 @@ class StubSubGraphTests(unittest.TestCase):
     @staticmethod
     def _invoke(graph, route: RouteKey) -> dict:
         local_fields = {
-            RouteKey.CURRENT_SONG: {"song_context": None, "rag_context": []},
+            RouteKey.CURRENT_SONG: {
+                "routing_context": RoutingContext(),
+                "prior_task_results": [],
+                "target_song_id": None,
+                "target_source": None,
+                "song_context": None,
+                "rag_context": [],
+            },
             RouteKey.TOOL_CALLING: {
                 "routing_context": RoutingContext(),
                 "prior_entities": [],
@@ -195,12 +205,13 @@ class StubSubGraphTests(unittest.TestCase):
         }
         return asyncio.run(graph.ainvoke(state))
 
-    def test_current_song_stub_runs_independently(self) -> None:
+    def test_current_song_without_player_context_requests_input(self) -> None:
         result = self._invoke(create_current_song_subgraph(), RouteKey.CURRENT_SONG)
 
         self.assertEqual(set(result), {"task_result"})
         self.assertEqual(result["task_result"].route_key, RouteKey.CURRENT_SONG)
-        self.assertEqual(result["task_result"].status, TaskStatus.SUCCESS)
+        self.assertEqual(result["task_result"].status, TaskStatus.NEEDS_INPUT)
+        self.assertEqual(result["task_result"].content, NO_CURRENT_SONG_MESSAGE)
 
     def test_tool_calling_subgraph_runs_independently(self) -> None:
         async def assistant(messages, current_input, routing_context, prior_entities):
@@ -239,6 +250,10 @@ class MainGraphFoundationTests(unittest.TestCase):
         )
         graph = build_main_graph(
             development_routes=routes,
+            current_song_subgraph=successful_subgraph(
+                RouteKey.CURRENT_SONG,
+                "CurrentSong SubGraph completed.",
+            ),
             tool_calling_subgraph=successful_subgraph(
                 RouteKey.TOOL_CALLING,
                 "ToolCalling SubGraph completed.",
@@ -269,7 +284,7 @@ class MainGraphFoundationTests(unittest.TestCase):
         self.assertTrue(
             all(item.status is TaskStatus.SUCCESS for item in current_results)
         )
-        self.assertIn("CurrentSong SubGraph stub completed.", result["final_response"])
+        self.assertIn("CurrentSong SubGraph completed.", result["final_response"])
         self.assertIn("ToolCalling SubGraph completed.", result["final_response"])
         self.assertIn("WorldLine SubGraph stub completed.", result["final_response"])
 
@@ -279,6 +294,10 @@ class MainGraphFoundationTests(unittest.TestCase):
                 RouteKey.CURRENT_SONG,
                 RouteKey.TOOL_CALLING,
                 RouteKey.WORLDLINE,
+            ),
+            current_song_subgraph=successful_subgraph(
+                RouteKey.CURRENT_SONG,
+                "CurrentSong SubGraph completed.",
             ),
             tool_calling_subgraph=successful_subgraph(
                 RouteKey.TOOL_CALLING,
@@ -338,14 +357,14 @@ class MainGraphFoundationTests(unittest.TestCase):
             [message.content for message in same_thread["messages"]],
             [
                 "first",
-                "CurrentSong SubGraph stub completed.",
+                NO_CURRENT_SONG_MESSAGE,
                 "second",
-                "CurrentSong SubGraph stub completed.",
+                NO_CURRENT_SONG_MESSAGE,
             ],
         )
         self.assertEqual(
             [message.content for message in other_thread["messages"]],
-            ["isolated", "CurrentSong SubGraph stub completed."],
+            ["isolated", NO_CURRENT_SONG_MESSAGE],
         )
         self.assertNotIn("thread_id", same_thread)
 
