@@ -66,7 +66,8 @@ def build_worldline_graph(
 
     sources = list(entity_facts.sources)
     source_ids = {source.id for source in sources}
-    for document in retrieved_docs:
+    remaining_source_slots = max(0, 30 - len(sources))
+    for document in retrieved_docs[:remaining_source_slots]:
         evidence_id = f"knowledge:{document.id}"
         if evidence_id not in source_ids:
             sources.append(

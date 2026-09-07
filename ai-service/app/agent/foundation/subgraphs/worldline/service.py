@@ -45,11 +45,24 @@ async def generate_worldline(
         },
     )
     raw_result = output.get("task_result")
-    result = (
-        raw_result
-        if isinstance(raw_result, TaskResult)
-        else TaskResult.model_validate(raw_result)
-    )
+    if raw_result is None:
+        raise WorldLineExecutionError(
+            "missing_worldline_result",
+            "音乐世界线没有返回结果。",
+            502,
+        )
+    try:
+        result = (
+            raw_result
+            if isinstance(raw_result, TaskResult)
+            else TaskResult.model_validate(raw_result)
+        )
+    except ValueError as exc:
+        raise WorldLineExecutionError(
+            "invalid_worldline_result",
+            "音乐世界线返回了无法识别的数据。",
+            502,
+        ) from exc
     if result.status is not TaskStatus.SUCCESS:
         reason = str(result.data.get("reason") or "worldline_failed")
         raise WorldLineExecutionError(

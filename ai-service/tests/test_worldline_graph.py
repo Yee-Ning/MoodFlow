@@ -18,6 +18,7 @@ from app.agent.foundation.subgraphs.worldline.models import (
     EvidenceType,
     MusicEntityFacts,
     MusicFact,
+    MusicKnowledgeDocument,
     ResolvedEntity,
     WorldLineBranch,
     WorldLineBranchTarget,
@@ -102,6 +103,19 @@ class EmptyRetriever:
 class FailingRetriever:
     async def retrieve(self, entity, query):
         raise RuntimeError("test retriever unavailable")
+
+
+class ManyDocsRetriever:
+    async def retrieve(self, entity, query):
+        return [
+            MusicKnowledgeDocument(
+                id=f"doc-{index}",
+                title=f"资料 {index}",
+                content="测试背景资料。",
+                source="test-index",
+            )
+            for index in range(25)
+        ]
 
 
 class FakeGenerator:
@@ -309,6 +323,19 @@ class WorldLineGraphTests(unittest.TestCase):
         result = output["task_result"]
         self.assertEqual(result.status, TaskStatus.SUCCESS)
         self.assertIn("仅基于目录事实", result.data["worldline_result"]["narrative"])
+
+    def test_retrieval_context_and_sources_are_bounded(self) -> None:
+        song = entity(1, EntityType.SONG, "晴天")
+        graph = create_worldline_subgraph(
+            music_service=FakeMusicService(song),
+            retriever=ManyDocsRetriever(),
+            generator=FakeGenerator(),
+        )
+
+        output = asyncio.run(invoke(graph, "歌曲《晴天》的世界线"))
+
+        sources = output["task_result"].data["worldline_result"]["sources"]
+        self.assertEqual(len(sources), 21)
 
     def test_branch_failure_returns_safe_failed_result(self) -> None:
         song = entity(1, EntityType.SONG, "晴天")

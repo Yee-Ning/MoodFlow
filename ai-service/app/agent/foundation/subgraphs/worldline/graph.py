@@ -271,6 +271,7 @@ def build_worldline_subgraph(
                 entity,
                 state["entity_query"] or state["current_input"],
             )
+            documents = documents[:20]
         except Exception:
             _log_node(
                 "worldline.retrieve",

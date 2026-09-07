@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 from unittest.mock import AsyncMock, patch
 
@@ -16,6 +17,7 @@ from app.agent.foundation.subgraphs.worldline.models import (
 )
 from app.agent.foundation.subgraphs.worldline.service import (
     WorldLineExecutionError,
+    generate_worldline,
 )
 from app.main import app
 
@@ -98,6 +100,16 @@ class WorldLineApiTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 422)
+
+    def test_service_rejects_graph_without_task_result(self) -> None:
+        graph = AsyncMock()
+        graph.ainvoke.return_value = {}
+
+        with self.assertRaises(WorldLineExecutionError) as raised:
+            asyncio.run(generate_worldline("晴天", graph=graph))
+
+        self.assertEqual(raised.exception.code, "missing_worldline_result")
+        self.assertEqual(raised.exception.status_code, 502)
 
 
 if __name__ == "__main__":
