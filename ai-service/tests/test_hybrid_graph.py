@@ -74,6 +74,7 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
                         RouteTask(
                             task_id=f"tool-{route_count}",
                             route_key=RouteKey.TOOL_CALLING,
+                            input_text=text,
                             intent_orders=[0],
                         )
                     ],

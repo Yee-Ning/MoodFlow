@@ -98,23 +98,36 @@ def build_main_graph(
             return "final_response"
         for task in decision.tasks:
             if task.task_id not in completed:
+                if not set(task.depends_on) <= completed:
+                    raise RuntimeError("route task dependencies are not satisfied")
                 return SUBGRAPH_NODES[task.route_key]
         return "final_response"
 
-    def clarify(_: MainState) -> dict[str, str]:
-        return {"final_response": "我还没能确定你希望我做什么，请补充或明确一下请求。"}
+    def clarify(state: MainState) -> dict[str, str]:
+        decision = state["route_decision"]
+        return {
+            "final_response": decision.clarification_question
+            or "我还没能确定你希望我做什么，请补充或明确一下请求。"
+        }
 
-    def development_route(_: MainState) -> dict[str, RouteDecision]:
+    def development_route(state: MainState) -> dict[str, RouteDecision]:
         run_id = uuid4().hex
+        tasks: list[RouteTask] = []
+        for route in routes:
+            task_id = f"{run_id}:{route.value}"
+            tasks.append(
+                RouteTask(
+                    task_id=task_id,
+                    route_key=route,
+                    input_text=state["current_input"],
+                    depends_on=[tasks[-1].task_id] if tasks else [],
+                )
+            )
         return {
             "route_decision": RouteDecision(
-                tasks=[
-                    RouteTask(
-                        task_id=f"{run_id}:{route.value}",
-                        route_key=route,
-                    )
-                    for route in routes
-                ]
+                is_complete=True,
+                coverage=1.0,
+                tasks=tasks,
             )
         }
 

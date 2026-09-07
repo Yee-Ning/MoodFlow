@@ -118,13 +118,48 @@ class GraphFoundationStateTests(unittest.TestCase):
 
     def test_route_decision_supports_multiple_tasks(self) -> None:
         decision = RouteDecision(
+            is_complete=True,
             tasks=[
-                RouteTask(task_id="task-1", route_key=RouteKey.CURRENT_SONG),
-                RouteTask(task_id="task-2", route_key=RouteKey.TOOL_CALLING),
+                RouteTask(
+                    task_id="task-1",
+                    route_key=RouteKey.CURRENT_SONG,
+                    input_text="分析歌曲",
+                ),
+                RouteTask(
+                    task_id="task-2",
+                    route_key=RouteKey.TOOL_CALLING,
+                    input_text="暂停播放",
+                    depends_on=["task-1"],
+                ),
             ]
         )
 
         self.assertEqual(len(decision.tasks), 2)
+
+    def test_route_decision_rejects_unsafe_execution_contracts(self) -> None:
+        with self.assertRaisesRegex(ValidationError, "incomplete"):
+            RouteDecision(
+                tasks=[
+                    RouteTask(
+                        task_id="task-1",
+                        route_key=RouteKey.GENERAL_CHAT,
+                        input_text="聊聊天",
+                    )
+                ]
+            )
+
+        with self.assertRaisesRegex(ValidationError, "earlier"):
+            RouteDecision(
+                is_complete=True,
+                tasks=[
+                    RouteTask(
+                        task_id="task-1",
+                        route_key=RouteKey.GENERAL_CHAT,
+                        input_text="聊聊天",
+                        depends_on=["missing"],
+                    )
+                ],
+            )
 
     def test_thread_id_is_not_business_state(self) -> None:
         annotations = get_type_hints(MainState, include_extras=True)

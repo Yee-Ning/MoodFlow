@@ -99,6 +99,7 @@ class FoundationStreamingTests(unittest.IsolatedAsyncioTestCase):
                         RouteTask(
                             task_id="pause-task",
                             route_key=RouteKey.TOOL_CALLING,
+                            input_text=text,
                             intent_orders=[0],
                         )
                     ],

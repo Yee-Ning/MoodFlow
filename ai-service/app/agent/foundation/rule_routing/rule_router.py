@@ -62,7 +62,11 @@ class RuleRouter:
         _routing_context = RoutingContext() if context is None else context
         normalized = normalize_text(query)
         if not normalized.text:
-            return RouteDecision(needs_clarification=True, coverage=1.0)
+            return RouteDecision(
+                needs_clarification=True,
+                clarification_question="请告诉我你希望我做什么。",
+                coverage=1.0,
+            )
 
         matches = resolve_conflicts(_collect_matches(normalized, self._rules))
         intents = [

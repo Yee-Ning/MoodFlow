@@ -21,9 +21,14 @@ def _task_for_route(state: MainState, route_key: RouteKey) -> RouteTask:
     if decision is None:
         raise RuntimeError("MainGraph has no route decision")
 
-    matches = [task for task in decision.tasks if task.route_key is route_key]
-    if len(matches) != 1:
-        raise RuntimeError(f"expected exactly one task for route {route_key.value}")
+    completed = {result.task_id for result in state.get("task_results", [])}
+    matches = [
+        task
+        for task in decision.tasks
+        if task.route_key is route_key and task.task_id not in completed
+    ]
+    if not matches:
+        raise RuntimeError(f"no pending task for route {route_key.value}")
     return matches[0]
 
 
@@ -49,8 +54,7 @@ def create_subgraph_adapter(
             decision = state["route_decision"]
             selected = [decision.intents[order] for order in task.intent_orders]
             # Each subgraph receives only the clauses assigned to this task.
-            evidence = list(dict.fromkeys(item.evidence for item in selected))
-            common_input["current_input"] = "；".join(evidence)
+            common_input["current_input"] = task.input_text
             common_input["routing_intents"] = selected
 
         if route_key is RouteKey.CURRENT_SONG:

@@ -37,6 +37,14 @@ class IntentMergerTests(unittest.TestCase):
         decision = RouteDecisionBuilder().build(text, merged, run_id="fixture")
         self.assertTrue(decision.is_complete)
         self.assertEqual([t.intent_orders for t in decision.tasks], [[0], [1]])
+        self.assertEqual(
+            [t.input_text for t in decision.tasks],
+            ["暂停一下", "讲讲这首歌"],
+        )
+        self.assertEqual(
+            decision.tasks[1].depends_on,
+            [decision.tasks[0].task_id],
+        )
 
     def test_llm_replaces_only_its_segment_even_at_lower_confidence(self):
         text = "暂停一下，然后说点什么"
@@ -94,4 +102,14 @@ class IntentMergerTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             RouteDecision(is_complete=True, needs_llm=True)
         with self.assertRaises(ValidationError):
-            RouteDecision(tasks=[RouteTask(task_id="t", route_key=RouteKey.CURRENT_SONG, intent_orders=[0])])
+            RouteDecision(
+                is_complete=True,
+                tasks=[
+                    RouteTask(
+                        task_id="t",
+                        route_key=RouteKey.CURRENT_SONG,
+                        input_text="分析歌曲",
+                        intent_orders=[0],
+                    )
+                ],
+            )
