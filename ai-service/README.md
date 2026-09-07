@@ -143,7 +143,108 @@ python scripts/intent/test_model_router.py --device auto
 
 `IntentMerger` 锁定 Rule 结果；LLM 结果只替换其负责片段的 Model 候选；相同 Intent + sub_intent + span 去重，不同位置或不同工具动作保留。全局按原文位置排序，重新生成连续 order。`RouteDecisionBuilder` 计算完成状态及分类证据覆盖率（不是业务执行成功率），按 RouteKey 分组生成任务，并用 `intent_orders` 引用原始 Intent。
 
-RouteTask 明确携带分配文本、Intent 引用和前置任务 ID；未完成的 RouteDecision 不能派发任务，澄清决策必须携带面向用户的问题。相邻且 RouteKey 相同的 Intent 合并为一个任务，路由类型被其他任务隔开的 Intent 保持独立，因此 `Tool → Chat → Tool` 会按三个任务和原文顺序执行。CurrentSong 已提供只读的当前歌曲分析，ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作，GeneralChat 已提供无工具的普通对话能力；WorldLine 仍是 Stub。
+RouteTask 明确携带分配文本、Intent 引用和前置任务 ID；未完成的 RouteDecision 不能派发任务，澄清决策必须携带面向用户的问题。相邻且 RouteKey 相同的 Intent 合并为一个任务，路由类型被其他任务隔开的 Intent 保持独立，因此 `Tool → Chat → Tool` 会按三个任务和原文顺序执行。CurrentSong 已提供只读的当前歌曲分析，ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作，GeneralChat 已提供无工具的普通对话能力；WorldLine 已支持歌曲、歌手和专辑的 V1 事实闭环。
+
+## WorldLine V1 SubGraph
+
+`app/agent/foundation/subgraphs/worldline` 是独立的、无 FastAPI request 依赖的 LangGraph 子图：
+
+```text
+START
+  -> resolve_entity
+  -> load_entity_facts
+  -> retrieve_music_knowledge
+  -> build_worldline_graph
+  -> generate_narrative
+  -> generate_branches
+  -> END
+```
+
+目录职责如下：
+
+```text
+worldline/
+  models.py           # ResolvedEntity、Graph、Branch、Result 等严格 Schema
+  state.py            # 仅在子图内存在的 WorldLineState
+  entity_resolver.py  # 规则化 query/type 提取、真实候选匹配与消歧
+  music_service.py    # 复用 MusicServiceClient 的事实适配层
+  retrieval.py        # MusicKnowledgeRetriever 接口与空检索降级实现
+  builder.py          # 只从有证据的事实构建有界图
+  prompts.py          # Grounded Narrative / Branch 系统提示
+  generation.py       # LLM JSON Schema 调用、重试与分支落地校验
+  graph.py            # LangGraph 节点、边、错误降级与结构化日志
+  service.py          # 独立 API 调用入口
+```
+
+实体解析先从用户文本提取实体名称与可选类型，再通过 Spring Boot 的 `/api/music/entities/search` 搜索网易云真实候选。只有规范化名称唯一精确匹配时才选择 canonical entity；同名歌曲/专辑或同名不同演唱者会返回 ambiguous，不把模型猜测当作事实。详情通过 `/api/music/entities/{type}/{id}` 加载；歌曲会尽力补充最多 5 首网易云相似作品，歌手和专辑详情会携带最多 8 个真实相关作品。相似作品加载失败不会丢失歌曲、歌手、专辑等基础事实。
+
+当前 `MusicKnowledgeRetriever` 默认实现是 `EmptyMusicKnowledgeRetriever`，不是正式 RAG。空结果或 Retriever 异常时，图仍可由 Music API facts 构建，Narrative 会明确标注知识范围。未来接入 Qdrant + BM25 + Hybrid Search + Reranker 时，只需替换该接口实现；如果检索结果提供经过验证的 `metadata.graph_nodes/graph_edges`，builder 会将其纳入图并绑定 evidence，普通检索文本本身不会自动造边。
+
+SubGraph 的候选、facts、retrieved docs、graph intermediate data 均保留在 `WorldLineState`。通过 MainGraph 执行时只返回统一 `TaskResult`，且成功载荷只有 `data.worldline_result`。显式“构建歌曲《七里香》的音乐世界线”等请求可由 Foundation Router 派发；生产 `/api/ai/chat` 仍需设置 `AI_AGENT_GRAPH_MODE=foundation` 才使用 Foundation MainGraph。
+
+也可以使用独立 JSON 接口直接联调：
+
+```powershell
+curl.exe -X POST http://127.0.0.1:8001/api/ai/worldline `
+  -H "Content-Type: application/json" `
+  -d '{"query":"歌曲《晴天》的音乐世界线"}'
+```
+
+成功响应是 `WorldLineResult`，示例：
+
+```json
+{
+  "root_entity": {
+    "entity_id": "netease:song:185809",
+    "entity_type": "song",
+    "name": "晴天",
+    "artist": "周杰伦",
+    "album": "叶惠美",
+    "source": "netease",
+    "metadata": {}
+  },
+  "graph": {
+    "root": "netease:song:185809",
+    "nodes": [
+      {
+        "id": "netease:song:185809",
+        "type": "song",
+        "name": "晴天",
+        "description": "世界线根实体",
+        "metadata": {}
+      }
+    ],
+    "edges": []
+  },
+  "narrative": "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。",
+  "branches": [
+    {
+      "id": "branch-1",
+      "title": "晴天作品线 1",
+      "description": "沿当前真实歌曲实体继续探索。",
+      "branch_type": "related_work",
+      "target_entity": {"id": "netease:song:185809", "type": "song", "name": "晴天"}
+    },
+    {
+      "id": "branch-2",
+      "title": "晴天作品线 2",
+      "description": "沿当前真实歌曲实体继续探索。",
+      "branch_type": "related_work",
+      "target_entity": {"id": "netease:song:185809", "type": "song", "name": "晴天"}
+    },
+    {
+      "id": "branch-3",
+      "title": "晴天作品线 3",
+      "description": "沿当前真实歌曲实体继续探索。",
+      "branch_type": "related_work",
+      "target_entity": {"id": "netease:song:185809", "type": "song", "name": "晴天"}
+    }
+  ],
+  "sources": []
+}
+```
+
+无法找到实体返回 404，同名歧义返回 409，音乐服务不可用返回 503，LLM/结构生成失败返回 502。默认流程不会调用 Neo4j、GraphRAG、用户画像、推荐算法或递归 Planner。
 
 ## CurrentSong SubGraph
 
