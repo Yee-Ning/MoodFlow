@@ -17,6 +17,7 @@ from app.agent.foundation.subgraphs import (
     create_worldline_subgraph,
 )
 from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
+from app.schemas.context import MusicAgentContext
 
 if TYPE_CHECKING:
     from app.agent.foundation.hybrid_routing import AsyncIntentRouter
@@ -89,6 +90,12 @@ def build_main_graph(
         if any(result.task_id in active_ids and result.status is TaskStatus.FAILED
                for result in state.get("task_results", [])):
             return "final_response"
+        if any(
+            result.task_id in active_ids
+            and result.status is TaskStatus.NEEDS_INPUT
+            for result in state.get("task_results", [])
+        ):
+            return "final_response"
         for task in decision.tasks:
             if task.task_id not in completed:
                 return SUBGRAPH_NODES[task.route_key]
@@ -158,7 +165,7 @@ def build_main_graph(
             contents.append("部分任务执行失败，请稍后重试。")
         return {"final_response": "\n".join(contents)}
 
-    builder = StateGraph(MainState)
+    builder = StateGraph(MainState, context_schema=MusicAgentContext)
     builder.add_node("prepare_context", prepare_context)
     routing_node = "development_route" if routes is not None else "intent_router"
     builder.add_node(routing_node, development_route if routes is not None else intent_route)

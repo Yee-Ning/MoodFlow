@@ -14,10 +14,23 @@ def create_memory_checkpointer() -> InMemorySaver:
             ("app.agent.foundation.routing", "IntentSource"),
             ("app.agent.foundation.routing", "IntentType"),
             ("app.agent.foundation.routing", "PlayerState"),
+            ("app.agent.foundation.routing", "PlayMode"),
             ("app.agent.foundation.routing", "RouteDecision"),
             ("app.agent.foundation.routing", "RouteKey"),
             ("app.agent.foundation.routing", "RouteTask"),
             ("app.agent.foundation.routing", "RoutingContext"),
+            (
+                "app.agent.foundation.subgraphs.tool_calling.models",
+                "ReferencedEntities",
+            ),
+            (
+                "app.agent.foundation.subgraphs.tool_calling.models",
+                "SongReference",
+            ),
+            (
+                "app.agent.foundation.subgraphs.tool_calling.models",
+                "PlaylistReference",
+            ),
         ]
     )
     return InMemorySaver(serde=serializer)

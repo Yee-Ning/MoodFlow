@@ -2,10 +2,13 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from langgraph.graph.state import CompiledStateGraph
+from langgraph.runtime import Runtime
 
 from app.agent.foundation.models import TaskResult
 from app.agent.foundation.routing import RouteKey, RouteTask
 from app.agent.foundation.state.main import MainState
+from app.agent.foundation.subgraphs.tool_calling.models import ReferencedEntities
+from app.schemas.context import MusicAgentContext
 
 SubGraphAdapter = Callable[[MainState], Awaitable[dict[str, list[TaskResult]]]]
 
@@ -27,7 +30,10 @@ def create_subgraph_adapter(
 ) -> SubGraphAdapter:
     """Isolate MainState from every SubGraph's private state shape."""
 
-    async def invoke_subgraph(state: MainState) -> dict[str, list[TaskResult]]:
+    async def invoke_subgraph(
+        state: MainState,
+        runtime: Runtime[MusicAgentContext],
+    ) -> dict[str, list[TaskResult]]:
         task = _task_for_route(state, route_key)
         common_input: dict[str, Any] = {
             "messages": state["messages"],
@@ -47,11 +53,33 @@ def create_subgraph_adapter(
         if route_key is RouteKey.CURRENT_SONG:
             common_input.update(song_context=None, rag_context=[])
         elif route_key is RouteKey.TOOL_CALLING:
-            common_input.update(tool_calls=[], tool_results=[])
+            active_task_ids = {
+                item.task_id for item in state["route_decision"].tasks
+            }
+            prior_entities: list[ReferencedEntities] = []
+            for previous in reversed(state.get("task_results", [])):
+                if previous.task_id in active_task_ids:
+                    continue
+                raw_entities = previous.data.get("entities")
+                if raw_entities:
+                    prior_entities.append(
+                        ReferencedEntities.model_validate(raw_entities)
+                    )
+                if len(prior_entities) >= 5:
+                    break
+            common_input.update(
+                routing_context=state["routing_context"],
+                prior_entities=prior_entities,
+                tool_calls=[],
+                tool_results=[],
+                client_actions=[],
+                tool_call_count=0,
+                direct_complete=False,
+            )
         elif route_key is RouteKey.WORLDLINE:
             common_input.update(rag_context=[], worldline_plan=None)
 
-        output = await subgraph.ainvoke(common_input)
+        output = await subgraph.ainvoke(common_input, context=runtime.context)
         result = output.get("task_result")
         if not isinstance(result, TaskResult):
             result = TaskResult.model_validate(result)

@@ -13,6 +13,7 @@ from app.agent.foundation import (
     RouteDecision,
     RouteKey,
     RouteTask,
+    RoutingContext,
     TaskResult,
     TaskStatus,
     build_main_graph,
@@ -87,6 +88,13 @@ class GraphFoundationStateTests(unittest.TestCase):
                 error="unexpected",
             )
 
+        with self.assertRaises(ValidationError):
+            TaskResult(
+                task_id="input-without-question",
+                route_key=RouteKey.TOOL_CALLING,
+                status=TaskStatus.NEEDS_INPUT,
+            )
+
     def test_route_decision_supports_multiple_tasks(self) -> None:
         decision = RouteDecision(
             tasks=[
@@ -110,7 +118,15 @@ class StubSubGraphTests(unittest.TestCase):
     def _invoke(graph, route: RouteKey) -> dict:
         local_fields = {
             RouteKey.CURRENT_SONG: {"song_context": None, "rag_context": []},
-            RouteKey.TOOL_CALLING: {"tool_calls": [], "tool_results": []},
+            RouteKey.TOOL_CALLING: {
+                "routing_context": RoutingContext(),
+                "prior_entities": [],
+                "tool_calls": [],
+                "tool_results": [],
+                "client_actions": [],
+                "tool_call_count": 0,
+                "direct_complete": False,
+            },
             RouteKey.WORLDLINE: {"rag_context": [], "worldline_plan": None},
         }
         state = {

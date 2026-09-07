@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 class TaskStatus(StrEnum):
     SUCCESS = "success"
     FAILED = "failed"
+    NEEDS_INPUT = "needs_input"
 
 
 class TaskResult(BaseModel):
@@ -27,6 +28,11 @@ class TaskResult(BaseModel):
             raise ValueError("successful task result cannot contain an error")
         if self.status is TaskStatus.FAILED and not self.error:
             raise ValueError("failed task result must contain an error")
+        if self.status is TaskStatus.NEEDS_INPUT:
+            if self.error is not None:
+                raise ValueError("input requests cannot contain an execution error")
+            if not self.content:
+                raise ValueError("input requests must contain a clarification message")
         return self
 
 
