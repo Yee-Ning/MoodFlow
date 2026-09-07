@@ -193,7 +193,22 @@ class StubSubGraphTests(unittest.TestCase):
                 "tool_call_count": 0,
                 "direct_complete": False,
             },
-            RouteKey.WORLDLINE: {"rag_context": [], "worldline_plan": None},
+            RouteKey.WORLDLINE: {
+                "user_query": "stub test",
+                "entity_query": None,
+                "expected_entity_type": None,
+                "candidate_entities": [],
+                "entity_resolution": None,
+                "resolved_entity": None,
+                "entity_facts": None,
+                "retrieved_docs": [],
+                "worldline_graph": None,
+                "narrative": None,
+                "branches": [],
+                "sources": [],
+                "error_code": None,
+                "error": None,
+            },
         }
         state = {
             "messages": [HumanMessage(content="stub test")],
@@ -226,8 +241,11 @@ class StubSubGraphTests(unittest.TestCase):
         self.assertEqual(result["task_result"].route_key, RouteKey.TOOL_CALLING)
         self.assertEqual(result["task_result"].status, TaskStatus.SUCCESS)
 
-    def test_worldline_stub_runs_independently(self) -> None:
-        result = self._invoke(create_worldline_subgraph(), RouteKey.WORLDLINE)
+    def test_worldline_subgraph_output_contract_is_route_compatible(self) -> None:
+        result = self._invoke(
+            successful_subgraph(RouteKey.WORLDLINE, "WorldLine completed."),
+            RouteKey.WORLDLINE,
+        )
 
         self.assertEqual(set(result), {"task_result"})
         self.assertEqual(result["task_result"].route_key, RouteKey.WORLDLINE)
@@ -258,6 +276,10 @@ class MainGraphFoundationTests(unittest.TestCase):
                 RouteKey.TOOL_CALLING,
                 "ToolCalling SubGraph completed.",
             ),
+            worldline_subgraph=successful_subgraph(
+                RouteKey.WORLDLINE,
+                "WorldLine SubGraph completed.",
+            ),
         ).compile()
 
         result = asyncio.run(
@@ -286,7 +308,7 @@ class MainGraphFoundationTests(unittest.TestCase):
         )
         self.assertIn("CurrentSong SubGraph completed.", result["final_response"])
         self.assertIn("ToolCalling SubGraph completed.", result["final_response"])
-        self.assertIn("WorldLine SubGraph stub completed.", result["final_response"])
+        self.assertIn("WorldLine SubGraph completed.", result["final_response"])
 
     def test_subgraph_private_fields_do_not_pollute_main_state(self) -> None:
         graph = build_main_graph(
@@ -303,6 +325,10 @@ class MainGraphFoundationTests(unittest.TestCase):
                 RouteKey.TOOL_CALLING,
                 "ToolCalling SubGraph completed.",
             ),
+            worldline_subgraph=successful_subgraph(
+                RouteKey.WORLDLINE,
+                "WorldLine SubGraph completed.",
+            ),
         ).compile()
 
         result = asyncio.run(
@@ -314,10 +340,12 @@ class MainGraphFoundationTests(unittest.TestCase):
 
         private_fields = {
             "song_context",
-            "rag_context",
+            "retrieved_docs",
             "tool_calls",
             "tool_results",
-            "worldline_plan",
+            "worldline_graph",
+            "entity_facts",
+            "candidate_entities",
             "answer",
             "task_result",
             "task_id",

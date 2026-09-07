@@ -107,7 +107,22 @@ def create_subgraph_adapter(
                 direct_complete=False,
             )
         elif route_key is RouteKey.WORLDLINE:
-            common_input.update(rag_context=[], worldline_plan=None)
+            common_input.update(
+                user_query=common_input["current_input"],
+                entity_query=None,
+                expected_entity_type=None,
+                candidate_entities=[],
+                entity_resolution=None,
+                resolved_entity=None,
+                entity_facts=None,
+                retrieved_docs=[],
+                worldline_graph=None,
+                narrative=None,
+                branches=[],
+                sources=[],
+                error_code=None,
+                error=None,
+            )
         elif route_key is RouteKey.GENERAL_CHAT:
             common_input.update(
                 routing_context=state["routing_context"],
