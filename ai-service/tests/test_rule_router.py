@@ -19,6 +19,20 @@ from app.agent.foundation.rule_routing.rule_registry import get_default_rules
 
 
 class RuleRouterTestCase(unittest.TestCase):
+    def test_routes_explicit_entity_worldline(self) -> None:
+        for query in (
+            "构建歌曲《七里香》的音乐世界线",
+            "探索周杰伦的世界线",
+        ):
+            with self.subTest(query=query):
+                result = route_by_rules(query)
+
+                self.assertTrue(result.is_complete)
+                self.assertEqual(
+                    [(item.intent, item.sub_intent) for item in result.intents],
+                    [(IntentType.WORLDLINE, "music_entity_worldline")],
+                )
+
     def assert_intents(
         self,
         query: str,

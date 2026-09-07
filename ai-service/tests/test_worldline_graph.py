@@ -3,6 +3,11 @@ import unittest
 
 from langchain_core.messages import HumanMessage
 
+from app.agent.foundation import (
+    RouteKey,
+    build_main_graph,
+    create_main_state,
+)
 from app.agent.foundation.models import TaskStatus
 from app.agent.foundation.subgraphs.worldline.graph import (
     create_worldline_subgraph,
@@ -168,6 +173,54 @@ async def invoke(graph, query: str) -> dict:
 
 
 class WorldLineGraphTests(unittest.TestCase):
+    def test_main_graph_receives_only_worldline_result_payload(self) -> None:
+        song = entity(1, EntityType.SONG, "晴天")
+        subgraph = create_worldline_subgraph(
+            music_service=FakeMusicService(
+                song,
+                [
+                    entity(2, EntityType.ARTIST, "周杰伦"),
+                    entity(3, EntityType.ALBUM, "叶惠美"),
+                ],
+            ),
+            retriever=EmptyRetriever(),
+            generator=FakeGenerator(),
+        )
+        main_graph = build_main_graph(
+            development_routes=(RouteKey.WORLDLINE,),
+            worldline_subgraph=subgraph,
+        ).compile()
+        query = "歌曲《晴天》的世界线"
+
+        output = asyncio.run(
+            main_graph.ainvoke(
+                create_main_state(
+                    query,
+                    messages=[HumanMessage(content=query)],
+                ),
+                {"configurable": {"thread_id": "main-worldline"}},
+            )
+        )
+
+        task_id = output["route_decision"].tasks[0].task_id
+        task_result = next(
+            item for item in output["task_results"] if item.task_id == task_id
+        )
+        self.assertEqual(set(task_result.data), {"worldline_result"})
+        self.assertEqual(
+            task_result.data["worldline_result"]["root_entity"]["name"],
+            "晴天",
+        )
+        self.assertTrue(
+            {
+                "candidate_entities",
+                "entity_facts",
+                "retrieved_docs",
+                "worldline_graph",
+                "branches",
+            }.isdisjoint(output)
+        )
+
     def test_song_worldline_completes_with_structured_result(self) -> None:
         song = entity(1, EntityType.SONG, "晴天")
         service = FakeMusicService(

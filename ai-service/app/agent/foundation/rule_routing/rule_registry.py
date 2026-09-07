@@ -52,10 +52,24 @@ _WORLDLINE_COUNTERFACTUAL = (
     r"(?:发行|发布|创作|写下|演唱|加入|离开|解散|组成|出道|存在)"
     r"[^,.;!?]{0,24}?(?=(?:然后|再(?=帮|请|给|把)|并且|同时|[,.;!?]|$))"
 )
+_WORLDLINE_EXPLORATION = (
+    r"(?:请|麻烦)?(?:帮我)?(?:生成|创建|构建|探索|查看|看看|讲讲|分析)?(?:一下)?"
+    r"(?:歌曲|单曲|歌手|音乐人|艺人|乐队|乐团|专辑|唱片)?"
+    r"(?:《[^》]{1,100}》|[\u4e00-\u9fffA-Za-z0-9·. '\"-]{1,40})"
+    r"(?:的)?(?:音乐)?(?:世界线|world\s*line)(?:图谱)?",
+)
 _NEGATION = r"(?:别|不要|不用|无需)[^,.;!?]{0,8}"
 
 
 DEFAULT_RULES: tuple[RuleSpec, ...] = (
+    _rule(
+        "worldline_entity_exploration",
+        IntentType.WORLDLINE,
+        "music_entity_worldline",
+        _WORLDLINE_EXPLORATION,
+        priority=305,
+        confidence=0.99,
+    ),
     _rule(
         "worldline_strong_counterfactual",
         IntentType.WORLDLINE,
