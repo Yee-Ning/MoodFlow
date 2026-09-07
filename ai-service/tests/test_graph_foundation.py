@@ -4,6 +4,7 @@ import unittest
 from typing import get_args, get_type_hints
 
 from langchain_core.messages import AIMessage, HumanMessage
+from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import ValidationError
 
@@ -25,6 +26,26 @@ from app.agent.foundation.subgraphs import (
     create_tool_calling_subgraph,
     create_worldline_subgraph,
 )
+from app.agent.foundation.subgraphs.base import SubGraphOutput
+from app.agent.foundation.subgraphs.general_chat import GeneralChatState
+
+
+def successful_subgraph(route: RouteKey, content: str) -> CompiledStateGraph:
+    def complete(state):
+        return {
+            "task_result": TaskResult(
+                task_id=state["task_id"],
+                route_key=route,
+                status=TaskStatus.SUCCESS,
+                content=content,
+            )
+        }
+
+    builder = StateGraph(GeneralChatState, output_schema=SubGraphOutput)
+    builder.add_node("complete", complete)
+    builder.add_edge(START, "complete")
+    builder.add_edge("complete", END)
+    return builder.compile()
 
 
 class GraphFoundationStateTests(unittest.TestCase):
@@ -146,8 +167,14 @@ class StubSubGraphTests(unittest.TestCase):
         self.assertEqual(result["task_result"].route_key, RouteKey.CURRENT_SONG)
         self.assertEqual(result["task_result"].status, TaskStatus.SUCCESS)
 
-    def test_tool_calling_stub_runs_independently(self) -> None:
-        result = self._invoke(create_tool_calling_subgraph(), RouteKey.TOOL_CALLING)
+    def test_tool_calling_subgraph_runs_independently(self) -> None:
+        async def assistant(messages, current_input, routing_context, prior_entities):
+            return AIMessage(content="ToolCalling SubGraph completed.")
+
+        result = self._invoke(
+            create_tool_calling_subgraph(assistant=assistant),
+            RouteKey.TOOL_CALLING,
+        )
 
         self.assertEqual(set(result), {"task_result"})
         self.assertEqual(result["task_result"].route_key, RouteKey.TOOL_CALLING)
@@ -175,7 +202,13 @@ class MainGraphFoundationTests(unittest.TestCase):
             RouteKey.TOOL_CALLING,
             RouteKey.WORLDLINE,
         )
-        graph = create_main_graph(development_routes=routes)
+        graph = build_main_graph(
+            development_routes=routes,
+            tool_calling_subgraph=successful_subgraph(
+                RouteKey.TOOL_CALLING,
+                "ToolCalling SubGraph completed.",
+            ),
+        ).compile()
 
         result = asyncio.run(
             graph.ainvoke(
@@ -202,17 +235,21 @@ class MainGraphFoundationTests(unittest.TestCase):
             all(item.status is TaskStatus.SUCCESS for item in current_results)
         )
         self.assertIn("CurrentSong SubGraph stub completed.", result["final_response"])
-        self.assertIn("ToolCalling SubGraph stub completed.", result["final_response"])
+        self.assertIn("ToolCalling SubGraph completed.", result["final_response"])
         self.assertIn("WorldLine SubGraph stub completed.", result["final_response"])
 
     def test_subgraph_private_fields_do_not_pollute_main_state(self) -> None:
-        graph = create_main_graph(
+        graph = build_main_graph(
             development_routes=(
                 RouteKey.CURRENT_SONG,
                 RouteKey.TOOL_CALLING,
                 RouteKey.WORLDLINE,
-            )
-        )
+            ),
+            tool_calling_subgraph=successful_subgraph(
+                RouteKey.TOOL_CALLING,
+                "ToolCalling SubGraph completed.",
+            ),
+        ).compile()
 
         result = asyncio.run(
             graph.ainvoke(

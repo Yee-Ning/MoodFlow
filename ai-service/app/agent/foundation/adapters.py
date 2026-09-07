@@ -10,7 +10,10 @@ from app.agent.foundation.state.main import MainState
 from app.agent.foundation.subgraphs.tool_calling.models import ReferencedEntities
 from app.schemas.context import MusicAgentContext
 
-SubGraphAdapter = Callable[[MainState], Awaitable[dict[str, list[TaskResult]]]]
+SubGraphAdapter = Callable[
+    [MainState, Runtime[MusicAgentContext]],
+    Awaitable[dict[str, list[TaskResult]]],
+]
 
 
 def _task_for_route(state: MainState, route_key: RouteKey) -> RouteTask:

@@ -24,6 +24,21 @@ def fixture_router(model=None, classify=None):
     return router, backend, runtime
 
 
+def successful_subgraph(route: RouteKey, content: str = "fixture"):
+    def complete(state):
+        return {"task_result": TaskResult(
+            task_id=state["task_id"],
+            route_key=route,
+            status=TaskStatus.SUCCESS,
+            content=content,
+        )}
+    sub = StateGraph(GeneralChatState, output_schema=SubGraphOutput)
+    sub.add_node("complete", complete)
+    sub.add_edge(START, "complete")
+    sub.add_edge("complete", END)
+    return sub.compile()
+
+
 class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
     async def test_default_graph_uses_dynamic_router_factory(self):
         router, _, _ = fixture_router()
@@ -80,7 +95,7 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
         state = create_main_state("暂停一下，然后讲讲这首歌", routing_context=RoutingContext(has_current_song=True, current_song_id=1))
         result = await graph.ainvoke(state, {"configurable": {"thread_id": "hybrid"}})
         self.assertEqual([r.route_key for r in result["task_results"]], [RouteKey.TOOL_CALLING, RouteKey.CURRENT_SONG])
-        self.assertIn("ToolCalling", result["final_response"])
+        self.assertIn("暂停指令", result["final_response"])
         self.assertIn("CurrentSong", result["final_response"])
         model.assert_called_once_with("讲讲这首歌")
         runtime.classify.assert_not_awaited()
@@ -94,7 +109,13 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
             classify=AsyncMock(side_effect=classify),
         )
         # No rule match here: the fixture exercises one LLM-owned multi-intent segment.
-        result = await build_main_graph(intent_router=router).compile().ainvoke(create_main_state("谈谈配器并把它纳入我的歌单"))
+        result = await build_main_graph(
+            intent_router=router,
+            tool_calling_subgraph=successful_subgraph(
+                RouteKey.TOOL_CALLING,
+                "tool fixture",
+            ),
+        ).compile().ainvoke(create_main_state("谈谈配器并把它纳入我的歌单"))
         self.assertEqual(len(result["route_decision"].intents), 2)
         self.assertEqual(len(result["task_results"]), 2)
         self.assertTrue(all(i.source.value == "llm" for i in result["route_decision"].intents))
@@ -131,11 +152,16 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
         router, _, _ = fixture_router()
         graph = create_main_graph(intent_router=router)
         config = {"configurable": {"thread_id": "repeat"}}
-        first = await graph.ainvoke(create_main_state("暂停一下"), config)
-        second = await graph.ainvoke(create_main_state("暂停一下"), config)
+        context = RoutingContext(has_current_song=True, current_song_id=1)
+        first = await graph.ainvoke(
+            create_main_state("暂停一下", routing_context=context), config
+        )
+        second = await graph.ainvoke(
+            create_main_state("暂停一下", routing_context=context), config
+        )
         self.assertNotEqual(first["route_decision"].tasks[0].task_id, second["route_decision"].tasks[0].task_id)
         self.assertEqual(len(second["task_results"]), 2)
-        self.assertEqual(second["final_response"].count("ToolCalling"), 1)
+        self.assertEqual(second["final_response"].count("暂停指令"), 1)
 
     async def test_subgraph_receives_only_its_assigned_evidence(self):
         seen = []
@@ -149,7 +175,13 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
         sub.add_edge("capture", END)
         router, _, _ = fixture_router()
         result = await build_main_graph(intent_router=router, current_song_subgraph=sub.compile()).compile().ainvoke(
-            create_main_state("暂停一下，然后讲讲这首歌"))
+            create_main_state(
+                "暂停一下，然后讲讲这首歌",
+                routing_context=RoutingContext(
+                    has_current_song=True,
+                    current_song_id=1,
+                ),
+            ))
         self.assertEqual(seen[0]["current_input"], "讲讲这首歌")
         self.assertEqual(seen[0]["routing_intents"][0].intent, IntentType.CURRENT_SONG)
         self.assertNotIn("routing_intents", result)

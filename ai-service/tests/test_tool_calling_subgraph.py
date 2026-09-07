@@ -1,0 +1,394 @@
+import json
+import unittest
+from collections.abc import Sequence
+from unittest.mock import patch
+
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.tools import BaseTool, tool
+
+from app.agent.foundation.models import TaskStatus
+from app.agent.foundation.routing import (
+    IntentItem,
+    IntentSource,
+    IntentType,
+    RoutingContext,
+)
+from app.agent.foundation.subgraphs.tool_calling import (
+    CLIENT_ACTION_TOOLS,
+    ClientActionName,
+    PlaylistReference,
+    ReferencedEntities,
+    SongReference,
+    create_tool_calling_subgraph,
+)
+from app.agent.foundation.subgraphs.tool_calling.graph import (
+    MAX_TOOL_CALLS,
+    TOOL_LIMIT_MESSAGE,
+)
+from app.schemas.context import MusicAgentContext
+from app.schemas.music import SearchMusicArgs, UserPlaylist, UserPlaylistsResult
+from app.tools.music import MUSIC_AGENT_TOOLS, MusicServiceClient
+
+
+def routing_intent(sub_intent: str, *, order: int = 0) -> IntentItem:
+    evidence = sub_intent.replace("_", " ")
+    return IntentItem(
+        intent=IntentType.TOOL_CALLING,
+        sub_intent=sub_intent,
+        confidence=1.0,
+        source=IntentSource.RULE,
+        evidence=evidence,
+        start=0,
+        end=len(evidence),
+        order=order,
+    )
+
+
+def tool_call(name: str, call_id: str, args: dict | None = None) -> AIMessage:
+    return AIMessage(
+        content="",
+        tool_calls=[
+            {
+                "name": name,
+                "args": args or {},
+                "id": call_id,
+                "type": "tool_call",
+            }
+        ],
+    )
+
+
+def scripted_assistant(
+    responses: Sequence[AIMessage],
+    observed: list[dict] | None = None,
+):
+    queue = list(responses)
+
+    async def assistant(messages, current_input, routing_context, prior_entities):
+        if observed is not None:
+            observed.append(
+                {
+                    "messages": list(messages),
+                    "current_input": current_input,
+                    "routing_context": routing_context,
+                    "prior_entities": list(prior_entities),
+                }
+            )
+        if not queue:
+            raise AssertionError("Scripted assistant ran more times than expected")
+        return queue.pop(0)
+
+    return assistant
+
+
+async def invoke(
+    graph,
+    *,
+    text: str = "执行操作",
+    intents: list[IntentItem] | None = None,
+    context: RoutingContext | None = None,
+    prior_entities: list[ReferencedEntities] | None = None,
+    session_cookie: str | None = None,
+):
+    return await graph.ainvoke(
+        {
+            "messages": [HumanMessage(content=text)],
+            "current_input": text,
+            "task_id": "tool-task",
+            "routing_intents": intents or [],
+            "routing_context": context or RoutingContext(),
+            "prior_entities": prior_entities or [],
+            "tool_calls": [],
+            "tool_results": [],
+            "client_actions": [],
+            "tool_call_count": 0,
+            "direct_complete": False,
+            "answer": None,
+            "task_result": None,
+        },
+        context=MusicAgentContext(session_cookie=session_cookie),
+    )
+
+
+def search_tool(*, fail: bool = False) -> BaseTool:
+    @tool("search_music", args_schema=SearchMusicArgs)
+    async def fake_search_music(keyword: str, limit: int = 10) -> str:
+        """Search fixture music."""
+        if fail:
+            raise RuntimeError("private upstream failure")
+        return json.dumps(
+            {
+                "keyword": keyword,
+                "limit": limit,
+                "songs": [
+                    {
+                        "song_id": 101,
+                        "name": "测试歌曲",
+                        "artists": ["测试歌手"],
+                        "album": "测试专辑",
+                        "cover_url": "https://example.test/cover.jpg",
+                        "duration": 180000,
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        )
+
+    return fake_search_music
+
+
+class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
+    async def test_graph_contains_direct_and_tool_loop_paths(self) -> None:
+        graph = create_tool_calling_subgraph(
+            assistant=scripted_assistant([AIMessage(content="完成")])
+        )
+        drawable = graph.get_graph()
+
+        self.assertEqual(
+            set(drawable.nodes),
+            {
+                "__start__",
+                "direct_actions",
+                "agent",
+                "tools",
+                "capture_tool_results",
+                "__end__",
+            },
+        )
+        edges = {(edge.source, edge.target) for edge in drawable.edges}
+        self.assertIn(("direct_actions", "__end__"), edges)
+        self.assertIn(("agent", "tools"), edges)
+        self.assertIn(("tools", "capture_tool_results"), edges)
+        self.assertIn(("capture_tool_results", "agent"), edges)
+
+    async def test_rule_pause_uses_deterministic_path_without_llm(self) -> None:
+        observed: list[dict] = []
+        graph = create_tool_calling_subgraph(
+            assistant=scripted_assistant([], observed)
+        )
+        result = await invoke(
+            graph,
+            text="暂停一下",
+            intents=[routing_intent("pause_music")],
+            context=RoutingContext(
+                has_current_song=True,
+                current_song_id=101,
+                queue_size=1,
+                current_index=0,
+            ),
+        )
+
+        task = result["task_result"]
+        self.assertEqual(task.status, TaskStatus.SUCCESS)
+        self.assertEqual(observed, [])
+        self.assertEqual(task.data["tool_calls"], 0)
+        self.assertEqual(
+            task.data["client_actions"][0]["name"],
+            ClientActionName.PAUSE_PLAYER,
+        )
+        self.assertEqual(task.data["client_actions"][0]["arguments"], {})
+
+    async def test_direct_actions_are_explicit_and_volume_is_clamped(self) -> None:
+        graph = create_tool_calling_subgraph(
+            assistant=scripted_assistant([])
+        )
+        result = await invoke(
+            graph,
+            intents=[
+                routing_intent("lower_volume", order=0),
+                routing_intent("favorite_song", order=1),
+            ],
+            context=RoutingContext(
+                has_current_song=True,
+                current_song_id=101,
+                volume=0.1,
+                queue_size=1,
+                current_index=0,
+                current_song_liked=False,
+            ),
+        )
+
+        actions = result["task_result"].data["client_actions"]
+        self.assertEqual([item["name"] for item in actions], ["set_volume", "set_liked"])
+        self.assertEqual(actions[0]["arguments"], {"volume": 0.0})
+        self.assertEqual(actions[1]["arguments"], {"song_id": 101, "liked": True})
+
+    async def test_missing_current_song_requests_input_without_side_effect(self) -> None:
+        graph = create_tool_calling_subgraph(
+            assistant=scripted_assistant([])
+        )
+        result = await invoke(
+            graph,
+            text="收藏这首歌",
+            intents=[routing_intent("favorite_song")],
+        )
+
+        task = result["task_result"]
+        self.assertEqual(task.status, TaskStatus.NEEDS_INPUT)
+        self.assertEqual(task.data["client_actions"], [])
+        self.assertIn("先选择", task.content)
+
+    async def test_search_then_play_emits_action_and_reference_entities(self) -> None:
+        play_song_tool = next(
+            item for item in CLIENT_ACTION_TOOLS if item.name == "play_song"
+        )
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(), play_song_tool],
+            assistant=scripted_assistant(
+                [
+                    tool_call(
+                        "search_music",
+                        "search-1",
+                        {"keyword": "测试歌曲", "limit": 1},
+                    ),
+                    tool_call(
+                        "play_song",
+                        "play-1",
+                        {
+                            "song": {
+                                "song_id": 101,
+                                "name": "测试歌曲",
+                                "artists": ["测试歌手"],
+                                "album": "测试专辑",
+                                "cover_url": "https://example.test/cover.jpg",
+                                "duration": 180000,
+                            }
+                        },
+                    ),
+                    AIMessage(content="已请求播放《测试歌曲》。"),
+                ]
+            ),
+        )
+
+        result = await invoke(graph, text="搜索并播放测试歌曲")
+
+        task = result["task_result"]
+        self.assertEqual(task.status, TaskStatus.SUCCESS)
+        self.assertEqual(task.data["tool_calls"], 2)
+        self.assertEqual(task.data["client_actions"][0]["name"], "play_song")
+        self.assertEqual(
+            task.data["client_actions"][0]["arguments"]["song"]["song_id"],
+            101,
+        )
+        self.assertEqual(task.data["entities"]["songs"][0]["position"], 1)
+        self.assertEqual(task.data["entities"]["songs"][0]["song_id"], 101)
+
+    async def test_prior_entities_are_passed_to_assistant(self) -> None:
+        prior = ReferencedEntities(
+            songs=[
+                SongReference(
+                    position=1,
+                    song_id=101,
+                    name="测试歌曲",
+                    artists=["测试歌手"],
+                )
+            ],
+            playlists=[
+                PlaylistReference(
+                    position=1,
+                    playlist_id=77,
+                    name="学习",
+                    editable=True,
+                )
+            ],
+        )
+        observed: list[dict] = []
+        graph = create_tool_calling_subgraph(
+            assistant=scripted_assistant([AIMessage(content="已识别历史对象。")], observed)
+        )
+
+        await invoke(graph, text="把刚才第一首加入刚才的歌单", prior_entities=[prior])
+
+        self.assertEqual(observed[0]["prior_entities"], [prior])
+        self.assertEqual(observed[0]["current_input"], "把刚才第一首加入刚才的歌单")
+
+    async def test_authenticated_server_tool_receives_runtime_cookie(self) -> None:
+        observed_cookies: list[str | None] = []
+
+        async def fake_get_user_playlists(client: MusicServiceClient):
+            observed_cookies.append(client._session_cookie)
+            return UserPlaylistsResult(
+                playlists=[
+                    UserPlaylist(
+                        playlist_id=77,
+                        name="学习",
+                        editable=True,
+                    )
+                ]
+            )
+
+        graph = create_tool_calling_subgraph(
+            tools=MUSIC_AGENT_TOOLS,
+            assistant=scripted_assistant(
+                [
+                    tool_call("get_user_playlists", "playlist-1"),
+                    AIMessage(content="已读取歌单。"),
+                ]
+            ),
+        )
+        with patch.object(
+            MusicServiceClient,
+            "get_user_playlists",
+            fake_get_user_playlists,
+        ):
+            result = await invoke(
+                graph,
+                text="列出我的歌单",
+                session_cookie="JSESSIONID=trusted-session",
+            )
+
+        self.assertEqual(observed_cookies, ["JSESSIONID=trusted-session"])
+        self.assertEqual(
+            result["task_result"].data["entities"]["playlists"][0]["playlist_id"],
+            77,
+        )
+        self.assertNotIn("trusted-session", result["task_result"].model_dump_json())
+
+    async def test_tool_failure_is_safe_and_marks_task_failed(self) -> None:
+        observed: list[dict] = []
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(fail=True)],
+            assistant=scripted_assistant(
+                [
+                    tool_call("search_music", "failed-search", {"keyword": "测试"}),
+                    AIMessage(content="音乐服务暂时不可用，请稍后再试。"),
+                ],
+                observed,
+            ),
+        )
+
+        result = await invoke(graph, text="搜索测试")
+
+        tool_message = next(
+            message
+            for message in observed[1]["messages"]
+            if isinstance(message, ToolMessage)
+        )
+        self.assertNotIn("private upstream failure", str(tool_message.content))
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+        self.assertTrue(result["task_result"].error)
+
+    async def test_tool_limit_stops_loop_with_failed_result(self) -> None:
+        responses = [
+            tool_call(
+                "search_music",
+                f"search-{index}",
+                {"keyword": f"测试 {index}"},
+            )
+            for index in range(MAX_TOOL_CALLS + 1)
+        ]
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool()],
+            assistant=scripted_assistant(responses),
+        )
+
+        result = await invoke(graph, text="不断搜索")
+
+        task = result["task_result"]
+        self.assertEqual(task.status, TaskStatus.FAILED)
+        self.assertEqual(task.content, TOOL_LIMIT_MESSAGE)
+        self.assertEqual(task.data["tool_calls"], MAX_TOOL_CALLS)
+
+
+if __name__ == "__main__":
+    unittest.main()
