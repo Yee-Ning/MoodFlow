@@ -129,12 +129,28 @@ async def create_routing_response(
     schema: dict[str, Any],
 ) -> Response:
     """Reuse provider settings with an independent tool-free routing schema."""
+    return await create_structured_response(
+        input_items,
+        instructions,
+        schema,
+        schema_name="intent_routing",
+    )
+
+
+async def create_structured_response(
+    input_items: list[dict[str, Any]],
+    instructions: str,
+    schema: dict[str, Any],
+    *,
+    schema_name: str,
+) -> Response:
+    """Run a strict, tool-free JSON Schema request with shared provider settings."""
     return await _create_response(
         input_items,
         instructions=instructions,
         enable_tools=False,
         output_format={
-            "type": "json_schema", "name": "intent_routing",
+            "type": "json_schema", "name": schema_name,
             "schema": schema, "strict": True,
         },
     )

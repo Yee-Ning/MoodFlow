@@ -222,3 +222,10 @@ class BranchesOutput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     branches: list[WorldLineBranch] = Field(min_length=3, max_length=3)
+
+    @model_validator(mode="after")
+    def unique_branch_ids(self) -> "BranchesOutput":
+        branch_ids = [branch.id for branch in self.branches]
+        if len(branch_ids) != len(set(branch_ids)):
+            raise ValueError("worldline branch ids must be unique")
+        return self
