@@ -4,6 +4,7 @@ import java.net.SocketTimeoutException;
 import java.net.http.HttpTimeoutException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -11,6 +12,8 @@ import java.util.StringJoiner;
 
 import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
 import cn.itcast.demo.musicbackend.dto.LyricsStatus;
+import cn.itcast.demo.musicbackend.dto.MusicEntityData;
+import cn.itcast.demo.musicbackend.dto.MusicEntityReferenceData;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
@@ -39,6 +42,7 @@ public class NeteaseMusicService {
 
     private static final Logger log = LoggerFactory.getLogger(NeteaseMusicService.class);
     private static final int PLAYLIST_LIMIT = 1000;
+    private static final List<String> MUSIC_ENTITY_TYPES = List.of("song", "artist", "album");
 
     private final RestClient neteaseRestClient;
 
@@ -94,19 +98,81 @@ public class NeteaseMusicService {
                 .toList();
     }
 
+    public List<MusicEntityData> searchMusicEntities(
+            String keyword,
+            String entityType,
+            int limit) {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
+        if (normalizedKeyword.isBlank()) {
+            throw new BadRequestException("搜索关键词不能为空");
+        }
+        if (limit < 1 || limit > 50) {
+            throw new BadRequestException("limit 必须在 1 到 50 之间");
+        }
+
+        if (entityType != null && !entityType.isBlank()) {
+            String normalizedType = entityType.trim().toLowerCase(Locale.ROOT);
+            validateMusicEntityType(normalizedType);
+            return searchMusicEntitiesByType(normalizedKeyword, normalizedType, limit);
+        }
+
+        List<MusicEntityData> entities = new ArrayList<>();
+        for (String type : MUSIC_ENTITY_TYPES) {
+            entities.addAll(searchMusicEntitiesByType(normalizedKeyword, type, limit));
+        }
+        return List.copyOf(entities);
+    }
+
+    public MusicEntityData getMusicEntityDetail(String entityType, long entityId) {
+        if (entityId <= 0) {
+            throw new BadRequestException("音乐实体 id 必须大于 0");
+        }
+        String normalizedType = entityType == null
+                ? ""
+                : entityType.trim().toLowerCase(Locale.ROOT);
+        validateMusicEntityType(normalizedType);
+
+        return switch (normalizedType) {
+            case "song" -> toSongEntity(fetchSongSource(entityId));
+            case "artist" -> {
+                Map<String, Object> response = get("/artists", Map.of("id", entityId));
+                Map<String, Object> artist = requiredMap(response, "artist");
+                List<MusicEntityReferenceData> related = optionalMapList(response, "hotSongs")
+                        .stream()
+                        .limit(8)
+                        .map(this::toSongReference)
+                        .toList();
+                yield toArtistEntity(artist, related);
+            }
+            case "album" -> {
+                Map<String, Object> response = get("/album", Map.of("id", entityId));
+                Map<String, Object> album = requiredMap(response, "album");
+                List<MusicEntityReferenceData> related = optionalMapList(response, "songs")
+                        .stream()
+                        .limit(8)
+                        .map(this::toSongReference)
+                        .toList();
+                yield toAlbumEntity(album, related);
+            }
+            default -> throw new IllegalStateException("unreachable entity type");
+        };
+    }
+
     public SongData getSongDetail(long songId) {
         if (songId <= 0) {
             throw new BadRequestException("歌曲 id 必须大于 0");
         }
 
-        Map<String, Object> response = get(
-                "/song/detail",
-                Map.of("ids", songId));
+        return toSong(fetchSongSource(songId));
+    }
+
+    private Map<String, Object> fetchSongSource(long songId) {
+        Map<String, Object> response = get("/song/detail", Map.of("ids", songId));
         List<Map<String, Object>> songs = requiredList(response, "songs");
         if (songs.isEmpty()) {
             throw new NotFoundException("歌曲不存在");
         }
-        return toSong(songs.getFirst());
+        return songs.getFirst();
     }
 
     public CurrentSongContextData getCurrentSongContext(long songId) {
@@ -337,6 +403,154 @@ public class NeteaseMusicService {
                 optionalLong(source, "dt"));
     }
 
+    private List<MusicEntityData> searchMusicEntitiesByType(
+            String keyword,
+            String entityType,
+            int limit) {
+        int searchType = switch (entityType) {
+            case "song" -> 1;
+            case "album" -> 10;
+            case "artist" -> 100;
+            default -> throw new IllegalStateException("unreachable entity type");
+        };
+        String resultField = switch (entityType) {
+            case "song" -> "songs";
+            case "album" -> "albums";
+            case "artist" -> "artists";
+            default -> throw new IllegalStateException("unreachable entity type");
+        };
+        Map<String, Object> response = get("/cloudsearch", Map.of(
+                "keywords", keyword,
+                "type", searchType,
+                "limit", limit));
+        Map<String, Object> result = requiredMap(response, "result");
+        List<Map<String, Object>> items = optionalMapList(result, resultField);
+        return switch (entityType) {
+            case "song" -> items.stream().map(this::toSongEntity).toList();
+            case "album" -> items.stream().map(item -> toAlbumEntity(item, List.of())).toList();
+            case "artist" -> items.stream().map(item -> toArtistEntity(item, List.of())).toList();
+            default -> throw new IllegalStateException("unreachable entity type");
+        };
+    }
+
+    private MusicEntityData toSongEntity(Map<String, Object> source) {
+        List<Map<String, Object>> artistSources = requiredList(source, "ar");
+        List<String> artists = artistSources.stream()
+                .map(artist -> requiredString(artist, "name"))
+                .toList();
+        Map<String, Object> album = requiredMap(source, "al");
+
+        List<MusicEntityReferenceData> related = new ArrayList<>();
+        artistSources.stream().map(this::toArtistReference).forEach(related::add);
+        related.add(new MusicEntityReferenceData(
+                requiredLong(album, "id"),
+                "album",
+                requiredString(album, "name"),
+                String.join("、", artists),
+                ""));
+
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("duration", optionalLong(source, "dt"));
+        metadata.put("artist_ids", artistSources.stream()
+                .map(artist -> requiredLong(artist, "id"))
+                .toList());
+        metadata.put("album_id", requiredLong(album, "id"));
+        return new MusicEntityData(
+                requiredLong(source, "id"),
+                "song",
+                requiredString(source, "name"),
+                String.join("、", artists),
+                requiredString(album, "name"),
+                optionalString(album, "picUrl"),
+                Map.copyOf(metadata),
+                List.copyOf(related));
+    }
+
+    private MusicEntityData toArtistEntity(
+            Map<String, Object> source,
+            List<MusicEntityReferenceData> related) {
+        String coverUrl = optionalString(source, "picUrl");
+        if (coverUrl.isBlank()) {
+            coverUrl = optionalString(source, "img1v1Url");
+        }
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("aliases", optionalStringList(source, "alias"));
+        metadata.put("album_size", optionalLong(source, "albumSize"));
+        metadata.put("music_size", optionalLong(source, "musicSize"));
+        metadata.put("description", optionalString(source, "briefDesc"));
+        return new MusicEntityData(
+                requiredLong(source, "id"),
+                "artist",
+                requiredString(source, "name"),
+                requiredString(source, "name"),
+                "",
+                coverUrl,
+                Map.copyOf(metadata),
+                List.copyOf(related));
+    }
+
+    private MusicEntityData toAlbumEntity(
+            Map<String, Object> source,
+            List<MusicEntityReferenceData> relatedSongs) {
+        List<Map<String, Object>> artistSources = optionalMapList(source, "artists");
+        if (artistSources.isEmpty() && source.get("artist") instanceof Map<?, ?>) {
+            artistSources = List.of(requiredMap(source, "artist"));
+        }
+        List<String> artists = artistSources.stream()
+                .map(artist -> requiredString(artist, "name"))
+                .toList();
+        List<MusicEntityReferenceData> related = new ArrayList<>();
+        artistSources.stream().map(this::toArtistReference).forEach(related::add);
+        related.addAll(relatedSongs);
+
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("publish_time", optionalLong(source, "publishTime"));
+        metadata.put("company", optionalString(source, "company"));
+        metadata.put("description", optionalString(source, "description"));
+        metadata.put("size", optionalLong(source, "size"));
+        metadata.put("artist_ids", artistSources.stream()
+                .map(artist -> requiredLong(artist, "id"))
+                .toList());
+        return new MusicEntityData(
+                requiredLong(source, "id"),
+                "album",
+                requiredString(source, "name"),
+                String.join("、", artists),
+                requiredString(source, "name"),
+                optionalString(source, "picUrl"),
+                Map.copyOf(metadata),
+                List.copyOf(related));
+    }
+
+    private MusicEntityReferenceData toArtistReference(Map<String, Object> source) {
+        String name = requiredString(source, "name");
+        return new MusicEntityReferenceData(
+                requiredLong(source, "id"),
+                "artist",
+                name,
+                name,
+                "");
+    }
+
+    private MusicEntityReferenceData toSongReference(Map<String, Object> source) {
+        List<String> artists = requiredList(source, "ar").stream()
+                .map(artist -> requiredString(artist, "name"))
+                .toList();
+        Map<String, Object> album = requiredMap(source, "al");
+        return new MusicEntityReferenceData(
+                requiredLong(source, "id"),
+                "song",
+                requiredString(source, "name"),
+                String.join("、", artists),
+                requiredString(album, "name"));
+    }
+
+    private void validateMusicEntityType(String entityType) {
+        if (!MUSIC_ENTITY_TYPES.contains(entityType)) {
+            throw new BadRequestException("type 必须是 song、artist 或 album");
+        }
+    }
+
     private String requireCookie(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         Object value = session == null ? null : session.getAttribute(AuthService.NETEASE_COOKIE);
@@ -474,6 +688,36 @@ public class NeteaseMusicService {
             result.add((Map<String, Object>) map);
         }
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> optionalMapList(Map<String, Object> source, String name) {
+        Object value = source.get(name);
+        if (!(value instanceof List<?> list)) {
+            return Collections.emptyList();
+        }
+        List<Map<String, Object>> result = new ArrayList<>(list.size());
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> map)) {
+                throw invalidResponse(name);
+            }
+            result.add((Map<String, Object>) map);
+        }
+        return result;
+    }
+
+    private List<String> optionalStringList(Map<String, Object> source, String name) {
+        Object value = source.get(name);
+        if (!(value instanceof List<?> list)) {
+            return Collections.emptyList();
+        }
+        List<String> result = new ArrayList<>(list.size());
+        for (Object item : list) {
+            if (item instanceof String stringValue && !stringValue.isBlank()) {
+                result.add(stringValue);
+            }
+        }
+        return List.copyOf(result);
     }
 
     private String requiredString(Map<String, Object> source, String name) {

@@ -16,12 +16,15 @@ from app.schemas.music import (
     SearchMusicArgs,
     SongLyricsResult,
     SpringMusicSearchResponse,
+    SpringMusicEntityDetailResponse,
+    SpringMusicEntitySearchResponse,
     SpringPlaylistMutationResponse,
     SpringSongLyricsResponse,
     SpringUserPlaylistsResponse,
     ToolFailure,
     UserPlaylist,
     UserPlaylistsResult,
+    MusicEntity,
 )
 
 logger = logging.getLogger(__name__)
@@ -147,6 +150,62 @@ class MusicServiceClient:
             limit=search_input.limit,
             songs=parsed.data,
         )
+
+    async def search_entities(
+        self,
+        keyword: str,
+        *,
+        entity_type: str | None = None,
+        limit: int = 5,
+    ) -> list[MusicEntity]:
+        search_input = SearchMusicArgs(keyword=keyword, limit=limit)
+        params: dict[str, Any] = {
+            "keyword": search_input.keyword,
+            "limit": search_input.limit,
+        }
+        if entity_type is not None:
+            if entity_type not in {"song", "artist", "album"}:
+                raise ValueError("unsupported music entity type")
+            params["type"] = entity_type
+        payload = await self._request(
+            "GET",
+            "/api/music/entities/search",
+            params=params,
+        )
+        parsed = self._validate_response(
+            payload,
+            SpringMusicEntitySearchResponse,
+        )
+        assert isinstance(parsed, SpringMusicEntitySearchResponse)
+        return parsed.data
+
+    async def get_entity_detail(
+        self,
+        entity_type: str,
+        entity_id: int,
+    ) -> MusicEntity:
+        if entity_type not in {"song", "artist", "album"}:
+            raise ValueError("unsupported music entity type")
+        if entity_id <= 0:
+            raise ValueError("music entity id must be positive")
+        payload = await self._request(
+            "GET",
+            f"/api/music/entities/{entity_type}/{entity_id}",
+        )
+        parsed = self._validate_response(
+            payload,
+            SpringMusicEntityDetailResponse,
+        )
+        assert isinstance(parsed, SpringMusicEntityDetailResponse)
+        if (
+            parsed.data.entity_type != entity_type
+            or parsed.data.entity_id != entity_id
+        ):
+            raise MusicServiceError(
+                "invalid_response",
+                "音乐服务返回了不匹配的实体数据。",
+            )
+        return parsed.data
 
     async def get_song_lyrics(self, song_id: int) -> SongLyricsResult:
         lyrics_input = GetSongLyricsArgs(song_id=song_id)

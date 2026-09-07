@@ -4,6 +4,7 @@ import java.util.List;
 
 import cn.itcast.demo.musicbackend.common.ApiResponse;
 import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
+import cn.itcast.demo.musicbackend.dto.MusicEntityData;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
@@ -46,6 +47,22 @@ public class UserMusicController {
             @RequestParam String keyword,
             @RequestParam(defaultValue = "10") int limit) {
         return ApiResponse.success(neteaseMusicService.searchSongs(keyword, limit));
+    }
+
+    @GetMapping("/music/entities/search")
+    public ApiResponse<List<MusicEntityData>> searchMusicEntities(
+            @RequestParam String keyword,
+            @RequestParam(required = false) String type,
+            @RequestParam(defaultValue = "5") int limit) {
+        return ApiResponse.success(
+                neteaseMusicService.searchMusicEntities(keyword, type, limit));
+    }
+
+    @GetMapping("/music/entities/{type}/{id}")
+    public ApiResponse<MusicEntityData> getMusicEntity(
+            @PathVariable String type,
+            @PathVariable long id) {
+        return ApiResponse.success(neteaseMusicService.getMusicEntityDetail(type, id));
     }
 
     @GetMapping("/songs/{id}")

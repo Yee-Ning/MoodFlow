@@ -88,6 +88,74 @@ class MusicServiceClientTests(unittest.TestCase):
         self.assertEqual(result.original_lyrics, "故事的小黄花")
         self.assertEqual(result.status, "available")
 
+    def test_search_entities_normalizes_catalog_response(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            self.assertEqual(request.url.path, "/api/music/entities/search")
+            self.assertEqual(request.url.params["keyword"], "周杰伦")
+            self.assertEqual(request.url.params["type"], "artist")
+            self.assertEqual(request.url.params["limit"], "3")
+            return httpx.Response(
+                200,
+                json={
+                    "code": 200,
+                    "message": "success",
+                    "data": [
+                        {
+                            "id": 6452,
+                            "entityType": "artist",
+                            "name": "周杰伦",
+                            "artist": "周杰伦",
+                            "album": "",
+                            "coverUrl": "https://img.test/jay.jpg",
+                            "metadata": {"album_size": 40},
+                            "relatedEntities": [],
+                        }
+                    ],
+                },
+            )
+
+        result = run_with_transport(
+            httpx.MockTransport(handler),
+            lambda: MusicServiceClient().search_entities(
+                "周杰伦",
+                entity_type="artist",
+                limit=3,
+            ),
+        )
+
+        self.assertEqual(result[0].entity_id, 6452)
+        self.assertEqual(result[0].entity_type, "artist")
+        self.assertEqual(result[0].metadata["album_size"], 40)
+
+    def test_entity_detail_rejects_mismatched_backend_entity(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            self.assertEqual(request.url.path, "/api/music/entities/song/185809")
+            return httpx.Response(
+                200,
+                json={
+                    "code": 200,
+                    "message": "success",
+                    "data": {
+                        "id": 99,
+                        "entityType": "song",
+                        "name": "错误歌曲",
+                        "artist": "测试歌手",
+                        "album": "测试专辑",
+                        "coverUrl": "",
+                        "metadata": {},
+                        "relatedEntities": [],
+                    },
+                },
+            )
+
+        with self.assertRaises(MusicServiceError) as raised:
+            run_with_transport(
+                httpx.MockTransport(handler),
+                lambda: MusicServiceClient().get_entity_detail("song", 185809),
+            )
+
+        self.assertEqual(raised.exception.code, "invalid_response")
+
     def test_get_user_playlists_returns_normalized_playlist_ids(self) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             self.assertEqual(request.url.path, "/api/user/playlists")

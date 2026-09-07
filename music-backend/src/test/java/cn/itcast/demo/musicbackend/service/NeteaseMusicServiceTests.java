@@ -12,9 +12,11 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
 import cn.itcast.demo.musicbackend.dto.LyricsStatus;
+import cn.itcast.demo.musicbackend.dto.MusicEntityData;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
@@ -22,6 +24,7 @@ import cn.itcast.demo.musicbackend.dto.SongData;
 import cn.itcast.demo.musicbackend.dto.SongLyricsData;
 import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
 import cn.itcast.demo.musicbackend.dto.UserProfileData;
+import cn.itcast.demo.musicbackend.exception.BadRequestException;
 import cn.itcast.demo.musicbackend.exception.NotFoundException;
 import cn.itcast.demo.musicbackend.exception.UnauthorizedException;
 
@@ -167,6 +170,101 @@ class NeteaseMusicServiceTests {
         assertEquals("晴天", songs.getFirst().name());
         assertEquals(List.of("周杰伦"), songs.getFirst().artists());
         assertEquals("叶惠美", songs.getFirst().album());
+        server.verify();
+    }
+
+    @Test
+    void shouldSearchArtistEntitiesWithoutRequiringLoginSession() {
+        server.expect(request -> {
+                    assertRequest(
+                            request.getURI(),
+                            "/cloudsearch",
+                            "keywords=周杰伦",
+                            "type=100",
+                            "limit=3");
+                    assertNull(request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "result": {
+                            "artistCount": 1,
+                            "artists": [
+                              {
+                                "id": 6452,
+                                "name": "周杰伦",
+                                "picUrl": "https://img.test/jay.jpg",
+                                "alias": ["Jay Chou"],
+                                "albumSize": 40,
+                                "musicSize": 600
+                              }
+                            ]
+                          }
+                        }
+                        """, APPLICATION_JSON));
+
+        List<MusicEntityData> entities = musicService.searchMusicEntities(
+                " 周杰伦 ",
+                "artist",
+                3);
+
+        assertEquals(1, entities.size());
+        MusicEntityData artist = entities.getFirst();
+        assertEquals(6452L, artist.id());
+        assertEquals("artist", artist.entityType());
+        assertEquals("周杰伦", artist.name());
+        assertEquals(List.of("Jay Chou"), artist.metadata().get("aliases"));
+        assertTrue(artist.relatedEntities().isEmpty());
+        server.verify();
+    }
+
+    @Test
+    void shouldLoadAlbumEntityWithGroundedRelatedSongs() {
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/album", "id=18905");
+                    assertNull(request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "album": {
+                            "id": 18905,
+                            "name": "叶惠美",
+                            "picUrl": "https://img.test/album.jpg",
+                            "publishTime": 1059955200000,
+                            "company": "杰威尔音乐",
+                            "description": "录音室专辑",
+                            "size": 11,
+                            "artists": [{"id": 6452, "name": "周杰伦"}]
+                          },
+                          "songs": [
+                            {
+                              "id": 185809,
+                              "name": "晴天",
+                              "ar": [{"id": 6452, "name": "周杰伦"}],
+                              "al": {"id": 18905, "name": "叶惠美"}
+                            }
+                          ]
+                        }
+                        """, APPLICATION_JSON));
+
+        MusicEntityData album = musicService.getMusicEntityDetail("album", 18905);
+
+        assertEquals("album", album.entityType());
+        assertEquals("叶惠美", album.name());
+        assertEquals("周杰伦", album.artist());
+        assertEquals(2, album.relatedEntities().size());
+        assertEquals("artist", album.relatedEntities().get(0).entityType());
+        assertEquals("song", album.relatedEntities().get(1).entityType());
+        assertEquals(1059955200000L, album.metadata().get("publish_time"));
+        server.verify();
+    }
+
+    @Test
+    void shouldRejectUnsupportedEntityTypeBeforeCallingUpstream() {
+        assertThrows(
+                BadRequestException.class,
+                () -> musicService.searchMusicEntities("周杰伦", "playlist", 3));
         server.verify();
     }
 

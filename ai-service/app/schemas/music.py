@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     AliasChoices,
@@ -78,6 +78,69 @@ class MusicSearchResult(BaseModel):
     keyword: NonBlankText
     limit: int = Field(ge=1, le=50)
     songs: list[MusicTrack]
+
+
+class MusicEntityReference(BaseModel):
+    """A related catalog entity returned by the Spring music service."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    entity_id: int = Field(validation_alias=AliasChoices("entity_id", "id"), gt=0)
+    entity_type: Literal["song", "artist", "album"] = Field(
+        validation_alias=AliasChoices("entity_type", "entityType")
+    )
+    name: NonBlankText
+    artist: str = ""
+    album: str = ""
+
+    @field_validator("artist", "album")
+    @classmethod
+    def strip_reference_text(cls, value: str) -> str:
+        return value.strip()
+
+
+class MusicEntity(BaseModel):
+    """Normalized song, artist, or album entity exposed by Spring Boot."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    entity_id: int = Field(validation_alias=AliasChoices("entity_id", "id"), gt=0)
+    entity_type: Literal["song", "artist", "album"] = Field(
+        validation_alias=AliasChoices("entity_type", "entityType")
+    )
+    name: NonBlankText
+    artist: str = ""
+    album: str = ""
+    cover_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("cover_url", "coverUrl"),
+    )
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    related_entities: list[MusicEntityReference] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("related_entities", "relatedEntities"),
+    )
+
+    @field_validator("artist", "album", "cover_url")
+    @classmethod
+    def strip_entity_text(cls, value: str) -> str:
+        return value.strip()
+
+
+class SpringMusicEntitySearchResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: int
+    message: str
+    data: list[MusicEntity]
+
+
+class SpringMusicEntityDetailResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: int
+    message: str
+    data: MusicEntity
 
 
 class SongLyricsResult(BaseModel):

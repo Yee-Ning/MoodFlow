@@ -1,5 +1,8 @@
 package cn.itcast.demo.musicbackend.controller;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -8,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
 import cn.itcast.demo.musicbackend.dto.LyricsStatus;
+import cn.itcast.demo.musicbackend.dto.MusicEntityData;
 import cn.itcast.demo.musicbackend.exception.GlobalExceptionHandler;
 import cn.itcast.demo.musicbackend.exception.NotFoundException;
 import cn.itcast.demo.musicbackend.service.NeteaseMusicService;
@@ -61,5 +65,28 @@ class UserMusicControllerTests {
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("歌曲不存在"))
                 .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnWorldLineMusicEntitySearchResults() throws Exception {
+        when(musicService.searchMusicEntities("周杰伦", "artist", 3)).thenReturn(
+                List.of(new MusicEntityData(
+                        6452,
+                        "artist",
+                        "周杰伦",
+                        "周杰伦",
+                        "",
+                        "https://img.test/jay.jpg",
+                        Map.of("album_size", 40),
+                        List.of())));
+
+        mockMvc.perform(get("/api/music/entities/search")
+                        .param("keyword", "周杰伦")
+                        .param("type", "artist")
+                        .param("limit", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].id").value(6452))
+                .andExpect(jsonPath("$.data[0].entityType").value("artist"));
     }
 }
