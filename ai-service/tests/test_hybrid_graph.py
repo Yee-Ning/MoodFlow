@@ -3,6 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
+from langchain_core.messages import AIMessage
 from langgraph.graph import END, START, StateGraph
 
 from app.agent.foundation import create_main_graph, create_main_state, RouteKey, RoutingContext
@@ -17,7 +18,10 @@ from app.agent.foundation.routing import (
     RouteDecision,
     RouteTask,
 )
-from app.agent.foundation.subgraphs.general_chat import GeneralChatState
+from app.agent.foundation.subgraphs.general_chat import (
+    GeneralChatState,
+    create_general_chat_subgraph,
+)
 from app.agent.foundation.subgraphs.base import SubGraphOutput
 from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
 from app.agent.checkpointing import create_memory_checkpointer
@@ -219,9 +223,18 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_general_chat_has_real_graph_destination(self):
         router, _, _ = fixture_router(model=Mock(side_effect=lambda text: model_result(text, (IntentType.GENERAL_CHAT,))))
-        result = await build_main_graph(intent_router=router).compile().ainvoke(create_main_state("什么叫概念专辑"))
+
+        async def assistant(*args):
+            return AIMessage(content="概念专辑会围绕统一主题组织歌曲。")
+
+        result = await build_main_graph(
+            intent_router=router,
+            general_chat_subgraph=create_general_chat_subgraph(
+                assistant=assistant
+            ),
+        ).compile().ainvoke(create_main_state("什么叫概念专辑"))
         self.assertEqual(result["task_results"][0].route_key, RouteKey.GENERAL_CHAT)
-        self.assertIn("GeneralChat", result["final_response"])
+        self.assertIn("统一主题", result["final_response"])
 
     async def test_network_error_propagates_without_fake_clarification(self):
         router, _, _ = fixture_router(

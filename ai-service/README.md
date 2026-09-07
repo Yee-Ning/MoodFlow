@@ -143,7 +143,13 @@ python scripts/intent/test_model_router.py --device auto
 
 `IntentMerger` 锁定 Rule 结果；LLM 结果只替换其负责片段的 Model 候选；相同 Intent + sub_intent + span 去重，不同位置或不同工具动作保留。全局按原文位置排序，重新生成连续 order。`RouteDecisionBuilder` 计算完成状态及分类证据覆盖率（不是业务执行成功率），按 RouteKey 分组生成任务，并用 `intent_orders` 引用原始 Intent。
 
-同一 RouteKey 当前只生成一个任务，组内保留全部 Intent；任务组按首次出现顺序执行。这不等同于完整依赖规划：例如 Tool → Song → Tool 会聚合为 Tool 组和 Song 组，未来真实业务执行器仍需处理跨组依赖。CurrentSong、WorldLine 和 GeneralChat 目前仍是 Stub；ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作。
+RouteTask 明确携带分配文本、Intent 引用和前置任务 ID；未完成的 RouteDecision 不能派发任务，澄清决策必须携带面向用户的问题。当前任务按前置依赖串行执行。CurrentSong 和 WorldLine 仍是 Stub；ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作，GeneralChat 已提供无工具的普通对话能力。
+
+## GeneralChat SubGraph
+
+`app/agent/foundation/subgraphs/general_chat` 使用现有基础聊天模型，但不绑定任何工具。子图只接收路由分配给它的文本片段、只读播放器快照、最近 12 条对话消息，以及本轮最多 8 个前置任务的受控摘要；工具参数、实体数据和其他 `TaskResult.data` 不会进入聊天模型。最终正文限制为 2000 个字符，并以统一 `TaskResult` 返回。
+
+MainGraph 会把本轮聚合后的最终答复写回消息历史，因此同一 `thread_id` 的后续 Chat 请求可以读取用户与助手的成对历史。Chat V1 当前不接实时搜索和 RAG；涉及执行操作的请求仍应由 ToolCalling 处理。
 
 ## ToolCalling SubGraph
 

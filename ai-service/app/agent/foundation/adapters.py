@@ -85,6 +85,20 @@ def create_subgraph_adapter(
             )
         elif route_key is RouteKey.WORLDLINE:
             common_input.update(rag_context=[], worldline_plan=None)
+        elif route_key is RouteKey.GENERAL_CHAT:
+            task_index = state["route_decision"].tasks.index(task)
+            prior_task_ids = {
+                item.task_id
+                for item in state["route_decision"].tasks[:task_index]
+            }
+            common_input.update(
+                routing_context=state["routing_context"],
+                prior_task_results=[
+                    result
+                    for result in state.get("task_results", [])
+                    if result.task_id in prior_task_ids
+                ],
+            )
 
         output = await subgraph.ainvoke(common_input, context=runtime.context)
         result = output.get("task_result")

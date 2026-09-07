@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from typing import Any, TYPE_CHECKING
 from uuid import uuid4
 
+from langchain_core.messages import AIMessage
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
@@ -13,10 +14,10 @@ from app.agent.foundation.routing import RouteDecision, RouteKey, RouteTask, Rou
 from app.agent.foundation.state.main import MainState
 from app.agent.foundation.subgraphs import (
     create_current_song_subgraph,
+    create_general_chat_subgraph,
     create_tool_calling_subgraph,
     create_worldline_subgraph,
 )
-from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
 from app.schemas.context import MusicAgentContext
 
 if TYPE_CHECKING:
@@ -157,7 +158,7 @@ def build_main_graph(
         ]
         return {"errors": errors}
 
-    def final_response(state: MainState) -> dict[str, str]:
+    def final_response(state: MainState) -> dict[str, Any]:
         decision = state.get("route_decision")
         current_task_ids = (
             [task.task_id for task in decision.tasks]
@@ -176,7 +177,11 @@ def build_main_graph(
         ]
         if any(result.status is TaskStatus.FAILED for result in results_by_id.values()):
             contents.append("部分任务执行失败，请稍后重试。")
-        return {"final_response": "\n".join(contents)}
+        response = "\n".join(contents)
+        return {
+            "final_response": response,
+            "messages": [AIMessage(content=response)] if response else [],
+        }
 
     builder = StateGraph(MainState, context_schema=MusicAgentContext)
     builder.add_node("prepare_context", prepare_context)

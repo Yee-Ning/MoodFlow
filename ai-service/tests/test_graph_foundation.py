@@ -336,11 +336,16 @@ class MainGraphFoundationTests(unittest.TestCase):
 
         self.assertEqual(
             [message.content for message in same_thread["messages"]],
-            ["first", "second"],
+            [
+                "first",
+                "CurrentSong SubGraph stub completed.",
+                "second",
+                "CurrentSong SubGraph stub completed.",
+            ],
         )
         self.assertEqual(
             [message.content for message in other_thread["messages"]],
-            ["isolated"],
+            ["isolated", "CurrentSong SubGraph stub completed."],
         )
         self.assertNotIn("thread_id", same_thread)
 
