@@ -108,3 +108,4 @@ CLIENT_ACTION_TOOLS: list[BaseTool] = [
     set_liked_tool,
     open_lyrics_tool,
 ]
+CLIENT_ACTION_TOOL_NAMES = frozenset(item.name for item in CLIENT_ACTION_TOOLS)

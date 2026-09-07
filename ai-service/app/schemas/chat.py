@@ -1,6 +1,12 @@
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, field_validator
+
+from app.schemas.client_actions import ClientAction
+from app.schemas.player import PlayerContext
+
+if TYPE_CHECKING:
+    from app.agent.foundation.routing import RoutingContext
 
 
 class ChatContext(BaseModel):
@@ -28,6 +34,7 @@ class ChatRequest(BaseModel):
     thread_id: str | None = Field(default=None, min_length=1, max_length=128)
     current_song_id: int | None = Field(default=None, gt=0)
     context: ChatContext | None = None
+    player_context: PlayerContext | None = None
 
     @field_validator("message")
     @classmethod
@@ -51,7 +58,31 @@ class ChatRequest(BaseModel):
         """Prefer the new top-level field while keeping older clients compatible."""
         if "current_song_id" in self.model_fields_set:
             return self.current_song_id
+        if self.player_context is not None:
+            return self.player_context.current_song_id
         return self.context.current_song_id if self.context is not None else None
+
+    def resolved_routing_context(self) -> "RoutingContext":
+        """Resolve a full player snapshot while preserving legacy request fields."""
+        from app.agent.foundation.routing import RoutingContext
+
+        current_song_id = self.resolved_current_song_id()
+        if self.player_context is None:
+            return RoutingContext(
+                has_current_song=current_song_id is not None,
+                current_song_id=current_song_id,
+            )
+        if "current_song_id" not in self.model_fields_set:
+            return RoutingContext.model_validate(
+                self.player_context.model_dump(mode="python")
+            )
+        return RoutingContext.model_validate(
+            {
+                **self.player_context.model_dump(mode="python"),
+                "has_current_song": current_song_id is not None,
+                "current_song_id": current_song_id,
+            }
+        )
 
 
 MessageText = Annotated[
@@ -103,8 +134,27 @@ class MessageStreamEvent(BaseModel):
 
 class UpdateStreamEvent(BaseModel):
     type: Literal["update"] = "update"
-    node: Literal["load_song_context", "agent", "tools"]
+    node: Literal[
+        "load_song_context",
+        "agent",
+        "tools",
+        "prepare_context",
+        "intent_router",
+        "development_route",
+        "current_song_subgraph",
+        "tool_calling_subgraph",
+        "worldline_subgraph",
+        "general_chat_subgraph",
+        "aggregate_results",
+        "final_response",
+        "clarify",
+    ]
     status: Literal["completed"] = "completed"
+
+
+class ClientActionStreamEvent(BaseModel):
+    type: Literal["action"] = "action"
+    action: ClientAction
 
 
 class FinalStreamEvent(BaseModel):
@@ -112,4 +162,9 @@ class FinalStreamEvent(BaseModel):
     response: StructuredOutput
 
 
-SongAssistantStreamEvent = MessageStreamEvent | UpdateStreamEvent | FinalStreamEvent
+SongAssistantStreamEvent = (
+    MessageStreamEvent
+    | UpdateStreamEvent
+    | ClientActionStreamEvent
+    | FinalStreamEvent
+)

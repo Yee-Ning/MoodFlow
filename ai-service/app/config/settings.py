@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import AnyHttpUrl, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -27,6 +28,10 @@ class Settings(BaseSettings):
         gt=0,
         le=60,
         validation_alias="SPRING_BOOT_TIMEOUT_SECONDS",
+    )
+    agent_graph_mode: Literal["legacy", "foundation"] = Field(
+        default="legacy",
+        validation_alias="AI_AGENT_GRAPH_MODE",
     )
 
 

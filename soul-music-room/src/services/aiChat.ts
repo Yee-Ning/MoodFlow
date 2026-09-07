@@ -6,7 +6,65 @@ export interface ChatRequest {
   message: string
   thread_id: string
   current_song_id: number | null
+  player_context: PlayerContext
 }
+
+export type PlayerState = 'playing' | 'paused' | 'stopped' | 'unknown'
+export type PlayerPlayMode = 'sequence' | 'list-loop' | 'single-loop' | 'shuffle'
+
+export interface PlayerContext {
+  has_current_song: boolean
+  current_song_id: number | null
+  player_state: PlayerState
+  volume: number
+  is_muted: boolean
+  play_mode: PlayerPlayMode
+  current_time: number
+  duration: number
+  queue_size: number
+  current_index: number
+  current_song_liked: boolean | null
+}
+
+interface ClientTrack {
+  song_id: number
+  name: string
+  artists: string[]
+  album: string
+  cover_url: string
+  duration: number
+}
+
+interface ClientActionBase {
+  action_id: string
+  task_id: string
+}
+
+type EmptyClientActionName =
+  | 'pause_player'
+  | 'resume_player'
+  | 'play_next'
+  | 'play_previous'
+  | 'open_lyrics'
+
+export type ClientAction =
+  | (ClientActionBase & {
+      name: EmptyClientActionName
+      arguments: Record<string, never>
+    })
+  | (ClientActionBase & { name: 'set_volume'; arguments: { volume: number } })
+  | (ClientActionBase & { name: 'set_muted'; arguments: { muted: boolean } })
+  | (ClientActionBase & { name: 'seek_to'; arguments: { seconds: number } })
+  | (ClientActionBase & { name: 'seek_by'; arguments: { offset_seconds: number } })
+  | (ClientActionBase & {
+      name: 'set_play_mode'
+      arguments: { mode: PlayerPlayMode }
+    })
+  | (ClientActionBase & { name: 'play_song'; arguments: { song: ClientTrack } })
+  | (ClientActionBase & {
+      name: 'set_liked'
+      arguments: { song_id: number; liked: boolean }
+    })
 
 export type AiResponseType = 'chat' | 'music_search' | 'music_recommendation'
 
@@ -21,6 +79,7 @@ export interface ChatResponse {
 export type AiChatStreamEvent =
   | { type: 'message'; delta: string }
   | { type: 'update'; node: AiChatNode; status: 'completed' }
+  | { type: 'action'; action: ClientAction }
   | { type: 'final'; response: ChatResponse }
   | { type: 'error'; message: string }
   | { type: 'done' }
@@ -48,6 +107,137 @@ function isRecommendation(value: unknown): value is AiSongRecommendation {
     && typeof item.duration === 'number'
     && typeof item.reason === 'string'
   )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function hasExactKeys(value: Record<string, unknown>, keys: string[]) {
+  const actual = Object.keys(value)
+  return actual.length === keys.length && keys.every((key) => key in value)
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return Number.isInteger(value) && Number(value) > 0
+}
+
+function parseClientTrack(value: unknown): ClientTrack {
+  if (!isRecord(value) || !hasExactKeys(
+    value,
+    ['song_id', 'name', 'artists', 'album', 'cover_url', 'duration'],
+  )) {
+    throw new AiChatApiError('AI 返回了无法识别的播放器动作')
+  }
+  if (
+    !isPositiveInteger(value.song_id)
+    || typeof value.name !== 'string'
+    || !value.name.trim()
+    || !Array.isArray(value.artists)
+    || value.artists.length === 0
+    || !value.artists.every((artist) => typeof artist === 'string' && artist.trim())
+    || typeof value.album !== 'string'
+    || typeof value.cover_url !== 'string'
+    || !Number.isInteger(value.duration)
+    || Number(value.duration) < 0
+  ) {
+    throw new AiChatApiError('AI 返回了无法识别的播放器动作')
+  }
+  return {
+    song_id: value.song_id,
+    name: value.name,
+    artists: value.artists,
+    album: value.album,
+    cover_url: value.cover_url,
+    duration: value.duration as number,
+  }
+}
+
+function parseClientAction(payload: unknown): ClientAction {
+  if (!isRecord(payload) || !hasExactKeys(
+    payload,
+    ['action_id', 'task_id', 'name', 'arguments'],
+  )) {
+    throw new AiChatApiError('AI 返回了无法识别的播放器动作')
+  }
+  if (
+    typeof payload.action_id !== 'string'
+    || !payload.action_id
+    || payload.action_id.length > 128
+    || typeof payload.task_id !== 'string'
+    || !payload.task_id
+    || payload.task_id.length > 128
+    || typeof payload.name !== 'string'
+    || !isRecord(payload.arguments)
+  ) {
+    throw new AiChatApiError('AI 返回了无法识别的播放器动作')
+  }
+
+  const base = { action_id: payload.action_id, task_id: payload.task_id }
+  const args = payload.arguments
+  switch (payload.name) {
+    case 'pause_player':
+    case 'resume_player':
+    case 'play_next':
+    case 'play_previous':
+    case 'open_lyrics':
+      if (!hasExactKeys(args, [])) break
+      return { ...base, name: payload.name, arguments: {} }
+    case 'set_volume':
+      if (!hasExactKeys(args, ['volume']) || !isFiniteNumber(args.volume)) break
+      if (args.volume < 0 || args.volume > 1) break
+      return { ...base, name: payload.name, arguments: { volume: args.volume } }
+    case 'set_muted':
+      if (!hasExactKeys(args, ['muted']) || typeof args.muted !== 'boolean') break
+      return { ...base, name: payload.name, arguments: { muted: args.muted } }
+    case 'seek_to':
+      if (!hasExactKeys(args, ['seconds']) || !isFiniteNumber(args.seconds)) break
+      if (args.seconds < 0) break
+      return { ...base, name: payload.name, arguments: { seconds: args.seconds } }
+    case 'seek_by':
+      if (!hasExactKeys(args, ['offset_seconds']) || !isFiniteNumber(args.offset_seconds)) break
+      if (Math.abs(args.offset_seconds) > 86400) break
+      return {
+        ...base,
+        name: payload.name,
+        arguments: { offset_seconds: args.offset_seconds },
+      }
+    case 'set_play_mode': {
+      const modes: PlayerPlayMode[] = ['sequence', 'list-loop', 'single-loop', 'shuffle']
+      if (
+        !hasExactKeys(args, ['mode'])
+        || !modes.includes(args.mode as PlayerPlayMode)
+      ) break
+      return {
+        ...base,
+        name: payload.name,
+        arguments: { mode: args.mode as PlayerPlayMode },
+      }
+    }
+    case 'play_song':
+      if (!hasExactKeys(args, ['song'])) break
+      return {
+        ...base,
+        name: payload.name,
+        arguments: { song: parseClientTrack(args.song) },
+      }
+    case 'set_liked':
+      if (
+        !hasExactKeys(args, ['song_id', 'liked'])
+        || !isPositiveInteger(args.song_id)
+        || typeof args.liked !== 'boolean'
+      ) break
+      return {
+        ...base,
+        name: payload.name,
+        arguments: { song_id: args.song_id, liked: args.liked },
+      }
+  }
+  throw new AiChatApiError('AI 返回了无法识别的播放器动作')
 }
 
 function parseResponse(payload: unknown): ChatResponse {
@@ -107,7 +297,21 @@ function parseSseEvent(block: string): AiChatStreamEvent | null {
   }
   if (
     eventName === 'update'
-    && ['load_song_context', 'agent', 'tools'].includes(String(candidate.node))
+    && [
+      'load_song_context',
+      'agent',
+      'tools',
+      'prepare_context',
+      'intent_router',
+      'development_route',
+      'current_song_subgraph',
+      'tool_calling_subgraph',
+      'worldline_subgraph',
+      'general_chat_subgraph',
+      'aggregate_results',
+      'final_response',
+      'clarify',
+    ].includes(String(candidate.node))
     && candidate.status === 'completed'
   ) {
     return {
@@ -115,6 +319,9 @@ function parseSseEvent(block: string): AiChatStreamEvent | null {
       node: candidate.node as AiChatNode,
       status: 'completed',
     }
+  }
+  if (eventName === 'action') {
+    return { type: 'action', action: parseClientAction(payload) }
   }
   if (eventName === 'final') {
     return { type: 'final', response: parseResponse(payload) }

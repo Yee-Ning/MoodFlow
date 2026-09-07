@@ -35,19 +35,19 @@ START
 
 ## Graph Foundation V1
 
-`app/agent/foundation` 是独立的 MainGraph 基础设施，现已支持 Rule → Model → LLM → Merger 动态路由。它尚未替换上面的生产 Chat HTTP/SSE 图；业务子图仍为 Stub。
+`app/agent/foundation` 是独立的 MainGraph 基础设施，现已支持 Rule → Model → LLM → Merger 动态路由，并已实现 ToolCalling SubGraph。生产 Chat HTTP/SSE 默认继续使用旧图；设置 `AI_AGENT_GRAPH_MODE=foundation` 后可显式启用 Foundation 图进行联调。
 
 ```text
 START
   -> prepare_context
-  -> development_route
-       -> one or more Stub SubGraphs
+  -> intent_router
+       -> one or more SubGraphs
   -> aggregate_results
   -> final_response
   -> END
 ```
 
-上图为显式传入 `development_routes` 时的兼容开发模式。默认 `create_main_graph()` 改用动态路由；可传入 `intent_router` 注入测试或替代运行时。四个 Stub SubGraph（含 GeneralChat）通过 adapter 接收对应任务的证据文本及 `routing_intents`，只把统一的 `TaskResult` 返回给 `MainState.task_results`；各自的私有状态保留在子图本地。
+显式传入 `development_routes` 时仍可绕过分类，用于隔离开发。默认 `create_main_graph()` 使用动态路由；可传入 `intent_router` 注入测试或替代运行时。各 SubGraph 通过 adapter 接收对应任务的证据文本及 `routing_intents`，只把统一的 `TaskResult` 返回给 `MainState.task_results`；各自的私有状态保留在子图本地。
 
 MainGraph 是唯一的持久化边界，复用共享的开发环境 `InMemorySaver`。调用方仍须通过 `configurable.thread_id` 提供线程标识，State 中不保存该运行配置。
 
@@ -143,7 +143,13 @@ python scripts/intent/test_model_router.py --device auto
 
 `IntentMerger` 锁定 Rule 结果；LLM 结果只替换其负责片段的 Model 候选；相同 Intent + sub_intent + span 去重，不同位置或不同工具动作保留。全局按原文位置排序，重新生成连续 order。`RouteDecisionBuilder` 计算完成状态及分类证据覆盖率（不是业务执行成功率），按 RouteKey 分组生成任务，并用 `intent_orders` 引用原始 Intent。
 
-同一 RouteKey 当前只生成一个任务，组内保留全部 Intent；任务组按首次出现顺序执行。这不等同于完整依赖规划：例如 Tool → Song → Tool 会聚合为 Tool 组和 Song 组，未来真实业务执行器需处理跨组依赖。GeneralChat 与三个业务子图均为 Stub，当前输出仅验证路由和调度；不会实际暂停播放器、收藏歌曲或生成业务回答。
+同一 RouteKey 当前只生成一个任务，组内保留全部 Intent；任务组按首次出现顺序执行。这不等同于完整依赖规划：例如 Tool → Song → Tool 会聚合为 Tool 组和 Song 组，未来真实业务执行器仍需处理跨组依赖。CurrentSong、WorldLine 和 GeneralChat 目前仍是 Stub；ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作。
+
+## ToolCalling SubGraph
+
+明确的暂停、继续、上一首、下一首、降低音量和收藏意图走确定性快速路径，不调用 LLM。搜索、歌词、歌单、播放指定歌曲和组合请求进入 `agent → tools → capture_tool_results → agent` 循环，最多调用 5 次工具。服务端工具继续通过 Spring Boot 执行；播放器操作只生成严格的 `ClientAction`，由 SSE 发送给浏览器。
+
+浏览器动作包括暂停/继续、切歌、设置音量和静音、跳转进度、设置播放模式、播放搜索结果、设置喜欢状态和打开歌词。动作使用显式 set 语义与唯一 `action_id`，React 会校验参数、去重后再交给白名单执行器。子图会保存搜索歌曲和用户歌单的结构化引用，供同一会话后续的“刚才第几首”请求使用；Cookie、歌词正文和原始工具结果不会写入 MainState 的任务数据。
 
 模型工件与 taxonomy 路径可通过 `create_hybrid_router(model_dir=..., taxonomy_path=..., device=...)` 配置，再传给 `create_main_graph(intent_router=...)`。应用启动时构造一次图和运行时，重复请求只提交 `create_main_state(text, routing_context=...)`；checkpointer 继续通过 `configurable.thread_id` 隔离会话。
 
@@ -176,10 +182,10 @@ python -m unittest discover -s tests
 curl.exe -N -X POST http://127.0.0.1:8001/api/ai/chat `
   -H "Content-Type: application/json" `
   -H "Accept: text/event-stream" `
-  -d '{"message":"搜索 Open Arms","thread_id":"demo-thread","current_song_id":null}'
+  -d '{"message":"暂停一下","thread_id":"demo-thread","current_song_id":185809,"player_context":{"has_current_song":true,"current_song_id":185809,"player_state":"playing","volume":0.72,"is_muted":false,"play_mode":"list-loop","current_time":30,"duration":240,"queue_size":1,"current_index":0,"current_song_liked":false}}'
 ```
 
-SSE 事件为 `message`、`update`、`final`、`error` 和 `done`。工具链请求的 `update` 通常依次出现 `load_song_context`、`agent`、`tools`、`agent`。
+SSE 事件为 `message`、`update`、`action`、`final`、`error` 和 `done`。旧图的工具链请求通常依次出现 `load_song_context`、`agent`、`tools`、`agent`；Foundation 模式会发送 MainGraph 节点更新，并在 ToolCalling 任务完成后先发送一个或多个 `action`，再发送 `final`。
 
 ## Test
 

@@ -18,6 +18,9 @@ from app.agent.foundation.subgraphs.tool_calling.assistant import (
     answer_tool_calling_task,
     bind_tool_calling_tools,
 )
+from app.agent.foundation.subgraphs.tool_calling.client_tools import (
+    CLIENT_ACTION_TOOL_NAMES,
+)
 from app.agent.foundation.subgraphs.tool_calling.direct_actions import (
     make_action_id,
     resolve_direct_actions,
@@ -31,7 +34,7 @@ from app.agent.foundation.subgraphs.tool_calling.models import (
 )
 from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
 from app.schemas.context import MusicAgentContext
-from app.schemas.music import MusicSearchResult, UserPlaylistsResult
+from app.schemas.music import MusicSearchResult, MusicTrack, ToolFailure, UserPlaylistsResult
 from app.tools.music import handle_music_tool_error
 
 MAX_TOOL_CALLS = 5
@@ -105,24 +108,96 @@ def _extract_client_actions(
 ) -> list[ClientAction]:
     actions: list[ClientAction] = []
     for index, result in enumerate(state.get("tool_results", [])):
+        if result.get("name") not in CLIENT_ACTION_TOOL_NAMES:
+            continue
         payload = _read_json(result.get("content"))
         if payload is None or payload.get("status") != "pending_client_execution":
             continue
-        try:
-            pending = PendingClientActionPayload.model_validate(payload)
-            actions.append(
-                ClientAction(
-                    action_id=make_action_id(
-                        state["task_id"],
-                        str(result.get("tool_call_id") or f"tool:{index}"),
-                    ),
-                    task_id=state["task_id"],
-                    **pending.client_action,
-                )
+        pending = PendingClientActionPayload.model_validate(payload)
+        actions.append(
+            ClientAction(
+                action_id=make_action_id(
+                    state["task_id"],
+                    str(result.get("tool_call_id") or f"tool:{index}"),
+                ),
+                task_id=state["task_id"],
+                **pending.client_action,
             )
-        except ValueError:
-            continue
+        )
     return actions
+
+
+def _latest_tool_calls(state: ToolCallingState) -> list[dict[str, Any]]:
+    for message in reversed(state["messages"]):
+        if isinstance(message, AIMessage) and message.tool_calls:
+            return [dict(call) for call in message.tool_calls]
+    return []
+
+
+def _known_references(
+    state: ToolCallingState,
+) -> tuple[dict[int, SongReference], dict[int, PlaylistReference]]:
+    current = _extract_entities(state.get("tool_results", []))
+    groups = [current, *state.get("prior_entities", [])]
+    songs = {
+        song.song_id: song
+        for group in groups
+        for song in group.songs
+    }
+    playlists = {
+        playlist.playlist_id: playlist
+        for group in groups
+        for playlist in group.playlists
+    }
+    return songs, playlists
+
+
+def _track_matches_reference(track: MusicTrack, reference: SongReference) -> bool:
+    return (
+        track.song_id == reference.song_id
+        and track.name == reference.name
+        and track.artists == reference.artists
+        and track.album == reference.album
+        and track.cover_url == reference.cover_url
+        and track.duration == reference.duration
+    )
+
+
+def _reference_errors(state: ToolCallingState) -> dict[str, str]:
+    songs, playlists = _known_references(state)
+    current_song_id = state["routing_context"].current_song_id
+    known_song_ids = {*songs, *([current_song_id] if current_song_id else [])}
+    errors: dict[str, str] = {}
+    for call in _latest_tool_calls(state):
+        call_id = str(call.get("id", ""))
+        name = call.get("name")
+        args = call.get("args")
+        if not call_id or not isinstance(args, dict):
+            continue
+        if name in {"get_song_lyrics", "set_liked"}:
+            song_id = args.get("song_id")
+            if isinstance(song_id, int) and song_id not in known_song_ids:
+                errors[call_id] = "歌曲 ID 没有可信来源；请先搜索歌曲或请用户明确选择。"
+        elif name == "play_song":
+            try:
+                track = MusicTrack.model_validate(args.get("song"))
+            except ValueError:
+                continue
+            reference = songs.get(track.song_id)
+            if reference is None or not _track_matches_reference(track, reference):
+                errors[call_id] = "播放歌曲必须完整使用 search_music 或历史结果；请先搜索。"
+        elif name == "add_song_to_playlist":
+            song_id = args.get("song_id")
+            playlist_id = args.get("playlist_id")
+            if isinstance(song_id, int) and song_id not in known_song_ids:
+                errors[call_id] = "歌曲 ID 没有可信来源；请先搜索歌曲。"
+            if isinstance(playlist_id, int):
+                playlist = playlists.get(playlist_id)
+                if playlist is None:
+                    errors[call_id] = "歌单 ID 没有可信来源；请先读取当前用户歌单。"
+                elif not playlist.editable:
+                    errors[call_id] = "目标歌单不可编辑；请让用户选择可编辑歌单。"
+    return errors
 
 
 def _final_task_result(
@@ -251,6 +326,31 @@ def build_tool_calling_subgraph(
             )
         return {"tool_results": results}
 
+    def reject_untrusted_references(state: ToolCallingState) -> dict[str, Any]:
+        errors = _reference_errors(state)
+        messages: list[ToolMessage] = []
+        for call in _latest_tool_calls(state):
+            call_id = str(call.get("id", ""))
+            message = errors.get(
+                call_id,
+                "同一批工具调用含有未经验证的实体引用，本次未执行；请重新获取真实 ID。",
+            )
+            messages.append(
+                ToolMessage(
+                    content=ToolFailure(
+                        error="untrusted_entity_reference",
+                        message=message,
+                    ).model_dump_json(),
+                    tool_call_id=call_id,
+                    name=str(call.get("name") or "unknown"),
+                    status="error",
+                )
+            )
+        return {"messages": messages}
+
+    def route_validated_calls(state: ToolCallingState) -> str:
+        return "reject_tool_calls" if _reference_errors(state) else "tools"
+
     builder = StateGraph(
         ToolCallingState,
         context_schema=MusicAgentContext,
@@ -258,11 +358,13 @@ def build_tool_calling_subgraph(
     )
     builder.add_node("direct_actions", resolve_direct_actions)
     builder.add_node("agent", agent)
+    builder.add_node("validate_tool_calls", lambda _: {})
     builder.add_node(
         "tools",
         ToolNode(graph_tools, handle_tool_errors=handle_music_tool_error),
     )
     builder.add_node("capture_tool_results", capture_tool_results)
+    builder.add_node("reject_tool_calls", reject_untrusted_references)
     builder.add_edge(START, "direct_actions")
     builder.add_conditional_edges(
         "direct_actions",
@@ -272,9 +374,15 @@ def build_tool_calling_subgraph(
     builder.add_conditional_edges(
         "agent",
         _route_after_agent,
-        {"tools": "tools", END: END},
+        {"tools": "validate_tool_calls", END: END},
+    )
+    builder.add_conditional_edges(
+        "validate_tool_calls",
+        route_validated_calls,
+        {"tools": "tools", "reject_tool_calls": "reject_tool_calls"},
     )
     builder.add_edge("tools", "capture_tool_results")
+    builder.add_edge("reject_tool_calls", "capture_tool_results")
     builder.add_edge("capture_tool_results", "agent")
     return builder
 

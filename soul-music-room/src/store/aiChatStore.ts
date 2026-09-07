@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { AiChatApiError, streamAiChatMessage } from '../services/aiChat'
+import type { PlayerContext } from '../services/aiChat'
 import type {
   AiChatMessage,
   AiChatStatus,
@@ -16,8 +17,8 @@ interface AiChatState {
   close: () => void
   clearConversation: () => void
   clearError: () => void
-  sendMessage: (message: string, currentSongId: number | null) => Promise<void>
-  retryLastMessage: (currentSongId: number | null) => Promise<void>
+  sendMessage: (message: string, playerContext: PlayerContext) => Promise<void>
+  retryLastMessage: (playerContext: PlayerContext) => Promise<void>
 }
 
 function createMessageId(prefix: string) {
@@ -65,7 +66,7 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
     status: state.isSending ? state.status : 'idle',
   })),
 
-  sendMessage: async (rawMessage, currentSongId) => {
+  sendMessage: async (rawMessage, playerContext) => {
     const message = rawMessage.trim()
     if (!message || get().isSending) return
     const threadId = get().conversationId ?? createConversationId()
@@ -102,11 +103,13 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
     try {
       let receivedFinal = false
       let receivedDone = false
+      let actionFailure = ''
       const stream = streamAiChatMessage(
         {
           message,
           thread_id: threadId,
-          current_song_id: currentSongId,
+          current_song_id: playerContext.current_song_id,
+          player_context: playerContext,
         },
         controller.signal,
       )
@@ -129,6 +132,16 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
                 ? 'finalizing'
                 : 'generating',
           })
+        } else if (event.type === 'action') {
+          try {
+            const { executeClientAction } = await import('../services/aiClientActions')
+            await executeClientAction(event.action)
+          } catch (error) {
+            actionFailure = error instanceof Error
+              ? error.message
+              : 'AI 播放器操作没有执行成功'
+            set({ error: actionFailure })
+          }
         } else if (event.type === 'final') {
           receivedFinal = true
           set((state) => ({
@@ -144,14 +157,22 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
           throw new AiChatApiError(event.message)
         } else if (event.type === 'done') {
           receivedDone = true
-          set({ isSending: false, status: 'idle' })
+          set({
+            isSending: false,
+            status: actionFailure ? 'error' : 'idle',
+            error: actionFailure,
+          })
         }
       }
 
       if (!receivedFinal || !receivedDone) {
         throw new AiChatApiError('AI 响应流意外中断，请重试')
       }
-      set({ isSending: false, status: 'idle', error: '' })
+      set({
+        isSending: false,
+        status: actionFailure ? 'error' : 'idle',
+        error: actionFailure,
+      })
     } catch (error) {
       if (isAbortError(error)) {
         if (activeRequestId === requestId) {
@@ -177,7 +198,7 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
     }
   },
 
-  retryLastMessage: async (currentSongId) => {
+  retryLastMessage: async (playerContext) => {
     if (get().isSending) return
     const messages = get().messages
     const lastUserIndex = messages.findLastIndex((message) => message.role === 'user')
@@ -188,6 +209,6 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
       error: '',
       status: 'idle',
     })
-    await get().sendMessage(lastUserMessage.content, currentSongId)
+    await get().sendMessage(lastUserMessage.content, playerContext)
   },
 }))

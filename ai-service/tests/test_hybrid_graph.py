@@ -10,9 +10,17 @@ from app.agent.foundation.hybrid_routing import HybridIntentRouter, EscalationPo
 from app.agent.foundation.llm_routing import LLMRouter
 from app.agent.foundation.main_graph import build_main_graph
 from app.agent.foundation.models import TaskResult, TaskStatus
-from app.agent.foundation.routing import IntentType
+from app.agent.foundation.routing import (
+    IntentItem,
+    IntentSource,
+    IntentType,
+    RouteDecision,
+    RouteTask,
+)
 from app.agent.foundation.subgraphs.general_chat import GeneralChatState
 from app.agent.foundation.subgraphs.base import SubGraphOutput
+from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
+from app.agent.checkpointing import create_memory_checkpointer
 from tests.test_intent_merger import model_result
 from tests.test_llm_router import TAXONOMY, output_for
 
@@ -40,6 +48,80 @@ def successful_subgraph(route: RouteKey, content: str = "fixture"):
 
 
 class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
+    async def test_previous_tool_entities_reach_next_turn(self):
+        seen_prior_entities = []
+        route_count = 0
+
+        class ToolRouter:
+            async def route(self, text, context):
+                nonlocal route_count
+                route_count += 1
+                intent = IntentItem(
+                    intent=IntentType.TOOL_CALLING,
+                    sub_intent="manage_music",
+                    confidence=1.0,
+                    source=IntentSource.LLM,
+                    evidence=text,
+                    start=0,
+                    end=len(text),
+                    order=0,
+                )
+                return RouteDecision(
+                    intents=[intent],
+                    is_complete=True,
+                    coverage=1.0,
+                    tasks=[
+                        RouteTask(
+                            task_id=f"tool-{route_count}",
+                            route_key=RouteKey.TOOL_CALLING,
+                            intent_orders=[0],
+                        )
+                    ],
+                )
+
+        def capture(state):
+            seen_prior_entities.append(state["prior_entities"])
+            return {
+                "task_result": TaskResult(
+                    task_id=state["task_id"],
+                    route_key=RouteKey.TOOL_CALLING,
+                    status=TaskStatus.SUCCESS,
+                    content="fixture",
+                    data={
+                        "entities": {
+                            "songs": [
+                                {
+                                    "position": 1,
+                                    "song_id": 101,
+                                    "name": "测试歌曲",
+                                    "artists": ["测试歌手"],
+                                    "album": "",
+                                    "cover_url": "",
+                                    "duration": 0,
+                                }
+                            ],
+                            "playlists": [],
+                        }
+                    },
+                )
+            }
+
+        subgraph = StateGraph(ToolCallingState, output_schema=SubGraphOutput)
+        subgraph.add_node("capture", capture)
+        subgraph.add_edge(START, "capture")
+        subgraph.add_edge("capture", END)
+        graph = build_main_graph(
+            intent_router=ToolRouter(),
+            tool_calling_subgraph=subgraph.compile(),
+        ).compile(checkpointer=create_memory_checkpointer())
+        config = {"configurable": {"thread_id": "prior-entities"}}
+
+        await graph.ainvoke(create_main_state("先推荐一首"), config)
+        await graph.ainvoke(create_main_state("使用刚才第一首"), config)
+
+        self.assertEqual(seen_prior_entities[0], [])
+        self.assertEqual(seen_prior_entities[1][0].songs[0].song_id, 101)
+
     async def test_default_graph_uses_dynamic_router_factory(self):
         router, _, _ = fixture_router()
         with patch("app.agent.foundation.main_graph.create_hybrid_router", return_value=router) as factory:

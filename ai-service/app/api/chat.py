@@ -8,8 +8,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
 from app.agent.graph import stream_current_song_assistant
+from app.agent.foundation.streaming import stream_foundation_assistant
+from app.config.settings import get_settings
 from app.schemas.chat import (
     ChatRequest,
+    ClientActionStreamEvent,
     FinalStreamEvent,
     MessageStreamEvent,
     UpdateStreamEvent,
@@ -41,18 +44,34 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
 
     async def generate_events() -> AsyncIterator[str]:
         try:
-            async for event in stream_current_song_assistant(
-                message=chat_request.message,
-                thread_id=chat_request.thread_id or str(uuid4()),
-                current_song_id=chat_request.resolved_current_song_id(),
-                session_cookie=session_cookie,
-            ):
+            thread_id = chat_request.thread_id or str(uuid4())
+            if get_settings().agent_graph_mode == "foundation":
+                event_stream = stream_foundation_assistant(
+                    message=chat_request.message,
+                    thread_id=thread_id,
+                    routing_context=chat_request.resolved_routing_context(),
+                    session_cookie=session_cookie,
+                )
+            else:
+                event_stream = stream_current_song_assistant(
+                    message=chat_request.message,
+                    thread_id=thread_id,
+                    current_song_id=chat_request.resolved_current_song_id(),
+                    session_cookie=session_cookie,
+                )
+
+            async for event in event_stream:
                 if isinstance(event, MessageStreamEvent):
                     yield _encode_sse("message", {"delta": event.delta})
                 elif isinstance(event, UpdateStreamEvent):
                     yield _encode_sse(
                         "update",
                         {"node": event.node, "status": event.status},
+                    )
+                elif isinstance(event, ClientActionStreamEvent):
+                    yield _encode_sse(
+                        "action",
+                        event.action.model_dump(mode="json"),
                     )
                 elif isinstance(event, FinalStreamEvent):
                     yield _encode_sse(

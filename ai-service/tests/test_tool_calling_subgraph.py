@@ -26,7 +26,12 @@ from app.agent.foundation.subgraphs.tool_calling.graph import (
     TOOL_LIMIT_MESSAGE,
 )
 from app.schemas.context import MusicAgentContext
-from app.schemas.music import SearchMusicArgs, UserPlaylist, UserPlaylistsResult
+from app.schemas.music import (
+    AddSongToPlaylistArgs,
+    SearchMusicArgs,
+    UserPlaylist,
+    UserPlaylistsResult,
+)
 from app.tools.music import MUSIC_AGENT_TOOLS, MusicServiceClient
 
 
@@ -137,6 +142,24 @@ def search_tool(*, fail: bool = False) -> BaseTool:
     return fake_search_music
 
 
+def add_to_playlist_tool(calls: list[dict]) -> BaseTool:
+    @tool("add_song_to_playlist", args_schema=AddSongToPlaylistArgs)
+    async def fake_add_song_to_playlist(playlist_id: int, song_id: int) -> str:
+        """Add fixture music to a playlist."""
+        calls.append({"playlist_id": playlist_id, "song_id": song_id})
+        return json.dumps(
+            {
+                "playlist_id": playlist_id,
+                "song_id": song_id,
+                "status": "added",
+                "message": "已添加",
+            },
+            ensure_ascii=False,
+        )
+
+    return fake_add_song_to_playlist
+
+
 class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
     async def test_graph_contains_direct_and_tool_loop_paths(self) -> None:
         graph = create_tool_calling_subgraph(
@@ -150,14 +173,18 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
                 "__start__",
                 "direct_actions",
                 "agent",
+                "validate_tool_calls",
                 "tools",
                 "capture_tool_results",
+                "reject_tool_calls",
                 "__end__",
             },
         )
         edges = {(edge.source, edge.target) for edge in drawable.edges}
         self.assertIn(("direct_actions", "__end__"), edges)
-        self.assertIn(("agent", "tools"), edges)
+        self.assertIn(("agent", "validate_tool_calls"), edges)
+        self.assertIn(("validate_tool_calls", "tools"), edges)
+        self.assertIn(("validate_tool_calls", "reject_tool_calls"), edges)
         self.assertIn(("tools", "capture_tool_results"), edges)
         self.assertIn(("capture_tool_results", "agent"), edges)
 
@@ -301,6 +328,91 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(observed[0]["prior_entities"], [prior])
         self.assertEqual(observed[0]["current_input"], "把刚才第一首加入刚才的歌单")
+
+    async def test_trusted_prior_ids_allow_playlist_mutation(self) -> None:
+        calls: list[dict] = []
+        prior = ReferencedEntities(
+            songs=[
+                SongReference(
+                    position=1,
+                    song_id=101,
+                    name="测试歌曲",
+                    artists=["测试歌手"],
+                )
+            ],
+            playlists=[
+                PlaylistReference(
+                    position=1,
+                    playlist_id=77,
+                    name="学习",
+                    editable=True,
+                )
+            ],
+        )
+        graph = create_tool_calling_subgraph(
+            tools=[add_to_playlist_tool(calls)],
+            assistant=scripted_assistant(
+                [
+                    tool_call(
+                        "add_song_to_playlist",
+                        "trusted-add",
+                        {"playlist_id": 77, "song_id": 101},
+                    ),
+                    AIMessage(content="已加入歌单。"),
+                ]
+            ),
+        )
+
+        result = await invoke(
+            graph,
+            text="把刚才第一首加入刚才的歌单",
+            prior_entities=[prior],
+        )
+
+        self.assertEqual(calls, [{"playlist_id": 77, "song_id": 101}])
+        self.assertEqual(result["task_result"].status, TaskStatus.SUCCESS)
+
+    async def test_untrusted_song_payload_is_rejected_before_client_action(self) -> None:
+        play_song_tool = next(
+            item for item in CLIENT_ACTION_TOOLS if item.name == "play_song"
+        )
+        observed: list[dict] = []
+        graph = create_tool_calling_subgraph(
+            tools=[play_song_tool],
+            assistant=scripted_assistant(
+                [
+                    tool_call(
+                        "play_song",
+                        "hallucinated-play",
+                        {
+                            "song": {
+                                "song_id": 999,
+                                "name": "不存在的结果",
+                                "artists": ["未知"],
+                                "album": "",
+                                "cover_url": "",
+                                "duration": 0,
+                            }
+                        },
+                    ),
+                    AIMessage(content="我还需要先搜索这首歌。"),
+                ],
+                observed,
+            ),
+        )
+
+        result = await invoke(graph, text="播放不存在的结果")
+
+        task = result["task_result"]
+        self.assertEqual(task.status, TaskStatus.FAILED)
+        self.assertEqual(task.data["client_actions"], [])
+        rejected = next(
+            message
+            for message in observed[1]["messages"]
+            if isinstance(message, ToolMessage)
+        )
+        payload = json.loads(str(rejected.content))
+        self.assertEqual(payload["error"], "untrusted_entity_reference")
 
     async def test_authenticated_server_tool_receives_runtime_cookie(self) -> None:
         observed_cookies: list[str | None] = []

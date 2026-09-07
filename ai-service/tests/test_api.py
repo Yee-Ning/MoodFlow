@@ -1,5 +1,6 @@
 import json
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -7,9 +8,15 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.schemas.chat import (
     ChatOutput,
+    ClientActionStreamEvent,
     FinalStreamEvent,
     MessageStreamEvent,
     UpdateStreamEvent,
+)
+from app.agent.foundation.subgraphs.tool_calling.models import (
+    ClientAction,
+    ClientActionName,
+    EmptyActionArguments,
 )
 
 
@@ -26,6 +33,12 @@ def parse_sse(body: str) -> list[tuple[str, dict]]:
 class ApiTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
+        settings = patch(
+            "app.api.chat.get_settings",
+            return_value=SimpleNamespace(agent_graph_mode="legacy"),
+        )
+        settings.start()
+        self.addCleanup(settings.stop)
 
     def test_health(self) -> None:
         response = self.client.get("/health")
@@ -144,6 +157,68 @@ class ApiTests(unittest.TestCase):
         self.assertIn("继续处理", final["message"])
         self.assertEqual(events[-1], ("done", {}))
         self.assertEqual(captured["session_cookie"], "JSESSIONID=spring-session")
+
+    def test_foundation_mode_streams_client_action_and_player_context(self) -> None:
+        captured: dict[str, object] = {}
+
+        async def stream_graph(**kwargs):
+            captured.update(kwargs)
+            yield ClientActionStreamEvent(
+                action=ClientAction(
+                    action_id="task-1:direct:0",
+                    task_id="task-1",
+                    name=ClientActionName.PAUSE_PLAYER,
+                    arguments=EmptyActionArguments(),
+                )
+            )
+            yield FinalStreamEvent(
+                response=ChatOutput(
+                    type="chat",
+                    message="已发送暂停指令。",
+                    search_query=None,
+                )
+            )
+
+        with (
+            patch(
+                "app.api.chat.get_settings",
+                return_value=SimpleNamespace(agent_graph_mode="foundation"),
+            ),
+            patch("app.api.chat.stream_foundation_assistant", stream_graph),
+        ):
+            response = self.client.post(
+                "/api/ai/chat",
+                json={
+                    "message": "暂停一下",
+                    "thread_id": "foundation-api",
+                    "current_song_id": 185809,
+                    "player_context": {
+                        "has_current_song": True,
+                        "current_song_id": 185809,
+                        "player_state": "playing",
+                        "volume": 0.72,
+                        "is_muted": False,
+                        "play_mode": "list-loop",
+                        "current_time": 30,
+                        "duration": 180,
+                        "queue_size": 1,
+                        "current_index": 0,
+                        "current_song_liked": False,
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        events = parse_sse(response.text)
+        self.assertEqual([name for name, _ in events], ["action", "final", "done"])
+        self.assertEqual(events[0][1]["name"], "pause_player")
+        self.assertEqual(captured["thread_id"], "foundation-api")
+        context = captured["routing_context"]
+        self.assertEqual(context.current_song_id, 185809)
+        self.assertEqual(context.current_time, 30)
+        self.assertNotIn("current_song_id", {
+            key: value for key, value in captured.items() if key != "routing_context"
+        })
 
     def test_streaming_failure_emits_error_and_done(self) -> None:
         async def failing_stream(**kwargs):

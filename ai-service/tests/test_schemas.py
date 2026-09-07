@@ -3,6 +3,7 @@ import unittest
 from pydantic import ValidationError
 
 from app.schemas.chat import ChatRequest, STRUCTURED_OUTPUT_ADAPTER
+from app.agent.foundation.routing import PlayMode, PlayerState
 
 
 class StructuredOutputSchemaTests(unittest.TestCase):
@@ -42,6 +43,50 @@ class StructuredOutputSchemaTests(unittest.TestCase):
 
         self.assertEqual(request.thread_id, "thread-1")
         self.assertIsNone(request.resolved_current_song_id())
+
+    def test_chat_request_accepts_full_player_snapshot(self) -> None:
+        request = ChatRequest.model_validate(
+            {
+                "message": "音量小一点，然后暂停",
+                "player_context": {
+                    "has_current_song": True,
+                    "current_song_id": 185809,
+                    "player_state": "playing",
+                    "volume": 0.65,
+                    "is_muted": False,
+                    "play_mode": "shuffle",
+                    "current_time": 42.5,
+                    "duration": 240,
+                    "queue_size": 3,
+                    "current_index": 1,
+                    "current_song_liked": False,
+                },
+            }
+        )
+
+        context = request.resolved_routing_context()
+        self.assertEqual(context.current_song_id, 185809)
+        self.assertEqual(context.player_state, PlayerState.PLAYING)
+        self.assertEqual(context.play_mode, PlayMode.SHUFFLE)
+        self.assertEqual(context.volume, 0.65)
+
+    def test_explicit_top_level_song_id_overrides_player_snapshot(self) -> None:
+        request = ChatRequest.model_validate(
+            {
+                "message": "暂停",
+                "current_song_id": None,
+                "player_context": {
+                    "has_current_song": True,
+                    "current_song_id": 185809,
+                    "queue_size": 1,
+                    "current_index": 0,
+                },
+            }
+        )
+
+        context = request.resolved_routing_context()
+        self.assertFalse(context.has_current_song)
+        self.assertIsNone(context.current_song_id)
 
     def test_accepts_each_output_variant(self) -> None:
         cases = [

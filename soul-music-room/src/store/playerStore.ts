@@ -34,14 +34,18 @@ interface PlayerState {
   notice: string
   playSong: (song: SongSummary, playlist?: SongSummary[]) => Promise<void>
   togglePlayback: () => Promise<void>
+  pausePlayback: () => void
+  resumePlayback: () => Promise<void>
   playPrevious: () => Promise<void>
   playNext: () => Promise<void>
   seek: (time: number) => void
   setVolume: (volume: number) => void
   toggleMute: () => void
+  setMuted: (muted: boolean) => void
   setPlayMode: (mode: PlayMode) => void
   togglePlayMode: () => void
   toggleLike: (songId: number) => Promise<void>
+  setLiked: (songId: number, liked: boolean) => Promise<void>
   playQueueItem: (index: number) => Promise<void>
   removeQueueItem: (index: number) => Promise<void>
   clearQueue: () => void
@@ -50,6 +54,7 @@ interface PlayerState {
   toggleQueue: () => void
   closeQueue: () => void
   toggleLyrics: () => void
+  openLyrics: () => void
   closeLyrics: () => void
   openAddToPlaylist: () => void
   closeAddToPlaylist: () => void
@@ -269,12 +274,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   togglePlayback: async () => {
     const state = get()
-    if (!state.currentSong || state.isLoading) return
-
     if (state.isPlaying) {
-      audio.pause()
+      get().pausePlayback()
       return
     }
+
+    await get().resumePlayback()
+  },
+
+  pausePlayback: () => {
+    const state = get()
+    if (!state.currentSong) return
+    if (state.isLoading) loadVersion += 1
+    audio.pause()
+    set({ isPlaying: false, isLoading: false })
+  },
+
+  resumePlayback: async () => {
+    const state = get()
+    if (!state.currentSong || state.isLoading || state.isPlaying) return
 
     if (!audio.src) {
       await loadAndPlay(Math.max(0, state.currentIndex))
@@ -346,22 +364,27 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   toggleMute: () => {
     const state = get()
-    const shouldRestore = state.isMuted || state.volume === 0
-    const nextVolume = shouldRestore
-      ? clampVolume(state.previousVolume || DEFAULT_VOLUME)
-      : 0
-    const previousVolume = shouldRestore
-      ? nextVolume
-      : state.volume || state.previousVolume || DEFAULT_VOLUME
+    get().setMuted(!state.isMuted)
+  },
+
+  setMuted: (muted) => {
+    const state = get()
+    if (muted === state.isMuted) return
+    const nextVolume = muted
+      ? 0
+      : clampVolume(state.previousVolume || DEFAULT_VOLUME)
+    const previousVolume = muted
+      ? state.volume || state.previousVolume || DEFAULT_VOLUME
+      : nextVolume
 
     set({
       volume: nextVolume,
       previousVolume,
-      isMuted: !shouldRestore,
+      isMuted: muted,
     })
     persistVolume(nextVolume, previousVolume)
     audio.volume = nextVolume
-    audio.muted = !shouldRestore
+    audio.muted = muted
   },
 
   setPlayMode: (mode) => {
@@ -376,8 +399,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   toggleLike: async (songId) => {
+    await get().setLiked(songId, !get().likedSongIds.has(songId))
+  },
+
+  setLiked: async (songId, liked) => {
     const previousIds = get().likedSongIds
-    const liked = !previousIds.has(songId)
+    if (previousIds.has(songId) === liked) return
     const nextIds = new Set(previousIds)
 
     if (liked) nextIds.add(songId)
@@ -502,6 +529,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   })),
   closeQueue: () => set({ isQueueOpen: false }),
   toggleLyrics: () => set((state) => ({ isLyricsOpen: !state.isLyricsOpen })),
+  openLyrics: () => set({ isLyricsOpen: true }),
   closeLyrics: () => set({ isLyricsOpen: false }),
   openAddToPlaylist: () => set({
     isAddToPlaylistOpen: true,

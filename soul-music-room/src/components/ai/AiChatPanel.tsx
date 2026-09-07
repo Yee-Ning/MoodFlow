@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useAiChatStore } from '../../store/aiChatStore'
-import { usePlayerStore } from '../../store/playerStore'
+import { createPlayerContextSnapshot } from '../../services/playerContext'
 import LiquidGlassSurface from '../liquid-glass/LiquidGlassSurface'
 import AiChatHeader from './AiChatHeader'
 import AiChatInput from './AiChatInput'
@@ -13,10 +13,6 @@ import {
   type AiChatTriggerAnchor,
 } from './aiChatTriggerPosition'
 import './ai-chat.css'
-
-function getCurrentSongId() {
-  return usePlayerStore.getState().currentSong?.id ?? null
-}
 
 function getViewportSize() {
   if (typeof window === 'undefined') return { width: 1440, height: 900 }
@@ -111,12 +107,18 @@ function AiChatPanel() {
                 status={status}
                 isSending={isSending}
                 error={error}
-                onSuggestion={(suggestion) => void sendMessage(suggestion, getCurrentSongId())}
-                onRetry={() => void retryLastMessage(getCurrentSongId())}
+                onSuggestion={(suggestion) => void sendMessage(
+                  suggestion,
+                  createPlayerContextSnapshot(),
+                )}
+                onRetry={() => void retryLastMessage(createPlayerContextSnapshot())}
               />
               <AiChatInput
                 disabled={isSending}
-                onSend={(message) => void sendMessage(message, getCurrentSongId())}
+                onSend={(message) => void sendMessage(
+                  message,
+                  createPlayerContextSnapshot(),
+                )}
               />
             </LiquidGlassSurface>
           </motion.aside>
