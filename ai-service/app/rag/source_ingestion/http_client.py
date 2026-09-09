@@ -6,9 +6,9 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlsplit
-from urllib.robotparser import RobotFileParser
 
 import httpx
+from protego import Protego
 
 
 DEFAULT_USER_AGENT = "MoodFlowMusicRAG/1.0 (https://github.com/Yee-Ning/MoodFlow)"
@@ -69,7 +69,7 @@ class PolicyAwareHttpClient:
         self._owns_client = client is None
         self._monotonic = monotonic
         self._sleeper = sleeper
-        self._robots_cache: dict[str, RobotFileParser | bool] = {}
+        self._robots_cache: dict[str, Protego | bool] = {}
         self._crawl_delay_by_origin: dict[str, float] = {}
         self._last_request_at: dict[str, float] = {}
 
@@ -131,7 +131,7 @@ class PolicyAwareHttpClient:
             current_url = urljoin(current_url, location)
         return None
 
-    def _load_robots_policy(self, url: str) -> RobotFileParser | bool:
+    def _load_robots_policy(self, url: str) -> Protego | bool:
         origin = self._origin(url)
         cached = self._robots_cache.get(origin)
         if cached is not None:
@@ -144,12 +144,10 @@ class PolicyAwareHttpClient:
             return False
 
         if response.status_code == 200:
-            parser = RobotFileParser()
-            parser.set_url(robots_url)
-            parser.parse(response.text.splitlines())
+            parser = Protego.parse(response.text)
             self._robots_cache[origin] = parser
             agent_token = self.user_agent.partition("/")[0]
-            crawl_delay = parser.crawl_delay(agent_token) or parser.crawl_delay("*")
+            crawl_delay = parser.crawl_delay(agent_token)
             if crawl_delay is not None:
                 self._crawl_delay_by_origin[origin] = float(crawl_delay)
             return parser
@@ -162,7 +160,8 @@ class PolicyAwareHttpClient:
 
     def _ensure_robots_allowed(self, url: str) -> None:
         policy = self._load_robots_policy(url)
-        allowed = policy if isinstance(policy, bool) else policy.can_fetch(self.user_agent, url)
+        agent_token = self.user_agent.partition("/")[0]
+        allowed = policy if isinstance(policy, bool) else policy.can_fetch(url, agent_token)
         if not allowed:
             raise RobotsDeniedError(f"robots.txt does not allow fetching {url}")
 

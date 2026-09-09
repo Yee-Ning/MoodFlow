@@ -176,6 +176,40 @@ class PolicyAwareHttpClientTests(unittest.TestCase):
 
         self.assertEqual(requested, ["https://example.test/robots.txt"])
 
+    def test_more_specific_wildcard_allow_rule_permits_json_snapshot(self) -> None:
+        requested: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            requested.append(str(request.url))
+            if request.url.path == "/robots.txt":
+                return httpx.Response(
+                    200,
+                    text=(
+                        "User-agent: *\n"
+                        "Disallow: /wiki/Special:EntityData/\n"
+                        "Allow: /wiki/Special:EntityData/*.\n"
+                    ),
+                    headers={"Content-Type": "text/plain"},
+                )
+            return httpx.Response(
+                200,
+                content=b'{"entities":{}}',
+                headers={"Content-Type": "application/json"},
+            )
+
+        response = self._client(handler).fetch(
+            "https://example.test/wiki/Special:EntityData/Q238819.json"
+        )
+
+        self.assertEqual(response.content, b'{"entities":{}}')
+        self.assertEqual(
+            requested,
+            [
+                "https://example.test/robots.txt",
+                "https://example.test/wiki/Special:EntityData/Q238819.json",
+            ],
+        )
+
     def test_allowed_response_is_returned_as_original_bytes(self) -> None:
         original = b"\x00raw\xffbytes"
 
