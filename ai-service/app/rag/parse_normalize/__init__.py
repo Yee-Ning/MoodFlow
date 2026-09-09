@@ -20,6 +20,12 @@ from .router import (
     UnsupportedCurrentStageError,
     UnsupportedFileTypeError,
 )
+from .service import (
+    OutcomeStatus,
+    ParseNormalizeService,
+    ParseOutcome,
+    create_default_service,
+)
 
 __all__ = [
     "NORMALIZATION_VERSION",
@@ -30,9 +36,12 @@ __all__ = [
     "DuplicateParserError",
     "FileTypeDetector",
     "NormalizedDocument",
+    "OutcomeStatus",
     "ParseInput",
     "ParseMetrics",
     "ParseNormalizeError",
+    "ParseNormalizeService",
+    "ParseOutcome",
     "ParseReport",
     "ParseStatus",
     "ParserError",
@@ -41,4 +50,5 @@ __all__ = [
     "ParserRouter",
     "UnsupportedCurrentStageError",
     "UnsupportedFileTypeError",
+    "create_default_service",
 ]
