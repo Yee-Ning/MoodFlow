@@ -21,4 +21,3 @@ class BaseParser(ABC):
     @abstractmethod
     def parse(self, parse_input: ParseInput) -> ParserResult:
         """Parse immutable input bytes into parser-independent blocks."""
-
