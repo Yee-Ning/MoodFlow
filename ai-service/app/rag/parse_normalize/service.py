@@ -36,6 +36,8 @@ from .writer import AtomicNormalizedWriter
 class OutcomeStatus(StrEnum):
     PARSED = "parsed"
     WARNING = "warning"
+    FALLBACK_USED = "fallback_used"
+    MANUAL_REVIEW = "manual_review"
     SKIPPED = "skipped"
     FAILED = "failed"
     UNSUPPORTED_FOR_CURRENT_STAGE = "unsupported_for_current_stage"
@@ -84,6 +86,7 @@ class ParseNormalizeService:
         *,
         force: bool = False,
         manifest_path: Path | None = None,
+        parser_mode: str = "auto",
     ) -> ParseOutcome:
         started = time.perf_counter()
         selected_manifest = manifest_path or self.raw_manifest_path
@@ -117,11 +120,18 @@ class ParseNormalizeService:
                 started,
             )
 
+        if not parser.supports_parser_mode(parser_mode):
+            return self._failed_outcome(
+                source_id,
+                parser.parser_name,
+                "parser_override_only_supported_for_pdf",
+                started,
+            )
+        parse_fingerprint = parser.fingerprint(parser_mode)
         if not force and self.writer.fingerprint_matches(
             source_id,
             raw_content_hash=loaded.record.content_hash,
-            parser_name=parser.parser_name,
-            parser_version=parser.parser_version,
+            parse_fingerprint=parse_fingerprint,
             normalization_version=self.normalizer.version,
         ):
             return ParseOutcome(
@@ -134,47 +144,65 @@ class ParseNormalizeService:
 
         candidate = self._candidate(source_id)
         try:
-            parsed = parser.parse(
+            execution = parser.execute(
                 ParseInput(
                     snapshot=loaded.record,
                     raw_bytes=loaded.raw_bytes,
                     candidate=candidate,
                 )
             )
+            parsed = execution.result
+            report = execution.report
+            if parsed is None:
+                if report is None:
+                    raise ParseNormalizeError("parser_returned_no_result")
+                output = self.writer.write_failure(source_id, report)
+                return ParseOutcome(
+                    source_id=source_id,
+                    status=OutcomeStatus.FAILED,
+                    parser_name=execution.selected_parser,
+                    quality_score=report.quality_score,
+                    output_directory=output.relative_to(self.project_root).as_posix(),
+                    detail="parse_quality_failed",
+                )
             markdown = self.normalizer.render(parsed.blocks)
             elapsed_ms = self._elapsed_ms(started)
-            report = self.quality_evaluator.evaluate(
-                source_id, parser.parser_name, parsed.blocks, elapsed_ms
-            )
+            if report is None:
+                report = self.quality_evaluator.evaluate(
+                    source_id, execution.selected_parser, parsed.blocks, elapsed_ms
+                )
             if report.status is ParseStatus.FAILED:
                 output = self.writer.write_failure(source_id, report)
                 return ParseOutcome(
                     source_id=source_id,
                     status=OutcomeStatus.FAILED,
-                    parser_name=parser.parser_name,
+                    parser_name=execution.selected_parser,
                     quality_score=report.quality_score,
                     output_directory=output.relative_to(self.project_root).as_posix(),
                     detail="parse_quality_failed",
                 )
             document = self._document(
                 loaded.record,
-                parser.parser_name,
-                parser.parser_version,
+                execution.selected_parser,
+                execution.selected_parser_version,
                 parsed,
                 markdown,
                 report.quality_score,
                 candidate,
+                parse_fingerprint,
             )
-            output = self.writer.write(document, report)
-            outcome_status = (
-                OutcomeStatus.WARNING
-                if report.status is ParseStatus.WARNING
-                else OutcomeStatus.PARSED
+            output = self.writer.write(
+                document, report, artifacts=execution.artifacts
             )
+            outcome_status = {
+                ParseStatus.WARNING: OutcomeStatus.WARNING,
+                ParseStatus.FALLBACK_USED: OutcomeStatus.FALLBACK_USED,
+                ParseStatus.MANUAL_REVIEW: OutcomeStatus.MANUAL_REVIEW,
+            }.get(report.status, OutcomeStatus.PARSED)
             return ParseOutcome(
                 source_id=source_id,
                 status=outcome_status,
-                parser_name=parser.parser_name,
+                parser_name=execution.selected_parser,
                 quality_score=report.quality_score,
                 output_directory=output.relative_to(self.project_root).as_posix(),
             )
@@ -184,7 +212,11 @@ class ParseNormalizeService:
             )
 
     def parse_manifest(
-        self, manifest_path: Path, *, force: bool = False
+        self,
+        manifest_path: Path,
+        *,
+        force: bool = False,
+        parser_mode: str = "auto",
     ) -> list[ParseOutcome]:
         try:
             source_ids = list(self.loader.latest_records(manifest_path))
@@ -201,7 +233,10 @@ class ParseNormalizeService:
             try:
                 outcomes.append(
                     self.parse_source(
-                        source_id, force=force, manifest_path=manifest_path
+                        source_id,
+                        force=force,
+                        manifest_path=manifest_path,
+                        parser_mode=parser_mode,
                     )
                 )
             except Exception as exc:
@@ -214,11 +249,15 @@ class ParseNormalizeService:
                 )
         return outcomes
 
-    def parse_all_approved(self, *, force: bool = False) -> list[ParseOutcome]:
+    def parse_all_approved(
+        self, *, force: bool = False, parser_mode: str = "auto"
+    ) -> list[ParseOutcome]:
         if self.candidate_manifest_path is None:
             return []
         return [
-            self.parse_source(candidate.source_id, force=force)
+            self.parse_source(
+                candidate.source_id, force=force, parser_mode=parser_mode
+            )
             for candidate in load_candidates(self.candidate_manifest_path)
             if candidate.status is ReviewStatus.APPROVED
         ]
@@ -244,6 +283,7 @@ class ParseNormalizeService:
         markdown,
         quality_score,
         candidate,
+        parse_fingerprint,
     ) -> NormalizedDocument:
         fingerprint = "|".join(
             (
@@ -261,6 +301,7 @@ class ParseNormalizeService:
         metadata = {
             "parser_metadata": parsed.metadata,
             "source_metadata": candidate.model_dump(mode="json") if candidate else {},
+            "parse_fingerprint": parse_fingerprint,
         }
         return NormalizedDocument(
             document_id=document_id,
@@ -281,6 +322,8 @@ class ParseNormalizeService:
             raw_content_hash=record.content_hash,
             markdown=markdown,
             blocks=parsed.blocks,
+            tables=parsed.tables,
+            images=parsed.images,
             metadata=metadata,
             parse_quality_score=quality_score,
             corpus_version=record.corpus_version,

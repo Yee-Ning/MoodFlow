@@ -230,6 +230,22 @@ class ParseNormalizeServiceTests(unittest.TestCase):
             self.assertEqual(forced.status, OutcomeStatus.PARSED)
             self.assertEqual(parser.calls, 2)
 
+    def test_non_pdf_parser_rejects_pdf_backend_override(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            _append_snapshot(root, source_id="source", content=b"<p>Raw</p>")
+            parser = CountingParser()
+
+            outcome = _service(root, parser).parse_source(
+                "source", parser_mode="mineru"
+            )
+
+            self.assertEqual(outcome.status, OutcomeStatus.FAILED)
+            self.assertEqual(
+                outcome.detail, "parser_override_only_supported_for_pdf"
+            )
+            self.assertEqual(parser.calls, 0)
+
     def test_parser_error_writes_failed_report_without_document(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
