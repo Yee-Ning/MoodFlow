@@ -4,3 +4,12 @@ __pycache__/
 .pytest_cache/
 *.py[cod]
 artifacts/intent_model/
+data/raw/html/*
+!data/raw/html/.gitkeep
+data/raw/pdf/*
+!data/raw/pdf/.gitkeep
+data/raw/json/*
+!data/raw/json/.gitkeep
+data/raw/txt/*
+!data/raw/txt/.gitkeep
+data/raw/sources_manifest.jsonl

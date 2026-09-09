@@ -145,6 +145,28 @@ python scripts/intent/test_model_router.py --device auto
 
 RouteTask 明确携带分配文本、Intent 引用和前置任务 ID；未完成的 RouteDecision 不能派发任务，澄清决策必须携带面向用户的问题。相邻且 RouteKey 相同的 Intent 合并为一个任务，路由类型被其他任务隔开的 Intent 保持独立，因此 `Tool → Chat → Tool` 会按三个任务和原文顺序执行。CurrentSong 已提供只读的当前歌曲分析，ToolCalling 已能执行服务端音乐工具并生成浏览器播放器动作，GeneralChat 已提供无工具的普通对话能力；WorldLine 已支持歌曲、歌手和专辑的 V1 事实闭环。
 
+## Music RAG Source Ingestion V1
+
+`app/rag/source_ingestion` 提供独立的离线数据源入口，当前只实现
+`Source Discovery → Candidate Manifest → Human Approval → Fetch → Raw Snapshot`。
+首批 50 个“周杰伦音乐知识 Corpus V1”候选位于
+`data/source_ingestion/jay_chou_corpus_v1/sources_candidates.json`，初始状态全部为
+`pending`；只有人工改为 `approved` 的来源才会进入 Fetch。
+
+```powershell
+python scripts/source_ingestion.py validate
+python scripts/source_ingestion.py list --status pending
+python scripts/source_ingestion.py review jc-v1-001 approved
+python scripts/source_ingestion.py fetch --source-id jc-v1-001
+```
+
+HTML、PDF、JSON/API 与纯文本 Fetcher 只保存原始响应 bytes，不提取正文。
+客户端检查每个跳转目标的 robots.txt，遵守 Crawl-delay，并以每个站点至少
+1.1 秒的间隔串行请求。快照使用 UTC 时间与 SHA-256 命名，通过 exclusive-create
+保证不覆盖；`data/raw/sources_manifest.jsonl` 以追加方式记录来源、哈希、HTTP
+状态与 corpus 版本。V1 不包含 Parser、Markdown 转换、Cleaning、Deduplication、
+Chunking、Entity Linking、Claim Extraction、Embedding 或 Vector DB。
+
 ## WorldLine V1 SubGraph
 
 `app/agent/foundation/subgraphs/worldline` 是独立的、无 FastAPI request 依赖的 LangGraph 子图：
