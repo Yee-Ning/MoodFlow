@@ -9,6 +9,7 @@ openai>=2.54,<3.0
 markdown-it-py>=4.2,<5.0
 pydantic-settings>=2.0,<3.0
 protego>=0.6.2,<1.0
+pymupdf4llm>=1.28.2,<2.0
 PyYAML>=6.0.3,<7.0
 scikit-learn>=1.5,<2.0
 torch>=2.5,<3.0
