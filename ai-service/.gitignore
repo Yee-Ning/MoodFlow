@@ -14,3 +14,5 @@ data/raw/txt/*
 !data/raw/txt/.gitkeep
 data/raw/sources_manifest.jsonl
 data/normalized/**
+data/parsed_cache/**
+tmp/

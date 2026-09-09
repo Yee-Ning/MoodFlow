@@ -1,0 +1,35 @@
+[
+  {
+    "type": "title",
+    "text": "Two-column Album Production Study",
+    "text_level": 1,
+    "page_idx": 0,
+    "bbox": [48, 40, 420, 66]
+  },
+  {
+    "type": "text",
+    "text": "The structured MinerU fixture preserves reading order and production context.",
+    "page_idx": 0,
+    "bbox": [48, 90, 278, 142]
+  },
+  {
+    "type": "list",
+    "list_items": ["Arrangement", "Instrumentation", "Collaboration"],
+    "page_idx": 0,
+    "bbox": [314, 90, 560, 160]
+  },
+  {
+    "type": "table",
+    "table_body": "| Album | Year |\n| --- | --- |\n| Fantasy | 2001 |",
+    "table_rows": [["Album", "Year"], ["Fantasy", "2001"]],
+    "page_idx": 0,
+    "bbox": [48, 300, 560, 410]
+  },
+  {
+    "type": "image",
+    "img_path": "images/layout.png",
+    "image_caption": ["Complex layout preview"],
+    "page_idx": 0,
+    "bbox": [400, 430, 560, 560]
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "pdf_info": [
+    {
+      "page_idx": 0,
+      "page_size": [612, 792],
+      "layout_bboxes": [[48, 40, 560, 560]]
+    }
+  ],
+  "version": "fixture-1"
+}

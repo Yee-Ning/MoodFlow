@@ -1,0 +1,24 @@
+{
+  "name": "Scanned Music Interview",
+  "texts": [
+    {
+      "label": "section_header",
+      "text": "Scanned Music Interview",
+      "level": 1,
+      "prov": [{"page_no": 1, "bbox": {"l": 70, "t": 710, "r": 500, "b": 675}}]
+    },
+    {
+      "label": "text",
+      "text": "The optional OCR fixture recovered album names, dates, and interview context for manual verification.",
+      "prov": [{"page_no": 1, "bbox": {"l": 70, "t": 640, "r": 520, "b": 560}}]
+    }
+  ],
+  "tables": [
+    {
+      "label": "table",
+      "data": {"grid": [[{"text": "Field"}, {"text": "Value"}], [{"text": "Year"}, {"text": "2001"}]]},
+      "prov": [{"page_no": 1, "bbox": {"l": 70, "t": 500, "r": 520, "b": 390}}]
+    }
+  ],
+  "pictures": []
+}
