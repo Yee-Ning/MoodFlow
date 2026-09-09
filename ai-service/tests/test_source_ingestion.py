@@ -76,12 +76,12 @@ class StubHttpClient:
 
 
 class CandidateManifestTests(unittest.TestCase):
-    def test_checked_in_manifest_has_20_to_50_pending_sources(self) -> None:
+    def test_checked_in_manifest_has_20_to_50_approved_sources(self) -> None:
         candidates = load_candidates(CANDIDATE_MANIFEST)
 
         self.assertGreaterEqual(len(candidates), 20)
         self.assertLessEqual(len(candidates), 50)
-        self.assertTrue(all(item.status is ReviewStatus.PENDING for item in candidates))
+        self.assertTrue(all(item.status is ReviewStatus.APPROVED for item in candidates))
         self.assertEqual(
             {item.file_type for item in candidates},
             {FileType.HTML, FileType.PDF, FileType.JSON},

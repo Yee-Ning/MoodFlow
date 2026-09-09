@@ -75,6 +75,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def _render(value: object) -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     print(json.dumps(value, ensure_ascii=False, indent=2))
 
 

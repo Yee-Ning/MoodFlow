@@ -10,11 +10,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["音乐风格演变", "合作关系", "作品影响"],
+    "topics": [
+      "音乐风格演变",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "艺人所属唱片公司的一手简介及专辑年表，可作为生涯、发行顺序和影响描述的官方基线。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-002",
@@ -27,11 +31,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["专辑制作过程", "音乐风格演变", "作品影响"],
+    "topics": [
+      "专辑制作过程",
+      "音乐风格演变",
+      "作品影响"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "唱片公司说明14张专辑母带重制、刻片与发行过程，并回顾二十年音乐轨迹。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-003",
@@ -44,11 +52,18 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["范特西", "七里香", "重点歌曲创作背景", "专辑制作过程", "合作关系", "歌手/制作人/作词人采访"],
+    "topics": [
+      "范特西",
+      "七里香",
+      "重点歌曲创作背景",
+      "专辑制作过程",
+      "合作关系",
+      "歌手/制作人/作词人采访"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "包含周杰伦及方文山对《爱在西元前》《搁浅》等DEMO与完成品差异的直接说明。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-004",
@@ -61,11 +76,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "范特西",
-    "topics": ["范特西", "专辑制作过程", "作品影响"],
+    "topics": [
+      "范特西",
+      "专辑制作过程",
+      "作品影响"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "唱片公司官方再版页，包含曲目、发行信息以及黑胶母带重制流程。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-005",
@@ -78,11 +97,17 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "八度空间",
-    "topics": ["八度空间", "重点歌曲创作背景", "专辑制作过程", "中国风", "合作关系"],
+    "topics": [
+      "八度空间",
+      "重点歌曲创作背景",
+      "专辑制作过程",
+      "中国风",
+      "合作关系"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "唱片公司官方专辑文案，逐曲说明概念、曲风与合作背景。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-006",
@@ -95,11 +120,17 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "叶惠美",
-    "topics": ["叶惠美", "重点歌曲创作背景", "专辑制作过程", "音乐风格演变", "中国风"],
+    "topics": [
+      "叶惠美",
+      "重点歌曲创作背景",
+      "专辑制作过程",
+      "音乐风格演变",
+      "中国风"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "唱片公司官方专辑文案，说明命名、《以父之名》视觉制作及复古与现代融合方向。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-007",
@@ -112,11 +143,16 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "七里香",
-    "topics": ["七里香", "重点歌曲创作背景", "专辑制作过程", "合作关系"],
+    "topics": [
+      "七里香",
+      "重点歌曲创作背景",
+      "专辑制作过程",
+      "合作关系"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "唱片公司官方专辑文案，记录命名讨论、音乐定位、封面及MV取景背景。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-008",
@@ -129,11 +165,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "十一月的萧邦",
-    "topics": ["十一月的萧邦", "专辑制作过程", "音乐风格演变"],
+    "topics": [
+      "十一月的萧邦",
+      "专辑制作过程",
+      "音乐风格演变"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "唱片公司官方再版页，提供专辑定位、曲目及母带再制信息。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-009",
@@ -146,11 +186,16 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["范特西", "音乐风格演变", "歌手/制作人/作词人采访", "作品影响"],
+    "topics": [
+      "范特西",
+      "音乐风格演变",
+      "歌手/制作人/作词人采访",
+      "作品影响"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "索尼音乐官方座谈，从日本音乐业者视角回顾《范特西》时期及周杰伦的长期影响。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-010",
@@ -163,11 +208,16 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "叶惠美",
-    "topics": ["叶惠美", "重点歌曲创作背景", "中国风", "合作关系"],
+    "topics": [
+      "叶惠美",
+      "重点歌曲创作背景",
+      "中国风",
+      "合作关系"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "官方频道说明词曲作者、二胡琵琶编配及古诗词与现代流行音乐融合的创作定位。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-011",
@@ -180,11 +230,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "范特西",
-    "topics": ["范特西", "合作关系", "作品影响"],
+    "topics": [
+      "范特西",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "台湾主管机关发布的正式获奖记录，包含《范特西》、周杰伦、方文山与钟兴民奖项及作品简介。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-012",
@@ -197,11 +251,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "范特西",
-    "topics": ["范特西", "合作关系", "作品影响"],
+    "topics": [
+      "范特西",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 1,
     "source_quality": "high",
     "reason": "官方入围记录可交叉验证《范特西》相关词曲、编曲与制作贡献。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-013",
@@ -214,11 +272,19 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["范特西", "八度空间", "专辑制作过程", "音乐风格演变", "合作关系", "歌手/制作人/作词人采访", "作品影响"],
+    "topics": [
+      "范特西",
+      "八度空间",
+      "专辑制作过程",
+      "音乐风格演变",
+      "合作关系",
+      "歌手/制作人/作词人采访",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "high",
     "reason": "同期国际主流媒体封面报道，采访周杰伦及早期合作人，记录录音室成长与成名过程。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-014",
@@ -231,11 +297,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "叶惠美",
-    "topics": ["叶惠美", "音乐风格演变", "作品影响"],
+    "topics": [
+      "叶惠美",
+      "音乐风格演变",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "medium",
     "reason": "2003年同期主流媒体资料，讨论其R&B创作、自作自唱与区域影响。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-015",
@@ -248,11 +318,17 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "叶惠美",
-    "topics": ["叶惠美", "重点歌曲创作背景", "音乐风格演变", "中国风", "作品影响"],
+    "topics": [
+      "叶惠美",
+      "重点歌曲创作背景",
+      "音乐风格演变",
+      "中国风",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "medium",
     "reason": "同期报道具体描述中西乐器混用、Hip-Hop风格及其在亚洲的受众影响。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-016",
@@ -265,11 +341,17 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "八度空间",
-    "topics": ["范特西", "八度空间", "专辑制作过程", "音乐风格演变", "歌手/制作人/作词人采访"],
+    "topics": [
+      "范特西",
+      "八度空间",
+      "专辑制作过程",
+      "音乐风格演变",
+      "歌手/制作人/作词人采访"
+    ],
     "source_tier": 2,
     "source_quality": "medium",
     "reason": "发行同期采访，包含周杰伦对《八度空间》评价争议、延续性与《范特西》制作阶段的直接回应。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-017",
@@ -282,11 +364,17 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "七里香",
-    "topics": ["七里香", "重点歌曲创作背景", "音乐风格演变", "中国风", "歌手/制作人/作词人采访"],
+    "topics": [
+      "七里香",
+      "重点歌曲创作背景",
+      "音乐风格演变",
+      "中国风",
+      "歌手/制作人/作词人采访"
+    ],
     "source_tier": 2,
     "source_quality": "medium",
     "reason": "发行期人物对话，直接讨论《东风破》到《七里香》的风格变化和创作取向。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-018",
@@ -299,11 +387,16 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["重点歌曲创作背景", "中国风", "合作关系", "歌手/制作人/作词人采访"],
+    "topics": [
+      "重点歌曲创作背景",
+      "中国风",
+      "合作关系",
+      "歌手/制作人/作词人采访"
+    ],
     "source_tier": 2,
     "source_quality": "high",
     "reason": "方文山一手访谈，具体说明与周杰伦先曲后词的协作方式及《东风破》等选题来源。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-019",
@@ -316,11 +409,18 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["重点歌曲创作背景", "音乐风格演变", "中国风", "合作关系", "歌手/制作人/作词人采访", "作品影响"],
+    "topics": [
+      "重点歌曲创作背景",
+      "音乐风格演变",
+      "中国风",
+      "合作关系",
+      "歌手/制作人/作词人采访",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "high",
     "reason": "人民日报记者在方文山工作室完成的一手访谈，回顾二十年搭档与中国风传播。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-020",
@@ -333,11 +433,17 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["重点歌曲创作背景", "中国风", "合作关系", "歌手/制作人/作词人采访", "作品影响"],
+    "topics": [
+      "重点歌曲创作背景",
+      "中国风",
+      "合作关系",
+      "歌手/制作人/作词人采访",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "high",
     "reason": "方文山专访，集中讨论《东风破》等中国风作品的创作观念和开拓价值。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-021",
@@ -350,11 +456,16 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["重点歌曲创作背景", "中国风", "合作关系", "歌手/制作人/作词人采访"],
+    "topics": [
+      "重点歌曲创作背景",
+      "中国风",
+      "合作关系",
+      "歌手/制作人/作词人采访"
+    ],
     "source_tier": 2,
     "source_quality": "medium",
     "reason": "主流报纸采访的高校转载，记录方文山关于《中国美和音乐美》及与周杰伦合作作品的说明。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-022",
@@ -367,11 +478,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "十一月的萧邦",
-    "topics": ["十一月的萧邦", "音乐风格演变", "作品影响"],
+    "topics": [
+      "十一月的萧邦",
+      "音乐风格演变",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "medium",
     "reason": "发行同期专业乐评，为专辑风格与当时评价提供独立且可追溯的批评视角。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-023",
@@ -384,11 +499,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["音乐风格演变", "歌手/制作人/作词人采访", "作品影响"],
+    "topics": [
+      "音乐风格演变",
+      "歌手/制作人/作词人采访",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "medium",
     "reason": "英文主流媒体对周杰伦本人的长期创作与文化影响访谈；可能存在订阅限制，审核时需确认访问条款。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-024",
@@ -401,11 +520,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["音乐风格演变", "歌手/制作人/作词人采访", "作品影响"],
+    "topics": [
+      "音乐风格演变",
+      "歌手/制作人/作词人采访",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "medium",
     "reason": "面向国际读者的周杰伦本人访谈，可补充创作身份及海外认知。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-025",
@@ -418,11 +541,15 @@
     "file_type": "pdf",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["音乐风格演变", "中国风", "作品影响"],
+    "topics": [
+      "音乐风格演变",
+      "中国风",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "medium",
     "reason": "高校托管的学术文本，从风格、明星形象和文化符号角度研究周杰伦。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-026",
@@ -435,11 +562,16 @@
     "file_type": "pdf",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["音乐风格演变", "中国风", "合作关系", "作品影响"],
+    "topics": [
+      "音乐风格演变",
+      "中国风",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "high",
     "reason": "大学论文库中的硕士论文原文，可提供可引用的流行文化、身份与接受史研究。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-027",
@@ -452,11 +584,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["音乐风格演变", "中国风", "作品影响"],
+    "topics": [
+      "音乐风格演变",
+      "中国风",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "high",
     "reason": "韩国高校论文元数据页，研究传统音乐在周杰伦中国风作品中的运用；全文权限需人工确认。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-028",
@@ -469,11 +605,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["音乐风格演变", "中国风", "作品影响"],
+    "topics": [
+      "音乐风格演变",
+      "中国风",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "high",
     "reason": "韩国引文索引收录的同行学术研究，聚焦早期中国风音乐的接受与社会语境。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-029",
@@ -486,11 +626,16 @@
     "file_type": "pdf",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["重点歌曲创作背景", "音乐风格演变", "中国风", "作品影响"],
+    "topics": [
+      "重点歌曲创作背景",
+      "音乐风格演变",
+      "中国风",
+      "作品影响"
+    ],
     "source_tier": 2,
     "source_quality": "high",
     "reason": "正规学术期刊PDF，讨论五声调式、传统文化与现代编曲融合，并以周杰伦作品为例。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-030",
@@ -503,11 +648,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["音乐风格演变", "合作关系", "作品影响"],
+    "topics": [
+      "音乐风格演变",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "可追溯修订历史与参考文献的百科总览，适合作为导航和交叉核验来源而非唯一事实依据。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-031",
@@ -520,11 +669,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["中国风", "合作关系", "作品影响"],
+    "topics": [
+      "中国风",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "作词人履历与合作作品导航，可借参考文献进一步回溯一手资料。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-032",
@@ -537,11 +690,15 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "范特西",
-    "topics": ["范特西", "合作关系", "作品影响"],
+    "topics": [
+      "范特西",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "专辑百科条目，提供发行、曲目、奖项和引用入口，须与官方及MusicBrainz交叉核验。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-033",
@@ -554,11 +711,17 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "八度空间",
-    "topics": ["八度空间", "重点歌曲创作背景", "中国风", "合作关系", "作品影响"],
+    "topics": [
+      "八度空间",
+      "重点歌曲创作背景",
+      "中国风",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "专辑百科条目，汇集概念、曲目背景、制作团队与奖项引用入口。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-034",
@@ -571,11 +734,17 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "叶惠美",
-    "topics": ["叶惠美", "重点歌曲创作背景", "中国风", "合作关系", "作品影响"],
+    "topics": [
+      "叶惠美",
+      "重点歌曲创作背景",
+      "中国风",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "专辑百科条目，提供命名、制作团队、曲目和奖项的引用导航。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-035",
@@ -588,11 +757,16 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "七里香",
-    "topics": ["七里香", "专辑制作过程", "合作关系", "作品影响"],
+    "topics": [
+      "七里香",
+      "专辑制作过程",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "专辑百科条目，汇集发行、制作团队、MV及奖项资料，后续需按引用核实。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-036",
@@ -605,11 +779,16 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "十一月的萧邦",
-    "topics": ["十一月的萧邦", "专辑制作过程", "合作关系", "作品影响"],
+    "topics": [
+      "十一月的萧邦",
+      "专辑制作过程",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "专辑百科条目，提供发行版本、曲目及乐评参考入口。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-037",
@@ -622,11 +801,17 @@
     "file_type": "html",
     "artist": "周杰伦",
     "album": "叶惠美",
-    "topics": ["叶惠美", "重点歌曲创作背景", "中国风", "合作关系", "作品影响"],
+    "topics": [
+      "叶惠美",
+      "重点歌曲创作背景",
+      "中国风",
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "代表歌曲百科入口，可与官方MV说明及方文山访谈交叉核验乐器、词曲与影响。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-038",
@@ -639,11 +824,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["合作关系", "作品影响"],
+    "topics": [
+      "合作关系",
+      "作品影响"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "CC0结构化实体数据，包含标识符、职业、奖项及外部数据库链接。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-039",
@@ -656,11 +844,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["中国风", "合作关系"],
+    "topics": [
+      "中国风",
+      "合作关系"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "CC0结构化作词人实体，可用于核对标识符、职业及跨库链接。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-040",
@@ -673,11 +864,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "范特西",
-    "topics": ["范特西", "合作关系"],
+    "topics": [
+      "范特西",
+      "合作关系"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "CC0专辑实体JSON，可补充发行、表演者、制作人和MusicBrainz标识符。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-041",
@@ -690,11 +884,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "八度空间",
-    "topics": ["八度空间", "合作关系"],
+    "topics": [
+      "八度空间",
+      "合作关系"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "CC0专辑实体JSON，为发行日期、表演者、类型和跨库ID提供结构化候选元数据。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-042",
@@ -707,11 +904,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "叶惠美",
-    "topics": ["叶惠美", "合作关系"],
+    "topics": [
+      "叶惠美",
+      "合作关系"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "CC0专辑实体JSON，记录发行、厂牌、制作人与MusicBrainz release-group ID。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-043",
@@ -724,11 +924,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "七里香",
-    "topics": ["七里香", "合作关系"],
+    "topics": [
+      "七里香",
+      "合作关系"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "CC0专辑实体JSON，可补充发行、厂牌、表演者与跨库标识。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-044",
@@ -741,11 +944,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "十一月的萧邦",
-    "topics": ["十一月的萧邦", "合作关系"],
+    "topics": [
+      "十一月的萧邦",
+      "合作关系"
+    ],
     "source_tier": 3,
     "source_quality": "medium",
     "reason": "CC0专辑实体JSON，可用于交叉核对发行信息、制作人与MusicBrainz标识。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-045",
@@ -758,11 +964,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": null,
-    "topics": ["音乐风格演变", "合作关系"],
+    "topics": [
+      "音乐风格演变",
+      "合作关系"
+    ],
     "source_tier": 4,
     "source_quality": "medium",
     "reason": "开放音乐数据库API，可取得规范艺人ID、别名、风格标签、发行组及外部关系。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-046",
@@ -775,11 +984,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "范特西",
-    "topics": ["范特西", "合作关系"],
+    "topics": [
+      "范特西",
+      "合作关系"
+    ],
     "source_tier": 4,
     "source_quality": "medium",
     "reason": "开放release-group JSON，包含规范ID、发行版本、日期、标签、风格与外部关系。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-047",
@@ -792,11 +1004,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "八度空间",
-    "topics": ["八度空间", "合作关系"],
+    "topics": [
+      "八度空间",
+      "合作关系"
+    ],
     "source_tier": 4,
     "source_quality": "medium",
     "reason": "开放release-group JSON，可核对官方发行版本、日期、厂牌、条码、风格和外部ID。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-048",
@@ -809,11 +1024,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "叶惠美",
-    "topics": ["叶惠美", "合作关系"],
+    "topics": [
+      "叶惠美",
+      "合作关系"
+    ],
     "source_tier": 4,
     "source_quality": "medium",
     "reason": "开放release-group JSON，提供规范专辑ID、发行版本、日期、风格与Wikidata关系。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-049",
@@ -826,11 +1044,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "七里香",
-    "topics": ["七里香", "合作关系"],
+    "topics": [
+      "七里香",
+      "合作关系"
+    ],
     "source_tier": 4,
     "source_quality": "medium",
     "reason": "开放release-group JSON，可补充不同地区发行、日期、介质、厂牌、风格及外部关系。",
-    "status": "pending"
+    "status": "approved"
   },
   {
     "source_id": "jc-v1-050",
@@ -843,10 +1064,14 @@
     "file_type": "json",
     "artist": "周杰伦",
     "album": "十一月的萧邦",
-    "topics": ["十一月的萧邦", "中国风", "合作关系"],
+    "topics": [
+      "十一月的萧邦",
+      "中国风",
+      "合作关系"
+    ],
     "source_tier": 4,
     "source_quality": "medium",
     "reason": "开放release-group JSON，包含不同版本、发行日期、厂牌、风格标签和外部标识。",
-    "status": "pending"
+    "status": "approved"
   }
 ]
