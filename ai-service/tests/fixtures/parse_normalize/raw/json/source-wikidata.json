@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "Q238819": {
+      "id": "Q238819",
+      "type": "item",
+      "labels": {
+        "zh": {"language": "zh", "value": "周杰伦"},
+        "en": {"language": "en", "value": "Jay Chou"}
+      },
+      "descriptions": {
+        "zh": {"language": "zh", "value": "台湾歌手、词曲作家及制作人"}
+      },
+      "aliases": {
+        "zh": [{"language": "zh", "value": "周董"}]
+      },
+      "claims": {
+        "P434": [
+          {"mainsnak": {"datavalue": {"value": "f82bcf78-5b69-4622-a5ef-73800768d9ac"}}}
+        ],
+        "P106": [
+          {"mainsnak": {"datavalue": {"value": {"entity-type": "item", "id": "Q177220"}}}}
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "f82bcf78-5b69-4622-a5ef-73800768d9ac",
+  "name": "Jay Chou",
+  "type": "Person",
+  "country": "TW",
+  "aliases": [
+    {"name": "周杰伦", "locale": "zh_Hans"},
+    {"name": "周杰倫", "locale": "zh_Hant"}
+  ],
+  "relations": [
+    {
+      "type": "official homepage",
+      "url": {"resource": "https://www.jvrmusic.com.tw/"}
+    }
+  ],
+  "release-groups": [
+    {"id": "00000000-0000-0000-0000-000000000001", "title": "Fantasy", "primary-type": "Album"}
+  ]
+}

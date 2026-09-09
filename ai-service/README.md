@@ -150,8 +150,8 @@ RouteTask 明确携带分配文本、Intent 引用和前置任务 ID；未完成
 `app/rag/source_ingestion` 提供独立的离线数据源入口，当前只实现
 `Source Discovery → Candidate Manifest → Human Approval → Fetch → Raw Snapshot`。
 首批 50 个“周杰伦音乐知识 Corpus V1”候选位于
-`data/source_ingestion/jay_chou_corpus_v1/sources_candidates.json`，初始状态全部为
-`pending`；只有人工改为 `approved` 的来源才会进入 Fetch。
+`data/source_ingestion/jay_chou_corpus_v1/sources_candidates.json`，当前已按人工指令
+全部标记为 `approved`；只有 `approved` 来源才会进入 Fetch。
 
 ```powershell
 python scripts/source_ingestion.py validate
@@ -166,6 +166,67 @@ HTML、PDF、JSON/API 与纯文本 Fetcher 只保存原始响应 bytes，不提�
 保证不覆盖；`data/raw/sources_manifest.jsonl` 以追加方式记录来源、哈希、HTTP
 状态与 corpus 版本。V1 不包含 Parser、Markdown 转换、Cleaning、Deduplication、
 Chunking、Entity Linking、Claim Extraction、Embedding 或 Vector DB。
+
+## Music RAG Parse + Normalize V1
+
+`app/rag/parse_normalize` 在只读 Raw Snapshot 之上提供独立的离线解析层：
+
+```text
+Raw Snapshot
+  -> FileTypeDetector
+  -> ParserRouter + ParserRegistry
+  -> HTML / Markdown / TXT / JSON Adapter
+  -> MarkdownNormalizer
+  -> ParseQualityEvaluator
+  -> NormalizedDocument + ParseReport
+```
+
+后续阶段只需依赖 `NormalizedDocument` 和 `DocumentBlock`，不需要感知具体
+Parser。当前明确不处理 PDF；PDF 会返回
+`unsupported_for_current_stage` 并只生成失败报告，不会伪装成成功结果。
+
+在 `ai-service` 目录执行：
+
+```powershell
+python run_parse.py --source-id jc-v1-001
+python run_parse.py --all-approved
+python run_parse.py --manifest data/raw/sources_manifest.jsonl
+python run_parse.py --source-id jc-v1-001 --force
+```
+
+每个成功来源输出：
+
+```text
+data/normalized/{source_id}/
+  document.md
+  document.json
+  parse_report.json
+```
+
+`document.md` 是 UTF-8、LF 换行的规范 Markdown；`document.json` 同时保存
+blocks、Parser metadata、候选来源 metadata 和原始 JSON structured data；
+`parse_report.json` 保存文本长度、标题/段落/表格计数、空内容、乱码比例、重复行
+比例、评分、状态和耗时。输入与输出对应关系示例：
+
+- HTML 的 `<h1>标题</h1><p>正文</p>` 变为 heading/paragraph blocks 和
+  `# 标题\n\n正文`；只移除 `script/style/noscript`。
+- Markdown 的 front matter、标题、列表、引用、代码、表格和图片会解析成相应
+  blocks，再统一空格、列表符号和空行，不改写正文。
+- TXT 严格检测 UTF-8、UTF-16、GB18030、Big5 等常见编码，并仅对保守匹配的
+  首段使用标题启发式；其余内容保留为 paragraph。
+- JSON 保留完整 `metadata.parser_metadata.raw_json`；Wikidata 和 MusicBrainz
+  另外保留 entity/external IDs、aliases、relations、release/artist/recording 等
+  字段，未知 schema 使用有深度、字段、条目和输出长度上限的递归表示。
+
+重复执行时，只有
+`raw_content_hash + parser_version + normalization_version` 全部匹配才会跳过；
+`--force` 可强制重解析。写入采用同目录临时文件、`fsync` 和原子替换，不会修改
+Raw Snapshot。测试夹具覆盖 2 个 HTML、1 个 Markdown、1 个 TXT、1 个
+Wikidata JSON 和 1 个 MusicBrainz JSON；本地真实快照验证覆盖
+`jc-v1-001`、`jc-v1-007`、`jc-v1-038`、`jc-v1-040`。
+
+本阶段不包含 PDF Parser、Cleaning、Deduplication、Chunking、Entity Linking、
+Claim Extraction、Embedding 或 Vector DB。
 
 ## WorldLine V1 SubGraph
 
