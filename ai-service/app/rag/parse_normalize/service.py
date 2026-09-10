@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import time
+from datetime import date
 from enum import StrEnum
 from pathlib import Path
 
@@ -190,6 +191,7 @@ class ParseNormalizeService:
                 markdown,
                 report.quality_score,
                 candidate,
+                loaded.source_metadata,
                 parse_fingerprint,
             )
             output = self.writer.write(
@@ -284,6 +286,7 @@ class ParseNormalizeService:
         markdown,
         quality_score,
         candidate,
+        raw_source_metadata,
         parse_fingerprint,
     ) -> NormalizedDocument:
         fingerprint = "|".join(
@@ -299,20 +302,33 @@ class ParseNormalizeService:
             f"doc-{record.source_id}-"
             f"{hashlib.sha256(fingerprint.encode('utf-8')).hexdigest()[:20]}"
         )
+        source_metadata = (
+            candidate.model_dump(mode="json") if candidate else {}
+        )
+        source_metadata.update(raw_source_metadata)
         metadata = {
             "parser_metadata": parsed.metadata,
-            "source_metadata": candidate.model_dump(mode="json") if candidate else {},
+            "source_metadata": source_metadata,
             "parse_fingerprint": parse_fingerprint,
         }
+        source_title = source_metadata.get("title")
+        source_author = source_metadata.get("author")
+        source_published_at = self._metadata_date(source_metadata.get("published_at"))
         return NormalizedDocument(
             document_id=document_id,
             source_id=record.source_id,
-            title=candidate.title if candidate else parsed.title,
-            author=(candidate.author if candidate and candidate.author else parsed.author),
+            title=(
+                source_title.strip()
+                if isinstance(source_title, str) and source_title.strip()
+                else parsed.title
+            ),
+            author=(
+                source_author.strip()
+                if isinstance(source_author, str) and source_author.strip()
+                else parsed.author
+            ),
             published_at=(
-                candidate.published_at
-                if candidate and candidate.published_at
-                else parsed.published_at
+                source_published_at if source_published_at else parsed.published_at
             ),
             language=parsed.language,
             original_file_type=self.detector.detect(record),
@@ -379,6 +395,17 @@ class ParseNormalizeService:
     @staticmethod
     def _elapsed_ms(started: float) -> float:
         return max(0.0, (time.perf_counter() - started) * 1_000)
+
+    @staticmethod
+    def _metadata_date(value: object) -> date | None:
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            try:
+                return date.fromisoformat(value[:10])
+            except ValueError:
+                return None
+        return None
 
 
 def create_default_service(

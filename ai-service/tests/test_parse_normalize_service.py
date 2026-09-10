@@ -161,6 +161,32 @@ class ParseQualityEvaluatorTests(unittest.TestCase):
 
 
 class RawSnapshotLoaderTests(unittest.TestCase):
+    def test_enriched_raw_corpus_manifest_preserves_source_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            _, manifest_path, record = _append_snapshot(
+                root, source_id="enriched-source", content=b"<p>Raw</p>"
+            )
+            enriched = {
+                **record.model_dump(mode="json"),
+                "title": "Corpus title",
+                "publisher": "Corpus Publisher",
+                "author": "Corpus Author",
+                "file_type": "html",
+                "topics": ["音乐风格"],
+            }
+            manifest_path.write_text(
+                json.dumps(enriched, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
+
+            loaded = RawSnapshotLoader(root).load_latest(
+                manifest_path, "enriched-source"
+            )
+
+            self.assertEqual(loaded.record.source_id, "enriched-source")
+            self.assertEqual(loaded.source_metadata["publisher"], "Corpus Publisher")
+            self.assertEqual(loaded.source_metadata["topics"], ["音乐风格"])
+
     def test_hash_mismatch_is_rejected_without_mutating_raw_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
@@ -193,6 +219,44 @@ class RawSnapshotLoaderTests(unittest.TestCase):
 
 
 class ParseNormalizeServiceTests(unittest.TestCase):
+    def test_enriched_manifest_metadata_is_mapped_to_document(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            _, manifest_path, record = _append_snapshot(
+                root, source_id="v2-source", content=b"<p>Raw</p>"
+            )
+            enriched = {
+                **record.model_dump(mode="json"),
+                "title": "V2 source title",
+                "publisher": "V2 Publisher",
+                "author": "V2 Author",
+                "file_type": "html",
+                "topics": ["作品影响"],
+            }
+            manifest_path.write_text(
+                json.dumps(enriched, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
+
+            outcome = _service(root, CountingParser()).parse_source(
+                "v2-source", manifest_path=manifest_path
+            )
+
+            document = NormalizedDocument.model_validate_json(
+                (
+                    root
+                    / "data"
+                    / "normalized"
+                    / "v2-source"
+                    / "document.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(outcome.status, OutcomeStatus.PARSED)
+            self.assertEqual(document.title, "V2 source title")
+            self.assertEqual(document.author, "V2 Author")
+            self.assertEqual(
+                document.metadata["source_metadata"]["publisher"], "V2 Publisher"
+            )
+
     def test_success_writes_valid_document_markdown_and_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
