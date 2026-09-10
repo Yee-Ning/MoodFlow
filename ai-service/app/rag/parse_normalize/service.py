@@ -389,7 +389,8 @@ class ParseNormalizeService:
 
     @staticmethod
     def _error_code(exc: Exception) -> str:
-        value = str(exc).splitlines()[0].strip()
+        lines = str(exc).splitlines()
+        value = lines[0].strip() if lines else ""
         return value[:200] if value else type(exc).__name__
 
     @staticmethod

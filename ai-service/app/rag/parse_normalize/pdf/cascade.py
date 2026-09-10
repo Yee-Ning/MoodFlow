@@ -75,6 +75,14 @@ class PdfCascadeParser(BaseParser):
         )
         attempts = [primary.attempt]
         if mode is not PDFParserMode.AUTO:
+            if primary.output is None:
+                return self._failed(
+                    parse_input,
+                    primary,
+                    attempts,
+                    started,
+                    parser_error_count=1,
+                )
             return self._finalize(
                 parse_input,
                 primary,

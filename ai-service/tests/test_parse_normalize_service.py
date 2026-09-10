@@ -219,6 +219,20 @@ class RawSnapshotLoaderTests(unittest.TestCase):
 
 
 class ParseNormalizeServiceTests(unittest.TestCase):
+    def test_empty_exception_text_is_reported_by_exception_type(self) -> None:
+        class EmptyErrorParser(CountingParser):
+            def parse(self, parse_input: ParseInput) -> ParserResult:
+                raise AssertionError()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            _append_snapshot(root, source_id="empty-error", content=b"<p>Raw</p>")
+
+            outcome = _service(root, EmptyErrorParser()).parse_source("empty-error")
+
+            self.assertEqual(outcome.status, OutcomeStatus.FAILED)
+            self.assertEqual(outcome.detail, "AssertionError")
+
     def test_enriched_manifest_metadata_is_mapped_to_document(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)

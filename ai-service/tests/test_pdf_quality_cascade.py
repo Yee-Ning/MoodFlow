@@ -241,6 +241,23 @@ class PDFCascadeTests(unittest.TestCase):
         self.assertEqual(fallback.calls, 0)
         self.assertNotEqual(execution.report.status, ParseStatus.FALLBACK_USED)
 
+    def test_forced_backend_error_returns_failed_execution_without_fallback(self) -> None:
+        primary = StubAdapter("mineru", ParserError("remote_api_failed"))
+        fallback = StubAdapter("docling", result_with("must not run"))
+        parse_input = parse_input_for(
+            "complex-layout.pdf", "pdf-cascade-forced-error"
+        )
+
+        execution = self._cascade(primary, fallback).execute(
+            parse_input, parser_mode="mineru"
+        )
+
+        self.assertIsNone(execution.result)
+        self.assertIs(execution.report.status, ParseStatus.FAILED)
+        self.assertEqual(execution.report.parser_attempts[0].error, "remote_api_failed")
+        self.assertEqual(primary.calls, 1)
+        self.assertEqual(fallback.calls, 0)
+
 
 if __name__ == "__main__":
     unittest.main()
