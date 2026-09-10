@@ -24,7 +24,7 @@ def _candidate(
     group: str,
     priority: int,
     replaces_source_id: str | None = None,
-) -> DiscoveredCandidate:
+    ) -> DiscoveredCandidate:
     return DiscoveredCandidate(
         source_id=source_id,
         title=f"周杰伦《七里香》制作资料 {source_id}",
@@ -44,6 +44,28 @@ def _candidate(
         replacement_group=group,
         priority=priority,
         replaces_source_id=replaces_source_id,
+    )
+
+
+def _pdf_candidate(source_id: str, *, group: str) -> DiscoveredCandidate:
+    return DiscoveredCandidate(
+        source_id=source_id,
+        title=f"周杰伦 PDF 研究资料 {source_id}",
+        url=f"https://example.test/{source_id}.pdf",
+        publisher="Example Academic Publisher",
+        author=None,
+        published_at=None,
+        source_type="academic_paper",
+        file_type="pdf",
+        artist="周杰伦",
+        album="七里香",
+        topics=["音乐风格"],
+        source_tier=2,
+        source_quality="high",
+        reason="A traceable PDF about Jay Chou.",
+        discovery_query="周杰伦 音乐风格 PDF",
+        replacement_group=group,
+        priority=1,
     )
 
 
@@ -162,6 +184,23 @@ class AutoSourceIngestionServiceTests(unittest.TestCase):
         self.assertEqual(len(client.urls), 1)
         self.assertEqual(len(self.ledger.load()), first_attempt_count)
         self.assertEqual(len(self.store.manifest_path.read_text().splitlines()), 1)
+
+    def test_underrepresented_pdf_group_is_attempted_before_html_target_is_reached(self) -> None:
+        html = _candidate("html-source", group="html-group", priority=1)
+        pdf = _pdf_candidate("pdf-source", group="pdf-group")
+        client = StubHttpClient(
+            {
+                str(html.url): _valid_html("html"),
+                str(pdf.url): RawHttpResponse(b"%PDF-1.7\n%%EOF", "application/pdf", 200),
+            }
+        )
+
+        summary = self._service(client).run(
+            [html, pdf], target_count=1, max_replacement_attempts=3
+        )
+
+        self.assertEqual(summary.fetch_success, 1)
+        self.assertEqual(client.urls, [str(pdf.url)])
 
 
 if __name__ == "__main__":

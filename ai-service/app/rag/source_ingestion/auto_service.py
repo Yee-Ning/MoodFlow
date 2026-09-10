@@ -101,7 +101,18 @@ class AutoSourceIngestionService:
         replacement_success = 0
         unresolved_source_gap = 0
 
-        for group_name, group_candidates in groups.items():
+        # Process underrepresented binary/structured formats first so a target
+        # count cannot be reached solely by a long run of HTML candidates.
+        ordered_groups = sorted(
+            groups.items(),
+            key=lambda item: (
+                0 if any(candidate.file_type.value == "pdf" for candidate in item[1]) else
+                1 if any(candidate.file_type.value == "json" for candidate in item[1]) else 2,
+                min(candidate.priority for candidate in item[1]),
+                item[0],
+            ),
+        )
+        for group_name, group_candidates in ordered_groups:
             if len(raw_source_ids) >= target_count:
                 break
             if group_name in unresolved_groups:
