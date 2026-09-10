@@ -87,7 +87,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     root = args.project_root.resolve()
     candidate_path, discovery_path, failure_path = _paths(args)
     existing_candidates = load_candidates(candidate_path)
-    discovered_candidates = load_discovered_candidates(discovery_path)
+    if args.command == "run" or discovery_path.exists():
+        discovered_candidates = load_discovered_candidates(discovery_path)
+    else:
+        discovered_candidates = []
     attempt_ledger = SourceAttemptLedger(root / "data/raw/source_attempts.jsonl")
     backfill_v1_failures(
         existing_candidates, _load_failures(failure_path), attempt_ledger

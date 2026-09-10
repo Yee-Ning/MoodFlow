@@ -15,6 +15,34 @@ CLI_PATH = AI_SERVICE_ROOT / "scripts/source_ingestion_v2.py"
 
 
 class SourceIngestionV2CliTests(unittest.TestCase):
+    def test_validate_does_not_require_a_discovery_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            candidate_manifest = root / "candidates.json"
+            write_candidates(candidate_manifest, [])
+            environment = os.environ.copy()
+            environment["PYTHONIOENCODING"] = "utf-8"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(CLI_PATH),
+                    "validate",
+                    "--project-root",
+                    str(root),
+                    "--candidate-manifest",
+                    str(candidate_manifest),
+                ],
+                cwd=AI_SERVICE_ROOT,
+                env=environment,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 2, result.stderr.decode())
+            payload = json.loads(result.stdout.decode("utf-8"))
+            self.assertEqual(payload["total_valid_snapshots"], 0)
+
     def test_report_command_writes_empty_audit_and_returns_not_ready(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
