@@ -53,6 +53,25 @@ def _parse_input(raw: bytes = RAW_HTML) -> ParseInput:
 
 
 class HtmlParserTests(unittest.TestCase):
+    def test_metadata_only_spa_falls_back_to_source_title_and_description(self) -> None:
+        raw = """<!doctype html>
+        <html lang="zh-Hant"><head>
+          <title>周杰倫《東風破》Official Music Video</title>
+          <meta name="description" content="歌曲與專輯的官方介紹。">
+          <script>window.renderClientSide = true;</script>
+        </head><body><div id="app"></div></body></html>
+        """.encode("utf-8")
+
+        result = HtmlParser().parse(_parse_input(raw))
+
+        self.assertEqual(
+            [block.block_type for block in result.blocks],
+            [BlockType.HEADING, BlockType.PARAGRAPH],
+        )
+        self.assertEqual(result.blocks[0].text, "周杰倫《東風破》Official Music Video")
+        self.assertEqual(result.blocks[1].text, "歌曲與專輯的官方介紹。")
+        self.assertTrue(result.metadata["metadata_only_fallback"])
+
     def test_html_emits_page_metadata_and_semantic_blocks(self) -> None:
         result = HtmlParser().parse(_parse_input())
 

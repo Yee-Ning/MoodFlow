@@ -20,7 +20,7 @@ from ..models import (
 
 class HtmlParser(BaseParser):
     parser_name = "html"
-    parser_version = "1.0.0"
+    parser_version = "1.1.0"
     supported_file_types = frozenset({DetectedFileType.HTML})
 
     _SEMANTIC_TAGS = (
@@ -64,6 +64,12 @@ class HtmlParser(BaseParser):
             "meta": page_metadata,
             "source_encoding": soup.original_encoding,
         }
+        if not blocks:
+            blocks = self._metadata_fallback_blocks(
+                parse_input.snapshot.source_id, title, page_metadata
+            )
+            if blocks:
+                metadata["metadata_only_fallback"] = True
         canonical = soup.find("link", rel="canonical")
         if isinstance(canonical, Tag) and canonical.get("href"):
             metadata["canonical_url"] = urljoin(
@@ -77,6 +83,48 @@ class HtmlParser(BaseParser):
             blocks=blocks,
             metadata=metadata,
         )
+
+    def _metadata_fallback_blocks(
+        self,
+        source_id: str,
+        title: str | None,
+        page_metadata: dict[str, JsonValue],
+    ) -> list[DocumentBlock]:
+        """Preserve source-authored metadata when an SPA has no rendered DOM."""
+
+        blocks: list[DocumentBlock] = []
+        heading_id: str | None = None
+        if title:
+            heading_id = f"{source_id}-b000000"
+            blocks.append(
+                DocumentBlock(
+                    block_id=heading_id,
+                    block_type=BlockType.HEADING,
+                    text=title,
+                    level=1,
+                    order_index=0,
+                    metadata={"source": "page_metadata"},
+                )
+            )
+        description = self._first_text(
+            page_metadata,
+            "description",
+            "og:description",
+            "twitter:description",
+        )
+        if description and description != title:
+            order_index = len(blocks)
+            blocks.append(
+                DocumentBlock(
+                    block_id=f"{source_id}-b{order_index:06d}",
+                    block_type=BlockType.PARAGRAPH,
+                    text=description,
+                    order_index=order_index,
+                    parent_block_id=heading_id,
+                    metadata={"source": "page_metadata"},
+                )
+            )
+        return blocks
 
     def _blocks(self, body: Tag, source_id: str, base_url: str) -> list[DocumentBlock]:
         blocks: list[DocumentBlock] = []
