@@ -15,7 +15,12 @@ from .adapters import (
     VLMPageParser,
 )
 from .cascade import PdfCascadeParser
-from .cloud import MinerUCloudConfig, MinerUCloudRunner
+from .cloud import (
+    MinerUCloudConfig,
+    MinerUCloudRunner,
+    PublicDnsHttpsDownloader,
+    PublicDnsResolver,
+)
 from .inspector import PDFInspectionError, PDFInspector, PDFInspectorConfig
 from .models import (
     PDFBackend,
@@ -57,6 +62,8 @@ __all__ = [
     "PDFQualityAssessment",
     "PdfCascadeParser",
     "PyMuPDF4LLMAdapter",
+    "PublicDnsHttpsDownloader",
+    "PublicDnsResolver",
     "SubprocessMinerURunner",
     "VLMPageParser",
 ]

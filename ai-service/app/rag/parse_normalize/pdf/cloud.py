@@ -8,7 +8,11 @@ those files into the shared ``NormalizedDocument`` model.
 from __future__ import annotations
 
 import json
+import http.client
+import ipaddress
 import shutil
+import socket
+import ssl
 import stat
 import tempfile
 import time
@@ -16,7 +20,7 @@ import zipfile
 from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path, PurePosixPath
-from typing import Literal
+from typing import Literal, Protocol
 from urllib.parse import urlparse
 
 import httpx
@@ -49,6 +53,7 @@ class MinerUCloudConfig(BaseSettings):
     max_archive_entries: int = Field(default=20_000, gt=0)
     max_archive_member_bytes: int = Field(default=268_435_456, gt=0)
     max_uncompressed_bytes: int = Field(default=1_073_741_824, gt=0)
+    public_dns_fallback_enabled: bool = True
 
     @model_validator(mode="after")
     def require_token_when_enabled(self) -> "MinerUCloudConfig":
@@ -61,6 +66,140 @@ class MinerUCloudConfig(BaseSettings):
     @classmethod
     def from_env_file(cls, env_file: Path) -> "MinerUCloudConfig":
         return cls(_env_file=env_file)  # type: ignore[call-arg]
+
+
+class DirectDownloader(Protocol):
+    def __call__(self, url: str, max_bytes: int, timeout: float) -> bytes: ...
+
+
+class PublicDnsResolver:
+    """Resolve public A records without trusting a local fake-IP DNS answer."""
+
+    endpoint = "https://dns.google/resolve"
+
+    def __call__(self, host: str, timeout: float) -> list[str]:
+        try:
+            response = httpx.get(
+                self.endpoint,
+                params={"name": host, "type": "A"},
+                headers={"Accept": "application/dns-json"},
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except (httpx.HTTPError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise ParserError("mineru_cloud_public_dns_failed") from exc
+        answers = payload.get("Answer") if isinstance(payload, dict) else None
+        if not isinstance(answers, list):
+            raise ParserError("mineru_cloud_public_dns_failed")
+        addresses: list[str] = []
+        for answer in answers:
+            if not isinstance(answer, dict) or answer.get("type") != 1:
+                continue
+            value = answer.get("data")
+            if not isinstance(value, str):
+                continue
+            try:
+                address = ipaddress.ip_address(value)
+            except ValueError:
+                continue
+            if address.version == 4 and address.is_global:
+                addresses.append(str(address))
+        if not addresses:
+            raise ParserError("mineru_cloud_public_dns_no_global_address")
+        return list(dict.fromkeys(addresses))
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """Connect to one IP while validating TLS for the original host name."""
+
+    def __init__(self, host: str, ip: str, port: int, timeout: float) -> None:
+        super().__init__(
+            host,
+            port=port,
+            timeout=timeout,
+            context=ssl.create_default_context(),
+        )
+        self._connect_ip = ip
+
+    def connect(self) -> None:
+        raw_socket = socket.create_connection(
+            (self._connect_ip, self.port),
+            self.timeout,
+            self.source_address,
+        )
+        self.sock = self._context.wrap_socket(raw_socket, server_hostname=self.host)
+
+
+class PublicDnsHttpsDownloader:
+    """HTTPS result downloader used only after the normal client cannot connect."""
+
+    def __init__(
+        self,
+        *,
+        resolver: Callable[[str, float], list[str]] | None = None,
+        connection_factory: Callable[
+            [str, str, int, float], http.client.HTTPSConnection
+        ]
+        | None = None,
+    ) -> None:
+        self._resolver = resolver or PublicDnsResolver()
+        self._connection_factory = connection_factory or _PinnedHTTPSConnection
+
+    def __call__(self, url: str, max_bytes: int, timeout: float) -> bytes:
+        parsed = urlparse(url)
+        if parsed.scheme != "https" or not parsed.hostname:
+            raise ParserError("mineru_cloud_result_url_invalid")
+        port = parsed.port or 443
+        target = parsed.path or "/"
+        if parsed.query:
+            target = f"{target}?{parsed.query}"
+        last_error: Exception | None = None
+        for address in self._resolver(parsed.hostname, timeout):
+            connection = self._connection_factory(
+                parsed.hostname, address, port, timeout
+            )
+            try:
+                connection.request(
+                    "GET",
+                    target,
+                    headers={
+                        "Host": parsed.hostname,
+                        "Accept": "application/zip, application/octet-stream",
+                        "User-Agent": "MoodFlow-Music-RAG/1.0",
+                    },
+                )
+                response = connection.getresponse()
+                if not 200 <= response.status < 300:
+                    raise ParserError(
+                        f"mineru_cloud_download_http_{response.status}"
+                    )
+                content_length = response.headers.get("Content-Length")
+                if content_length is not None:
+                    try:
+                        if int(content_length) > max_bytes:
+                            raise ParserError("mineru_cloud_download_too_large")
+                    except ValueError as exc:
+                        raise ParserError(
+                            "mineru_cloud_download_length_invalid"
+                        ) from exc
+                chunks: list[bytes] = []
+                total = 0
+                while True:
+                    chunk = response.read(65_536)
+                    if not chunk:
+                        return b"".join(chunks)
+                    total += len(chunk)
+                    if total > max_bytes:
+                        raise ParserError("mineru_cloud_download_too_large")
+                    chunks.append(chunk)
+            except ParserError:
+                raise
+            except (OSError, ssl.SSLError, http.client.HTTPException) as exc:
+                last_error = exc
+            finally:
+                connection.close()
+        raise ParserError("mineru_cloud_public_dns_download_failed") from last_error
 
 
 class MinerUCloudRunner:
@@ -78,6 +217,7 @@ class MinerUCloudRunner:
         client: httpx.Client | None = None,
         sleeper: Callable[[float], None] = time.sleep,
         monotonic: Callable[[], float] = time.monotonic,
+        direct_downloader: DirectDownloader | None = None,
     ) -> None:
         if not config.cloud_enabled:
             raise ValueError("MinerU cloud runner requires MINERU_CLOUD_ENABLED=true")
@@ -85,6 +225,7 @@ class MinerUCloudRunner:
         self._client = client
         self._sleeper = sleeper
         self._monotonic = monotonic
+        self._direct_downloader = direct_downloader or PublicDnsHttpsDownloader()
 
     def run(
         self, parse_input: ParseInput, output_directory: Path, allow_ocr: bool
@@ -212,6 +353,14 @@ class MinerUCloudRunner:
                     chunks.append(chunk)
         except ParserError:
             raise
+        except httpx.ConnectError as exc:
+            if not self.config.public_dns_fallback_enabled:
+                raise ParserError("mineru_cloud_download_network_error") from exc
+            return self._direct_downloader(
+                url,
+                self.config.max_download_bytes,
+                self.config.upload_timeout_seconds,
+            )
         except httpx.TimeoutException as exc:
             raise ParserError("mineru_cloud_download_timeout") from exc
         except httpx.RequestError as exc:

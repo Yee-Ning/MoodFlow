@@ -15,6 +15,7 @@ from app.rag.parse_normalize.pdf.adapters import MinerUAdapter
 from app.rag.parse_normalize.pdf.cloud import (
     MinerUCloudConfig,
     MinerUCloudRunner,
+    PublicDnsHttpsDownloader,
 )
 from app.rag.parse_normalize.pdf.inspector import PDFInspector
 from app.rag.parse_normalize.pdf.models import PDFBackend
@@ -326,6 +327,121 @@ class MinerUCloudRunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(ParserError, "mineru_cloud_archive_unsafe"):
                 runner.run(parse_input, root / "cache", False)
             self.assertFalse((root / "escaped.txt").exists())
+
+    def test_cdn_connect_error_uses_verified_public_dns_fallback(self) -> None:
+        parse_input = parse_input_for("complex-layout.pdf", "pdf-cloud-dns")
+        archive_bytes = mineru_archive()
+        fallback_calls: list[tuple[str, int, float]] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path == "/api/v4/file-urls/batch":
+                return httpx.Response(
+                    200,
+                    json={
+                        "code": 0,
+                        "msg": "ok",
+                        "data": {
+                            "batch_id": "batch-dns",
+                            "file_urls": ["https://upload.example/signed"],
+                        },
+                    },
+                )
+            if request.url.host == "upload.example":
+                return httpx.Response(200)
+            if request.url.path.startswith("/api/v4/extract-results/batch/"):
+                return httpx.Response(
+                    200,
+                    json={
+                        "code": 0,
+                        "msg": "ok",
+                        "data": {
+                            "batch_id": "batch-dns",
+                            "extract_result": [
+                                {
+                                    "file_name": "pdf-cloud-dns.pdf",
+                                    "data_id": "pdf-cloud-dns",
+                                    "state": "done",
+                                    "err_msg": "",
+                                    "full_zip_url": (
+                                        "https://cdn-mineru.openxlab.org.cn/result.zip"
+                                    ),
+                                }
+                            ],
+                        },
+                    },
+                )
+            raise httpx.ConnectError("TLS connection failed", request=request)
+
+        def fallback(url: str, max_bytes: int, timeout: float) -> bytes:
+            fallback_calls.append((url, max_bytes, timeout))
+            return archive_bytes
+
+        runner = MinerUCloudRunner(
+            MinerUCloudConfig(cloud_enabled=True, api_token="secret-token"),
+            client=httpx.Client(transport=httpx.MockTransport(handler)),
+            sleeper=lambda _: None,
+            direct_downloader=fallback,
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "cache"
+            runner.run(parse_input, output, False)
+            self.assertTrue((output / "result" / "full.md").is_file())
+
+        self.assertEqual(len(fallback_calls), 1)
+        self.assertEqual(
+            fallback_calls[0][0],
+            "https://cdn-mineru.openxlab.org.cn/result.zip",
+        )
+
+
+class PublicDnsHttpsDownloaderTests(unittest.TestCase):
+    def test_download_connects_to_public_ip_with_original_host_and_sni(self) -> None:
+        captured: dict[str, object] = {}
+
+        class Response:
+            status = 200
+            reason = "OK"
+            headers = {"Content-Length": "7"}
+
+            def read(self, amount: int) -> bytes:
+                chunks = captured.setdefault("chunks", [b"archive", b""])
+                return chunks.pop(0)
+
+        class Connection:
+            def request(self, method: str, target: str, *, headers) -> None:
+                captured["request"] = (method, target, headers)
+
+            def getresponse(self):
+                return Response()
+
+            def close(self) -> None:
+                captured["closed"] = True
+
+        def connection_factory(host: str, ip: str, port: int, timeout: float):
+            captured["connection"] = (host, ip, port, timeout)
+            return Connection()
+
+        downloader = PublicDnsHttpsDownloader(
+            resolver=lambda host, timeout: ["1.1.1.1"],
+            connection_factory=connection_factory,
+        )
+
+        result = downloader(
+            "https://cdn.example/result.zip?signature=abc",
+            100,
+            12.0,
+        )
+
+        self.assertEqual(result, b"archive")
+        self.assertEqual(
+            captured["connection"], ("cdn.example", "1.1.1.1", 443, 12.0)
+        )
+        method, target, headers = captured["request"]
+        self.assertEqual(method, "GET")
+        self.assertEqual(target, "/result.zip?signature=abc")
+        self.assertEqual(headers["Host"], "cdn.example")
+        self.assertNotIn("Authorization", headers)
+        self.assertTrue(captured["closed"])
 
 
 if __name__ == "__main__":

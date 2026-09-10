@@ -213,6 +213,11 @@ Bearer Token；PUT 上传地址和结果 CDN 请求不会携带 Token。流程�
 不会使整个 batch 崩溃。官方当前限制与字段以
 [MinerU API 文档](https://mineru.net/apiManage/docs)为准。
 
+如果本地代理的 fake-IP DNS 导致结果 CDN 的 TLS 握手失败，runner 会在普通 HTTPS
+连接失败后使用公共 DNS A 记录直连，并继续按原 CDN 域名执行 SNI 与证书校验；
+该请求不携带 MinerU Token。可用
+`MINERU_PUBLIC_DNS_FALLBACK_ENABLED=false` 显式关闭此兼容路径。
+
 在 `ai-service` 目录执行：
 
 ```powershell
