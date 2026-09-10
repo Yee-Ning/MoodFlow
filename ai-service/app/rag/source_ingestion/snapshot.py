@@ -9,6 +9,8 @@ from pathlib import Path
 
 from .http_client import RawHttpResponse
 from .models import CORPUS_VERSION, CandidateSource, RawSnapshotRecord, ensure_approved
+from .v2_models import SnapshotValidationResult
+from .validation import InvalidSnapshotError
 
 
 class RawSnapshotStore:
@@ -31,6 +33,26 @@ class RawSnapshotStore:
         response: RawHttpResponse,
     ) -> RawSnapshotRecord:
         ensure_approved(candidate)
+        return self._persist(candidate, response)
+
+    def save_auto_validated(
+        self,
+        candidate: CandidateSource,
+        response: RawHttpResponse,
+        validation: SnapshotValidationResult,
+    ) -> RawSnapshotRecord:
+        if validation.source_id != candidate.source_id:
+            raise InvalidSnapshotError("snapshot validation source_id mismatch")
+        if not validation.valid:
+            reasons = ",".join(validation.reasons) or "unknown"
+            raise InvalidSnapshotError(f"snapshot validation failed: {reasons}")
+        return self._persist(candidate, response)
+
+    def _persist(
+        self,
+        candidate: CandidateSource,
+        response: RawHttpResponse,
+    ) -> RawSnapshotRecord:
         fetched_at = self._now()
         if fetched_at.tzinfo is None or fetched_at.utcoffset() is None:
             raise ValueError("snapshot clock must return a timezone-aware datetime")

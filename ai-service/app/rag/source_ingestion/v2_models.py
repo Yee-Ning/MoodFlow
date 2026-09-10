@@ -37,3 +37,14 @@ class DuplicateDecision(BaseModel):
     is_duplicate: bool
     reason: str | None = None
     duplicate_of: str | None = None
+
+
+class SnapshotValidationResult(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source_id: str
+    valid: bool
+    reasons: list[str] = Field(default_factory=list)
+    size_bytes: int = Field(ge=0)
+    media_type: str
+    detected_encoding: str | None = None
