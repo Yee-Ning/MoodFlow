@@ -1,0 +1,16 @@
+[
+  {"source_id":"jc-v1-014","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"http_404"},
+  {"source_id":"jc-v1-015","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"http_404"},
+  {"source_id":"jc-v1-019","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-022","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-024","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"http_403"},
+  {"source_id":"jc-v1-026","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-027","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-028","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-045","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-046","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-047","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-048","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-049","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"},
+  {"source_id":"jc-v1-050","attempted_at":"2026-09-10T01:00:00Z","failure_reason":"robots_denied"}
+]
