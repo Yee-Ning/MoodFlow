@@ -178,7 +178,7 @@ Raw Snapshot
   -> HTML / Markdown / TXT / JSON Adapter
   -> PDFInspector
        -> SIMPLE_TEXT                    -> PyMuPDF4LLM
-       -> COMPLEX_LAYOUT / SCANNED       -> MinerU (lazy)
+       -> COMPLEX_LAYOUT / SCANNED       -> MinerU (cloud or lazy local)
        -> UNKNOWN                        -> PyMuPDF4LLM
        -> PDF Quality Gate               -> Docling fallback (lazy)
   -> MarkdownNormalizer
@@ -192,9 +192,26 @@ Parser。PDF block 在后端可提供时保存 `page_number` 和 `bbox`，docume
 
 PDF 采用“主环境轻量 + 延迟加载 Adapter”：主依赖只有 PyMuPDF4LLM，且该
 Adapter 始终传入 `use_ocr=False`、`force_ocr=False`。MinerU 和 Docling 仅在被
-路由到时才调用；当前仓库不安装二者、不下载模型。缺少可选后端会写成
-`parser_attempts[].status=unavailable`，不会让整个 manifest 批次崩溃。扫描件或
-没有可用 native text 的路径才允许可选后端启用 OCR。
+路由到时才调用；仓库不安装二者，也不下载模型。配置 MinerU Precision API 后，
+复杂与扫描 PDF 会通过云端 MinerU VLM 处理；未启用云端时仍保留本地 CLI runner。
+缺少可选后端会写成 `parser_attempts[].status=unavailable`，不会让整个 manifest
+批次崩溃。扫描件或没有可用 native text 的路径才会把 `ocr_used` 标记为 true。
+
+云端 MinerU 在 `ai-service/.env` 中配置（Token 不得提交 Git）：
+
+```dotenv
+MINERU_CLOUD_ENABLED=true
+MINERU_API_BASE_URL=https://mineru.net
+MINERU_API_TOKEN=your-private-token
+MINERU_MODEL_VERSION=vlm
+```
+
+云端 runner 使用精准解析批量接口申请单文件签名 URL，只向 MinerU API 请求发送
+Bearer Token；PUT 上传地址和结果 CDN 请求不会携带 Token。流程为“申请签名 URL
+→ 上传 Raw Snapshot bytes → 轮询批次状态 → 下载 ZIP → 校验大小与 ZIP 路径
+→ 原子写入 parser cache”。远端异常会转为有界 ParserError 并进入现有 fallback，
+不会使整个 batch 崩溃。官方当前限制与字段以
+[MinerU API 文档](https://mineru.net/apiManage/docs)为准。
 
 在 `ai-service` 目录执行：
 
@@ -249,12 +266,13 @@ Fantasy is used here as a deterministic native-text fixture.
 ```
 
 MinerU Adapter 优先读取 `content_list_v2.json`、`content_list.json`、
-`middle.json` 等结构化结果，再把 Markdown 作为补充；缓存位于
+`*_content_list.json`、`middle.json`、`*_middle.json` 等结构化结果，再把
+`full.md` 作为补充；缓存位于
 `data/parsed_cache/mineru/{source_id}/{raw_hash_prefix}/`，不覆盖 Raw Snapshot。
 Docling Adapter 同时读取 `export_to_markdown()` 和 `export_to_dict()`。将来启用
-MinerU 时可把其 CLI 放到独立重型环境并确保 `mineru` 可执行文件在 PATH，或在
-构造 `MinerUAdapter` 时注入自定义 runner；启用 Docling 时另行安装其 runtime。
-这两个动作可能下载大量依赖/模型，当前版本不会自动执行。
+本地 MinerU 时仍可把 CLI 放到独立重型环境并确保 `mineru` 可执行文件在 PATH，
+或在构造 `MinerUAdapter` 时注入自定义 runner；启用 Docling 时另行安装其
+runtime。这两个本地动作可能下载大量依赖/模型，当前版本不会自动执行。
 
 `document.md` 是 UTF-8、LF 换行的规范 Markdown；`document.json` 同时保存
 blocks、Parser metadata、候选来源 metadata 和原始 JSON structured data；

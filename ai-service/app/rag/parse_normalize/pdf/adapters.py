@@ -376,6 +376,7 @@ MinerUCommandBuilder = Callable[[Path, Path, bool], list[str]]
 
 @dataclass(frozen=True, slots=True)
 class SubprocessMinerURunner:
+    version_label = "lazy-cli"
     executable: str = "mineru"
     timeout_seconds: float = 900.0
     backend: str = "pipeline"
@@ -446,7 +447,8 @@ class MinerUAdapter(PDFParserAdapter):
 
     @property
     def parser_version(self) -> str:
-        return f"lazy-cli+a{self.adapter_version}"
+        backend = getattr(self.runner, "version_label", "custom-runner")
+        return f"{backend}+a{self.adapter_version}"
 
     def parse(
         self, parse_input: ParseInput, inspection: PDFInspection
@@ -459,9 +461,13 @@ class MinerUAdapter(PDFParserAdapter):
             content_path = self._first_named(
                 cache_directory,
                 ("content_list_v2.json", "content_list.json"),
-            )
-            middle_path = self._first_named(cache_directory, ("middle.json",))
-            markdown_path = self._first_suffix(cache_directory, ".md")
+            ) or self._first_suffix(cache_directory, "_content_list.json")
+            middle_path = self._first_named(
+                cache_directory, ("middle.json", "layout.json")
+            ) or self._first_suffix(cache_directory, "_middle.json")
+            markdown_path = self._first_named(
+                cache_directory, ("full.md",)
+            ) or self._first_suffix(cache_directory, ".md")
             content_list = self._load_json(content_path) if content_path else []
             middle = self._load_json(middle_path) if middle_path else {}
             markdown = (
@@ -507,6 +513,7 @@ class MinerUAdapter(PDFParserAdapter):
                 ("content_list_v2.json", "content_list.json"),
             )
             is not None
+            or cls._first_suffix(cache_directory, "_content_list.json") is not None
             or cls._first_suffix(cache_directory, ".md") is not None
         )
 

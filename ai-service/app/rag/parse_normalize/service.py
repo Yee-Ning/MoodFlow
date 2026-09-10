@@ -424,13 +424,20 @@ def create_default_service(
             PyMuPDF4LLMAdapter,
         )
         from .pdf.cascade import PdfCascadeParser
+        from .pdf.cloud import MinerUCloudConfig, MinerUCloudRunner
         from .pdf.models import PDFBackend
+
+        mineru_cloud = MinerUCloudConfig.from_env_file(root / ".env")
+        mineru_runner = (
+            MinerUCloudRunner(mineru_cloud) if mineru_cloud.cloud_enabled else None
+        )
 
         pdf_parser = PdfCascadeParser(
             adapters={
                 PDFBackend.PYMUPDF4LLM: PyMuPDF4LLMAdapter(),
                 PDFBackend.MINERU: MinerUAdapter(
-                    root / "data" / "parsed_cache" / "mineru"
+                    root / "data" / "parsed_cache" / "mineru",
+                    runner=mineru_runner,
                 ),
                 PDFBackend.DOCLING: DoclingAdapter(),
             }

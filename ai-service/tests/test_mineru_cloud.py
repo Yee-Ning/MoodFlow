@@ -1,5 +1,6 @@
 import io
 import json
+import shutil
 import tempfile
 import unittest
 import zipfile
@@ -9,11 +10,19 @@ import httpx
 from pydantic import ValidationError
 
 from app.rag.parse_normalize.base import ParserError
+from app.rag.parse_normalize.models import DetectedFileType
+from app.rag.parse_normalize.pdf.adapters import MinerUAdapter
 from app.rag.parse_normalize.pdf.cloud import (
     MinerUCloudConfig,
     MinerUCloudRunner,
 )
-from tests.test_pdf_optional_adapters import parse_input_for
+from app.rag.parse_normalize.pdf.inspector import PDFInspector
+from app.rag.parse_normalize.pdf.models import PDFBackend
+from app.rag.parse_normalize.service import create_default_service
+from tests.test_pdf_optional_adapters import FIXTURE_ROOT, parse_input_for
+
+
+FIXTURE_BACKEND = FIXTURE_ROOT / "backends" / "mineru"
 
 
 def mineru_archive(*, unsafe_name: str | None = None) -> bytes:
@@ -67,6 +76,56 @@ class MinerUCloudConfigTests(unittest.TestCase):
             self.assertEqual(config.model_version, "vlm")
             self.assertEqual(config.api_token.get_secret_value(), "secret-token")
             self.assertNotIn("secret-token", repr(config))
+
+    def test_default_service_selects_cloud_runner_from_project_env(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / ".env").write_text(
+                "MINERU_CLOUD_ENABLED=true\n"
+                "MINERU_API_BASE_URL=https://mineru.net\n"
+                "MINERU_API_TOKEN=secret-token\n"
+                "MINERU_MODEL_VERSION=vlm\n",
+                encoding="utf-8",
+            )
+
+            service = create_default_service(root)
+            parser = service.router.registry.resolve(DetectedFileType.PDF)
+            runner = parser.adapters[PDFBackend.MINERU].runner
+
+            self.assertIsInstance(runner, MinerUCloudRunner)
+
+
+class OfficialArchiveCompatibilityTests(unittest.TestCase):
+    def test_adapter_reads_prefixed_official_structured_output_names(self) -> None:
+        parse_input = parse_input_for("complex-layout.pdf", "pdf-cloud-shape")
+
+        class OfficialShapeRunner:
+            version_label = "cloud-api-v4"
+
+            def run(self, parse_input, output_directory: Path, allow_ocr: bool) -> None:
+                source = FIXTURE_BACKEND
+                result = output_directory / "nested"
+                result.mkdir(parents=True)
+                shutil.copy(source / "content_list.json", result / "doc_content_list.json")
+                shutil.copy(source / "middle.json", result / "doc_middle.json")
+                shutil.copy(source / "document.md", result / "full.md")
+                image = result / "images" / "layout.png"
+                image.parent.mkdir()
+                image.write_bytes(b"fixture-image")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = MinerUAdapter(
+                Path(temp_dir),
+                runner=OfficialShapeRunner(),
+            )
+            output = adapter.parse(
+                parse_input,
+                PDFInspector().inspect(parse_input.raw_bytes),
+            )
+
+            content_list = output.result.metadata["mineru"]["content_list"]
+            self.assertEqual(len(content_list), 5)
+            self.assertEqual(output.parser_version, "cloud-api-v4+a1.0.0")
 
 
 class MinerUCloudRunnerTests(unittest.TestCase):

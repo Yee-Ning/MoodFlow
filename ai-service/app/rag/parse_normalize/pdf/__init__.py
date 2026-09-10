@@ -15,6 +15,7 @@ from .adapters import (
     VLMPageParser,
 )
 from .cascade import PdfCascadeParser
+from .cloud import MinerUCloudConfig, MinerUCloudRunner
 from .inspector import PDFInspectionError, PDFInspector, PDFInspectorConfig
 from .models import (
     PDFBackend,
@@ -37,6 +38,8 @@ __all__ = [
     "LocalDoclingRuntime",
     "MinerUAdapter",
     "MinerUAdapterConfig",
+    "MinerUCloudConfig",
+    "MinerUCloudRunner",
     "MinerURunner",
     "PDFBackend",
     "PDFAdapterOutput",
