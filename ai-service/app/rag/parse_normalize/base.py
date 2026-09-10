@@ -22,7 +22,9 @@ class BaseParser(ABC):
     def parse(self, parse_input: ParseInput) -> ParserResult:
         """Parse immutable input bytes into parser-independent blocks."""
 
-    def execute(self, parse_input: ParseInput) -> ParserExecution:
+    def execute(
+        self, parse_input: ParseInput, parser_mode: str = "auto"
+    ) -> ParserExecution:
         """Run an adapter through the shared execution envelope."""
 
         return ParserExecution(

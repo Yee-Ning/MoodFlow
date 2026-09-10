@@ -42,7 +42,7 @@ class ParseNormalizeCliTests(unittest.TestCase):
             completed.stderr,
         )
 
-    def test_cli_manifest_reports_pdf_as_unsupported(self) -> None:
+    def test_cli_manifest_reports_malformed_pdf_as_failed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
             raw_path = root / "data" / "raw" / "pdf" / "pdf-source.pdf"
@@ -73,11 +73,12 @@ class ParseNormalizeCliTests(unittest.TestCase):
 
             payload = json.loads(output.getvalue())
             self.assertEqual(exit_code, 2)
-            self.assertEqual(
-                payload["results"][0]["status"], "unsupported_for_current_stage"
-            )
+            self.assertEqual(payload["results"][0]["status"], "failed")
             normalized = root / "data" / "normalized" / "pdf-source"
-            self.assertTrue((normalized / "parse_report.json").exists())
+            report = ParseReport.model_validate_json(
+                (normalized / "parse_report.json").read_text(encoding="utf-8")
+            )
+            self.assertIn("pdf_inspection_failed", report.warnings)
             self.assertFalse((normalized / "document.json").exists())
 
 

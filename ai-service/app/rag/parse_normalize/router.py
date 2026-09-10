@@ -23,13 +23,15 @@ class ParserRouter:
 
     def select(self, record: RawSnapshotRecord) -> BaseParser:
         detected = self.detector.detect(record)
-        if detected is DetectedFileType.PDF:
-            raise UnsupportedCurrentStageError("unsupported_for_current_stage: pdf")
         if detected is DetectedFileType.UNKNOWN:
             raise UnsupportedFileTypeError("unsupported_file_type: unknown")
         try:
             return self.registry.resolve(detected)
         except ParserNotRegisteredError as exc:
+            if detected is DetectedFileType.PDF:
+                raise UnsupportedCurrentStageError(
+                    "unsupported_for_current_stage: pdf"
+                ) from exc
             raise UnsupportedFileTypeError(
                 f"unsupported_file_type: {detected.value}"
             ) from exc

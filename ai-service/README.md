@@ -176,23 +176,41 @@ Raw Snapshot
   -> FileTypeDetector
   -> ParserRouter + ParserRegistry
   -> HTML / Markdown / TXT / JSON Adapter
+  -> PDFInspector
+       -> SIMPLE_TEXT                    -> PyMuPDF4LLM
+       -> COMPLEX_LAYOUT / SCANNED       -> MinerU (lazy)
+       -> UNKNOWN                        -> PyMuPDF4LLM
+       -> PDF Quality Gate               -> Docling fallback (lazy)
   -> MarkdownNormalizer
-  -> ParseQualityEvaluator
+  -> ParseQualityEvaluator / PDFParseQualityEvaluator
   -> NormalizedDocument + ParseReport
 ```
 
 后续阶段只需依赖 `NormalizedDocument` 和 `DocumentBlock`，不需要感知具体
-Parser。当前明确不处理 PDF；PDF 会返回
-`unsupported_for_current_stage` 并只生成失败报告，不会伪装成成功结果。
+Parser。PDF block 在后端可提供时保存 `page_number` 和 `bbox`，document 另有
+`tables`、`images`；因此后续证据可以追溯到原 PDF 页。
+
+PDF 采用“主环境轻量 + 延迟加载 Adapter”：主依赖只有 PyMuPDF4LLM，且该
+Adapter 始终传入 `use_ocr=False`、`force_ocr=False`。MinerU 和 Docling 仅在被
+路由到时才调用；当前仓库不安装二者、不下载模型。缺少可选后端会写成
+`parser_attempts[].status=unavailable`，不会让整个 manifest 批次崩溃。扫描件或
+没有可用 native text 的路径才允许可选后端启用 OCR。
 
 在 `ai-service` 目录执行：
 
 ```powershell
 python run_parse.py --source-id jc-v1-001
+python run_parse.py --source-id some-pdf --parser auto
+python run_parse.py --source-id some-pdf --parser pymupdf
+python run_parse.py --source-id some-pdf --parser mineru
+python run_parse.py --source-id some-pdf --parser docling
 python run_parse.py --all-approved
 python run_parse.py --manifest data/raw/sources_manifest.jsonl
 python run_parse.py --source-id jc-v1-001 --force
 ```
+
+`--parser` 默认是 `auto`。`auto` 才执行完整级联；显式指定后端用于调试，只尝试
+一次且仍经过 Quality Gate。把 PDF 后端参数用于非 PDF 来源会明确失败。
 
 每个成功来源输出：
 
@@ -201,7 +219,42 @@ data/normalized/{source_id}/
   document.md
   document.json
   parse_report.json
+  images/
 ```
+
+解析彻底失败仍会生成 `parse_report.json`，但不会留下伪成功的 document。
+`pass/warning/fallback_used` 是 CLI 成功状态，`manual_review/failed` 返回非零。
+质量报告包括 `chars_per_page`、空页/乱码/替换字符/重复行/可疑换行比例、标题、
+段落、表格、图片和 parser error 数量。所有分类、评分、通过和回退阈值分别集中
+在 `PDFInspectorConfig` 与 `PDFParseQualityConfig`，没有散落在业务代码中。
+
+三种后端统一映射到相同模型，示意输出如下：
+
+```markdown
+# Music Production Notes
+
+Fantasy is used here as a deterministic native-text fixture.
+```
+
+```json
+{
+  "parser_name": "docling",
+  "selected_parser": "docling",
+  "status": "fallback_used",
+  "parser_attempts": [
+    {"parser": "mineru", "status": "success", "ocr_used": true},
+    {"parser": "docling", "status": "success", "ocr_used": true}
+  ]
+}
+```
+
+MinerU Adapter 优先读取 `content_list_v2.json`、`content_list.json`、
+`middle.json` 等结构化结果，再把 Markdown 作为补充；缓存位于
+`data/parsed_cache/mineru/{source_id}/{raw_hash_prefix}/`，不覆盖 Raw Snapshot。
+Docling Adapter 同时读取 `export_to_markdown()` 和 `export_to_dict()`。将来启用
+MinerU 时可把其 CLI 放到独立重型环境并确保 `mineru` 可执行文件在 PATH，或在
+构造 `MinerUAdapter` 时注入自定义 runner；启用 Docling 时另行安装其 runtime。
+这两个动作可能下载大量依赖/模型，当前版本不会自动执行。
 
 `document.md` 是 UTF-8、LF 换行的规范 Markdown；`document.json` 同时保存
 blocks、Parser metadata、候选来源 metadata 和原始 JSON structured data；
@@ -219,14 +272,16 @@ blocks、Parser metadata、候选来源 metadata 和原始 JSON structured data�
   字段，未知 schema 使用有深度、字段、条目和输出长度上限的递归表示。
 
 重复执行时，只有
-`raw_content_hash + parser_version + normalization_version` 全部匹配才会跳过；
+`raw_content_hash + parser/cascade fingerprint + normalization_version` 全部匹配才会跳过；
 `--force` 可强制重解析。写入采用同目录临时文件、`fsync` 和原子替换，不会修改
 Raw Snapshot。测试夹具覆盖 2 个 HTML、1 个 Markdown、1 个 TXT、1 个
 Wikidata JSON 和 1 个 MusicBrainz JSON；本地真实快照验证覆盖
 `jc-v1-001`、`jc-v1-007`、`jc-v1-038`、`jc-v1-040`。
 
-本阶段不包含 PDF Parser、Cleaning、Deduplication、Chunking、Entity Linking、
-Claim Extraction、Embedding 或 Vector DB。
+PDF V1 已预留 `parse_page(...)`、`reparse_failed_pages(...)` 和默认关闭的
+`VLMPageParser`，但不实现混合页面合并，也不调用视觉模型。本阶段不包含
+Cleaning、Deduplication、Chunking、Entity Linking、Claim Extraction、Embedding
+或 Vector DB。
 
 ## WorldLine V1 SubGraph
 

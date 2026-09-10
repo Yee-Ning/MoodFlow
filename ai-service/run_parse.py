@@ -24,6 +24,7 @@ from app.rag.parse_normalize.service import (
 SUCCESS_STATUSES = {
     OutcomeStatus.PARSED,
     OutcomeStatus.WARNING,
+    OutcomeStatus.FALLBACK_USED,
     OutcomeStatus.SKIPPED,
 }
 
@@ -31,7 +32,7 @@ SUCCESS_STATUSES = {
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Parse immutable HTML, Markdown, TXT, and JSON snapshots into "
+            "Parse immutable HTML, Markdown, TXT, JSON, and PDF snapshots into "
             "NormalizedDocument artifacts."
         )
     )
@@ -51,6 +52,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--force",
         action="store_true",
         help="Ignore a matching raw/parser/normalization fingerprint.",
+    )
+    parser.add_argument(
+        "--parser",
+        choices=("auto", "pymupdf", "mineru", "docling"),
+        default="auto",
+        help="PDF backend mode; auto enables the quality-gated cascade.",
     )
     return parser.parse_args(argv)
 
@@ -78,11 +85,21 @@ def main(
         raw_manifest_path=raw_manifest_path,
     )
     if args.source_id:
-        outcomes = [service.parse_source(args.source_id, force=args.force)]
+        outcomes = [
+            service.parse_source(
+                args.source_id,
+                force=args.force,
+                parser_mode=args.parser,
+            )
+        ]
     elif args.all_approved:
-        outcomes = service.parse_all_approved(force=args.force)
+        outcomes = service.parse_all_approved(
+            force=args.force, parser_mode=args.parser
+        )
     else:
-        outcomes = service.parse_manifest(args.manifest, force=args.force)
+        outcomes = service.parse_manifest(
+            args.manifest, force=args.force, parser_mode=args.parser
+        )
     _render(outcomes)
     return 0 if outcomes and all(
         outcome.status in SUCCESS_STATUSES for outcome in outcomes

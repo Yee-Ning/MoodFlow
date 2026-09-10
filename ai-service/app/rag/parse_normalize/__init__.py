@@ -21,6 +21,13 @@ from .models import (
     ParserResult,
 )
 from .registry import DuplicateParserError, ParserRegistry
+from .pdf import (
+    PDFInspector,
+    PDFInspectorConfig,
+    PDFParseQualityConfig,
+    PDFParseQualityEvaluator,
+    PdfCascadeParser,
+)
 from .router import (
     ParserRouter,
     UnsupportedCurrentStageError,
@@ -46,6 +53,10 @@ __all__ = [
     "NormalizedDocument",
     "OutputArtifact",
     "OutcomeStatus",
+    "PDFInspector",
+    "PDFInspectorConfig",
+    "PDFParseQualityConfig",
+    "PDFParseQualityEvaluator",
     "ParseInput",
     "ParseMetrics",
     "ParseNormalizeError",
@@ -60,6 +71,7 @@ __all__ = [
     "ParserRegistry",
     "ParserResult",
     "ParserRouter",
+    "PdfCascadeParser",
     "UnsupportedCurrentStageError",
     "UnsupportedFileTypeError",
     "create_default_service",

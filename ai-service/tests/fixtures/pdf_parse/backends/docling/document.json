@@ -20,5 +20,12 @@
       "prov": [{"page_no": 1, "bbox": {"l": 70, "t": 500, "r": 520, "b": 390}}]
     }
   ],
-  "pictures": []
+  "pictures": [
+    {
+      "label": "picture",
+      "caption": "Recovered scan page",
+      "uri": "images/scan-page.png",
+      "prov": [{"page_no": 1, "bbox": {"l": 70, "t": 360, "r": 520, "b": 120}}]
+    }
+  ]
 }

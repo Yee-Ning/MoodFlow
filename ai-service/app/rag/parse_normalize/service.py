@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.rag.source_ingestion.manifest import load_candidates
 from app.rag.source_ingestion.models import CandidateSource, ReviewStatus
 
-from .base import ParseNormalizeError
+from .base import BaseParser, ParseNormalizeError
 from .detection import FileTypeDetector
 from .manifest import RawSnapshotLoader, RawSnapshotNotFoundError
 from .models import (
@@ -149,7 +149,8 @@ class ParseNormalizeService:
                     snapshot=loaded.record,
                     raw_bytes=loaded.raw_bytes,
                     candidate=candidate,
-                )
+                ),
+                parser_mode=parser_mode,
             )
             parsed = execution.result
             report = execution.report
@@ -385,11 +386,30 @@ def create_default_service(
     *,
     raw_manifest_path: Path | None = None,
     candidate_manifest_path: Path | None = None,
+    pdf_parser: BaseParser | None = None,
 ) -> ParseNormalizeService:
     root = project_root.resolve()
     detector = FileTypeDetector()
+    if pdf_parser is None:
+        from .pdf.adapters import (
+            DoclingAdapter,
+            MinerUAdapter,
+            PyMuPDF4LLMAdapter,
+        )
+        from .pdf.cascade import PdfCascadeParser
+        from .pdf.models import PDFBackend
+
+        pdf_parser = PdfCascadeParser(
+            adapters={
+                PDFBackend.PYMUPDF4LLM: PyMuPDF4LLMAdapter(),
+                PDFBackend.MINERU: MinerUAdapter(
+                    root / "data" / "parsed_cache" / "mineru"
+                ),
+                PDFBackend.DOCLING: DoclingAdapter(),
+            }
+        )
     registry = ParserRegistry(
-        [HtmlParser(), MarkdownParser(), TxtParser(), JsonParser()]
+        [HtmlParser(), MarkdownParser(), TxtParser(), JsonParser(), pdf_parser]
     )
     return ParseNormalizeService(
         project_root=root,

@@ -3,12 +3,13 @@ import json
 import shutil
 import sys
 import tempfile
+import types
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
 from app.rag.parse_normalize.base import ParserError
-from app.rag.parse_normalize.models import BlockType, ParseInput
+from app.rag.parse_normalize.models import BlockType, OutputArtifact, ParseInput
 from app.rag.parse_normalize.pdf.adapters import (
     DoclingAdapter,
     DoclingRuntimeOutput,
@@ -71,6 +72,13 @@ class FixtureDoclingRuntime:
         return DoclingRuntimeOutput(
             markdown="# Scanned Music Interview\n\nRecovered interview context.\n",
             structured=structured,
+            artifacts=[
+                OutputArtifact(
+                    relative_path="images/scan-page.png",
+                    content=b"scan-page-image",
+                    content_type="image/png",
+                )
+            ],
         )
 
 
@@ -129,8 +137,72 @@ class MinerUAdapterTests(unittest.TestCase):
             with self.assertRaisesRegex(ParserError, "mineru_backend_timeout"):
                 runner.run(parse_input, Path(temp_dir), False)
 
+    def test_incomplete_middle_only_cache_is_regenerated(self) -> None:
+        parse_input = parse_input_for("complex-layout.pdf", "pdf-incomplete-cache")
+        inspection = PDFInspector().inspect(parse_input.raw_bytes)
+        runner = FixtureMinerURunner()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = MinerUAdapter(Path(temp_dir), runner=runner)
+            cache = adapter._cache_directory(parse_input)
+            cache.mkdir(parents=True)
+            (cache / "middle.json").write_text("{}", encoding="utf-8")
+
+            output = adapter.parse(parse_input, inspection)
+
+            self.assertEqual(runner.calls, [False])
+            self.assertTrue(output.result.blocks)
+
 
 class DoclingAdapterTests(unittest.TestCase):
+    def test_local_runtime_uses_document_stream_from_official_module(self) -> None:
+        captured = {}
+
+        class Options:
+            do_ocr = False
+            document_timeout = None
+
+        class Document:
+            def export_to_markdown(self):
+                return "# Converted\n"
+
+            def export_to_dict(self):
+                return {"name": "Converted"}
+
+        class Converter:
+            def __init__(self, *, format_options):
+                captured["options"] = format_options["pdf"].pipeline_options
+
+            def convert(self, source):
+                captured["source"] = source
+                return types.SimpleNamespace(document=Document())
+
+        modules = {
+            "docling.document_converter": types.SimpleNamespace(
+                DocumentConverter=Converter,
+                PdfFormatOption=lambda *, pipeline_options: types.SimpleNamespace(
+                    pipeline_options=pipeline_options
+                ),
+            ),
+            "docling.datamodel.base_models": types.SimpleNamespace(
+                InputFormat=types.SimpleNamespace(PDF="pdf"),
+                DocumentStream=lambda *, name, stream: types.SimpleNamespace(
+                    name=name, stream=stream
+                ),
+            ),
+            "docling.datamodel.pipeline_options": types.SimpleNamespace(
+                PdfPipelineOptions=Options
+            ),
+        }
+        runtime = LocalDoclingRuntime(import_module=modules.__getitem__)
+
+        output = runtime.convert(b"pdf-bytes", "source.pdf", True)
+
+        self.assertEqual(output.markdown, "# Converted\n")
+        self.assertEqual(captured["source"].name, "source.pdf")
+        self.assertEqual(captured["source"].stream.read(), b"pdf-bytes")
+        self.assertTrue(captured["options"].do_ocr)
+        self.assertEqual(captured["options"].document_timeout, 900.0)
+
     def test_structured_output_maps_provenance_and_ocr_is_scan_only(self) -> None:
         native = parse_input_for("simple-text.pdf", "pdf-docling-native")
         scanned = parse_input_for("scanned.pdf", "pdf-docling-scan")
@@ -147,11 +219,49 @@ class DoclingAdapterTests(unittest.TestCase):
         self.assertEqual(scan_output.result.blocks[0].metadata["page_number"], 1)
         self.assertEqual(scan_output.result.blocks[0].metadata["bbox"], [70, 710, 500, 675])
         self.assertEqual(scan_output.result.tables[0].rows[1], ["Year", "2001"])
+        self.assertEqual(scan_output.result.images[0].path, "images/scan-page.png")
+        self.assertTrue(
+            any(block.block_type is BlockType.IMAGE for block in scan_output.result.blocks)
+        )
         self.assertIn("structured_document", scan_output.result.metadata["docling"])
 
     def test_local_runtime_is_lazy_and_reports_missing_dependency(self) -> None:
         runtime = LocalDoclingRuntime(import_module=lambda name: (_ for _ in ()).throw(ImportError()))
         with self.assertRaisesRegex(ParserError, "docling_backend_unavailable"):
+            runtime.convert(b"pdf", "source.pdf", False)
+
+    def test_local_runtime_rejects_docling_timeout_partial_result(self) -> None:
+        class Options:
+            do_ocr = False
+            document_timeout = None
+
+        class Converter:
+            def __init__(self, *, format_options):
+                pass
+
+            def convert(self, source):
+                return types.SimpleNamespace(
+                    document=object(), has_timeout_errors=lambda: True
+                )
+
+        modules = {
+            "docling.document_converter": types.SimpleNamespace(
+                DocumentConverter=Converter,
+                PdfFormatOption=lambda *, pipeline_options: types.SimpleNamespace(
+                    pipeline_options=pipeline_options
+                ),
+            ),
+            "docling.datamodel.base_models": types.SimpleNamespace(
+                InputFormat=types.SimpleNamespace(PDF="pdf"),
+                DocumentStream=lambda *, name, stream: object(),
+            ),
+            "docling.datamodel.pipeline_options": types.SimpleNamespace(
+                PdfPipelineOptions=Options
+            ),
+        }
+        runtime = LocalDoclingRuntime(import_module=modules.__getitem__)
+
+        with self.assertRaisesRegex(ParserError, "docling_backend_timeout"):
             runtime.convert(b"pdf", "source.pdf", False)
 
 

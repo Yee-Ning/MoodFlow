@@ -95,12 +95,20 @@ class PDFParseQualityEvaluator:
         replacement_ratio = replacement_count / text_length if text_length else 0.0
         garbled_count = sum(1 for char in text if self._is_garbled(char))
         garbled_ratio = garbled_count / text_length if text_length else 0.0
+        flow_lines = [
+            line.strip()
+            for block in result.blocks
+            if block.block_type
+            in {BlockType.PARAGRAPH, BlockType.QUOTE, BlockType.OTHER}
+            for line in block.text.splitlines()
+            if line.strip()
+        ]
         suspicious_count = sum(
             len(line) <= self.config.suspicious_line_max_chars
-            for line in non_empty_lines
+            for line in flow_lines
         )
         suspicious_ratio = (
-            suspicious_count / len(non_empty_lines) if non_empty_lines else 0.0
+            suspicious_count / len(flow_lines) if flow_lines else 0.0
         )
         non_empty_pages = {
             page

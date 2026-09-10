@@ -504,7 +504,7 @@ class MinerUAdapter(PDFParserAdapter):
         return (
             cls._first_named(
                 cache_directory,
-                ("content_list_v2.json", "content_list.json", "middle.json"),
+                ("content_list_v2.json", "content_list.json"),
             )
             is not None
             or cls._first_suffix(cache_directory, ".md") is not None
@@ -681,8 +681,12 @@ class MinerUAdapter(PDFParserAdapter):
         else:
             text = str(item.get("text", ""))
             items = []
-        raw_page = item.get("page_idx", item.get("page_number", 0))
-        page_number = int(raw_page) + 1 if isinstance(raw_page, int) else 1
+        if isinstance(item.get("page_idx"), int):
+            page_number = int(item["page_idx"]) + 1
+        elif isinstance(item.get("page_number"), int):
+            page_number = int(item["page_number"])
+        else:
+            page_number = 1
         metadata: dict[str, JsonValue] = {
             "page_number": max(1, page_number),
             "backend_type": item_type,
@@ -783,7 +787,6 @@ class LocalDoclingRuntime:
             converter_module = self.import_module("docling.document_converter")
             base_models = self.import_module("docling.datamodel.base_models")
             pipeline_module = self.import_module("docling.datamodel.pipeline_options")
-            document_module = self.import_module("docling.datamodel.document")
             options = pipeline_module.PdfPipelineOptions()
             options.do_ocr = allow_ocr
             options.document_timeout = self.timeout_seconds
@@ -794,10 +797,13 @@ class LocalDoclingRuntime:
                     )
                 }
             )
-            stream = document_module.DocumentStream(
+            stream = base_models.DocumentStream(
                 name=filename, stream=BytesIO(raw_bytes)
             )
             result = converter.convert(stream)
+            has_timeout_errors = getattr(result, "has_timeout_errors", None)
+            if callable(has_timeout_errors) and has_timeout_errors():
+                raise ParserError("docling_backend_timeout")
             document = result.document
             return DoclingRuntimeOutput(
                 markdown=document.export_to_markdown(),
@@ -858,6 +864,7 @@ class DoclingAdapter(PDFParserAdapter):
         structured = runtime_output.structured
         blocks: list[DocumentBlock] = []
         tables: list[DocumentTable] = []
+        images: list[DocumentImage] = []
         title = self._text_value(structured.get("name"))
 
         raw_texts = structured.get("texts", [])
@@ -910,6 +917,49 @@ class DoclingAdapter(PDFParserAdapter):
                         metadata={"source_block_id": block.block_id},
                     )
                 )
+        artifacts_by_name = {
+            Path(artifact.relative_path).name: artifact
+            for artifact in runtime_output.artifacts
+            if artifact.content_type.startswith("image/")
+        }
+        raw_pictures = structured.get("pictures", [])
+        if isinstance(raw_pictures, list):
+            for item in raw_pictures:
+                if not isinstance(item, dict):
+                    continue
+                caption = self._text_value(item.get("caption")) or ""
+                uri = self._text_value(item.get("uri")) or ""
+                name = Path(uri).name if uri else ""
+                artifact = artifacts_by_name.get(name)
+                relative_path = artifact.relative_path if artifact else uri
+                block = self._append_docling_block(
+                    blocks,
+                    parse_input.snapshot.source_id,
+                    BlockType.IMAGE,
+                    caption,
+                    None,
+                    item,
+                    extra_metadata={
+                        "src": relative_path,
+                        "alt": caption,
+                    },
+                )
+                if artifact is not None:
+                    images.append(
+                        DocumentImage(
+                            image_id=(
+                                f"{parse_input.snapshot.source_id}-i{len(images):06d}"
+                            ),
+                            page_number=block.metadata.get("page_number", 1),
+                            bbox=MinerUAdapter._bbox_tuple(
+                                block.metadata.get("bbox")
+                            ),
+                            path=artifact.relative_path,
+                            content_type=artifact.content_type,
+                            caption=caption or None,
+                            metadata={"source_block_id": block.block_id},
+                        )
+                    )
         if not blocks and runtime_output.markdown.strip():
             parsed = MarkdownParser().parse(
                 parse_input.model_copy(
@@ -928,6 +978,7 @@ class DoclingAdapter(PDFParserAdapter):
             language="und",
             blocks=blocks,
             tables=tables,
+            images=images,
             metadata={
                 "docling": {"structured_document": structured},
                 "ocr_used": allow_ocr,
