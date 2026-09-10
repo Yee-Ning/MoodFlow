@@ -114,6 +114,25 @@ class SnapshotValidatorTests(unittest.TestCase):
                 self.assertFalse(result.valid)
                 self.assertIn(expected_reason, result.reasons)
 
+    def test_article_with_embedded_site_login_widget_is_not_a_login_page(self) -> None:
+        body = (
+            "<html><head><title>周杰伦《八度空间》发布现场</title></head><body>"
+            "<article><h1>专辑发布现场</h1><p>"
+            "这是一篇可公开阅读的完整采访正文，介绍周杰伦在专辑发布现场谈到的创作过程。"
+            "正文在登录控件之外仍然完整可见，不应因为评论区登录表单而被拒绝。"
+            "</p></article>"
+            "<form class='comment-login'><input name='user'>"
+            "<input name='password' type='password'></form>"
+            "</body></html>"
+        ).encode("utf-8")
+
+        result = self.validator.validate(
+            _candidate("html"),
+            RawHttpResponse(body, "text/html; charset=utf-8", 200),
+        )
+
+        self.assertTrue(result.valid, result.reasons)
+
     def test_json_error_response_and_invalid_json_are_rejected(self) -> None:
         error_result = self.validator.validate(
             _candidate("json"),

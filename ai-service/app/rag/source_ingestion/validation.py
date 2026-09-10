@@ -122,9 +122,14 @@ class SnapshotValidator:
         has_password = soup.find(
             "input", attrs={"type": re.compile("password", re.I)}
         )
-        if has_password is not None or re.search(
+        explicit_login_gate = re.search(
             r"sign in to continue|log in to continue|请登录后|請登入後", normalized
-        ):
+        )
+        login_title = re.search(
+            r"(?:^|\s)(?:sign[ -]?in|log[ -]?in|login)(?:\s|$)|登录|登入",
+            title.casefold(),
+        )
+        if explicit_login_gate or (has_password is not None and login_title):
             reasons.append("login-page")
         if re.search(r"search results(?: for)?|搜索结果|搜尋結果", normalized):
             reasons.append("search-results-page")
