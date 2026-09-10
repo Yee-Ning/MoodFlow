@@ -122,6 +122,34 @@ class PdfCascadeParser(BaseParser):
                 fallback_used=False,
                 parser_error_count=error_count + 1,
             )
+        if (
+            inspection.native_text_available
+            and backend is not PDFBackend.PYMUPDF4LLM
+        ):
+            recovery_reason = (
+                "optional_pdf_backends_unavailable_native_text_recovery"
+            )
+            recovery = self._attempt(
+                self.adapters[PDFBackend.PYMUPDF4LLM],
+                parse_input,
+                inspection,
+                parser_error_count=error_count + 1,
+                fallback_reason=recovery_reason,
+            )
+            attempts.append(recovery.attempt)
+            if recovery.output is not None:
+                return self._finalize(
+                    parse_input,
+                    recovery,
+                    attempts,
+                    started,
+                    fallback_used=True,
+                    parser_error_count=error_count + 1,
+                    force_manual_review=True,
+                    extra_warnings=(
+                        "complex_layout_native_text_recovery_requires_review",
+                    ),
+                )
         return self._failed(
             parse_input,
             fallback,
@@ -194,6 +222,8 @@ class PdfCascadeParser(BaseParser):
         *,
         fallback_used: bool,
         parser_error_count: int | None = None,
+        force_manual_review: bool = False,
+        extra_warnings: tuple[str, ...] = (),
     ) -> ParserExecution:
         assert attempted.output is not None
         assert attempted.assessment is not None
@@ -211,6 +241,10 @@ class PdfCascadeParser(BaseParser):
             status = ParseStatus.FAILED
             result = None
             artifacts = []
+        elif force_manual_review:
+            status = ParseStatus.MANUAL_REVIEW
+            result = attempted.output.result
+            artifacts = attempted.output.artifacts
         elif assessment.quality_score < self.quality_evaluator.config.quality_pass_threshold:
             status = ParseStatus.MANUAL_REVIEW
             result = attempted.output.result
@@ -234,7 +268,7 @@ class PdfCascadeParser(BaseParser):
             parser_attempts=attempts,
             quality_score=assessment.quality_score,
             status=status,
-            warnings=assessment.warnings,
+            warnings=list(dict.fromkeys([*assessment.warnings, *extra_warnings])),
             metrics=assessment.metrics,
             elapsed_ms=self._elapsed_ms(started),
         )

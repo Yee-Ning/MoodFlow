@@ -153,6 +153,59 @@ class PDFCascadeTests(unittest.TestCase):
         self.assertEqual(execution.report.parser_attempts[0].error, "primary_broke")
         self.assertEqual(execution.report.metrics.parser_error_count, 1)
 
+    def test_complex_native_text_uses_review_only_lightweight_recovery_when_optional_backends_are_unavailable(self) -> None:
+        mineru = StubAdapter("mineru", ParserError("mineru_backend_unavailable"))
+        docling = StubAdapter("docling", ParserError("docling_backend_unavailable"))
+        pymupdf = StubAdapter(
+            "pymupdf4llm",
+            result_with("Recovered native text in reading order. " * 40, pages=(1, 2)),
+        )
+        cascade = PdfCascadeParser(
+            adapters={
+                PDFBackend.PYMUPDF4LLM: pymupdf,
+                PDFBackend.MINERU: mineru,
+                PDFBackend.DOCLING: docling,
+            }
+        )
+        parse_input = parse_input_for(
+            "complex-layout.pdf", "pdf-cascade-lightweight-recovery"
+        )
+
+        execution = cascade.execute(parse_input)
+
+        self.assertIs(execution.report.status, ParseStatus.MANUAL_REVIEW)
+        self.assertIsNotNone(execution.result)
+        self.assertEqual(execution.selected_parser, "pymupdf4llm")
+        self.assertEqual(
+            [attempt.parser for attempt in execution.report.parser_attempts],
+            ["mineru", "docling", "pymupdf4llm"],
+        )
+        self.assertIn(
+            "complex_layout_native_text_recovery_requires_review",
+            execution.report.warnings,
+        )
+
+    def test_scanned_pdf_does_not_use_native_text_recovery(self) -> None:
+        mineru = StubAdapter("mineru", ParserError("mineru_backend_unavailable"))
+        docling = StubAdapter("docling", ParserError("docling_backend_unavailable"))
+        pymupdf = StubAdapter(
+            "pymupdf4llm", result_with("Native recovery must not run")
+        )
+        cascade = PdfCascadeParser(
+            adapters={
+                PDFBackend.PYMUPDF4LLM: pymupdf,
+                PDFBackend.MINERU: mineru,
+                PDFBackend.DOCLING: docling,
+            }
+        )
+        parse_input = parse_input_for("scanned.pdf", "pdf-cascade-no-scan-recovery")
+
+        execution = cascade.execute(parse_input)
+
+        self.assertIs(execution.report.status, ParseStatus.FAILED)
+        self.assertIsNone(execution.result)
+        self.assertEqual(pymupdf.calls, 0)
+
     def test_medium_final_result_requires_manual_review_and_empty_fails(self) -> None:
         config = PDFParseQualityConfig(
             quality_pass_threshold=0.95,
