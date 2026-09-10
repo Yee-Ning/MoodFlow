@@ -13,6 +13,10 @@ data/raw/json/*
 data/raw/txt/*
 !data/raw/txt/.gitkeep
 data/raw/sources_manifest.jsonl
+data/raw/source_attempts.jsonl
+data/raw/raw_corpus_manifest.jsonl
+data/raw/source_corpus_report.json
+data/raw/source_corpus_report.md
 data/normalized/**
 data/parsed_cache/**
 tmp/

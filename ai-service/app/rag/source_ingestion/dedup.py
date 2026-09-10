@@ -67,6 +67,9 @@ class CandidateDeduplicator:
         if external_id:
             self._external_ids.setdefault(_normalize_text(str(external_id)), source_id)
 
+    def register_url(self, source_id: str, url: str) -> None:
+        self._urls.setdefault(normalize_url(url), source_id)
+
     def check(self, candidate: DiscoveredCandidate) -> DuplicateDecision:
         source_id = candidate.source_id
         normalized_candidate_url = normalize_url(str(candidate.url))
