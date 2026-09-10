@@ -229,6 +229,10 @@ python run_parse.py --source-id some-pdf --parser docling
 python run_parse.py --all-approved
 python run_parse.py --manifest data/raw/sources_manifest.jsonl
 python run_parse.py --source-id jc-v1-001 --force
+
+# 全量生成 Cleaning 阶段所需的 Normalized Corpus V1
+python run_parse_corpus.py --all
+python run_parse_corpus.py --report-only
 ```
 
 `--parser` 默认是 `auto`。`auto` 才执行完整级联；显式指定后端用于调试，只尝试
@@ -249,6 +253,12 @@ data/normalized/{source_id}/
 质量报告包括 `chars_per_page`、空页/乱码/替换字符/重复行/可疑换行比例、标题、
 段落、表格、图片和 parser error 数量。所有分类、评分、通过和回退阈值分别集中
 在 `PDFInspectorConfig` 与 `PDFParseQualityConfig`，没有散落在业务代码中。
+
+全量命令只读取 `data/raw/raw_corpus_manifest.jsonl` 中通过 Snapshot Validation 的
+记录，逐条失败不会中断批次。结束后会刷新
+`data/normalized/normalized_corpus_manifest.jsonl`、`parse_corpus_report.json` 和
+`parse_corpus_report.md`；不带 `--force` 重复执行时，匹配 raw hash、parser version
+与 normalization version 的来源会直接跳过。
 
 三种后端统一映射到相同模型，示意输出如下：
 

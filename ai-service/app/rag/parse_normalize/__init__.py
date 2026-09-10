@@ -1,6 +1,13 @@
 """Music RAG Parse + Normalize V1 public contracts."""
 
 from .base import BaseParser, ParseNormalizeError, ParserError
+from .corpus import (
+    CorpusParseRunner,
+    CorpusParseReporter,
+    NormalizedCorpusManifestRow,
+    RepresentativeBatchSelector,
+    RepresentativeSample,
+)
 from .detection import FileTypeDetector
 from .models import (
     NORMALIZATION_VERSION,
@@ -44,6 +51,8 @@ __all__ = [
     "NORMALIZATION_VERSION",
     "BaseParser",
     "BlockType",
+    "CorpusParseReporter",
+    "CorpusParseRunner",
     "DetectedFileType",
     "DocumentBlock",
     "DocumentImage",
@@ -51,6 +60,7 @@ __all__ = [
     "DuplicateParserError",
     "FileTypeDetector",
     "NormalizedDocument",
+    "NormalizedCorpusManifestRow",
     "OutputArtifact",
     "OutcomeStatus",
     "PDFInspector",
@@ -71,6 +81,8 @@ __all__ = [
     "ParserRegistry",
     "ParserResult",
     "ParserRouter",
+    "RepresentativeBatchSelector",
+    "RepresentativeSample",
     "PdfCascadeParser",
     "UnsupportedCurrentStageError",
     "UnsupportedFileTypeError",
