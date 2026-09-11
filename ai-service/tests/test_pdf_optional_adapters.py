@@ -119,6 +119,23 @@ class MinerUAdapterTests(unittest.TestCase):
             self.assertEqual(runner.calls, [False])
             self.assertEqual(second.result.blocks, output.result.blocks)
 
+    def test_html_table_body_is_promoted_to_rows_and_canonical_markdown(self) -> None:
+        item = {
+            "type": "table",
+            "page_idx": 0,
+            "table_body": (
+                "<table><tr><th>Album</th><th>Year</th></tr>"
+                "<tr><td>Blue</td><td>1971</td></tr></table>"
+            ),
+        }
+
+        block_type, text, _, metadata = MinerUAdapter._block_value(item)
+
+        self.assertEqual(block_type, BlockType.TABLE)
+        self.assertIn("<table>", text)
+        self.assertEqual(metadata["rows"], [["Album", "Year"], ["Blue", "1971"]])
+        self.assertTrue(metadata["has_header"])
+
     def test_missing_executable_and_timeout_are_bounded_errors(self) -> None:
         parse_input = parse_input_for("complex-layout.pdf", "pdf-runner")
         with tempfile.TemporaryDirectory() as temp_dir:

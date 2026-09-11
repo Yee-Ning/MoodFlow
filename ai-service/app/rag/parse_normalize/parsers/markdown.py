@@ -18,11 +18,12 @@ from ..models import (
     ParseInput,
     ParserResult,
 )
+from ..table_support import document_tables_from_blocks
 
 
 class MarkdownParser(BaseParser):
     parser_name = "markdown"
-    parser_version = "1.0.0"
+    parser_version = "1.1.0"
     supported_file_types = frozenset({DetectedFileType.MARKDOWN})
 
     def __init__(self) -> None:
@@ -62,6 +63,7 @@ class MarkdownParser(BaseParser):
             published_at=published_at,
             language=language,
             blocks=blocks,
+            tables=document_tables_from_blocks(blocks),
             metadata={"front_matter": self._json_safe(front_matter)},
         )
 
@@ -133,7 +135,11 @@ class MarkdownParser(BaseParser):
                 rows, next_index = self._table_rows(tokens, index)
                 block_type = BlockType.TABLE
                 text = "\n".join(" | ".join(row) for row in rows)
-                metadata = {"rows": rows}
+                metadata = {
+                    "rows": rows,
+                    "has_header": True,
+                    "table_kind_hint": "semantic_candidate",
+                }
             elif token.type == "html_block":
                 block_type = BlockType.OTHER
                 text = token.content.rstrip()

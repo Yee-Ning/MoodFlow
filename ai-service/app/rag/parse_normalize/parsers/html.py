@@ -16,11 +16,12 @@ from ..models import (
     ParseInput,
     ParserResult,
 )
+from ..table_support import document_tables_from_blocks
 
 
 class HtmlParser(BaseParser):
     parser_name = "html"
-    parser_version = "1.1.0"
+    parser_version = "1.2.0"
     supported_file_types = frozenset({DetectedFileType.HTML})
 
     _SEMANTIC_TAGS = (
@@ -81,6 +82,7 @@ class HtmlParser(BaseParser):
             published_at=published_at,
             language=language,
             blocks=blocks,
+            tables=document_tables_from_blocks(blocks),
             metadata=metadata,
         )
 
@@ -196,13 +198,18 @@ class HtmlParser(BaseParser):
             )
             return BlockType.CODE, target.get_text(), None, {"language": language}
         if name == "table":
+            has_header = tag.find("th") is not None
             rows = [
                 [self._text(cell) for cell in row.find_all(("th", "td"), recursive=False)]
                 for row in tag.find_all("tr")
             ]
             rows = [row for row in rows if row]
             return BlockType.TABLE, "\n".join(" | ".join(row) for row in rows), None, {
-                "rows": rows
+                "rows": rows,
+                "has_header": has_header,
+                "table_kind_hint": (
+                    "semantic_candidate" if has_header else "uncertain"
+                ),
             }
         if name == "img":
             src = urljoin(base_url, str(tag.get("src", "")))

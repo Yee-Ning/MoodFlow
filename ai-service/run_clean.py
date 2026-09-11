@@ -29,6 +29,10 @@ from app.rag.clean.sampling import (
     write_sampling_manifest,
 )
 from app.rag.clean.service import CleanPipelineService
+from app.rag.clean.table_inspection import (
+    NormalizedTableInspector,
+    write_table_inspection_report,
+)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -36,7 +40,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         description="Profile, sample, discover candidates, and clean normalized music documents."
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
-    for name in ("profile", "sample", "discover-noise", "clean"):
+    for name in ("profile", "sample", "inspect-tables", "discover-noise", "clean"):
         subparser = subparsers.add_parser(name)
         subparser.add_argument("--config", type=Path, default=DEFAULT_CLEAN_CONFIG_PATH)
         subparser.add_argument("--normalized-root", type=Path)
@@ -49,6 +53,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     sample.add_argument("--output", type=Path)
     sample.add_argument("--seed", type=int)
     sample.add_argument("--size", type=int)
+
+    inspect_tables = subparsers.choices["inspect-tables"]
+    inspect_tables.add_argument("--output", type=Path)
 
     discover = subparsers.choices["discover-noise"]
     discover.add_argument("--sampling-manifest", type=Path)
@@ -122,6 +129,28 @@ def main(
                 "actual_size": sampling.actual_size,
                 "dimensions_used": sampling.dimensions_used,
                 "degraded_dimensions": sampling.degraded_dimensions,
+            }
+        elif args.command == "inspect-tables":
+            report = NormalizedTableInspector().inspect(reader.load_all())
+            output = _resolve(root, args.output) or (
+                root
+                / "data"
+                / "clean"
+                / "reports"
+                / config.clean_version
+                / "tables"
+                / "table_summary.json"
+            )
+            paths = write_table_inspection_report(report, output)
+            payload = {
+                "output": _relative(root, paths.summary),
+                "manifest": _relative(root, paths.manifest),
+                "documents_with_tables": report["documents_with_tables"],
+                "table_count": report["table_count"],
+                "classification_statistics": report[
+                    "classification_statistics"
+                ],
+                "review_document_count": report["review_document_count"],
             }
         elif args.command == "discover-noise":
             sampling_path = _resolve(root, args.sampling_manifest) or (

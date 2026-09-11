@@ -3,10 +3,11 @@
 from collections.abc import Sequence
 
 from .models import BlockType, DocumentBlock, JsonValue
+from .table_support import normalized_table_rows, render_table_markdown
 
 
 class MarkdownNormalizer:
-    version = "1.0.0"
+    version = "1.1.0"
 
     def render(self, blocks: Sequence[DocumentBlock]) -> str:
         rendered = [self._render_block(block) for block in blocks]
@@ -57,34 +58,12 @@ class MarkdownNormalizer:
         return f"{fence}{language}\n{code}\n{fence}"
 
     def _render_table(self, block: DocumentBlock) -> str:
-        rows = block.metadata.get("rows")
-        if not isinstance(rows, list) or not rows:
+        rows = normalized_table_rows(block.metadata.get("rows"))
+        if not rows:
             return block.text
-        normalized_rows = [
-            [self._escape_table_cell(self._string_value(cell)) for cell in row]
-            for row in rows
-            if isinstance(row, list)
-        ]
-        if not normalized_rows:
-            return block.text
-        column_count = max(len(row) for row in normalized_rows)
-        padded = [row + [""] * (column_count - len(row)) for row in normalized_rows]
-        header = padded[0]
-        separator = ["---"] * column_count
-        body = padded[1:]
-        return "\n".join(
-            self._markdown_row(row) for row in [header, separator, *body]
+        return render_table_markdown(
+            rows, has_header=block.metadata.get("has_header") is not False
         )
-
-    @staticmethod
-    def _markdown_row(row: Sequence[str]) -> str:
-        return f"| {' | '.join(row)} |"
-
-    @staticmethod
-    def _escape_table_cell(value: str) -> str:
-        return value.replace("|", "\\|").replace("\r\n", "<br>").replace(
-            "\r", "<br>"
-        ).replace("\n", "<br>")
 
     @staticmethod
     def _normalize_newlines(value: str) -> str:

@@ -126,7 +126,7 @@ class OfficialArchiveCompatibilityTests(unittest.TestCase):
 
             content_list = output.result.metadata["mineru"]["content_list"]
             self.assertEqual(len(content_list), 5)
-            self.assertEqual(output.parser_version, "cloud-api-v4+a1.0.0")
+            self.assertEqual(output.parser_version, "cloud-api-v4+a1.1.0")
 
 
 class MinerUCloudRunnerTests(unittest.TestCase):

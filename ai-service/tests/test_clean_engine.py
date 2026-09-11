@@ -124,6 +124,14 @@ class CleanEngineRegressionTests(unittest.TestCase):
         self.assertTrue(result.document.needs_review)
         self.assertIn("unknown_source:Music Source", result.document.warnings)
 
+    def test_default_clean_preserves_table_rows_and_numeric_facts(self) -> None:
+        text = "| 歌曲 | 年份 | 排名 |\n| --- | --- | --- |\n| 红豆 | 1998 | 1 |\n"
+
+        result = configured_engine().clean(self._context(text))
+
+        self.assertEqual(result.after_text, text)
+        self.assertIn("| 红豆 | 1998 | 1 |", result.document.cleaned_text)
+
     def test_source_and_document_type_rules_are_strictly_scoped(self) -> None:
         rules = [
             rule(

@@ -25,7 +25,7 @@ from .router import PDFParserRouter
 
 class PdfCascadeParser(BaseParser):
     parser_name = "pdf-cascade"
-    parser_version = "1.0.0"
+    parser_version = "1.1.0"
     supported_file_types = frozenset({DetectedFileType.PDF})
 
     def __init__(

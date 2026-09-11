@@ -94,6 +94,9 @@ class MarkdownParserTests(unittest.TestCase):
             result.blocks[5].metadata["rows"],
             [["曲目", "年份"], ["简单爱", "2001"]],
         )
+        self.assertEqual(len(result.tables), 1)
+        self.assertTrue(result.tables[0].metadata["has_header"])
+        self.assertEqual(result.tables[0].rows[1], ["简单爱", "2001"])
         self.assertEqual(result.blocks[6].metadata["src"], "cover.jpg")
 
     def test_markdown_is_reformatted_without_rewriting_inline_text(self) -> None:

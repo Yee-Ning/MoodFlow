@@ -169,6 +169,9 @@ class CleanCliTests(unittest.TestCase):
                 run_clean.main(["sample", "--size", "1"], project_root=root), 0
             )
             self.assertEqual(
+                run_clean.main(["inspect-tables"], project_root=root), 0
+            )
+            self.assertEqual(
                 run_clean.main(
                     ["clean", "--dry-run", "--run-id", "cli-dry-run"],
                     project_root=root,
@@ -185,6 +188,17 @@ class CleanCliTests(unittest.TestCase):
                     / "v0.2"
                     / "cli-dry-run"
                     / "clean_summary.json"
+                ).is_file()
+            )
+            self.assertTrue(
+                (
+                    root
+                    / "data"
+                    / "clean"
+                    / "reports"
+                    / "v0.2"
+                    / "tables"
+                    / "table_summary.json"
                 ).is_file()
             )
 

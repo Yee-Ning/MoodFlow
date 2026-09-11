@@ -16,7 +16,7 @@ from pydantic import (
 from app.rag.source_ingestion.models import CandidateSource, RawSnapshotRecord
 
 
-NORMALIZATION_VERSION = "1.0.0"
+NORMALIZATION_VERSION = "1.1.0"
 
 
 class DetectedFileType(StrEnum):

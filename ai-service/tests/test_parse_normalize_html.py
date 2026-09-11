@@ -101,6 +101,16 @@ class HtmlParserTests(unittest.TestCase):
             result.blocks[7].metadata["rows"],
             [["Song", "Year"], ["Qi Li Xiang", "2004"]],
         )
+        self.assertTrue(result.blocks[7].metadata["has_header"])
+        self.assertEqual(len(result.tables), 1)
+        self.assertEqual(
+            result.tables[0].rows,
+            [["Song", "Year"], ["Qi Li Xiang", "2004"]],
+        )
+        self.assertEqual(
+            result.tables[0].metadata["source_block_id"],
+            result.blocks[7].block_id,
+        )
         self.assertEqual(
             result.blocks[8].metadata["src"],
             "https://example.test/albums/cover.jpg",
@@ -139,6 +149,19 @@ class HtmlParserTests(unittest.TestCase):
         self.assertNotIn("\r", markdown)
         self.assertNotIn("\n\n\n", markdown)
         self.assertTrue(markdown.endswith("\n"))
+
+    def test_headerless_html_table_is_preserved_without_semantic_guess(self) -> None:
+        raw = b"<html><body><table><tr><td>Home</td><td>News</td></tr></table></body></html>"
+
+        result = HtmlParser().parse(_parse_input(raw))
+
+        self.assertEqual(result.blocks[0].metadata["table_kind_hint"], "uncertain")
+        self.assertFalse(result.blocks[0].metadata["has_header"])
+        self.assertEqual(result.tables[0].rows, [["Home", "News"]])
+        self.assertEqual(
+            MarkdownNormalizer().render(result.blocks),
+            "|  |  |\n| --- | --- |\n| Home | News |\n",
+        )
 
     def test_code_fence_is_longer_than_backtick_run_in_content(self) -> None:
         block = DocumentBlock(

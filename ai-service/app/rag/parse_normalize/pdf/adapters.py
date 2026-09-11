@@ -32,6 +32,11 @@ from app.rag.parse_normalize.models import (
     ParserResult,
 )
 from app.rag.parse_normalize.parsers.markdown import MarkdownParser
+from app.rag.parse_normalize.table_support import (
+    extract_html_table,
+    normalized_table_rows,
+    render_table_markdown,
+)
 
 from .models import PDFInspection
 
@@ -433,6 +438,7 @@ class MinerUAdapterConfig:
 
 class MinerUAdapter(PDFParserAdapter):
     parser_name = "mineru"
+    adapter_version = "1.1.0"
 
     def __init__(
         self,
@@ -581,19 +587,28 @@ class MinerUAdapter(PDFParserAdapter):
             if title is None and block_type is BlockType.HEADING:
                 title = text
             if block_type is BlockType.TABLE:
-                rows = item.get("table_rows", [])
+                rows = normalized_table_rows(block_metadata.get("rows"))
                 tables.append(
                     DocumentTable(
                         table_id=f"{parse_input.snapshot.source_id}-t{len(tables):06d}",
                         page_number=block_metadata["page_number"],
                         bbox=self._bbox_tuple(block_metadata.get("bbox")),
-                        markdown=text,
-                        rows=(
-                            [[str(cell) for cell in row] for row in rows if isinstance(row, list)]
-                            if isinstance(rows, list)
-                            else []
+                        markdown=(
+                            render_table_markdown(
+                                rows,
+                                has_header=block_metadata.get("has_header") is not False,
+                            )
+                            if rows
+                            else text
                         ),
-                        metadata={"source_block_id": block_id},
+                        rows=rows,
+                        metadata={
+                            "source_block_id": block_id,
+                            "has_header": block_metadata.get("has_header", False),
+                            "table_kind_hint": block_metadata.get(
+                                "table_kind_hint", "uncertain"
+                            ),
+                        },
                     )
                 )
             if block_type is BlockType.IMAGE:
@@ -704,9 +719,15 @@ class MinerUAdapter(PDFParserAdapter):
         if block_type is BlockType.LIST:
             metadata.update({"items": items, "ordered": False})
         if block_type is BlockType.TABLE:
-            rows = item.get("table_rows", [])
-            if isinstance(rows, list):
-                metadata["rows"] = PyMuPDF4LLMAdapter._json_safe(rows)
+            rows = normalized_table_rows(item.get("table_rows", []))
+            has_header = False
+            if not rows:
+                rows, has_header = extract_html_table(text)
+            metadata["rows"] = rows
+            metadata["has_header"] = has_header
+            metadata["table_kind_hint"] = (
+                "semantic_candidate" if has_header else "uncertain"
+            )
         if block_type is BlockType.IMAGE:
             metadata.update(
                 {

@@ -21,6 +21,12 @@ from .profiling import NormalizedCorpusProfiler, write_profile_report
 from .registry import RuleAction, RuleRegistry, RuleScopeType
 from .sampling import SamplingManifest, StratifiedSampler, write_sampling_manifest
 from .service import CleanPipelineService, CleanRunOutcome
+from .table_inspection import (
+    NormalizedTableInspector,
+    TableInspectionConfig,
+    TableInspectionPaths,
+    write_table_inspection_report,
+)
 
 __all__ = [
     "DEFAULT_CLEAN_CONFIG_PATH",
@@ -45,8 +51,12 @@ __all__ = [
     "RuleScopeType",
     "SamplingManifest",
     "StratifiedSampler",
+    "NormalizedTableInspector",
+    "TableInspectionConfig",
+    "TableInspectionPaths",
     "SemanticGuard",
     "load_clean_config",
     "write_profile_report",
     "write_sampling_manifest",
+    "write_table_inspection_report",
 ]
