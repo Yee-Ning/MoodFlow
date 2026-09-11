@@ -1,0 +1,60 @@
+clean_version: v0.1
+
+# A source or document type becomes "known" only after its registry behavior has
+# been reviewed. Empty v0.1 catalogs intentionally keep current missing/unknown
+# dimensions on the global-safe path.
+known_sources: []
+known_document_types: []
+
+profiling:
+  short_document_chars: 300
+  frequent_line_min_documents: 3
+  frequent_short_text_min_documents: 3
+  frequent_short_text_max_chars: 80
+  prefix_suffix_line_count: 1
+  repeated_sequence_lines: 2
+  repeated_sequence_min_documents: 3
+  top_k: 100
+  max_example_chars: 500
+
+sampling:
+  seed: 104729
+  sample_size: 18
+  max_text_chars_per_document: 12000
+  length_buckets:
+    - name: empty
+      max_chars: 0
+    - name: very_short
+      max_chars: 500
+    - name: short
+      max_chars: 2000
+    - name: medium
+      max_chars: 10000
+    - name: long
+      max_chars: 50000
+    - name: very_long
+      max_chars: null
+
+noise_discovery:
+  prompt_version: v0.1
+  batch_size: 4
+  max_candidates_per_batch: 12
+
+semantic_guard:
+  removed_ratio_warning: 0.35
+  large_drop_ratio: 0.20
+  large_drop_min_chars: 1000
+  fact_loss_warning_ratio: 0.25
+  min_numeric_facts: 3
+  min_structured_facts: 2
+  numeric_pattern: '(?<![\w])\d+(?:[.,]\d+)?%?(?![\w])'
+  date_pattern: '(?<!\d)(?:1[89]|20)\d{2}(?:[-/.年]\d{1,2}(?:[-/.月]\d{1,2}日?)?)?(?!\d)'
+  structured_fact_patterns:
+    - '(?im)^\s*(?:[-*]\s*)?(?:artist|歌手|艺人|藝人|演唱)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:album|专辑|專輯|收录|收錄)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:lyrics?|作词|作詞|词|詞)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:composer|music|作曲|曲)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:release(?:d)?|发行|發行|日期|date)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:rank|ranking|chart|排名|榜单|榜單|bpm|销量|銷量)\s*[:：].+$'
+
+rules: []

@@ -19,4 +19,6 @@ data/raw/source_corpus_report.json
 data/raw/source_corpus_report.md
 data/normalized/**
 data/parsed_cache/**
+data/clean/**
+data/cleaned/**
 tmp/
