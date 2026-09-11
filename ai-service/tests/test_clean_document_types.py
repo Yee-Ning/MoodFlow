@@ -43,13 +43,22 @@ def assignment(
 
 def sidecar(*assignments: DocumentTypeAssignment) -> DocumentTypeSidecar:
     return DocumentTypeSidecar(
-        sidecar_version="v0.1",
+        sidecar_version="v0.2",
         assignment_policy="Only manually reviewed assignments are applied.",
         assignments=list(assignments),
     )
 
 
 class DocumentTypeSidecarTests(unittest.TestCase):
+    def test_v01_registry_remains_loadable_without_a_sidecar(self) -> None:
+        config, _ = load_clean_config(
+            DEFAULT_CLEAN_CONFIG_PATH.with_name("v0.1.yaml")
+        )
+
+        self.assertEqual(config.clean_version, "v0.1")
+        self.assertIsNone(config.document_type_sidecar)
+        self.assertIsNone(config.document_type_sidecar_checksum)
+
     def test_approved_sidecar_fills_missing_type_without_mutating_normalized(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -78,7 +87,7 @@ class DocumentTypeSidecarTests(unittest.TestCase):
 
             self.assertEqual(context.document_type, "album")
             self.assertEqual(context.document_type_origin, DocumentTypeOrigin.SIDECAR)
-            self.assertEqual(context.document_type_sidecar_version, "v0.1")
+            self.assertEqual(context.document_type_sidecar_version, "v0.2")
             self.assertEqual(context.document_type_sidecar_checksum, checksum)
             self.assertEqual(
                 hashlib.sha256(normalized_path.read_bytes()).hexdigest(), before_hash

@@ -1,0 +1,44 @@
+review_version: v0.2
+reviewed_at: 2026-09-11
+source_report: data/clean/reports/v0.1/noise_discovery/candidate_rules.json
+policy: >-
+  Approve only source-scoped patterns supported by the sampled normalized
+  documents. Preserve publisher facts, article disclaimers, article images,
+  language lists, category lists, and ambiguous promotional prose.
+
+decisions:
+  - candidate_id: candidate-9f2a96dda3026607
+    decision: APPROVED_PARTIAL
+    implemented_rules: [SONY_TW_UI_001, SONY_TW_UI_002]
+    approved: Exact site-logo, social-icon asset filenames, and primary navigation labels.
+    deferred: Album covers, artist images, footer company facts, and policy text.
+
+  - candidate_id: candidate-eef38023946a397e
+    decision: DEFERRED
+    implemented_rules: []
+    deferred: Appliance advertorial block observed in only one PDF snapshot.
+    reason: More same-source evidence is required before a stable block boundary can be defined.
+
+  - candidate_id: candidate-3bcb284054e5f329
+    decision: APPROVED_PARTIAL
+    implemented_rules: [BAMID_UI_001]
+    approved: Repeated global-menu rows and exact share, print, search, and font controls.
+    deferred: Award breadcrumbs, publication dates, award labels, and government facts.
+
+  - candidate_id: candidate-27e65dd043887703
+    decision: APPROVED_PARTIAL
+    implemented_rules: [WIKIPEDIA_UI_001, WIKIPEDIA_UI_002]
+    approved: Start-anchored MediaWiki header and complete contiguous page-action block.
+    deferred: Language lists, categories, maintenance notices, revision date, and license footer.
+
+  - candidate_id: candidate-9b9b6939696a3254
+    decision: APPROVED_PARTIAL
+    implemented_rules: [JVR_UI_001]
+    approved: Exact language, primary-navigation, social, and privacy-link labels.
+    deferred: Company name, copyright year, address, phone number, and content imagery.
+
+  - candidate_id: candidate-d40400a71c4482a4
+    decision: APPROVED_PARTIAL
+    implemented_rules: [THEPAPER_UI_001, THEPAPER_UI_002]
+    approved: Static UI-bundle images and exact login, action, app-download, and social labels.
+    deferred: Hotline, email, licenses, copyright, article disclaimer, and article media.

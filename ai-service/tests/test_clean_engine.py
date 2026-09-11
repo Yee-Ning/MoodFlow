@@ -61,7 +61,7 @@ def rule(
         "enabled": True,
         "safe": safe,
         "reason": "Hermetic regression fixture",
-        "version": "v0.1",
+        "version": "v0.2",
         "flags": flags or [],
     }
     if replacement is not None:
@@ -122,7 +122,7 @@ class CleanEngineRegressionTests(unittest.TestCase):
         self.assertNotIn("\r", result.after_text)
         self.assertIn("GLOBAL_SAFE_002", result.audit.applied_rules)
         self.assertTrue(result.document.needs_review)
-        self.assertIn("unknown_document_type:song", result.document.warnings)
+        self.assertIn("unknown_source:Music Source", result.document.warnings)
 
     def test_source_and_document_type_rules_are_strictly_scoped(self) -> None:
         rules = [

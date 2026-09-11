@@ -13,7 +13,7 @@ from .document_types import DocumentTypeSidecar
 from .errors import CleanConfigError
 
 
-DEFAULT_CLEAN_CONFIG_PATH = Path(__file__).with_name("rules") / "v0.1.yaml"
+DEFAULT_CLEAN_CONFIG_PATH = Path(__file__).with_name("rules") / "v0.2.yaml"
 
 
 class ProfilingConfig(BaseModel):
@@ -81,6 +81,7 @@ class SemanticGuardConfig(BaseModel):
     fact_loss_warning_ratio: float = Field(default=0.25, ge=0, le=1)
     min_numeric_facts: int = Field(default=3, ge=1)
     min_structured_facts: int = Field(default=2, ge=1)
+    ignore_url_numeric_facts: bool = False
     numeric_pattern: str = Field(min_length=1)
     date_pattern: str = Field(min_length=1)
     structured_fact_patterns: list[str] = Field(min_length=1)

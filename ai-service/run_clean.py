@@ -1,4 +1,4 @@
-"""Operator CLI for the Music RAG Clean v0.1 offline pipeline."""
+"""Operator CLI for the versioned Music RAG Clean offline pipeline."""
 
 from __future__ import annotations
 

@@ -1,0 +1,246 @@
+sidecar_version: v0.2
+assignment_policy: >-
+  Apply only document types confirmed from the normalized page purpose, title,
+  URL, and publisher context. Absence is preserved as unknown; source_type is
+  evidence only and is never copied mechanically into document_type.
+
+assignments:
+  - source_id: jc-v1-001
+    document_type: artist
+    review_status: APPROVED
+    reason: The official artist profile URL and page heading identify an artist profile.
+    evidence: ["URL path: /artist/profile/", "page heading: 藝人專區"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-002
+    document_type: news
+    review_status: APPROVED
+    reason: The official label page is a dated release announcement in its news section.
+    evidence: ["URL path: /artist/news/detail/", "page contains a release announcement"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-003
+    document_type: news
+    review_status: APPROVED
+    reason: The official label page is an announcement in its news section.
+    evidence: ["URL path: /news/detail/", "page body is an official announcement"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-004
+    document_type: album
+    review_status: APPROVED
+    reason: The record-label URL and page content identify an album product page.
+    evidence: ["URL path: /album/", "page contains an album title and track list"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-005
+    document_type: album
+    review_status: APPROVED
+    reason: The record-label URL and page content identify an album product page.
+    evidence: ["URL path: /album/", "page contains an album title and track list"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-006
+    document_type: album
+    review_status: APPROVED
+    reason: The record-label URL and page content identify an album product page.
+    evidence: ["URL path: /album/", "page contains an album title and track list"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-007
+    document_type: album
+    review_status: APPROVED
+    reason: The record-label URL and page content identify an album product page.
+    evidence: ["URL path: /album/", "page contains an album title and track list"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-008
+    document_type: album
+    review_status: APPROVED
+    reason: The record-label URL and page content identify an album product page.
+    evidence: ["URL path: /album/", "page contains an album title and track list"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-003
+    document_type: album
+    review_status: APPROVED
+    reason: The record-label URL and page content identify an album product page.
+    evidence: ["URL path: /album/", "page contains an album title and track list"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-004
+    document_type: album
+    review_status: APPROVED
+    reason: The record-label URL and page content identify an album product page.
+    evidence: ["URL path: /album/", "page contains an album title and track list"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-011
+    document_type: award
+    review_status: APPROVED
+    reason: The government page explicitly contains an official award-winner list.
+    evidence: ["title: 第十三屆金曲獎得獎名單", "publisher is the responsible government bureau"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-012
+    document_type: award
+    review_status: APPROVED
+    reason: The government page explicitly contains an official award-nominee list.
+    evidence: ["title: 第十三屆金曲獎入圍名單", "publisher is the responsible government bureau"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-030
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-031
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-032
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-033
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-034
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-035
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-036
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v1-037
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-016
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-020
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-022
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-025
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-026
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-029
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-033
+    document_type: wiki
+    review_status: APPROVED
+    reason: The original URL and publisher identify a Wikipedia article snapshot.
+    evidence: ["publisher: Wikipedia", "URL host: zh.wikipedia.org"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-006
+    document_type: news
+    review_status: APPROVED
+    reason: The publisher page is a journalistic feature article.
+    evidence: ["publisher: 澎湃新闻", "page contains editorial credits and an original headline"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-007
+    document_type: news
+    review_status: APPROVED
+    reason: The publisher page is a journalistic feature article.
+    evidence: ["publisher: 澎湃新闻", "URL path: /newsDetail_forward_"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11
+
+  - source_id: jc-v2-008
+    document_type: news
+    review_status: APPROVED
+    reason: The publisher page is a journalistic feature article.
+    evidence: ["publisher: 澎湃新闻", "URL path: /newsDetail_forward_"]
+    reviewed_by: clean-v0.2-manual-review
+    reviewed_at: 2026-09-11

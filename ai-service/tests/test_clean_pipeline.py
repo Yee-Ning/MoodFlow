@@ -43,7 +43,7 @@ class CleanPipelineServiceTests(unittest.TestCase):
                 path: hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in (root / "data" / "normalized").glob("*/document.json")
             }
-            cleaned_root = root / "data" / "cleaned" / "v0.1"
+            cleaned_root = root / "data" / "cleaned" / "v0.2"
             cleaned_root.mkdir(parents=True)
             sentinel = cleaned_root / "sentinel.txt"
             sentinel.write_text("do not touch", encoding="utf-8")
@@ -110,7 +110,7 @@ class CleanPipelineServiceTests(unittest.TestCase):
                 root
                 / "data"
                 / "cleaned"
-                / "v0.1"
+                / "v0.2"
                 / "cleaned_corpus_manifest.jsonl",
             )
             cleaned = CleanedDocument.model_validate_json(
@@ -118,13 +118,13 @@ class CleanPipelineServiceTests(unittest.TestCase):
                     root
                     / "data"
                     / "cleaned"
-                    / "v0.1"
+                    / "v0.2"
                     / "utada-song"
                     / "document.json"
                 ).read_text(encoding="utf-8")
             )
             self.assertEqual(cleaned.document_id, "doc-utada-song")
-            self.assertEqual(cleaned.clean_version, "v0.1")
+            self.assertEqual(cleaned.clean_version, "v0.2")
             self.assertEqual(cleaned.rule_registry_checksum, checksum)
             self.assertIn("1999", cleaned.cleaned_text)
             self.assertTrue(cleaned.rules_applied)
@@ -182,7 +182,7 @@ class CleanCliTests(unittest.TestCase):
                     / "data"
                     / "clean"
                     / "reports"
-                    / "v0.1"
+                    / "v0.2"
                     / "cli-dry-run"
                     / "clean_summary.json"
                 ).is_file()

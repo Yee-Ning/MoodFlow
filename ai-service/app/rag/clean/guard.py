@@ -11,6 +11,11 @@ from .registry import RuleRegistry
 
 
 class SemanticGuard:
+    markdown_destination_pattern = re.compile(
+        r"\]\((?:https?|data):[^)\s]*\)", re.IGNORECASE
+    )
+    raw_url_pattern = re.compile(r"https?://\S+", re.IGNORECASE)
+
     def __init__(self, config: SemanticGuardConfig) -> None:
         self.config = config
         self.numeric_pattern = re.compile(config.numeric_pattern)
@@ -89,9 +94,17 @@ class SemanticGuard:
             warnings.append(f"{code}:count={lost},ratio={ratio:.4f}")
 
     def _numeric_facts(self, text: str) -> Counter[str]:
-        facts = [f"number:{match.group(0)}" for match in self.numeric_pattern.finditer(text)]
+        candidate = text
+        if self.config.ignore_url_numeric_facts:
+            candidate = self.markdown_destination_pattern.sub("]()", candidate)
+            candidate = self.raw_url_pattern.sub("", candidate)
+        facts = [
+            f"number:{match.group(0)}"
+            for match in self.numeric_pattern.finditer(candidate)
+        ]
         facts.extend(
-            f"date:{match.group(0)}" for match in self.date_pattern.finditer(text)
+            f"date:{match.group(0)}"
+            for match in self.date_pattern.finditer(candidate)
         )
         return Counter(facts)
 

@@ -1,0 +1,274 @@
+clean_version: v0.2
+document_type_sidecar_path: document_types/v0.2.yaml
+
+known_sources:
+  - 杰威爾音樂
+  - 台灣索尼音樂娛樂
+  - 文化部影視及流行音樂產業局
+  - Wikipedia
+  - 澎湃新闻
+
+known_document_types:
+  - artist
+  - album
+  - award
+  - news
+  - wiki
+
+profiling:
+  short_document_chars: 300
+  frequent_line_min_documents: 3
+  frequent_short_text_min_documents: 3
+  frequent_short_text_max_chars: 80
+  prefix_suffix_line_count: 1
+  repeated_sequence_lines: 2
+  repeated_sequence_min_documents: 3
+  top_k: 100
+  max_example_chars: 500
+
+sampling:
+  seed: 104729
+  sample_size: 12
+  max_text_chars_per_document: 6000
+  length_buckets:
+    - name: empty
+      max_chars: 0
+    - name: very_short
+      max_chars: 500
+    - name: short
+      max_chars: 2000
+    - name: medium
+      max_chars: 10000
+    - name: long
+      max_chars: 50000
+    - name: very_long
+      max_chars: null
+
+noise_discovery:
+  prompt_version: v0.2
+  batch_size: 2
+  max_candidates_per_batch: 1
+
+semantic_guard:
+  removed_ratio_warning: 0.35
+  large_drop_ratio: 0.20
+  large_drop_min_chars: 1000
+  fact_loss_warning_ratio: 0.25
+  min_numeric_facts: 3
+  min_structured_facts: 2
+  ignore_url_numeric_facts: true
+  numeric_pattern: '(?<![\w])\d+(?:[.,]\d+)?%?(?![\w])'
+  date_pattern: '(?<!\d)(?:1[89]|20)\d{2}(?:[-/.年]\d{1,2}(?:[-/.月]\d{1,2}日?)?)?(?!\d)'
+  structured_fact_patterns:
+    - '(?im)^\s*(?:[-*]\s*)?(?:artist|歌手|艺人|藝人|演唱)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:album|专辑|專輯|收录|收錄)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:lyrics?|作词|作詞|词|詞)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:composer|music|作曲|曲)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:release(?:d)?|发行|發行|日期|date)\s*[:：].+$'
+    - '(?im)^\s*(?:[-*]\s*)?(?:rank|ranking|chart|排名|榜单|榜單|bpm|销量|銷量)\s*[:：].+$'
+
+reporting:
+  before_after_sample_size: 20
+  max_sample_text_chars: 4000
+
+rules:
+  - id: GLOBAL_SAFE_001
+    name: normalize_unicode_nfc
+    description: Normalize canonically equivalent Unicode sequences to NFC.
+    scope: {type: GLOBAL}
+    action: NORMALIZE
+    pattern: UNICODE_NFC
+    priority: 10
+    enabled: true
+    safe: true
+    reason: Canonical Unicode normalization preserves text semantics.
+    version: v0.2
+
+  - id: GLOBAL_SAFE_002
+    name: normalize_newlines
+    description: Normalize CRLF and CR line endings to LF.
+    scope: {type: GLOBAL}
+    action: NORMALIZE
+    pattern: NEWLINES
+    priority: 20
+    enabled: true
+    safe: true
+    reason: Platform line endings are representational rather than semantic.
+    version: v0.2
+
+  - id: GLOBAL_SAFE_003
+    name: trim_trailing_whitespace
+    description: Remove spaces and tabs immediately before a line ending.
+    scope: {type: GLOBAL}
+    action: NORMALIZE
+    pattern: TRAILING_WHITESPACE
+    priority: 30
+    enabled: true
+    safe: true
+    reason: Parser output does not use trailing whitespace as music-domain data.
+    version: v0.2
+
+  - id: GLOBAL_SAFE_004
+    name: collapse_excess_blank_lines
+    description: Collapse three or more consecutive LF characters to two.
+    scope: {type: GLOBAL}
+    action: NORMALIZE
+    pattern: BLANK_LINES
+    priority: 40
+    enabled: true
+    safe: true
+    reason: Preserve paragraph boundaries while removing redundant blank lines.
+    version: v0.2
+
+  - id: GLOBAL_SAFE_005
+    name: ensure_single_final_newline
+    description: Ensure non-empty text ends with exactly one LF character.
+    scope: {type: GLOBAL}
+    action: NORMALIZE
+    pattern: FINAL_NEWLINE
+    priority: 50
+    enabled: true
+    safe: true
+    reason: Stable file termination makes output reproducible.
+    version: v0.2
+
+  - id: JVR_UI_001
+    name: remove_jvr_navigation_controls
+    description: Remove exact language, top-menu, social, and privacy-link UI lines.
+    scope:
+      type: SOURCE_SPECIFIC
+      sources: [杰威爾音樂]
+    action: DROP_LINE
+    pattern: '^-(?: |\s+)(?:繁|簡|EN|NEWS 最新消息|ARTISTS 藝人專區|SCHEDULE 活動行程|VIDEO 影音專區|ABOUT 關於我們|HOME 首頁|FB|Youtube|新浪微博|版權及隱私保護⁄)$'
+    flags: []
+    priority: 100
+    enabled: true
+    safe: false
+    reason: Candidate candidate-9b9b6939696a3254; only exact UI labels are approved, while company, address, phone, and copyright facts remain untouched.
+    version: v0.2
+
+  - id: SONY_TW_UI_001
+    name: remove_sony_template_icon_images
+    description: Remove site-logo and social-platform icon image lines by reviewed asset filename.
+    scope:
+      type: SOURCE_SPECIFIC
+      sources: [台灣索尼音樂娛樂]
+    action: DROP_LINE
+    pattern: '^!\[(?:Sony Music|YouTube|Spotify|social|KBox|Instagram|Facebook)\]\(https?://[^)]+/(?:sony-music-logo|icon-yt|Spotify_Primary_Logo_RGB_White|music|kbox-icon|Instagram_Glyph_White|Facebook_Logo_Secondary)\.(?:png|svg)(?:\?[^)]*)?\)$'
+    flags: [IGNORECASE]
+    priority: 100
+    enabled: true
+    safe: false
+    reason: Candidate candidate-9f2a96dda3026607; filenames identify template logos/icons and deliberately exclude album covers and artist images.
+    version: v0.2
+
+  - id: SONY_TW_UI_002
+    name: remove_sony_primary_navigation
+    description: Remove exact top-level record-label navigation labels.
+    scope:
+      type: SOURCE_SPECIFIC
+      sources: [台灣索尼音樂娛樂]
+    action: DROP_LINE
+    pattern: '^- (?:華語|西洋|東洋|韓樂|古典|新聞|商店)$'
+    flags: []
+    priority: 110
+    enabled: true
+    safe: false
+    reason: Manual review confirmed these exact repeated lines as the label site's primary navigation.
+    version: v0.2
+
+  - id: BAMID_UI_001
+    name: remove_government_page_controls
+    description: Remove reviewed global-menu, share, and font-size control lines while preserving award breadcrumbs and facts.
+    scope:
+      type: SOURCE_SPECIFIC
+      sources: [文化部影視及流行音樂產業局]
+    action: DROP_LINE
+    pattern: '^- (?:進階搜尋|Facebook|X|line|Email|字級 小|字級 中|字級 大|列印內容|無障礙服務|網站導覽|About Us|RSS|影音|社群|English|隱私權及安全政策宣示|政府網站資料開放宣告|個資保護|首長信箱|關於本局 成立沿革.*|最新消息 新聞稿.*|申請業務 廣播電視.*|獎勵業務 廣播電視.*|補助業務 廣播電視.*|行政公開資訊 研究報告.*|相關法規 電影法規.*|便民服務 檔案應用申請.*)$'
+    flags: []
+    priority: 100
+    enabled: true
+    safe: false
+    reason: Candidate candidate-3bcb284054e5f329; long menu rows and exact UI controls were confirmed in both official award pages, while award navigation and dates remain.
+    version: v0.2
+
+  - id: WIKIPEDIA_UI_001
+    name: remove_wikipedia_header_chrome
+    description: Remove the exact MediaWiki sidebar and account header before the table of contents.
+    scope:
+      type: SOURCE_SPECIFIC
+      sources: [Wikipedia]
+    action: DROP_BLOCK
+    pattern: '\A- 首页\n- 分类索引\n- 特色内容\n- 新闻动态\n- 随机条目\n- 联络我们\n- 关于维基百科\n\n- 帮助\n- 维基社群\n- 编辑入门\n- 互助客栈\n- IRC即时聊天\n- 最近更改\n- 特殊页面\n\n!\[\]\(https://zh\.wikipedia\.org/static/images/icons/wikipedia\.png\)\n\n!\[维基百科\]\(https://zh\.wikipedia\.org/static/images/mobile/copyright/wikipedia-wordmark-zh\.svg\)\n\n!\[自由的百科全书\]\(https://zh\.wikipedia\.org/static/images/mobile/copyright/wikipedia-tagline-zh\.svg\)\n\n- 资助维基百科\n- 创建账号\n- 登录\n\n- 资助维基百科\n- 创建账号\n- 登录\n\n(?=## 目录\n)'
+    flags: []
+    priority: 100
+    enabled: true
+    safe: false
+    reason: Candidate candidate-27e65dd043887703; the exact start-anchored block is identical MediaWiki chrome across all reviewed Wikipedia snapshots.
+    version: v0.2
+
+  - id: WIKIPEDIA_UI_002
+    name: remove_wikipedia_page_action_controls
+    description: Remove the contiguous article-action, script-variant, and tool UI block.
+    scope:
+      type: SOURCE_SPECIFIC
+      sources: [Wikipedia]
+    action: DROP_BLOCK
+    pattern: '\n- 条目\n- 讨论\n\n- 不转换\n- 简体\n- 繁體\n- 大陆简体\n- 香港繁體\n- 澳門繁體\n- 大马简体\n- 新加坡简体\n- 臺灣正體\n\n- 阅读\n- (?:查看源代码|编辑)\n- 查看历史\n\n- 阅读\n- (?:查看源代码|编辑)\n- 查看历史\n\n- 链入页面\n- 相关更改\n- 上传文件\n- 固定链接\n- 页面信息\n- 引用此页\n- 获取短链接\n\n- 下载为PDF\n- 打印页面\n\n(?:- 维基共享资源\n)?(?:- 维基语录\n)?- 维基数据项目\n\n'
+    flags: []
+    priority: 110
+    enabled: true
+    safe: false
+    reason: Candidate candidate-27e65dd043887703; the surrounding sequence is required so isolated factual bullets, language lists, categories, notices, dates, and footer facts remain untouched.
+    version: v0.2
+
+  - id: THEPAPER_UI_001
+    name: remove_thepaper_static_ui_assets
+    description: Remove Markdown image lines pointing to The Paper's static UI media bundle.
+    scope:
+      type: SOURCE_SPECIFIC
+      sources: [澎湃新闻]
+    action: DROP_LINE
+    pattern: '^!\[[^]]*\]\(https?://(?:www\.|m\.)?thepaper\.cn/_next/static/media/[^)]+\)$'
+    flags: [IGNORECASE]
+    priority: 100
+    enabled: true
+    safe: false
+    reason: Candidate candidate-d40400a71c4482a4; the path identifies bundled logo, QR, accessibility, and partner UI assets rather than article media.
+    version: v0.2
+
+  - id: THEPAPER_UI_002
+    name: remove_thepaper_app_and_page_controls
+    description: Remove exact login, action, app-download, and publisher-social UI labels.
+    scope:
+      type: SOURCE_SPECIFIC
+      sources: [澎湃新闻]
+    action: DROP_LINE
+    pattern: '^(?:登录|- \+1|阅读原文|#### 扫码下载澎湃新闻客户端|Android版|iPhone版|iPad版|- 澎湃新闻微博|- 澎湃新闻公众号|- 澎湃新闻抖音号|- 派生万物开放平台|- IP SHANGHAI|- SIXTH TONE)$'
+    flags: []
+    priority: 110
+    enabled: true
+    safe: false
+    reason: Candidate candidate-d40400a71c4482a4; hotline, email, license, copyright, disclaimer, and article facts are deliberately preserved.
+    version: v0.2
+
+  - id: REVIEWED_SOURCES_FORMAT_001
+    name: collapse_blank_lines_after_source_rules
+    description: Collapse blank-line runs introduced by reviewed source-specific deletions.
+    scope:
+      type: SOURCE_SPECIFIC
+      sources:
+        - 杰威爾音樂
+        - 台灣索尼音樂娛樂
+        - 文化部影視及流行音樂產業局
+        - Wikipedia
+        - 澎湃新闻
+    action: REPLACE
+    pattern: '\n{3,}'
+    replacement: "\n\n"
+    flags: []
+    priority: 10000
+    enabled: true
+    safe: true
+    reason: DROP_LINE rules can expose adjacent blank separators; this representational normalization restores the same two-newline invariant as GLOBAL_SAFE_004.
+    version: v0.2
