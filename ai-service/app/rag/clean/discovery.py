@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Sequence
+from enum import StrEnum
 from pathlib import Path
-from typing import Protocol
+from typing import Annotated, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -37,32 +38,44 @@ Safety requirements:
 6. Every candidate must state a pattern or exact example, noise_type,
    recommended_action, applicable_source, applicable_document_type, reason,
    confidence, false_positive_risk, and evidence_document_ids.
+   recommended_action must be exactly one of DROP_LINE, DROP_BLOCK, REPLACE,
+   or REVIEW_ONLY.
 7. Rules must generalize by source or document type. Never create an entity-specific
    rule for a particular artist, song, album, award, or chart entry.
 8. An absent document_type is unknown; do not infer one from source_type.
+9. Be concise. Return only the strongest candidates allowed by maximum_candidates;
+   keep each reason and risk explanation focused, and return at most two short batch
+   notes.
 """
+
+
+class CandidateRecommendedAction(StrEnum):
+    DROP_LINE = "DROP_LINE"
+    DROP_BLOCK = "DROP_BLOCK"
+    REPLACE = "REPLACE"
+    REVIEW_ONLY = "REVIEW_ONLY"
 
 
 class CandidateNoisePattern(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    pattern_or_example: str = Field(min_length=1, max_length=2_000)
-    noise_type: str = Field(min_length=1, max_length=100)
-    recommended_action: str = Field(min_length=1, max_length=100)
-    applicable_source: list[str]
-    applicable_document_type: list[str]
-    reason: str = Field(min_length=1, max_length=2_000)
+    pattern_or_example: str = Field(min_length=1, max_length=1_000)
+    noise_type: str = Field(min_length=1, max_length=80)
+    recommended_action: CandidateRecommendedAction
+    applicable_source: list[str] = Field(max_length=10)
+    applicable_document_type: list[str] = Field(max_length=10)
+    reason: str = Field(min_length=1, max_length=600)
     confidence: float = Field(ge=0, le=1)
-    false_positive_risk: str = Field(min_length=1, max_length=1_000)
+    false_positive_risk: str = Field(min_length=1, max_length=400)
     uncertain: bool
-    evidence_document_ids: list[str] = Field(min_length=1)
+    evidence_document_ids: list[str] = Field(min_length=1, max_length=10)
 
 
 class NoiseDiscoveryBatchResult(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     candidates: list[CandidateNoisePattern]
-    batch_notes: list[str]
+    batch_notes: list[Annotated[str, Field(max_length=300)]] = Field(max_length=2)
 
 
 class NoiseDiscoveryRuntime(Protocol):
@@ -85,25 +98,30 @@ class ExistingLLMNoiseDiscoveryRuntime:
     ) -> NoiseDiscoveryBatchResult:
         from app.llm.client import create_structured_response
 
-        response = await create_structured_response(
-            [
-                {
-                    "role": "user",
-                    "content": json.dumps(
-                        {
-                            "maximum_candidates": max_candidates,
-                            "sample_documents": documents,
-                        },
-                        ensure_ascii=False,
-                    ),
-                }
-            ],
-            NOISE_DISCOVERY_PROMPT,
-            NoiseDiscoveryBatchResult.model_json_schema(),
-            schema_name="clean_noise_candidates_v0_1",
-        )
+        try:
+            response = await create_structured_response(
+                [
+                    {
+                        "role": "user",
+                        "content": json.dumps(
+                            {
+                                "maximum_candidates": max_candidates,
+                                "sample_documents": documents,
+                            },
+                            ensure_ascii=False,
+                        ),
+                    }
+                ],
+                NOISE_DISCOVERY_PROMPT,
+                NoiseDiscoveryBatchResult.model_json_schema(),
+                schema_name="clean_noise_candidates_v0_1",
+            )
+        except Exception as exc:
+            raise NoiseDiscoveryError("noise_discovery_llm_request_failed") from exc
         if response.status != "completed" or not response.output_text:
-            raise NoiseDiscoveryError("noise_discovery_llm_incomplete")
+            detail = getattr(response, "incomplete_details", None)
+            reason = getattr(detail, "reason", "unknown")
+            raise NoiseDiscoveryError(f"noise_discovery_llm_incomplete:{reason}")
         try:
             return NoiseDiscoveryBatchResult.model_validate_json(
                 response.output_text

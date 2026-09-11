@@ -104,6 +104,13 @@ class SemanticGuardConfig(BaseModel):
         return self
 
 
+class ReportingConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    before_after_sample_size: int = Field(default=20, ge=1, le=1_000)
+    max_sample_text_chars: int = Field(default=4_000, ge=200, le=100_000)
+
+
 class CleanRuleConfig(BaseModel):
     """Loose action values are validated by RuleRegistry at its boundary."""
 
@@ -134,6 +141,7 @@ class CleanPipelineConfig(BaseModel):
     sampling: SamplingConfig
     noise_discovery: NoiseDiscoveryConfig
     semantic_guard: SemanticGuardConfig
+    reporting: ReportingConfig
     rules: list[CleanRuleConfig] = Field(default_factory=list)
 
     @model_validator(mode="after")

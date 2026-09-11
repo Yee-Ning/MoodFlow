@@ -316,6 +316,89 @@ PDF V1 已预留 `parse_page(...)`、`reparse_failed_pages(...)` 和默认关闭
 Cleaning、Deduplication、Chunking、Entity Linking、Claim Extraction、Embedding
 或 Vector DB。
 
+## Music RAG Clean v0.1
+
+Clean 是只读 `NormalizedDocument`、另写 versioned Cleaned Dataset 的离线阶段：
+
+```text
+data/normalized/normalized_corpus_manifest.jsonl
+  -> profile
+  -> stratified sample
+  -> LLM candidate discovery
+  -> human review
+  -> versioned Rule Registry
+  -> clean --dry-run
+  -> review reports
+  -> clean
+  -> data/cleaned/v0.1/
+```
+
+实现位于 `app/rag/clean/`。`corpus.py` 负责严格读取现有 normalized manifest；
+`profiling.py` 统计分布、长度、重复与模板候选；`sampling.py` 使用固定 seed 做
+分层 round-robin；`discovery.py` 只让现有 LLM Client 生成未审核候选；
+`registry.py`、`engine.py` 与 `guard.py` 负责确定性规则和语义损失告警；
+`writer.py`、`reporting.py`、`service.py` 负责原子写入和运行编排。
+
+所有规则与阈值集中在 `app/rag/clean/rules/v0.1.yaml`。规则 scope 支持
+`GLOBAL`、`SOURCE_SPECIFIC`、`DOCUMENT_TYPE_SPECIFIC`，action 支持
+`NORMALIZE`、`REPLACE`、`DROP_LINE`、`DROP_BLOCK`。GLOBAL 规则必须显式
+`safe: true`；执行顺序固定为 Global → Source → Document Type，每阶段按
+`priority, id` 排序。未知 source 或未知/缺失 document type 只执行 Global Safe
+Rules，并写入 `needs_review`。当前 corpus 没有 `document_type`，sampling 会如实记录
+降级为 `source + source_type + length_bucket`，不会把 `source_type` 伪装成文档类型。
+
+在 `ai-service` 目录执行完整审核流程：
+
+```powershell
+python run_clean.py profile
+python run_clean.py sample
+python run_clean.py discover-noise
+python run_clean.py clean --dry-run
+# 人工检查 reports，确认/修改 registry 后再次 dry-run
+python run_clean.py clean
+```
+
+`sample` 可使用 `--seed`、`--size` 覆盖默认值。`discover-noise` 复用 `.env` 中现有
+LLM 配置，但模型只能输出 `candidate_rules.json`，绝不直接修改 registry；候选必须
+带 reason、scope、confidence、example 和 false-positive risk，且仍需人工确认。
+
+画像、抽样与候选报告默认位于：
+
+```text
+data/clean/reports/v0.1/
+  profile/profile_report.json
+  sampling/sampling_manifest.json
+  noise_discovery/candidate_rules.json
+```
+
+每次 dry-run/正式运行使用独立 run ID 目录，并生成：
+
+```text
+data/clean/reports/v0.1/{run_id}/
+  clean_summary.json
+  document_changes.jsonl
+  rule_hits.json
+  rule_hits.csv
+  suspicious_documents.jsonl
+  before_after_samples.jsonl
+```
+
+dry-run 会写报告但完全不触碰 `data/cleaned`。正式运行原子写入：
+
+```text
+data/cleaned/v0.1/
+  cleaned_corpus_manifest.jsonl
+  {source_id}/
+    document.md
+    document.json
+```
+
+cleaned document 保留原 `document_id`、source/source_type/document_type、metadata 和
+normalized 路径/hash，并记录 `clean_version`、registry SHA-256、`rules_applied`、
+warnings 与 `needs_review`。同一版本目录若检测到不同 registry checksum 会拒绝覆盖，
+要求升级为 v0.2，从而避免“同版本不同规则”。任何 Clean 结果都可直接从 immutable
+normalized 数据重建，无需重新 fetch 或 parse。
+
 ## WorldLine V1 SubGraph
 
 `app/agent/foundation/subgraphs/worldline` 是独立的、无 FastAPI request 依赖的 LangGraph 子图：

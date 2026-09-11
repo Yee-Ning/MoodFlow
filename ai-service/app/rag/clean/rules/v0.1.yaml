@@ -19,8 +19,8 @@ profiling:
 
 sampling:
   seed: 104729
-  sample_size: 18
-  max_text_chars_per_document: 12000
+  sample_size: 12
+  max_text_chars_per_document: 6000
   length_buckets:
     - name: empty
       max_chars: 0
@@ -37,8 +37,8 @@ sampling:
 
 noise_discovery:
   prompt_version: v0.1
-  batch_size: 4
-  max_candidates_per_batch: 12
+  batch_size: 2
+  max_candidates_per_batch: 1
 
 semantic_guard:
   removed_ratio_warning: 0.35
@@ -57,4 +57,72 @@ semantic_guard:
     - '(?im)^\s*(?:[-*]\s*)?(?:release(?:d)?|发行|發行|日期|date)\s*[:：].+$'
     - '(?im)^\s*(?:[-*]\s*)?(?:rank|ranking|chart|排名|榜单|榜單|bpm|销量|銷量)\s*[:：].+$'
 
-rules: []
+reporting:
+  before_after_sample_size: 20
+  max_sample_text_chars: 4000
+
+rules:
+  - id: GLOBAL_SAFE_001
+    name: normalize_unicode_nfc
+    description: Normalize canonically equivalent Unicode sequences to NFC.
+    scope:
+      type: GLOBAL
+    action: NORMALIZE
+    pattern: UNICODE_NFC
+    priority: 10
+    enabled: true
+    safe: true
+    reason: Canonical Unicode normalization preserves text semantics.
+    version: v0.1
+
+  - id: GLOBAL_SAFE_002
+    name: normalize_newlines
+    description: Normalize CRLF and CR line endings to LF.
+    scope:
+      type: GLOBAL
+    action: NORMALIZE
+    pattern: NEWLINES
+    priority: 20
+    enabled: true
+    safe: true
+    reason: Platform line endings are representational rather than semantic.
+    version: v0.1
+
+  - id: GLOBAL_SAFE_003
+    name: trim_trailing_whitespace
+    description: Remove spaces and tabs immediately before a line ending.
+    scope:
+      type: GLOBAL
+    action: NORMALIZE
+    pattern: TRAILING_WHITESPACE
+    priority: 30
+    enabled: true
+    safe: true
+    reason: Parser output does not use trailing whitespace as music-domain data.
+    version: v0.1
+
+  - id: GLOBAL_SAFE_004
+    name: collapse_excess_blank_lines
+    description: Collapse three or more consecutive LF characters to two.
+    scope:
+      type: GLOBAL
+    action: NORMALIZE
+    pattern: BLANK_LINES
+    priority: 40
+    enabled: true
+    safe: true
+    reason: Preserve paragraph boundaries while removing redundant blank lines.
+    version: v0.1
+
+  - id: GLOBAL_SAFE_005
+    name: ensure_single_final_newline
+    description: Ensure non-empty text ends with exactly one LF character.
+    scope:
+      type: GLOBAL
+    action: NORMALIZE
+    pattern: FINAL_NEWLINE
+    priority: 50
+    enabled: true
+    safe: true
+    reason: Stable file termination makes output reproducible.
+    version: v0.1
