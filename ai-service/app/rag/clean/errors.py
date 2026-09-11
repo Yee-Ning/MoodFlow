@@ -15,3 +15,7 @@ class CleanConfigError(CleanPipelineError):
 
 class RuleRegistryError(CleanPipelineError):
     """The rule registry is invalid or internally inconsistent."""
+
+
+class NoiseDiscoveryError(CleanPipelineError):
+    """Noise discovery could not validate or complete an LLM analysis batch."""

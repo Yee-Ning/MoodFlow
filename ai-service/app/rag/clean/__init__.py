@@ -8,6 +8,7 @@ from .config import (
 )
 from .corpus import NormalizedCorpusReader, NormalizedDocumentContext
 from .profiling import NormalizedCorpusProfiler, write_profile_report
+from .sampling import SamplingManifest, StratifiedSampler, write_sampling_manifest
 
 __all__ = [
     "DEFAULT_CLEAN_CONFIG_PATH",
@@ -16,6 +17,9 @@ __all__ = [
     "NormalizedCorpusReader",
     "NormalizedDocumentContext",
     "ProfilingConfig",
+    "SamplingManifest",
+    "StratifiedSampler",
     "load_clean_config",
     "write_profile_report",
+    "write_sampling_manifest",
 ]
