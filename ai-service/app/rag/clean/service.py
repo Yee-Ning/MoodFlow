@@ -43,6 +43,8 @@ class CleanPipelineService:
             self.project_root,
             normalized_root=normalized_root,
             manifest_path=normalized_manifest_path,
+            document_type_sidecar=config.document_type_sidecar,
+            document_type_sidecar_checksum=config.document_type_sidecar_checksum,
         )
         self.registry = RuleRegistry(config)
         self.engine = CleanEngine(

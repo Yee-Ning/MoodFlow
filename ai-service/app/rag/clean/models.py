@@ -16,6 +16,11 @@ class CleanedDocument(BaseModel):
     source: str = Field(min_length=1, max_length=500)
     source_type: str | None = Field(default=None, max_length=200)
     document_type: str | None = Field(default=None, max_length=200)
+    document_type_origin: str | None = Field(default=None, max_length=50)
+    document_type_sidecar_version: str | None = Field(default=None, max_length=50)
+    document_type_sidecar_checksum: str | None = Field(
+        default=None, pattern=r"^sha256:[0-9a-f]{64}$"
+    )
     title: str | None = Field(default=None, max_length=500)
     author: str | None = Field(default=None, max_length=300)
     published_at: date | None = None
@@ -41,6 +46,9 @@ class CleanDocumentAudit(BaseModel):
     source: str
     source_type: str | None = None
     document_type: str | None = None
+    document_type_origin: str | None = None
+    document_type_sidecar_version: str | None = None
+    document_type_sidecar_checksum: str | None = None
     before_length: int = Field(ge=0)
     after_length: int = Field(ge=0)
     removed_chars: int = Field(ge=0)

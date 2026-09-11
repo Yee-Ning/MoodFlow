@@ -7,6 +7,13 @@ from .config import (
     load_clean_config,
 )
 from .corpus import NormalizedCorpusReader, NormalizedDocumentContext
+from .document_types import (
+    DocumentTypeAssignment,
+    DocumentTypeOrigin,
+    DocumentTypeResolver,
+    DocumentTypeReviewStatus,
+    DocumentTypeSidecar,
+)
 from .engine import CleanEngine
 from .guard import SemanticGuard
 from .models import CleanDocumentAudit, CleanedDocument, CleanExecutionResult
@@ -24,6 +31,11 @@ __all__ = [
     "CleanedDocument",
     "CleanEngine",
     "CleanExecutionResult",
+    "DocumentTypeAssignment",
+    "DocumentTypeOrigin",
+    "DocumentTypeResolver",
+    "DocumentTypeReviewStatus",
+    "DocumentTypeSidecar",
     "NormalizedCorpusProfiler",
     "NormalizedCorpusReader",
     "NormalizedDocumentContext",

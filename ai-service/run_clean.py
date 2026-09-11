@@ -78,6 +78,8 @@ def main(
             root,
             normalized_root=normalized_root,
             manifest_path=manifest,
+            document_type_sidecar=config.document_type_sidecar,
+            document_type_sidecar_checksum=config.document_type_sidecar_checksum,
         )
         if args.command == "profile":
             report = NormalizedCorpusProfiler(config.profiling).profile(

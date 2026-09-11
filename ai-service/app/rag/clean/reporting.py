@@ -71,6 +71,9 @@ class CleanReporter:
             rule_hits.update(audit.rule_hits)
         changed_count = sum(audit.changed for audit in audits)
         suspicious_count = sum(audit.needs_review for audit in audits)
+        document_type_resolution_statistics = Counter(
+            audit.document_type_origin or "missing" for audit in audits
+        )
         summary: dict[str, object] = {
             "report_version": "v0.1",
             "run_id": run_id,
@@ -89,6 +92,9 @@ class CleanReporter:
             ),
             "rule_hit_statistics": dict(sorted(rule_hits.items())),
             "suspicious_documents": suspicious_count,
+            "document_type_resolution_statistics": dict(
+                sorted(document_type_resolution_statistics.items())
+            ),
             "cleaned_manifest_path": (
                 cleaned_manifest_path.relative_to(self.project_root).as_posix()
                 if cleaned_manifest_path is not None

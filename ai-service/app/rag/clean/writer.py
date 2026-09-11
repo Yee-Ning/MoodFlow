@@ -51,6 +51,13 @@ class CleanedDatasetWriter:
                     "source": result.document.source,
                     "source_type": result.document.source_type,
                     "document_type": result.document.document_type,
+                    "document_type_origin": result.document.document_type_origin,
+                    "document_type_sidecar_version": (
+                        result.document.document_type_sidecar_version
+                    ),
+                    "document_type_sidecar_checksum": (
+                        result.document.document_type_sidecar_checksum
+                    ),
                     "clean_version": result.document.clean_version,
                     "rule_registry_checksum": result.document.rule_registry_checksum,
                     "rules_applied": result.document.rules_applied,

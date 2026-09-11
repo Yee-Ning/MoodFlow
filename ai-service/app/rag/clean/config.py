@@ -9,6 +9,7 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .document_types import DocumentTypeSidecar
 from .errors import CleanConfigError
 
 
@@ -135,6 +136,13 @@ class CleanPipelineConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     clean_version: str = Field(pattern=r"^v\d+\.\d+$")
+    document_type_sidecar_path: str | None = None
+    document_type_sidecar: DocumentTypeSidecar | None = Field(
+        default=None, exclude=True
+    )
+    document_type_sidecar_checksum: str | None = Field(
+        default=None, pattern=r"^sha256:[0-9a-f]{64}$", exclude=True
+    )
     known_sources: list[str] = Field(default_factory=list)
     known_document_types: list[str] = Field(default_factory=list)
     profiling: ProfilingConfig
@@ -155,6 +163,32 @@ class CleanPipelineConfig(BaseModel):
             raise ValueError("clean rule IDs must be unique")
         if any(rule.version != self.clean_version for rule in self.rules):
             raise ValueError("every rule version must equal clean_version")
+        if self.document_type_sidecar_path is None:
+            if self.document_type_sidecar is not None:
+                raise ValueError("document type sidecar payload requires a path")
+            if self.document_type_sidecar_checksum is not None:
+                raise ValueError("document type sidecar checksum requires a path")
+        else:
+            if self.document_type_sidecar is None:
+                raise ValueError("document type sidecar path requires a payload")
+            if self.document_type_sidecar_checksum is None:
+                raise ValueError("document type sidecar path requires a checksum")
+            if self.document_type_sidecar.sidecar_version != self.clean_version:
+                raise ValueError(
+                    "document type sidecar version must equal clean_version"
+                )
+            approved_types = {
+                assignment.document_type
+                for assignment in (
+                    self.document_type_sidecar.approved_assignments().values()
+                )
+            }
+            unknown_types = approved_types - set(self.known_document_types)
+            if unknown_types:
+                raise ValueError(
+                    "approved sidecar document types must be known:"
+                    f"{sorted(unknown_types)}"
+                )
         return self
 
 
@@ -169,7 +203,43 @@ def load_clean_config(
         payload = yaml.safe_load(raw)
         if not isinstance(payload, dict):
             raise ValueError("clean config root must be an object")
+        if (
+            "document_type_sidecar" in payload
+            or "document_type_sidecar_checksum" in payload
+        ):
+            raise ValueError("document type sidecar runtime fields are reserved")
+        sidecar_raw = b""
+        sidecar_path_value = payload.get("document_type_sidecar_path")
+        if sidecar_path_value is not None:
+            if (
+                not isinstance(sidecar_path_value, str)
+                or not sidecar_path_value.strip()
+            ):
+                raise ValueError(
+                    "document_type_sidecar_path must be a non-empty string"
+                )
+            relative_sidecar = Path(sidecar_path_value)
+            if relative_sidecar.is_absolute():
+                raise ValueError("document_type_sidecar_path must be relative")
+            sidecar_path = (selected.parent / relative_sidecar).resolve()
+            if not sidecar_path.is_relative_to(selected.parent):
+                raise ValueError("document_type_sidecar_path escapes config directory")
+            sidecar_raw = sidecar_path.read_bytes()
+            sidecar_payload = yaml.safe_load(sidecar_raw)
+            if not isinstance(sidecar_payload, dict):
+                raise ValueError("document type sidecar root must be an object")
+            payload["document_type_sidecar"] = sidecar_payload
+            payload["document_type_sidecar_checksum"] = (
+                "sha256:" + hashlib.sha256(sidecar_raw).hexdigest()
+            )
         config = CleanPipelineConfig.model_validate(payload)
     except (OSError, ValueError, yaml.YAMLError) as exc:
         raise CleanConfigError(f"clean_config_invalid:{selected}") from exc
-    return config, "sha256:" + hashlib.sha256(raw).hexdigest()
+    fingerprint = hashlib.sha256()
+    fingerprint.update(raw)
+    if config.document_type_sidecar_path is not None:
+        fingerprint.update(b"\0document_type_sidecar\0")
+        fingerprint.update(config.document_type_sidecar_path.encode("utf-8"))
+        fingerprint.update(b"\0")
+        fingerprint.update(sidecar_raw)
+    return config, "sha256:" + fingerprint.hexdigest()

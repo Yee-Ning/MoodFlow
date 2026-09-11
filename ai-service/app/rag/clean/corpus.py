@@ -11,6 +11,11 @@ from pydantic import ValidationError
 
 from app.rag.parse_normalize.models import NormalizedDocument
 
+from .document_types import (
+    DocumentTypeOrigin,
+    DocumentTypeResolver,
+    DocumentTypeSidecar,
+)
 from .errors import NormalizedCorpusError
 
 
@@ -25,6 +30,9 @@ class NormalizedDocumentContext:
     source: str
     source_type: str | None
     document_type: str | None
+    document_type_origin: DocumentTypeOrigin | None
+    document_type_sidecar_version: str | None
+    document_type_sidecar_checksum: str | None
 
 
 class NormalizedCorpusReader:
@@ -36,6 +44,8 @@ class NormalizedCorpusReader:
         *,
         normalized_root: Path | None = None,
         manifest_path: Path | None = None,
+        document_type_sidecar: DocumentTypeSidecar | None = None,
+        document_type_sidecar_checksum: str | None = None,
     ) -> None:
         self.project_root = project_root.resolve()
         self.normalized_root = (
@@ -47,6 +57,10 @@ class NormalizedCorpusReader:
             manifest_path.resolve()
             if manifest_path is not None
             else self.normalized_root / "normalized_corpus_manifest.jsonl"
+        )
+        self.document_type_resolver = DocumentTypeResolver(
+            document_type_sidecar,
+            sidecar_checksum=document_type_sidecar_checksum,
         )
 
     def load_all(self) -> list[NormalizedDocumentContext]:
@@ -81,6 +95,18 @@ class NormalizedCorpusReader:
             seen_ids.add(document.document_id)
             seen_sources.add(document.source_id)
             source_metadata = self._mapping(document.metadata.get("source_metadata"))
+            normalized_document_type = self._optional_dimension(
+                source_metadata.get("document_type")
+                or document.metadata.get("document_type")
+            )
+            (
+                document_type,
+                document_type_origin,
+                sidecar_version,
+                sidecar_checksum,
+            ) = self.document_type_resolver.resolve(
+                document.source_id, normalized_document_type
+            )
             documents.append(
                 NormalizedDocumentContext(
                     document=document,
@@ -93,10 +119,10 @@ class NormalizedCorpusReader:
                         source_metadata.get("source_type")
                         or document.metadata.get("source_type")
                     ),
-                    document_type=self._optional_dimension(
-                        source_metadata.get("document_type")
-                        or document.metadata.get("document_type")
-                    ),
+                    document_type=document_type,
+                    document_type_origin=document_type_origin,
+                    document_type_sidecar_version=sidecar_version,
+                    document_type_sidecar_checksum=sidecar_checksum,
                 )
             )
         return sorted(documents, key=lambda item: item.document.document_id)
