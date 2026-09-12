@@ -55,6 +55,8 @@ class ClaimVerifier:
             return self._insufficient("claim_source_chunk_mismatch")
         if claim.evidence_span not in chunk.content:
             return self._insufficient("claim_evidence_not_in_current_chunk")
+        if not self._time_is_grounded(claim):
+            return self._insufficient("claim_time_not_grounded")
         if self._is_contradicted(claim):
             return ClaimVerification(
                 status=VerificationStatus.CONTRADICTED,
@@ -76,6 +78,23 @@ class ClaimVerifier:
         return any(
             cue in claim.evidence_span
             for cue in _NEGATION_CUES.get(claim.predicate, ())
+        )
+
+    @staticmethod
+    def _time_is_grounded(claim: Claim) -> bool:
+        if claim.time is None:
+            return True
+        time = claim.time
+        candidates = [
+            time.raw,
+            str(time.year) if time.year is not None else None,
+            str(time.date.year) if time.date is not None else None,
+            str(time.start_year) if time.start_year is not None else None,
+            str(time.end_year) if time.end_year is not None else None,
+        ]
+        return any(
+            candidate is not None and candidate in claim.evidence_span
+            for candidate in candidates
         )
 
     def _verify_rule_claim(self, claim: Claim) -> ClaimVerification:

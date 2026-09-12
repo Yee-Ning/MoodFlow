@@ -32,7 +32,7 @@ from app.rag.knowledge import (
     KnowledgeStatus,
     VerificationStatus,
 )
-from app.rag.knowledge.claims import Claim, ClaimPredicate, ClaimSource
+from app.rag.knowledge.claims import Claim, ClaimPredicate, ClaimSource, ClaimTime
 from app.rag.knowledge.writer import KnowledgeDatasetWriter
 from app.rag.knowledge.claims.models import ClaimExtractionOutput
 from app.rag.knowledge.entity_linking.models import EntityDisambiguationOutput
@@ -413,6 +413,7 @@ def _claim(
         subject_entity_id="artist:jay_chou",
         predicate=ClaimPredicate.DEBUTED,
         object_value="出道",
+        time=ClaimTime(year=1999, raw="1999年"),
         source_chunk_id=chunk.chunk_id,
         evidence_span=evidence,
         confidence=0.9,
@@ -440,6 +441,7 @@ class ClaimVerificationTests(unittest.IsolatedAsyncioTestCase):
             verification.status, VerificationStatus.INSUFFICIENT_EVIDENCE
         )
         self.assertIsNone(verification.evidence_span)
+        self.assertEqual(verification.reason, "claim_time_not_grounded")
 
     async def test_explicit_negation_is_contradicted(self) -> None:
         content = "周杰伦并未发行专辑Jay。"
