@@ -11,6 +11,7 @@ from app.rag.enrichment.models import EnrichedChunk
 
 from ..config import KnowledgeConfig
 from ..entity_linking.models import CanonicalEntity, EntityLinkingResult
+from ..structured import strict_model_schema
 from .ids import build_claim_id
 from .models import (
     Claim,
@@ -62,7 +63,9 @@ class ClaimExtractor:
                 warnings.append(self._error_code(exc))
                 status = ClaimExtractionStatus.PARTIAL
 
-        by_id = {claim.claim_id: claim for claim in claims}
+        by_id: dict[str, Claim] = {}
+        for claim in claims:
+            by_id.setdefault(claim.claim_id, claim)
         return ClaimExtractionResult(
             claims=sorted(by_id.values(), key=lambda item: item.claim_id),
             status=status,
@@ -88,7 +91,7 @@ class ClaimExtractor:
                     self.runtime.generate(
                         payload,
                         instructions=instructions,
-                        schema=ClaimExtractionOutput.model_json_schema(),
+                        schema=strict_model_schema(ClaimExtractionOutput),
                         schema_name=f"music_claim_extraction_{self.config.prompt_version}",
                     ),
                     timeout=self.config.timeout_seconds,

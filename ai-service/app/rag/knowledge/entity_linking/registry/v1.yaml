@@ -3,8 +3,8 @@ entities:
   - entity_id: artist:jay_chou
     entity_type: artist
     canonical_name: 周杰伦
-    aliases: [周杰倫, 周董, Jay Chou, JAY CHOU]
-    ambiguous_aliases: []
+    aliases: [周杰倫, 周董, Jay Chou, JAY CHOU, Jay]
+    ambiguous_aliases: [Jay]
   - entity_id: album:jay_2000
     entity_type: album
     canonical_name: Jay

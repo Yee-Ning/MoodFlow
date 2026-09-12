@@ -11,7 +11,6 @@ from .models import ClaimCandidate
 def build_claim_id(candidate: ClaimCandidate, source_chunk_id: str) -> str:
     identity = {
         "source_chunk_id": source_chunk_id,
-        "statement": candidate.statement,
         "subject_entity_id": candidate.subject_entity_id,
         "predicate": candidate.predicate.value,
         "object_entity_id": candidate.object_entity_id,

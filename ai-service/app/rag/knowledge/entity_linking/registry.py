@@ -82,17 +82,31 @@ class EntityRegistry:
         if not candidates:
             return RegistryResolution(None, (), 0, "registry_no_candidate")
 
-        selected_type = type_hint or context_type
-        if selected_type is not None:
-            candidates = [item for item in candidates if item.entity_type == selected_type]
+        if type_hint is not None:
+            candidates = [item for item in candidates if item.entity_type == type_hint]
             if not candidates:
                 return RegistryResolution(
                     None, candidate_ids, 0, "registry_candidate_type_mismatch"
                 )
             if len(candidates) == 1:
-                confidence = 0.99 if type_hint is not None else 0.92
                 return RegistryResolution(
-                    candidates[0], candidate_ids, confidence, "registry_typed_match"
+                    candidates[0], candidate_ids, 0.99, "registry_typed_match"
+                )
+
+        if len(candidates) == 1 and (candidates[0].entity_id, key) not in self._ambiguous:
+            return RegistryResolution(
+                candidates[0], candidate_ids, 0.98, "registry_exact_match"
+            )
+
+        if context_type is not None:
+            candidates = [item for item in candidates if item.entity_type == context_type]
+            if not candidates:
+                return RegistryResolution(
+                    None, candidate_ids, 0, "registry_candidate_type_mismatch"
+                )
+            if len(candidates) == 1:
+                return RegistryResolution(
+                    candidates[0], candidate_ids, 0.92, "registry_context_match"
                 )
 
         if len(candidates) > 1:
@@ -107,7 +121,19 @@ class EntityRegistry:
 
     @staticmethod
     def canonical(entity: RegistryEntity, confidence: float) -> CanonicalEntity:
-        aliases = list(dict.fromkeys([entity.canonical_name, *entity.aliases]))
+        ambiguous = {normalize_alias(value) for value in entity.ambiguous_aliases}
+        aliases = list(
+            dict.fromkeys(
+                [
+                    entity.canonical_name,
+                    *(
+                        value
+                        for value in entity.aliases
+                        if normalize_alias(value) not in ambiguous
+                    ),
+                ]
+            )
+        )
         return CanonicalEntity(
             entity_id=entity.entity_id,
             entity_type=entity.entity_type,

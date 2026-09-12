@@ -54,6 +54,7 @@ class RuleClaimExtractor:
             claims.extend(self._birth_claims(evidence, present))
             claims.extend(self._debut_claims(evidence, present))
             claims.extend(self._release_claims(evidence, present))
+            claims.extend(self._first_album_claims(evidence, present))
             claims.extend(self._track_claims(evidence, present))
             claims.extend(self._genre_claims(evidence, present))
         return claims
@@ -167,6 +168,29 @@ class RuleClaimExtractor:
                 )
             )
         return results
+
+    def _first_album_claims(
+        self, evidence: str, entities: list[CanonicalEntity]
+    ) -> list[ClaimCandidate]:
+        if not any(
+            cue in evidence
+            for cue in ("首张专辑", "首張專輯", "首张唱片", "首張唱片")
+        ):
+            return []
+        artist = self._first(entities, EntityType.ARTIST)
+        album = self._first(entities, EntityType.ALBUM)
+        if artist is None or album is None:
+            return []
+        return [
+            ClaimCandidate(
+                statement=f"{album.canonical_name}是{artist.canonical_name}的首张专辑",
+                subject_entity_id=album.entity_id,
+                predicate=ClaimPredicate.FIRST_ALBUM_OF,
+                object_entity_id=artist.entity_id,
+                evidence_span=evidence,
+                confidence=0.97,
+            )
+        ]
 
     def _track_claims(
         self, evidence: str, entities: list[CanonicalEntity]

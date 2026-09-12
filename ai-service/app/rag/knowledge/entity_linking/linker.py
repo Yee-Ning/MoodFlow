@@ -15,6 +15,7 @@ from app.rag.enrichment.models import (
 )
 
 from ..config import KnowledgeConfig
+from ..structured import strict_model_schema
 from .models import (
     CanonicalEntity,
     EntityDisambiguationOutput,
@@ -46,7 +47,7 @@ _METADATA_ENTITY_FIELDS: dict[str, EntityType] = {
     "genre": EntityType.GENRE,
     "genres": EntityType.GENRE,
     "label": EntityType.LABEL,
-    "publisher": EntityType.ORGANIZATION,
+    "publisher": EntityType.LABEL,
 }
 
 
@@ -75,6 +76,8 @@ class EntityLinker:
     ) -> None:
         self.config = config
         self.registry = registry or EntityRegistry.load()
+        if self.registry.version != config.registry_version:
+            raise ValueError("entity_registry_version_mismatch")
         self.runtime = runtime or ExistingLLMEntityLinkingRuntime()
 
     async def link(self, chunk: EnrichedChunk) -> EntityLinkingResult:
@@ -83,6 +86,10 @@ class EntityLinker:
         pending: list[_Pending] = []
         for mention in mentions:
             context_type = self._infer_context_type(chunk.content, mention.text)
+            if context_type is None:
+                title = str(chunk.metadata.get("title") or "")
+                section_context = " > ".join([title, *chunk.section_path, mention.text])
+                context_type = self._infer_context_type(section_context, mention.text)
             resolution = self.registry.resolve(
                 mention.text,
                 type_hint=mention.type_hint,
@@ -251,8 +258,16 @@ class EntityLinker:
                 position + len(mention) : position + len(mention) + 12
             ].casefold()
             for entity_type, cues in _CONTEXT_CUES.items():
-                score = sum(2 for cue in cues if cue.casefold() in before)
-                score += sum(1 for cue in cues if cue.casefold() in after)
+                score = 0
+                for cue in cues:
+                    normalized_cue = cue.casefold()
+                    before_position = before.rfind(normalized_cue)
+                    if before_position >= 0:
+                        distance = len(before) - before_position - len(normalized_cue)
+                        score = max(score, 100 - distance)
+                    after_position = after.find(normalized_cue)
+                    if after_position >= 0:
+                        score = max(score, 50 - after_position)
                 scores[entity_type] = max(scores.get(entity_type, 0), score)
         positive = [(score, entity_type) for entity_type, score in scores.items() if score]
         if not positive:
@@ -300,7 +315,7 @@ class EntityLinker:
                     self.runtime.generate(
                         payload,
                         instructions=instructions,
-                        schema=EntityDisambiguationOutput.model_json_schema(),
+                        schema=strict_model_schema(EntityDisambiguationOutput),
                         schema_name=f"music_entity_linking_{self.config.prompt_version}",
                     ),
                     timeout=self.config.timeout_seconds,

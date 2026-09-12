@@ -5,13 +5,17 @@ from __future__ import annotations
 from datetime import date as Date
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+ClaimObjectValue = str | int | float | bool
 
 
 class ClaimPredicate(StrEnum):
     BORN_ON = "born_on"
     DEBUTED = "debuted"
     RELEASED = "released"
+    FIRST_ALBUM_OF = "first_album_of"
     INCLUDES_TRACK = "includes_track"
     HAS_GENRE = "has_genre"
     CONTAINS_MUSIC_ELEMENT = "contains_music_element"
@@ -75,7 +79,7 @@ class ClaimCandidate(BaseModel):
     object_entity_id: str | None = Field(
         default=None, pattern=r"^[a-z][a-z0-9_]*:[a-z0-9][a-z0-9_]*$"
     )
-    object_value: JsonValue | None = None
+    object_value: ClaimObjectValue | None = None
     time: ClaimTime | None = None
     evidence_span: str = Field(min_length=1, max_length=5_000)
     confidence: float = Field(ge=0, le=1)
@@ -99,7 +103,7 @@ class Claim(BaseModel):
     object_entity_id: str | None = Field(
         default=None, pattern=r"^[a-z][a-z0-9_]*:[a-z0-9][a-z0-9_]*$"
     )
-    object_value: JsonValue | None = None
+    object_value: ClaimObjectValue | None = None
     time: ClaimTime | None = None
     source_chunk_id: str = Field(min_length=1, max_length=200)
     evidence_span: str = Field(min_length=1, max_length=5_000)

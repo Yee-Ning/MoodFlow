@@ -524,6 +524,44 @@ python run_enrich.py --limit 20 --sample-size 5 --rule-only
 `data/chunked`。本阶段只抽取 mention，不生成 entity ID、不合并 alias，也不包含
 Claim、Embedding、Qdrant、BM25、Hybrid 或 Rerank。
 
+## Music RAG Knowledge Structuring V1
+
+`app/rag/knowledge/` 在 `EnrichedChunk` 之上追加独立 `knowledge` 对象，原有 chunk
+和 enrichment 字段保持不变：
+
+```text
+EnrichedChunk
+  -> registry-backed Entity Linking
+  -> atomic Claim Extraction
+  -> source-local Claim Verification
+  -> KnowledgeEnrichedChunk
+```
+
+实体注册表位于 `app/rag/knowledge/entity_linking/registry/v1.yaml`。解析优先级为现有
+metadata / registry → 确定性上下文 → Structured Output LLM；不使用外部知识，也不会
+在运行时创建未知 canonical entity。别名共享稳定 ID，短别名或同名实体在证据不足时
+保存在 `unresolved_mentions`。
+
+Claim 必须只表达一个可判断真假的事实，并携带稳定 `claim_id`、关联实体、时间、
+`source_chunk_id` 和原文连续 `evidence_span`。LLM 响应只通过 JSON Schema + Pydantic
+读取，之后仍会执行实体白名单、证据落地和主观内容检查。验证器只读取当前 chunk，
+输出 `SUPPORTED`、`PARTIALLY_SUPPORTED`、`CONTRADICTED` 或
+`INSUFFICIENT_EVIDENCE`，不会访问互联网或跨文档补证。
+
+```powershell
+# 使用现有 LLM 配置处理最新 enriched corpus
+python run_knowledge.py --limit 20 --sample-size 5
+
+# 完全离线 smoke：registry + deterministic rules + source verifier
+python run_knowledge.py --enriched-path .dev/enrichment-smoke/enriched/v1/enriched_chunks.jsonl `
+  --output-root .dev/knowledge-smoke/knowledge/v1 --limit 5 --sample-size 5 --rule-only
+```
+
+结果原子写入 `knowledge_enriched_chunks.jsonl` 和
+`knowledge_corpus_manifest.jsonl`。三个阶段版本与完整 EnrichedChunk 一同生成
+`knowledge_input_hash`；成功结果在输入和版本未变时会标记 `skipped`。本阶段不实现
+Embedding、Qdrant、HNSW、BM25、Hybrid Search 或 Rerank。
+
 ## WorldLine V1 SubGraph
 
 `app/agent/foundation/subgraphs/worldline` 是独立的、无 FastAPI request 依赖的 LangGraph 子图：

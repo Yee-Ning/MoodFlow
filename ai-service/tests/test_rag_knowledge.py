@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from app.rag.chunk.models import ChunkType, ParentChunk
 from app.rag.enrichment.models import (
@@ -20,8 +22,22 @@ from app.rag.enrichment.models import (
     SourceMetadata,
     TemporalMetadata,
 )
-from app.rag.knowledge import ClaimExtractor, EntityLinker, EntityRegistry, KnowledgeConfig
-from app.rag.knowledge.claims import ClaimSource
+from app.rag.knowledge import (
+    ClaimExtractor,
+    ClaimVerifier,
+    EntityLinker,
+    EntityRegistry,
+    KnowledgeConfig,
+    KnowledgePipeline,
+    KnowledgeStatus,
+    VerificationStatus,
+)
+from app.rag.knowledge.claims import Claim, ClaimPredicate, ClaimSource
+from app.rag.knowledge.writer import KnowledgeDatasetWriter
+from app.rag.knowledge.claims.models import ClaimExtractionOutput
+from app.rag.knowledge.entity_linking.models import EntityDisambiguationOutput
+from app.rag.knowledge.structured import strict_model_schema
+from app.rag.knowledge.verification.models import ClaimVerification
 
 
 def _enriched(
@@ -98,6 +114,7 @@ class EntityLinkingTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([item.entity_id for item in result.linked_entities], ["artist:jay_chou"])
         self.assertEqual(result.linked_entities[0].canonical_name, "周杰伦")
         self.assertIn("周董", result.linked_entities[0].aliases)
+        self.assertNotIn("Jay", result.linked_entities[0].aliases)
         self.assertFalse(result.unresolved_mentions)
 
     async def test_artist_album_and_song_keep_distinct_entity_types(self) -> None:
@@ -128,11 +145,12 @@ class EntityLinkingTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result.linked_entities)
         self.assertEqual(result.unresolved_mentions[0].text, "Jay")
         self.assertEqual(
-            result.unresolved_mentions[0].candidate_entity_ids, ["album:jay_2000"]
+            result.unresolved_mentions[0].candidate_entity_ids,
+            ["album:jay_2000", "artist:jay_chou"],
         )
         self.assertEqual(
             result.unresolved_mentions[0].reason,
-            "registry_alias_requires_context",
+            "registry_ambiguous",
         )
 
     async def test_context_can_resolve_an_ambiguous_album_name(self) -> None:
@@ -144,6 +162,27 @@ class EntityLinkingTests(unittest.IsolatedAsyncioTestCase):
         result = await self.linker.link(chunk)
 
         self.assertEqual([item.entity_id for item in result.linked_entities], ["album:jay_2000"])
+        self.assertFalse(result.unresolved_mentions)
+
+    async def test_unique_artist_alias_is_not_derailed_by_nearby_song_word(self) -> None:
+        chunk = _enriched("周杰倫是著名流行歌曲男歌手。")
+
+        result = await self.linker.link(chunk)
+
+        self.assertEqual([item.entity_id for item in result.linked_entities], ["artist:jay_chou"])
+        self.assertFalse(result.unresolved_mentions)
+
+    async def test_section_path_disambiguates_album_name(self) -> None:
+        chunk = _enriched("2004 七里香").model_copy(
+            update={"section_path": ["藝人專區", "專輯"]}
+        )
+
+        result = await self.linker.link(chunk)
+
+        self.assertEqual(
+            [item.entity_id for item in result.linked_entities],
+            ["album:qi_li_xiang"],
+        )
         self.assertFalse(result.unresolved_mentions)
 
     async def test_entity_id_is_stable_across_chunks_and_aliases(self) -> None:
@@ -177,6 +216,32 @@ class StaticKnowledgeRuntime:
         return json.dumps(self.response, ensure_ascii=False)
 
 
+class StructuredOutputSchemaTests(unittest.TestCase):
+    def test_all_provider_object_fields_are_required(self) -> None:
+        for model in (
+            EntityDisambiguationOutput,
+            ClaimExtractionOutput,
+            ClaimVerification,
+        ):
+            with self.subTest(model=model.__name__):
+                self._assert_strict(strict_model_schema(model))
+
+    def _assert_strict(self, value: object) -> None:
+        if isinstance(value, list):
+            for item in value:
+                self._assert_strict(item)
+            return
+        if not isinstance(value, dict):
+            return
+        self.assertNotIn("default", value)
+        properties = value.get("properties")
+        if isinstance(properties, dict):
+            self.assertEqual(set(value.get("required", [])), set(properties))
+            self.assertFalse(value.get("additionalProperties"))
+        for child in value.values():
+            self._assert_strict(child)
+
+
 class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
     async def _entities(
         self, chunk: EnrichedParentChunk
@@ -184,7 +249,7 @@ class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
         return await EntityLinker(KnowledgeConfig(llm_enabled=False)).link(chunk)
 
     async def test_complex_sentence_splits_into_atomic_claims(self) -> None:
-        evidence = "周杰伦于2000年出道并发行专辑Jay，该专辑融合R&B和Hip-Hop元素。"
+        evidence = "2000年，周杰伦带来专辑Jay；这张作品运用了R&B和Hip-Hop，也标志着他的乐坛起点。"
         chunk = _enriched(
             evidence,
             mentions=[
@@ -300,6 +365,196 @@ class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
             [claim.claim_id for claim in first.claims],
             [claim.claim_id for claim in second.claims],
         )
+
+    async def test_reference_sentence_yields_four_rule_facts(self) -> None:
+        chunk = _enriched(
+            "2000年周杰伦发行首张专辑《Jay》，作品融合R&B和Hip-Hop元素。",
+            mentions=[
+                ("周杰伦", EntityTypeHint.ARTIST),
+                ("Jay", EntityTypeHint.ALBUM),
+                ("R&B", EntityTypeHint.GENRE),
+                ("Hip-Hop", EntityTypeHint.GENRE),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertEqual(len(result.claims), 4)
+        self.assertEqual(
+            {claim.predicate for claim in result.claims},
+            {
+                ClaimPredicate.RELEASED,
+                ClaimPredicate.FIRST_ALBUM_OF,
+                ClaimPredicate.CONTAINS_MUSIC_ELEMENT,
+            },
+        )
+        self.assertEqual(
+            sum(
+                claim.predicate == ClaimPredicate.CONTAINS_MUSIC_ELEMENT
+                for claim in result.claims
+            ),
+            2,
+        )
+
+
+def _claim(
+    chunk: EnrichedParentChunk,
+    *,
+    statement: str,
+    evidence: str,
+    source: ClaimSource = ClaimSource.LLM,
+) -> Claim:
+    return Claim(
+        claim_id="claim:" + ("a" * 24),
+        statement=statement,
+        subject_entity_id="artist:jay_chou",
+        predicate=ClaimPredicate.DEBUTED,
+        object_value="出道",
+        source_chunk_id=chunk.chunk_id,
+        evidence_span=evidence,
+        confidence=0.9,
+        extraction_source=source,
+    )
+
+
+class ClaimVerificationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_hallucinated_claim_is_insufficient_without_source_support(self) -> None:
+        chunk = _enriched(
+            "周杰伦于2000年出道。",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+        )
+        claim = _claim(
+            chunk,
+            statement="周杰伦于1999年出道",
+            evidence="周杰伦于2000年出道。",
+        )
+
+        verification = await ClaimVerifier(
+            KnowledgeConfig(llm_enabled=False)
+        ).verify(claim, chunk)
+
+        self.assertEqual(
+            verification.status, VerificationStatus.INSUFFICIENT_EVIDENCE
+        )
+        self.assertIsNone(verification.evidence_span)
+
+    async def test_explicit_negation_is_contradicted(self) -> None:
+        content = "周杰伦并未发行专辑Jay。"
+        chunk = _enriched(
+            content,
+            mentions=[
+                ("周杰伦", EntityTypeHint.ARTIST),
+                ("Jay", EntityTypeHint.ALBUM),
+            ],
+        )
+        claim = Claim(
+            claim_id="claim:" + ("b" * 24),
+            statement="周杰伦发行了专辑Jay",
+            subject_entity_id="artist:jay_chou",
+            predicate=ClaimPredicate.RELEASED,
+            object_entity_id="album:jay_2000",
+            source_chunk_id=chunk.chunk_id,
+            evidence_span=content,
+            confidence=0.9,
+            extraction_source=ClaimSource.RULE,
+        )
+
+        verification = await ClaimVerifier(
+            KnowledgeConfig(llm_enabled=False)
+        ).verify(claim, chunk)
+
+        self.assertEqual(verification.status, VerificationStatus.CONTRADICTED)
+        self.assertEqual(verification.evidence_span, content)
+
+
+class FailingEntityLinker:
+    def __init__(self) -> None:
+        self.delegate = EntityLinker(KnowledgeConfig(llm_enabled=False))
+
+    async def link(self, chunk):  # type: ignore[no-untyped-def]
+        if "触发失败" in chunk.content:
+            raise RuntimeError("isolated_entity_link_failure")
+        return await self.delegate.link(chunk)
+
+
+class KnowledgePipelineTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self) -> None:
+        self.config = KnowledgeConfig(llm_enabled=False, max_concurrency=2)
+
+    async def test_pipeline_preserves_enriched_chunk_and_adds_knowledge(self) -> None:
+        chunk = _enriched(
+            "周杰伦于2000年出道。",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+        )
+
+        result = await KnowledgePipeline(self.config).process(chunk)
+
+        self.assertEqual(
+            result.model_dump(mode="json", exclude={"knowledge"}),
+            chunk.model_dump(mode="json"),
+        )
+        self.assertEqual(result.knowledge.quality.status, KnowledgeStatus.SUCCESS)
+        self.assertEqual(result.knowledge.stats.entity_count, 1)
+        self.assertEqual(result.knowledge.stats.claim_count, 1)
+        self.assertEqual(
+            result.knowledge.claims[0].verification.status,
+            VerificationStatus.SUPPORTED,
+        )
+
+    async def test_successful_unchanged_result_is_skipped(self) -> None:
+        chunk = _enriched(
+            "周杰伦于2000年出道。",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+        )
+        pipeline = KnowledgePipeline(self.config)
+        first = await pipeline.process(chunk)
+
+        second = await pipeline.process(first)
+
+        self.assertEqual(second.knowledge.quality.status, KnowledgeStatus.SKIPPED)
+        self.assertEqual(
+            second.knowledge.provenance.knowledge_input_hash,
+            first.knowledge.provenance.knowledge_input_hash,
+        )
+        self.assertIn("unchanged_input_and_versions", second.knowledge.quality.warnings)
+
+    async def test_batch_failure_is_isolated_to_one_chunk(self) -> None:
+        good = _enriched(
+            "周杰伦于2000年出道。",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+            chunk_id="good",
+        )
+        bad = _enriched("这条内容触发失败。", chunk_id="bad")
+        pipeline = KnowledgePipeline(
+            self.config,
+            entity_linker=FailingEntityLinker(),  # type: ignore[arg-type]
+        )
+
+        results = await pipeline.process_batch([good, bad])
+
+        self.assertEqual(results[0].knowledge.quality.status, KnowledgeStatus.SUCCESS)
+        self.assertEqual(results[1].knowledge.quality.status, KnowledgeStatus.FAILED)
+        self.assertIn("isolated_entity_link_failure", results[1].knowledge.quality.errors)
+
+    async def test_writer_round_trip_keeps_full_knowledge_structure(self) -> None:
+        chunk = _enriched(
+            "周杰伦于2000年出道。",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+        )
+        result = await KnowledgePipeline(self.config).process(chunk)
+        project_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=project_root) as temporary:
+            writer = KnowledgeDatasetWriter(project_root, Path(temporary))
+
+            chunks_path, manifest_path = writer.write([result])
+            loaded = writer.load_existing()
+
+            self.assertTrue(chunks_path.is_file())
+            self.assertTrue(manifest_path.is_file())
+            self.assertEqual(loaded[result.chunk_id], result)
 
 
 if __name__ == "__main__":
