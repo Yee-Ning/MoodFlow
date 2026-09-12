@@ -426,6 +426,68 @@ report 汇总 `sidecar`、`normalized`、`missing` 三类解析数量。同一�
 要求升级到下一个版本，从而避免“同版本不同规则”。任何 Clean 结果都可直接从 immutable
 normalized 数据重建，无需重新 fetch 或 parse。
 
+## Music RAG Offline Chunk V1
+
+`app/rag/chunk/` 在 Clean v0.2 之后实现只读、可重放的 Structure-aware
+Chunking。当前真实 schema 中，`CleanedDocument` 保存清洗文本和
+`normalized_path`，`DocumentBlock`/`DocumentTable` 仍保存在对应的 immutable
+`NormalizedDocument`，因此入口会先严格校验 document/source/hash，再把二者配对：
+
+```text
+CleanedDocument + referenced NormalizedDocument
+  -> Clean text projection onto existing Blocks
+  -> ChunkRouter
+  -> Structure Section
+  -> Narrative Parent
+  -> Chinese Recursive Child
+  -> DocumentTable row-group chunks
+  -> same-parent/same-section/same-type small-chunk merge
+  -> breadcrumb + retrieval_content
+  -> stable IDs + parent/neighbor relationships
+  -> Validator + Stats
+```
+
+存在 Blocks 时不会重新解析 Markdown。Clean 投影使用 normalized canonical Markdown
+与 `cleaned_text` 的有序行对齐，只借用现有 Block 边界和 hierarchy，不会把 Clean
+已删除的导航项重新带回。仅当 `blocks=[]` 且只剩 Markdown 时，才使用
+`MarkdownHeaderTextSplitter` 建立 fallback sections。通用递归拆分由
+`langchain-text-splitters` 提供；Parent/Child、表格、上下文、ID、关系、校验和统计
+均由项目代码负责。
+
+默认参数集中在 `app/rag/chunk/config/v1.yaml`：Parent target/max 为
+1000/1500 tokens，Child target/max/min 为 350/500/80 tokens，overlap 为 50。
+中文 separators 依次为段落、换行、句号、感叹号、问号、分号、冒号、逗号、顿号、
+空格和字符 fallback。默认离线 counter 是 lexical/CJK unit heuristic，不使用
+`len(text)`；配置 Hugging Face tokenizer 时，通过 `AutoTokenizer` 使用对应模型的
+真实 tokenization，不绑定任何固定 Embedding Model：
+
+```powershell
+python run_chunk.py --validate-only
+python run_chunk.py
+python run_chunk.py --tokenizer-name-or-path path-or-huggingface-model
+python run_chunk.py --tokenizer-name-or-path local-model --tokenizer-local-files-only
+```
+
+默认读取最新的 `data/cleaned/v*/cleaned_corpus_manifest.jsonl`，正式运行原子写入：
+
+```text
+data/chunked/v1/
+  chunked_corpus_manifest.jsonl
+  {source_id}/chunks.json
+```
+
+Parent 保存完整 section 上下文；Child 保存用于后续 Embedding/BM25 的
+`retrieval_content`，格式为 `document_title > h1 > h2 ...` 加原始 `content`，不会
+改写 `content`。Child 还保存 `parent_id`、`previous_chunk_id`、`next_chunk_id`。
+ID 由 doc、section path、parent/child index 和 content hash 确定性生成。
+
+`TableChunker` 只读 `DocumentTable.rows/metadata`，从不读取其 Markdown 后再用 regex
+还原二维表。有表头（显式或上游标记为 inferred）时每个 chunk 携带相同 header；
+无表头时第一行继续作为 data，`col_1 | col_2 ...` 只进入
+`retrieval_content`。原始 cells（包括空字符串）保存在 `TableChunkData`。超长原子
+row 的检索表示会进一步分片，但只有一个 fragment 拥有完整 source row；Validator
+同时验证 fragment 可重组为同一行，以及所有 source row 的位置和值恰好出现一次。
+
 ## WorldLine V1 SubGraph
 
 `app/agent/foundation/subgraphs/worldline` 是独立的、无 FastAPI request 依赖的 LangGraph 子图：

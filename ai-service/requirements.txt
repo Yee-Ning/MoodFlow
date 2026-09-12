@@ -4,6 +4,7 @@ charset-normalizer>=3.5.1,<4.0
 httpx>=0.28,<1.0
 langgraph>=1.2,<2.0
 langchain-openai>=1.6,<2.0
+langchain-text-splitters==1.1.2
 numpy>=1.26,<3.0
 openai>=2.54,<3.0
 markdown-it-py>=4.2,<5.0

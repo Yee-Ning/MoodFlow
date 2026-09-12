@@ -1,0 +1,26 @@
+chunk_version: v1
+target_parent_tokens: 1000
+max_parent_tokens: 1500
+target_child_tokens: 350
+max_child_tokens: 500
+min_child_tokens: 80
+child_overlap_tokens: 50
+separators:
+  - "\n\n"
+  - "\n"
+  - "。"
+  - "！"
+  - "？"
+  - "；"
+  - "："
+  - "，"
+  - "、"
+  - " "
+  - ""
+content_joiner: "\n\n"
+token_counter:
+  backend: unicode_heuristic
+  tokenizer_name_or_path: null
+  add_special_tokens: false
+  local_files_only: false
+  tokenizer_kwargs: {}
