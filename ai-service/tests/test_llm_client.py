@@ -5,7 +5,12 @@ from unittest.mock import sentinel, patch
 
 from pydantic import SecretStr
 
-from app.llm.client import create_base_response, create_response, get_base_chat_model
+from app.llm.client import (
+    create_base_response,
+    create_response,
+    create_structured_response,
+    get_base_chat_model,
+)
 
 
 class FakeResponse:
@@ -94,6 +99,54 @@ class CreateResponseTests(unittest.TestCase):
         self.assertEqual(request["instructions"], "current song assistant prompt")
         self.assertNotIn("tools", request)
         self.assertNotIn("tool_choice", request)
+
+    def test_structured_response_inlines_referenced_union_branch(self) -> None:
+        schema = {
+            "$defs": {
+                "Subject": {
+                    "type": "object",
+                    "properties": {"name": {"type": "string"}},
+                    "required": ["name"],
+                    "additionalProperties": False,
+                }
+            },
+            "type": "object",
+            "properties": {
+                "subject": {
+                    "anyOf": [
+                        {"$ref": "#/$defs/Subject"},
+                        {"type": "null"},
+                    ]
+                }
+            },
+            "required": ["subject"],
+            "additionalProperties": False,
+        }
+
+        with (
+            patch("app.llm.client.AsyncOpenAI", FakeAsyncOpenAI),
+            patch("app.llm.client.get_settings", fake_settings),
+        ):
+            asyncio.run(
+                create_structured_response(
+                    [{"role": "user", "content": "payload"}],
+                    "extract subject",
+                    schema,
+                    schema_name="subject_schema",
+                )
+            )
+
+        request = FakeAsyncOpenAI.last_request
+        self.assertIsNotNone(request)
+        assert request is not None
+        output_schema = request["text"]["format"]["schema"]
+        subject_branch = output_schema["properties"]["subject"]["anyOf"][0]
+        self.assertEqual(subject_branch["type"], "object")
+        self.assertIn("name", subject_branch["properties"])
+        self.assertNotIn("$ref", subject_branch)
+        self.assertEqual(schema["properties"]["subject"]["anyOf"][0], {
+            "$ref": "#/$defs/Subject"
+        })
 
     def test_langchain_chat_model_reuses_existing_settings_without_tools(self) -> None:
         with (

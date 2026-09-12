@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from functools import lru_cache
 from typing import Any
 
@@ -151,6 +152,55 @@ async def create_structured_response(
         enable_tools=False,
         output_format={
             "type": "json_schema", "name": schema_name,
-            "schema": schema, "strict": True,
+            "schema": _provider_compatible_schema(schema), "strict": True,
         },
     )
+
+
+def _provider_compatible_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    """Inline referenced union branches required by DeepSeek's schema validator."""
+
+    prepared = deepcopy(schema)
+
+    def referenced_schema(reference: object) -> dict[str, Any] | None:
+        if not isinstance(reference, str) or not reference.startswith("#/"):
+            return None
+        target: object = prepared
+        for raw_part in reference[2:].split("/"):
+            if not isinstance(target, dict):
+                return None
+            part = raw_part.replace("~1", "/").replace("~0", "~")
+            target = target.get(part)
+        return target if isinstance(target, dict) else None
+
+    def visit(
+        value: object,
+        *,
+        union_branch: bool = False,
+        resolving: frozenset[str] = frozenset(),
+    ) -> None:
+        if isinstance(value, list):
+            for item in value:
+                visit(item, union_branch=union_branch, resolving=resolving)
+            return
+        if not isinstance(value, dict):
+            return
+        next_resolving = resolving
+        reference = value.get("$ref")
+        if union_branch and isinstance(reference, str) and reference not in resolving:
+            resolved = referenced_schema(reference)
+            if resolved is not None:
+                siblings = {key: child for key, child in value.items() if key != "$ref"}
+                value.clear()
+                value.update(deepcopy(resolved))
+                value.update(siblings)
+                next_resolving = resolving | {reference}
+        for key, child in value.items():
+            visit(
+                child,
+                union_branch=key in {"anyOf", "oneOf"},
+                resolving=next_resolving,
+            )
+
+    visit(prepared)
+    return prepared
