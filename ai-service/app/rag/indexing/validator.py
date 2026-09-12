@@ -1,0 +1,44 @@
+"""Validation of projected documents and generated dense vectors."""
+
+from __future__ import annotations
+
+import math
+import uuid
+
+from .config import IndexingConfig
+from .models import IndexPoint, PreparedIndexDocument
+
+
+class IndexingValidator:
+    def __init__(self, config: IndexingConfig) -> None:
+        self.config = config
+
+    def validate_document(self, document: PreparedIndexDocument) -> None:
+        parsed = uuid.UUID(document.point_id)
+        if parsed.version != 5:
+            raise ValueError(f"point_id_not_uuid5:{document.chunk_id}")
+        if document.payload.get("record_type") != "child":
+            raise ValueError(f"non_child_index_document:{document.chunk_id}")
+        if document.payload.get("chunk_id") != document.chunk_id:
+            raise ValueError(f"payload_chunk_id_mismatch:{document.chunk_id}")
+        if document.payload.get("parent_id") != document.parent_id:
+            raise ValueError(f"payload_parent_id_mismatch:{document.chunk_id}")
+        if document.payload.get("index_input_hash") != document.input_hash:
+            raise ValueError(f"payload_input_hash_mismatch:{document.chunk_id}")
+
+    def validate_point(self, point: IndexPoint) -> None:
+        self.validate_document(point.document)
+        vector = point.dense_vector
+        if len(vector) != self.config.dense.dimension:
+            raise ValueError(
+                f"dense_dimension_invalid:{point.document.chunk_id}:"
+                f"expected={self.config.dense.dimension}:actual={len(vector)}"
+            )
+        if not all(math.isfinite(value) for value in vector):
+            raise ValueError(f"dense_vector_non_finite:{point.document.chunk_id}")
+        if self.config.dense.normalize:
+            norm = math.sqrt(sum(value * value for value in vector))
+            if not math.isclose(norm, 1.0, rel_tol=1e-3, abs_tol=1e-3):
+                raise ValueError(
+                    f"dense_vector_not_normalized:{point.document.chunk_id}:{norm}"
+                )

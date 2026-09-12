@@ -21,4 +21,5 @@ data/normalized/**
 data/parsed_cache/**
 data/clean/**
 data/cleaned/**
+data/indexing/**
 tmp/
