@@ -23,6 +23,10 @@ _RANGE_RE = re.compile(
     rf"(?P<end>{_YEAR})\s*年?(?!\d)"
 )
 _YEAR_RE = re.compile(rf"(?<!\d)(?P<year>{_YEAR})\s*年?(?!\d)")
+_NON_EVENT_YEAR_PREFIX_RE = re.compile(
+    r"(?:©|copyright|版權所有|版权所有|著作權|著作权)\s*[:：]?\s*$",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,6 +82,8 @@ class TemporalExtractor:
         for match in _YEAR_RE.finditer(content):
             if self._overlaps(match.span(), occupied):
                 continue
+            if self._has_non_event_prefix(content, match.start()):
+                continue
             year = int(match.group("year"))
             mentions.append(_Mention(*match.span(), match.group(0), (year,)))
         mentions.sort(key=lambda item: item.start)
@@ -97,3 +103,9 @@ class TemporalExtractor:
     @staticmethod
     def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:
         return any(span[0] < end and start < span[1] for start, end in occupied)
+
+    @staticmethod
+    def _has_non_event_prefix(content: str, start: int) -> bool:
+        return bool(
+            _NON_EVENT_YEAR_PREFIX_RE.search(content[max(0, start - 30) : start])
+        )

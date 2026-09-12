@@ -270,6 +270,15 @@ class MetadataEnrichmentTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(enriched.enrichment.temporal.date)
         self.assertEqual(enriched.enrichment.temporal.raw_mentions, [])
 
+    async def test_copyright_year_is_not_treated_as_event_time(self) -> None:
+        chunk = _parent("杰威尔音乐有限公司\n© Copyright 2019")
+        enriched = await _pipeline(StaticRuntime([_semantic_output()])).enrich_chunk(
+            chunk
+        )
+
+        self.assertIsNone(enriched.enrichment.temporal.year)
+        self.assertEqual(enriched.enrichment.temporal.raw_mentions, [])
+
     async def test_subjective_review_uses_controlled_content_type(self) -> None:
         chunk = _parent("我认为这张专辑的编曲细腻，但后半段略显重复。")
         enriched = await _pipeline(
