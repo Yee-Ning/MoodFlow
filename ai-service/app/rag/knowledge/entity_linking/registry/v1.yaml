@@ -1,0 +1,47 @@
+registry_version: v1
+entities:
+  - entity_id: artist:jay_chou
+    entity_type: artist
+    canonical_name: 周杰伦
+    aliases: [周杰倫, 周董, Jay Chou, JAY CHOU]
+    ambiguous_aliases: []
+  - entity_id: album:jay_2000
+    entity_type: album
+    canonical_name: Jay
+    aliases: [周杰伦同名专辑, 周杰倫同名專輯]
+    ambiguous_aliases: [Jay]
+  - entity_id: album:qi_li_xiang
+    entity_type: album
+    canonical_name: 七里香
+    aliases: [七里香专辑, 七里香專輯]
+    ambiguous_aliases: [七里香]
+  - entity_id: song:qi_li_xiang
+    entity_type: song
+    canonical_name: 七里香
+    aliases: [七里香歌曲]
+    ambiguous_aliases: [七里香]
+  - entity_id: song:qing_tian
+    entity_type: song
+    canonical_name: 晴天
+    aliases: [晴天歌曲]
+    ambiguous_aliases: []
+  - entity_id: album:ye_hui_mei
+    entity_type: album
+    canonical_name: 叶惠美
+    aliases: [葉惠美, 叶惠美专辑, 葉惠美專輯]
+    ambiguous_aliases: [叶惠美, 葉惠美]
+  - entity_id: genre:r_and_b
+    entity_type: genre
+    canonical_name: R&B
+    aliases: [R＆B, RnB, Rhythm and Blues, 节奏布鲁斯, 節奏藍調]
+    ambiguous_aliases: []
+  - entity_id: genre:hip_hop
+    entity_type: genre
+    canonical_name: Hip-Hop
+    aliases: [Hip Hop, hiphop, 嘻哈]
+    ambiguous_aliases: []
+  - entity_id: label:jvr_music
+    entity_type: label
+    canonical_name: 杰威尔音乐
+    aliases: [杰威爾音樂, JVR Music]
+    ambiguous_aliases: []
