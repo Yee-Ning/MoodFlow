@@ -1,0 +1,8 @@
+enrichment_version: v1
+schema_version: v1
+prompt_version: v1
+llm_enabled: true
+batch_size: 16
+max_concurrency: 4
+timeout_seconds: 45
+retry_count: 2

@@ -488,6 +488,42 @@ ID 由 doc、section path、parent/child index 和 content hash 确定性生成�
 row 的检索表示会进一步分片，但只有一个 fragment 拥有完整 source row；Validator
 同时验证 fragment 可重组为同一行，以及所有 source row 的位置和值恰好出现一次。
 
+## Music RAG Metadata Enrichment V1
+
+`app/rag/enrichment/` 只读 Chunk V1，并在不修改任何原 Chunk 字段的前提下追加独立
+`enrichment` 对象：
+
+```text
+Chunk
+  -> Document / Parent Metadata Inheritance
+  -> Rule Enrichment (language, source, content temporal mentions)
+  -> one Structured Output LLM call
+  -> normalization + priority-aware merge
+  -> validation + versioned input hash
+  -> data/enriched/v1/enriched_chunks.jsonl
+```
+
+LLM 一次提取受控 `content_type`、`topics`、`keywords`、surface-only
+`entity_mentions` 与 `primary_subject`，不生成 summary。Prompt 禁止外部知识，响应经过
+JSON Schema、Pydantic 和实体文本落地校验；超时、非法结构或未落地实体会保留原 Chunk
+并标记 `partial`。合并优先级固定为 existing/manual → parser/inherited → rule → LLM，
+冲突保存在 `quality.metadata_conflicts`，不静默覆盖。
+
+```powershell
+# 默认使用现有 LLM_* 配置进行语义增强
+python run_enrich.py --limit 20 --sample-size 5
+
+# 纯离线 smoke：只跑继承和规则层，不消耗 LLM
+python run_enrich.py --limit 20 --sample-size 5 --rule-only
+```
+
+配置位于 `app/rag/enrichment/config/v1.yaml`，包括 batch size、并发、单次超时与重试。
+`content + title + section_path + inherited metadata + parent subject + enrichment version`
+共同生成 `input_hash`；hash 和三个版本均未变化且已有成功结果时标记 `skipped`，不再次
+调用 LLM。输出通过 `chunk_id` 与 Chunk V1 对应，并原子写入独立 JSONL，不覆盖
+`data/chunked`。本阶段只抽取 mention，不生成 entity ID、不合并 alias，也不包含
+Claim、Embedding、Qdrant、BM25、Hybrid 或 Rerank。
+
 ## WorldLine V1 SubGraph
 
 `app/agent/foundation/subgraphs/worldline` 是独立的、无 FastAPI request 依赖的 LangGraph 子图：
