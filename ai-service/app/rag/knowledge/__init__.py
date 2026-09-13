@@ -17,6 +17,12 @@ from .models import (
 )
 from .pipeline import KnowledgePipeline
 from .report import KnowledgeQualityReporter
+from .release import (
+    KnowledgeReleaseBuilder,
+    KnowledgeReleaseError,
+    KnowledgeReleaseOutcome,
+)
+from .qa import KnowledgeQASampler
 from .service import KnowledgePipelineService, KnowledgeRunOutcome
 from .validator import KnowledgeValidationError, KnowledgeValidator
 from .verification import ClaimVerification, ClaimVerifier, VerificationStatus
@@ -38,6 +44,10 @@ __all__ = [
     "KnowledgePipeline",
     "KnowledgePipelineService",
     "KnowledgeQualityReporter",
+    "KnowledgeQASampler",
+    "KnowledgeReleaseBuilder",
+    "KnowledgeReleaseError",
+    "KnowledgeReleaseOutcome",
     "KnowledgeRunOutcome",
     "KnowledgeStatus",
     "KnowledgeValidationError",

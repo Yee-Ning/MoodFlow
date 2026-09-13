@@ -581,6 +581,34 @@ python run_knowledge.py --validate-only --sample-size 0
 `knowledge_input_hash`；成功结果在输入和版本未变时会标记 `skipped`。本阶段不实现
 Embedding、Qdrant、HNSW、BM25、Hybrid Search 或 Rerank。
 
+### Knowledge V2 冻结发布
+
+`run_knowledge_release.py` 将可重跑的 `data/knowledge/v1` 工作集与正式发布物分离。
+它先重新校验上游 EnrichedChunk、Parent/Child 引用、组件版本、全部 Claim 证据、
+quality report、corpus manifest 与 registry candidate 清单，再确定性抽取 100 条 Claim
+和 100 条实体链接供人工复核：
+
+```powershell
+# 只生成可复核抽样包，不运行 LLM、Embedding 或索引
+python run_knowledge_release.py --prepare-review
+
+# 人工复核后，在 data/knowledge/review-v2/qa_review_attestation.json 中记录签字
+# 签字必须绑定 qa_sampling_manifest.json 中两个抽样文件的 SHA-256，示例字段：
+# attestation_version, reviewer, review_status=approved,
+# claim_sample_sha256, entity_link_sample_sha256,
+# claim_reviewed_count, entity_link_reviewed_count,
+# generation_mode=rule_only, rejected_sample_ids=[]
+
+# 仅在所有门禁和签字均通过时冻结 data/knowledge/v2
+python run_knowledge_release.py --finalize
+```
+
+V2 使用 `create_once_or_verify_identical` 策略：首次创建后，相同内容可重复验证；任一
+文件发生变化都会拒绝覆盖。`knowledge_release_manifest.json` 记录 Enriched 输入、配置、
+Registry V3 及其 V2 基线、全部发布文件的 SHA-256、组件版本、QA 签字、统计和排除阶段。
+V2 corpus manifest 会指向 V2 JSONL，不再引用工作集 V1。该发布动作明确排除
+Embedding、Qdrant、BM25、在线检索、RRF 与 Rerank。
+
 ## Music RAG Offline Indexing V1
 
 `app/rag/indexing/` 是离线数据链路的最终阶段。它只读取

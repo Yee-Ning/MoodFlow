@@ -37,10 +37,15 @@ from app.rag.knowledge import (
     KnowledgePipeline,
     KnowledgePipelineService,
     KnowledgeQualityReporter,
+    KnowledgeQASampler,
+    KnowledgeReleaseBuilder,
     KnowledgeStatus,
     KnowledgeValidator,
     VerificationStatus,
 )
+from app.rag.clean.io import atomic_write_json, atomic_write_jsonl
+from app.rag.knowledge.config import DEFAULT_KNOWLEDGE_CONFIG_PATH
+from app.rag.knowledge.entity_linking.registry import DEFAULT_ENTITY_REGISTRY_PATH
 from app.rag.knowledge.claims import Claim, ClaimPredicate, ClaimSource, ClaimTime
 from app.rag.knowledge.writer import KnowledgeDatasetWriter
 from app.rag.knowledge.ownership import deduplicate_claim_ownership
@@ -853,6 +858,123 @@ class KnowledgePipelineTests(unittest.IsolatedAsyncioTestCase):
             )
             candidate = json.loads(candidates_path.read_text(encoding="utf-8"))
             self.assertEqual(candidate["normalized_text"], "未知音乐人")
+
+
+class KnowledgeReleaseTests(unittest.IsolatedAsyncioTestCase):
+    async def _fixture(
+        self, root: Path
+    ) -> tuple[KnowledgeReleaseBuilder, Path, Path]:
+        project_root = Path(__file__).resolve().parents[1]
+        source = _enriched(
+            "2000年周杰伦发行首张专辑《Jay》。",
+            mentions=[
+                ("周杰伦", EntityTypeHint.ARTIST),
+                ("Jay", EntityTypeHint.ALBUM),
+            ],
+        )
+        result = await KnowledgePipeline(
+            KnowledgeConfig(llm_enabled=False)
+        ).process(source)
+        enriched_path = root / "enriched" / "enriched_chunks.jsonl"
+        source_root = root / "knowledge" / "v1"
+        review_root = root / "knowledge" / "review-v2"
+        output_root = root / "knowledge" / "v2"
+        atomic_write_jsonl(enriched_path, [source.model_dump(mode="json")])
+        KnowledgeDatasetWriter(project_root, source_root).write([result])
+        KnowledgeQualityReporter(project_root, source_root).write([result])
+        builder = KnowledgeReleaseBuilder(
+            project_root,
+            source_root=source_root,
+            output_root=output_root,
+            review_root=review_root,
+            enriched_path=enriched_path,
+            config_path=DEFAULT_KNOWLEDGE_CONFIG_PATH,
+            registry_path=DEFAULT_ENTITY_REGISTRY_PATH,
+            claim_sample_size=1,
+            entity_sample_size=1,
+        )
+        return builder, review_root, output_root
+
+    async def test_qa_sampler_is_deterministic_and_keeps_review_context(self) -> None:
+        source = _enriched(
+            "周杰伦于2000年出道。",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+        )
+        result = await KnowledgePipeline(
+            KnowledgeConfig(llm_enabled=False)
+        ).process(source)
+        sampler = KnowledgeQASampler(claim_sample_size=1, entity_sample_size=1)
+
+        first_claims = sampler.claim_rows([result])
+        second_claims = sampler.claim_rows([result])
+        entities = sampler.entity_rows([result])
+
+        self.assertEqual(first_claims, second_claims)
+        self.assertEqual(first_claims[0]["review_status"], "pending")
+        self.assertEqual(first_claims[0]["evidence_span"], source.content)
+        self.assertEqual(entities[0]["matched_surfaces"], ["周杰伦"])
+        self.assertIn("周杰伦", entities[0]["context_excerpt"])
+
+    async def test_release_requires_bound_review_attestation(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=project_root) as temporary:
+            root = Path(temporary)
+            builder, _, _ = await self._fixture(root)
+            builder.prepare_review()
+
+            with self.assertRaisesRegex(ValueError, "review_missing"):
+                builder.finalize()
+
+    async def test_release_is_immutable_and_idempotent(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=project_root) as temporary:
+            root = Path(temporary)
+            builder, review_root, output_root = await self._fixture(root)
+            prepared = builder.prepare_review()
+            sampling = json.loads(
+                (review_root / "qa_sampling_manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            atomic_write_json(
+                review_root / "qa_review_attestation.json",
+                {
+                    "attestation_version": "v1",
+                    "reviewer": "test-reviewer",
+                    "review_status": "approved",
+                    "claim_sample_sha256": sampling["claim_sample_sha256"],
+                    "entity_link_sample_sha256": sampling[
+                        "entity_link_sample_sha256"
+                    ],
+                    "claim_reviewed_count": sampling["claim_sample_count"],
+                    "entity_link_reviewed_count": sampling[
+                        "entity_link_sample_count"
+                    ],
+                    "generation_mode": "rule_only",
+                    "rejected_sample_ids": [],
+                    "notes": "fixture review",
+                },
+            )
+
+            created = builder.finalize()
+            unchanged = builder.finalize()
+
+            self.assertEqual(prepared.status, "review_prepared")
+            self.assertEqual(created.status, "created")
+            self.assertEqual(unchanged.status, "unchanged")
+            self.assertEqual(created.release_id, unchanged.release_id)
+            self.assertTrue((output_root / "knowledge_release_manifest.json").is_file())
+            release = json.loads(
+                (output_root / "knowledge_release_manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertTrue(release["quality"]["pre_embedding_release_ready"])
+            self.assertIn("embedding", release["excluded_stages"])
+
+            atomic_write_json(output_root / "knowledge_quality_report.json", {})
+            with self.assertRaisesRegex(ValueError, "knowledge_release_conflict"):
+                builder.finalize()
 
 
 if __name__ == "__main__":

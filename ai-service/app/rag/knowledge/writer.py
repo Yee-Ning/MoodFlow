@@ -70,10 +70,10 @@ class KnowledgeDatasetWriter:
             self.chunks_path,
             (chunk.model_dump(mode="json") for chunk in ordered),
         )
-        atomic_write_jsonl(self.manifest_path, self._manifest_rows(ordered))
+        atomic_write_jsonl(self.manifest_path, self.manifest_rows(ordered))
         return self.chunks_path, self.manifest_path
 
-    def _manifest_rows(
+    def manifest_rows(
         self, chunks: list[KnowledgeEnrichedChunk]
     ) -> list[dict[str, object]]:
         grouped: dict[str, list[KnowledgeEnrichedChunk]] = defaultdict(list)

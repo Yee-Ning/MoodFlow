@@ -44,7 +44,7 @@ class KnowledgeQualityReporter:
         unresolved_with_candidates = sum(
             bool(item.candidate_entity_ids) for item in unresolved
         )
-        candidates = self._candidate_rows(chunks)
+        candidates = self.candidate_rows(chunks)
         verification_counts = Counter(
             item.verification.status.value
             for chunk in chunks
@@ -112,13 +112,13 @@ class KnowledgeQualityReporter:
         self, chunks: list[KnowledgeEnrichedChunk]
     ) -> tuple[Path, Path, dict[str, object]]:
         report = self.build(chunks)
-        candidates = self._candidate_rows(chunks)
+        candidates = self.candidate_rows(chunks)
         atomic_write_json(self.report_path, report)
         atomic_write_jsonl(self.candidates_path, candidates)
         return self.report_path, self.candidates_path, report
 
     @staticmethod
-    def _candidate_rows(
+    def candidate_rows(
         chunks: list[KnowledgeEnrichedChunk],
     ) -> list[dict[str, object]]:
         grouped: dict[str, list[object]] = defaultdict(list)
