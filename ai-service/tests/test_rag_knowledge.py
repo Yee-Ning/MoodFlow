@@ -791,6 +791,9 @@ class KnowledgePipelineTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(outcome.summary["status"], "validated")
             self.assertEqual(outcome.summary["total"], 1)
+            self.assertEqual(
+                outcome.summary["claims"], result.knowledge.stats.claim_count
+            )
             self.assertIsNone(outcome.chunks_path)
 
     async def test_knowledge_validator_rejects_inconsistent_stats(self) -> None:

@@ -109,10 +109,8 @@ class KnowledgePipelineService:
             "llm_enabled": self.config.llm_enabled,
             "available": total_available,
             "total": len(chunks),
-            "linked_entities": sum(
-                chunk.knowledge.stats.entity_count for chunk in chunks
-            ),
-            "claims": sum(chunk.knowledge.stats.claim_count for chunk in chunks),
+            "linked_entities": entity_quality["linked_occurrences"],
+            "claims": claim_quality["claim_count"],
             "unresolved_mentions": entity_quality["unresolved_occurrences"],
             "unique_unresolved_mentions": entity_quality["unique_unresolved_mentions"],
             "resolved_occurrence_ratio": entity_quality["resolved_occurrence_ratio"],
