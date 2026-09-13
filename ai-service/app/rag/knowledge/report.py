@@ -41,6 +41,9 @@ class KnowledgeQualityReporter:
             for chunk in chunks
             for item in chunk.knowledge.entities.unresolved_mentions
         ]
+        unresolved_with_candidates = sum(
+            bool(item.candidate_entity_ids) for item in unresolved
+        )
         candidates = self._candidate_rows(chunks)
         verification_counts = Counter(
             item.verification.status.value
@@ -51,6 +54,10 @@ class KnowledgeQualityReporter:
             item.claim.claim_id for chunk in chunks for item in chunk.knowledge.claims
         ]
         denominator = linked_occurrences + len(unresolved)
+        registry_denominator = linked_occurrences + unresolved_with_candidates
+        registry_resolution_ratio = (
+            linked_occurrences / registry_denominator if registry_denominator else 1.0
+        )
         return {
             "report_version": "v1",
             "document_count": len({chunk.doc_id for chunk in chunks}),
@@ -66,6 +73,9 @@ class KnowledgeQualityReporter:
                 "unique_unresolved_mentions": len(candidates),
                 "resolved_occurrence_ratio": (
                     round(linked_occurrences / denominator, 6) if denominator else 1.0
+                ),
+                "registry_candidate_resolution_ratio": round(
+                    registry_resolution_ratio, 6
                 ),
                 "unresolved_by_reason": dict(
                     sorted(Counter(item.reason for item in unresolved).items())
@@ -86,10 +96,14 @@ class KnowledgeQualityReporter:
                 "zero_failed_chunks": status_counts.get("failed", 0) == 0,
                 "claim_ids_unique": len(claim_ids) == len(set(claim_ids)),
                 "claim_evidence_validated": True,
+                "core_entity_resolution_target_met": (
+                    registry_resolution_ratio >= 0.95
+                ),
                 "pre_embedding_ready": (
                     len(chunks) > 0
                     and status_counts.get("failed", 0) == 0
                     and len(claim_ids) == len(set(claim_ids))
+                    and registry_resolution_ratio >= 0.95
                 ),
             },
         }

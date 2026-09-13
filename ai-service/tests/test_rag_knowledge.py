@@ -798,6 +798,11 @@ class KnowledgePipelineTests(unittest.IsolatedAsyncioTestCase):
                 report["entity_linking"]["unresolved_occurrences"],  # type: ignore[index]
                 1,
             )
+            self.assertTrue(
+                report["quality_gates"][  # type: ignore[index]
+                    "core_entity_resolution_target_met"
+                ]
+            )
             candidate = json.loads(candidates_path.read_text(encoding="utf-8"))
             self.assertEqual(candidate["normalized_text"], "未知音乐人")
 

@@ -82,6 +82,10 @@ class KnowledgePipelineService:
                 source_chunks, existing_by_id=existing
             )
             chunks = deduplicate_claim_ownership(chunks)
+            validator = KnowledgeValidator()
+            for source, chunk in zip(source_chunks, chunks, strict=True):
+                validator.validate(source, chunk)
+            validator.validate_parent_references(chunks)
             chunks_path, manifest_path = writer.write(
                 chunks,
                 preserve_existing=limit is not None and limit < total_available,
@@ -112,6 +116,9 @@ class KnowledgePipelineService:
             "unresolved_mentions": entity_quality["unresolved_occurrences"],
             "unique_unresolved_mentions": entity_quality["unique_unresolved_mentions"],
             "resolved_occurrence_ratio": entity_quality["resolved_occurrence_ratio"],
+            "registry_candidate_resolution_ratio": entity_quality[
+                "registry_candidate_resolution_ratio"
+            ],
             "verification_status": claim_quality["verification_status"],
             "pre_embedding_ready": gates["pre_embedding_ready"],
             **counts,
