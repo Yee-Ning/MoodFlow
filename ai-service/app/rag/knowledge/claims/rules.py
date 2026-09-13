@@ -14,7 +14,7 @@ _SENTENCE_RE = re.compile(r"[^。！？!?；;\n]+[。！？!?；;]?")
 _YEAR_RE = re.compile(r"(?P<year>(?:18|19|20)\d{2})\s*年")
 _BIRTH_RE = re.compile(
     r"(?P<year>(?:18|19|20)\d{2})\s*年\s*"
-    r"(?P<month>\d{1,2})\s*月\s*(?P<day>\d{1,2})\s*日[^。！？!?；;]{0,30}(?:出生|生于|生於)"
+    r"(?P<month>\d{1,2})\s*月\s*(?P<day>\d{1,2})\s*日[^。！？!?；;]{0,30}(?:出生|生于|生於|生)"
     r"|(?:出生|生于|生於)[^。！？!?；;]{0,20}"
     r"(?P<year_after>(?:18|19|20)\d{2})\s*年\s*"
     r"(?P<month_after>\d{1,2})\s*月\s*(?P<day_after>\d{1,2})\s*日"
@@ -58,6 +58,31 @@ _PERFORMANCE_NEGATIONS = (
 )
 _PERFORMANCE_QUESTION_MARKERS = ("问：", "問：", "问:", "問:", "为什么", "為什麼")
 _TABLE_NAV_MARKERS = ("查论编", "查論編", "音樂作品 創作作品", "音乐作品 创作作品")
+_PERFORMANCE_CONTEXT_EXCLUSIONS = (
+    "拍卖",
+    "拍賣",
+    "拍品",
+    "服饰",
+    "服飾",
+    "服装",
+    "服裝",
+    "战袍",
+    "戰袍",
+    "策展",
+    "捐赠",
+    "捐贈",
+)
+_COLLABORATION_QUESTION_MARKERS = (
+    "?",
+    "？",
+    "为什么",
+    "為什麼",
+    "为何",
+    "為何",
+    "怎样",
+    "怎樣",
+    "如何",
+)
 
 
 def is_subjective(text: str) -> bool:
@@ -227,30 +252,73 @@ class RuleClaimExtractor:
         for match in _BIRTH_RE.finditer(evidence):
             marker_matches = list(
                 re.finditer(
-                    r"得奖者\s*[:：]|得獎者\s*[:：]|获奖者\s*[:：]|獲獎者\s*[:：]",
+                    r"(?:得奖者|得獎者|获奖者|獲獎者)(?P<brief>简介|簡介)?\s*[:：]",
                     evidence[: match.start()],
                 )
             )
             subject = None
+            marker_scoped = False
             if marker_matches:
                 marker = marker_matches[-1]
                 if match.start() - marker.end() <= 180:
-                    scoped = evidence[marker.end() : match.start()]
-                    scoped_people = [
-                        entity
-                        for entity in entities
-                        if entity.entity_type in {EntityType.ARTIST, EntityType.PERSON}
-                        and self._alias_positions(scoped, entity)
-                    ]
-                    subject = self._nearest_entity(
-                        scoped,
-                        scoped_people,
-                        len(scoped),
-                        {EntityType.ARTIST, EntityType.PERSON},
-                        max_distance=180,
-                        before_only=True,
-                    )
-            if subject is None:
+                    marker_scoped = True
+                    if marker.group("brief"):
+                        # A “winner biography” marker introduces the date but
+                        # repeats the winner before the marker (e.g. winner:
+                        # Person ... winner profile: 1966...).  Bind to that
+                        # person instead of borrowing a name from an adjacent
+                        # table row.
+                        previous_winner = next(
+                            (
+                                item
+                                for item in reversed(marker_matches[:-1])
+                                if not item.group("brief")
+                            ),
+                            None,
+                        )
+                        if previous_winner is not None:
+                            scoped = evidence[previous_winner.end() : marker.start()]
+                            scoped_people = [
+                                entity
+                                for entity in entities
+                                if entity.entity_type
+                                in {EntityType.ARTIST, EntityType.PERSON}
+                                and self._alias_positions(scoped, entity)
+                            ]
+                            first_people = [
+                                (
+                                    self._alias_positions(scoped, entity)[0][0],
+                                    entity,
+                                )
+                                for entity in scoped_people
+                            ]
+                            subject = (
+                                min(first_people, key=lambda item: item[0])[1]
+                                if first_people
+                                else None
+                            )
+                    else:
+                        scoped = evidence[marker.end() : match.start()]
+                        scoped_people = [
+                            entity
+                            for entity in entities
+                            if entity.entity_type
+                            in {EntityType.ARTIST, EntityType.PERSON}
+                            and self._alias_positions(scoped, entity)
+                        ]
+                        first_people = [
+                            (
+                                self._alias_positions(scoped, entity)[0][0],
+                                entity,
+                            )
+                            for entity in scoped_people
+                        ]
+                        subject = (
+                            min(first_people, key=lambda item: item[0])[1]
+                            if first_people
+                            else None
+                        )
+            if subject is None and not marker_scoped:
                 subject = self._nearest_entity(
                     evidence,
                     entities,
@@ -585,9 +653,7 @@ class RuleClaimExtractor:
         *,
         table_context: bool = False,
     ) -> list[ClaimCandidate]:
-        if table_context and not any(
-            cue in evidence for cue in ("获奖", "獲獎", "得奖", "得獎")
-        ):
+        if table_context and not self._table_has_award_result(evidence):
             return []
         if any(cue in evidence for cue in _AWARD_NEGATIONS) or re.search(
             r"没有.{0,4}(?:获奖|獲獎)", evidence
@@ -606,7 +672,13 @@ class RuleClaimExtractor:
             award_positions = self._alias_positions(evidence, award)
             if not award_positions:
                 continue
-            award_anchor = award_positions[0][0]
+            award_span = min(
+                award_positions,
+                key=lambda span: min(
+                    abs(span[0] - match.start()) for match in win_matches
+                ),
+            )
+            award_anchor = award_span[0]
             win = min(
                 win_matches,
                 key=lambda item: min(
@@ -615,6 +687,22 @@ class RuleClaimExtractor:
             )
             if min(abs(win.start() - award_anchor), abs(win.end() - award_anchor)) > 45:
                 continue
+            if not table_context:
+                if win.end() <= award_span[0]:
+                    between = evidence[win.end() : award_span[0]]
+                elif award_span[1] <= win.start():
+                    between = evidence[award_span[1] : win.start()]
+                else:
+                    between = ""
+                # A clause boundary or an explicit contrast means that the
+                # nearest award belongs to another winner (for example, the
+                # album award mentioned after Zhong Xingmin's arrangement
+                # award in the same paragraph).
+                if re.search(r"[。！？!?；;]", between) or re.search(
+                    r"(?:而|但|然而|另外|另|同时|同時|这张专辑|這張專輯|该专辑|該專輯)",
+                    between,
+                ):
+                    continue
             subject = self._nearest_entity(
                 evidence,
                 entities,
@@ -644,6 +732,23 @@ class RuleClaimExtractor:
                 )
             )
         return results
+
+    @staticmethod
+    def _table_has_award_result(evidence: str) -> bool:
+        """Require an explicit result cell, not a generic column heading.
+
+        Table contexts include header labels such as ``获奖专辑或歌曲``.
+        Treating that label as a result produced claims from rows that only
+        listed nominees/categories.  A result must therefore be a standalone
+        cell value (or the value after a ``:`` separator).
+        """
+
+        result_cues = {"获奖", "獲獎", "得奖", "得獎"}
+        for part in evidence.split("|"):
+            value = part.rsplit(":", 1)[-1].strip()
+            if value in result_cues:
+                return True
+        return False
 
     def _chart_claims(
         self, evidence: str, entities: list[CanonicalEntity]
@@ -689,6 +794,8 @@ class RuleClaimExtractor:
             return []
         if any(cue in evidence for cue in _PERFORMANCE_QUESTION_MARKERS):
             return []
+        if any(cue in evidence for cue in _PERFORMANCE_CONTEXT_EXCLUSIONS):
+            return []
         cue = next(
             (
                 item
@@ -699,6 +806,11 @@ class RuleClaimExtractor:
         )
         if cue is None:
             return []
+        cue_spans = [
+            match.span()
+            for item in ("演唱会", "演唱會", "巡回演出", "巡迴演出", "登台演出")
+            for match in re.finditer(re.escape(item), evidence)
+        ]
         cue_position = evidence.find(cue)
         action_matches = list(
             re.finditer(
@@ -709,26 +821,46 @@ class RuleClaimExtractor:
         action_matches = [
             item
             for item in action_matches
-            if item.end() <= cue_position or item.start() >= cue_position + len(cue)
+            if not any(
+                item.start() < cue_end and item.end() > cue_start
+                for cue_start, cue_end in cue_spans
+            )
         ]
         if not action_matches:
             return []
-        artist = self._nearest_entity(
-            evidence,
-            entities,
-            min(action_matches, key=lambda item: abs(item.start() - cue_position)).start(),
-            {EntityType.ARTIST},
-            max_distance=45,
-        )
-        if artist is None:
-            return []
-        artist_span = self._nearest_occurrence(evidence, artist, action_matches[0].start())
-        if (
-            artist_span is not None
-            and artist_span[0] > action_matches[0].start()
-            and any(cue in evidence for cue in ("继", "繼"))
-            and any(cue in evidence for cue in ("之后", "之後"))
-        ):
+        action_matches.sort(key=lambda item: abs(item.start() - cue_position))
+        artist = None
+        action_match = None
+        artist_span = None
+        for candidate in action_matches:
+            candidate_artist = self._nearest_entity(
+                evidence,
+                entities,
+                candidate.start(),
+                {EntityType.ARTIST},
+                max_distance=35,
+                before_only=True,
+            )
+            if candidate_artist is None:
+                continue
+            candidate_span = self._nearest_occurrence(
+                evidence, candidate_artist, candidate.start()
+            )
+            if candidate_span is None:
+                continue
+            prefix = evidence[max(0, candidate_span[0] - 18) : candidate_span[0]]
+            suffix = evidence[candidate_span[1] : min(len(evidence), candidate_span[1] + 12)]
+            # Do not turn a comparison list ("继王菲之后...") into a claim
+            # that the compared artist performed at the current concert.
+            if re.search(r"(?:继|繼)[^。！？!?；;]{0,12}$", prefix) or re.match(
+                r"(?:之后|之後)", suffix
+            ):
+                continue
+            artist = candidate_artist
+            action_match = candidate
+            artist_span = candidate_span
+            break
+        if artist is None or action_match is None or artist_span is None:
             return []
         return [
             ClaimCandidate(
@@ -748,6 +880,8 @@ class RuleClaimExtractor:
         *,
         table_context: bool = False,
     ) -> list[ClaimCandidate]:
+        if any(marker in evidence for marker in _COLLABORATION_QUESTION_MARKERS):
+            return []
         if not any(cue in evidence for cue in ("合作", "合唱", "共同创作", "共同創作")):
             return []
         if table_context and not any(cue in evidence for cue in ("合作", "合唱")):

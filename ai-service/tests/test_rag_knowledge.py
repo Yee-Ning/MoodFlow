@@ -606,6 +606,120 @@ class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
             ClaimPredicate.PERFORMED_AT, {claim.predicate for claim in result.claims}
         )
 
+    async def test_award_table_requires_an_explicit_result_cell(self) -> None:
+        content = (
+            "| 颁奖典礼 | 奖项 | 获奖专辑或歌曲 |\n"
+            "| 2002年度金曲奖 | 最佳作词人奖 | 《爱在西元前》 |"
+        )
+        chunk = _enriched(
+            content,
+            mentions=[
+                ("爱在西元前", EntityTypeHint.SONG),
+                ("最佳作词人奖", EntityTypeHint.AWARD),
+            ],
+        ).model_copy(
+            update={
+                "table_data": TableChunkData(
+                    table_id="table-award-1",
+                    header_state=TableHeaderState.EXPLICIT,
+                    headers=["颁奖典礼", "奖项", "获奖专辑或歌曲"],
+                    rows=[["2002年度金曲奖", "最佳作词人奖", "《爱在西元前》"]],
+                    row_start=0,
+                    row_end=1,
+                    source_row_count=1,
+                )
+            }
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertNotIn(
+            ClaimPredicate.WON_AWARD, {claim.predicate for claim in result.claims}
+        )
+
+    async def test_winner_profile_birth_dates_bind_to_the_declared_winner(self) -> None:
+        content = (
+            "最佳编曲人奖 得奖者：钟兴民 得奖者简介：1966年1月26日生于台南。"
+            "最佳专辑制作人奖 得奖者：周杰伦 得奖者简介：1979年1月18日生。"
+        )
+        chunk = _enriched(
+            content,
+            mentions=[
+                ("钟兴民", EntityTypeHint.PERSON),
+                ("周杰伦", EntityTypeHint.ARTIST),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+        births = {
+            (claim.subject_entity_id, claim.object_value)
+            for claim in result.claims
+            if claim.predicate == ClaimPredicate.BORN_ON
+        }
+
+        self.assertEqual(
+            births,
+            {
+                ("person:chung_hing_man", "1966-01-26"),
+                ("artist:jay_chou", "1979-01-18"),
+            },
+        )
+
+    async def test_auction_clothing_is_not_a_performance_claim(self) -> None:
+        chunk = _enriched(
+            "在一场拍卖中，周杰伦的演唱会服饰是拍品之一。",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertNotIn(
+            ClaimPredicate.PERFORMED_AT, {claim.predicate for claim in result.claims}
+        )
+
+    async def test_comparison_artist_is_not_attributed_to_the_current_concert(self) -> None:
+        chunk = _enriched(
+            "在日本武道馆连开两场演唱会，成为继王菲之后第二位在武道馆开唱的华人歌手。",
+            mentions=[("王菲", EntityTypeHint.ARTIST)],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertNotIn(
+            ClaimPredicate.PERFORMED_AT, {claim.predicate for claim in result.claims}
+        )
+
+    async def test_collaboration_question_is_not_a_fact_claim(self) -> None:
+        chunk = _enriched(
+            "那么究竟是怎样的契机让方文山和周杰伦有合作？",
+            mentions=[
+                ("方文山", EntityTypeHint.PERSON),
+                ("周杰伦", EntityTypeHint.ARTIST),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertNotIn(
+            ClaimPredicate.COLLABORATED_WITH,
+            {claim.predicate for claim in result.claims},
+        )
+
     async def test_table_row_is_used_only_when_exactly_grounded_in_content(self) -> None:
         content = "| 专辑 | 收录歌曲 |\n| 七里香 | 晴天 |"
         chunk = _enriched(
