@@ -61,6 +61,18 @@ class EnrichmentStatus(StrEnum):
     FAILED = "failed"
 
 
+class StructuralStatus(StrEnum):
+    SUCCESS = "success"
+    FAILED = "failed"
+
+
+class SemanticStatus(StrEnum):
+    SUCCESS = "success"
+    REJECTED = "rejected"
+    DISABLED = "disabled"
+    FAILED = "failed"
+
+
 ShortPhrase = Annotated[str, Field(min_length=1, max_length=200)]
 WarningText = Annotated[str, Field(min_length=1, max_length=500)]
 
@@ -149,11 +161,46 @@ class QualityMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     enrichment_status: EnrichmentStatus
+    structural_status: StructuralStatus
+    semantic_status: SemanticStatus
+    index_ready: bool
     warnings: list[WarningText] = Field(default_factory=list, max_length=100)
     errors: list[WarningText] = Field(default_factory=list, max_length=20)
     metadata_conflicts: list[MetadataConflict] = Field(
         default_factory=list, max_length=100
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def derive_stage_quality(cls, value: object) -> object:
+        if not isinstance(value, dict):
+            return value
+        payload = dict(value)
+        overall = payload.get("enrichment_status")
+        warnings = {str(item) for item in payload.get("warnings", [])}
+        errors = [str(item) for item in payload.get("errors", [])]
+        structural = (
+            StructuralStatus.FAILED
+            if overall == EnrichmentStatus.FAILED
+            or overall == EnrichmentStatus.FAILED.value
+            else StructuralStatus.SUCCESS
+        )
+        if "semantic_enrichment_disabled" in warnings:
+            semantic = SemanticStatus.DISABLED
+        elif errors:
+            semantic = (
+                SemanticStatus.REJECTED
+                if all(item.startswith("ungrounded_") for item in errors)
+                else SemanticStatus.FAILED
+            )
+        elif structural == StructuralStatus.FAILED:
+            semantic = SemanticStatus.FAILED
+        else:
+            semantic = SemanticStatus.SUCCESS
+        payload.setdefault("structural_status", structural)
+        payload.setdefault("semantic_status", semantic)
+        payload.setdefault("index_ready", structural == StructuralStatus.SUCCESS)
+        return payload
 
 
 class ProvenanceMetadata(BaseModel):

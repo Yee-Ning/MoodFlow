@@ -10,7 +10,13 @@ from app.rag.chunk.models import ChunkedDocument
 
 from .config import EnrichmentConfig
 from .corpus import EnrichmentCorpusReader
-from .models import BaseChunk, EnrichedChunk, EnrichmentStatus
+from .models import (
+    BaseChunk,
+    EnrichedChunk,
+    EnrichmentStatus,
+    SemanticStatus,
+    StructuralStatus,
+)
 from .pipeline import MetadataEnrichmentPipeline
 from .validator import EnrichmentValidator
 from .writer import EnrichmentDatasetWriter
@@ -99,8 +105,15 @@ class MetadataEnrichmentService:
             )
 
         counts = {status.value: 0 for status in EnrichmentStatus}
+        structural_counts = {status.value: 0 for status in StructuralStatus}
+        semantic_counts = {status.value: 0 for status in SemanticStatus}
+        index_ready = 0
         for chunk in chunks:
-            counts[chunk.enrichment.quality.enrichment_status.value] += 1
+            quality = chunk.enrichment.quality
+            counts[quality.enrichment_status.value] += 1
+            structural_counts[quality.structural_status.value] += 1
+            semantic_counts[quality.semantic_status.value] += 1
+            index_ready += int(quality.index_ready)
         rng = random.Random(sample_seed)
         sampled = rng.sample(chunks, min(sample_size, len(chunks))) if chunks else []
         summary: dict[str, object] = {
@@ -111,6 +124,9 @@ class MetadataEnrichmentService:
             "llm_enabled": self.config.llm_enabled,
             "available": total_available,
             "total": len(chunks),
+            "index_ready": index_ready,
+            "structural": structural_counts,
+            "semantic": semantic_counts,
             **counts,
             "samples": [item.model_dump(mode="json") for item in sampled],
         }

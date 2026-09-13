@@ -14,8 +14,11 @@ from app.rag.enrichment import (
     MetadataEnrichmentPipeline,
     MetadataEnrichmentService,
     RuleEnricher,
+    SemanticStatus,
     SemanticEnricher,
+    StructuralStatus,
 )
+from app.rag.enrichment.models import QualityMetadata
 from app.rag.enrichment.writer import EnrichmentDatasetWriter
 
 
@@ -177,6 +180,33 @@ class MetadataEnrichmentTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.content.language, "zh-TW")
         self.assertEqual(result.temporal.year, 2000)
         self.assertEqual(result.entities.primary_subject.text, "周杰伦")
+
+    async def test_rule_only_is_structurally_successful_and_index_ready(self) -> None:
+        chunk = _parent("周杰伦于2000年出道。")
+
+        enriched = await MetadataEnrichmentPipeline(
+            EnrichmentConfig(llm_enabled=False)
+        ).enrich_chunk(chunk)
+
+        quality = enriched.enrichment.quality
+        self.assertEqual(quality.enrichment_status, EnrichmentStatus.SUCCESS)
+        self.assertEqual(quality.structural_status, StructuralStatus.SUCCESS)
+        self.assertEqual(quality.semantic_status, SemanticStatus.DISABLED)
+        self.assertTrue(quality.index_ready)
+
+    async def test_legacy_partial_quality_is_usable_and_semantically_rejected(
+        self,
+    ) -> None:
+        quality = QualityMetadata.model_validate(
+            {
+                "enrichment_status": "partial",
+                "errors": ["ungrounded_entity_mention"],
+            }
+        )
+
+        self.assertEqual(quality.structural_status, StructuralStatus.SUCCESS)
+        self.assertEqual(quality.semantic_status, SemanticStatus.REJECTED)
+        self.assertTrue(quality.index_ready)
 
     async def test_artist_career_chunk_preserves_content_and_enriches(self) -> None:
         chunk = _parent("周杰伦于2000年出道，开始其音乐生涯。")

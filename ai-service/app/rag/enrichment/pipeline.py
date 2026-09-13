@@ -107,12 +107,13 @@ class MetadataEnrichmentPipeline:
             semantic = None
             warnings: list[str] = []
             errors: list[str] = []
-            status = EnrichmentStatus.PARTIAL
+            status = EnrichmentStatus.SUCCESS
             if self.config.llm_enabled:
                 try:
                     semantic = await self.semantic_enricher.enrich(base, context)
                     status = EnrichmentStatus.SUCCESS
                 except Exception as exc:
+                    status = EnrichmentStatus.PARTIAL
                     errors.append(self._safe_error(exc))
                     warnings.append("semantic_enrichment_unavailable")
             else:

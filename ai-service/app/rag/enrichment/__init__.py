@@ -19,7 +19,9 @@ from .models import (
     EntityTypeHint,
     MentionSource,
     PrimarySubject,
+    SemanticStatus,
     SemanticEnrichmentOutput,
+    StructuralStatus,
 )
 from .pipeline import MetadataEnrichmentPipeline
 from .rule_enricher import RuleEnricher
@@ -54,10 +56,12 @@ __all__ = [
     "MetadataMerger",
     "PrimarySubject",
     "RuleEnricher",
+    "SemanticStatus",
     "SemanticEnricher",
     "SemanticEnrichmentError",
     "SemanticEnrichmentOutput",
     "SemanticEnrichmentRuntime",
+    "StructuralStatus",
     "TemporalExtractor",
     "latest_chunked_root",
     "load_enrichment_config",

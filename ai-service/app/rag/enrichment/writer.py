@@ -81,8 +81,10 @@ class EnrichmentDatasetWriter:
         for document_id, values in sorted(grouped.items()):
             source_id = values[0].enrichment.source.source_id
             statuses = {status.value: 0 for status in EnrichmentStatus}
+            index_ready_count = 0
             for value in values:
                 statuses[value.enrichment.quality.enrichment_status.value] += 1
+                index_ready_count += int(value.enrichment.quality.index_ready)
             rows.append(
                 {
                     "document_id": document_id,
@@ -93,6 +95,7 @@ class EnrichmentDatasetWriter:
                     "schema_version": values[0].enrichment.provenance.schema_version,
                     "prompt_version": values[0].enrichment.provenance.prompt_version,
                     "chunk_count": len(values),
+                    "index_ready_count": index_ready_count,
                     **{f"{key}_count": count for key, count in statuses.items()},
                     "enriched_chunks_path": relative_chunks_path,
                 }
