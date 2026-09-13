@@ -99,7 +99,11 @@ class EntityRegistry:
             return RegistryResolution(None, (), 0, "registry_no_candidate")
 
         if type_hint is not None:
-            candidates = [item for item in candidates if item.entity_type == type_hint]
+            candidates = [
+                item
+                for item in candidates
+                if self._type_matches(item.entity_type, type_hint)
+            ]
             if not candidates:
                 return RegistryResolution(
                     None, candidate_ids, 0, "registry_candidate_type_mismatch"
@@ -140,6 +144,12 @@ class EntityRegistry:
             )
         return RegistryResolution(
             candidate, candidate_ids, 0.98, "registry_exact_match"
+        )
+
+    @staticmethod
+    def _type_matches(candidate: EntityType, hint: EntityType) -> bool:
+        return candidate == hint or (
+            hint == EntityType.PERSON and candidate == EntityType.ARTIST
         )
 
     @staticmethod

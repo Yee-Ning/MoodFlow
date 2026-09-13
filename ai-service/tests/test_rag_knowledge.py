@@ -201,6 +201,29 @@ class EntityLinkingTests(unittest.IsolatedAsyncioTestCase):
             {"artist:jolin_tsai", "song:love_confession"},
         )
 
+    async def test_person_hint_accepts_artist_but_not_album(self) -> None:
+        artist_chunk = _enriched(
+            "吴宗宪是音乐人。",
+            mentions=[("吴宗宪", EntityTypeHint.PERSON)],
+        )
+        album_chunk = _enriched(
+            "叶惠美是周杰伦的母亲。",
+            mentions=[("叶惠美", EntityTypeHint.PERSON)],
+        )
+
+        artist_result = await self.linker.link(artist_chunk)
+        album_result = await self.linker.link(album_chunk)
+
+        self.assertEqual(
+            [item.entity_id for item in artist_result.linked_entities],
+            ["artist:jacky_wu"],
+        )
+        self.assertFalse(album_result.linked_entities)
+        self.assertEqual(
+            album_result.unresolved_mentions[0].reason,
+            "registry_candidate_type_mismatch",
+        )
+
     async def test_source_publisher_and_non_music_organization_are_not_candidates(
         self,
     ) -> None:
