@@ -56,6 +56,7 @@ _PERFORMANCE_NEGATIONS = (
     "没有参加演唱会",
     "沒有參加演唱會",
 )
+_PERFORMANCE_QUESTION_MARKERS = ("问：", "問：", "问:", "問:", "为什么", "為什麼")
 _TABLE_NAV_MARKERS = ("查论编", "查論編", "音樂作品 創作作品", "音乐作品 创作作品")
 
 
@@ -76,18 +77,19 @@ class RuleClaimExtractor:
         for context, evidence in dict.fromkeys(evidence_units):
             if not evidence or is_subjective(evidence):
                 continue
+            table_context = context != evidence
             present = self._present_entities(context, entities)
             extracted = [
                 *self._birth_claims(context, present),
                 *self._debut_claims(context, present),
-                *self._release_claims(context, present),
+                *self._release_claims(context, present, table_context=table_context),
                 *self._first_album_claims(context, present),
                 *self._track_claims(context, present),
                 *self._genre_claims(context, present),
-                *self._award_claims(context, present),
+                *self._award_claims(context, present, table_context=table_context),
                 *self._chart_claims(context, present),
-                *self._performance_claims(context, present),
-                *self._collaboration_claims(context, present),
+                *self._performance_claims(context, present, table_context=table_context),
+                *self._collaboration_claims(context, present, table_context=table_context),
                 *self._signed_claims(context, present),
                 *self._creative_role_claims(context, present),
             ]
@@ -223,13 +225,40 @@ class RuleClaimExtractor:
         results: list[ClaimCandidate] = []
         seen: set[tuple[str, str]] = set()
         for match in _BIRTH_RE.finditer(evidence):
-            subject = self._nearest_entity(
-                evidence,
-                entities,
-                match.start(),
-                {EntityType.ARTIST, EntityType.PERSON},
-                max_distance=55,
+            marker_matches = list(
+                re.finditer(
+                    r"得奖者\s*[:：]|得獎者\s*[:：]|获奖者\s*[:：]|獲獎者\s*[:：]",
+                    evidence[: match.start()],
+                )
             )
+            subject = None
+            if marker_matches:
+                marker = marker_matches[-1]
+                if match.start() - marker.end() <= 180:
+                    scoped = evidence[marker.end() : match.start()]
+                    scoped_people = [
+                        entity
+                        for entity in entities
+                        if entity.entity_type in {EntityType.ARTIST, EntityType.PERSON}
+                        and self._alias_positions(scoped, entity)
+                    ]
+                    subject = self._nearest_entity(
+                        scoped,
+                        scoped_people,
+                        len(scoped),
+                        {EntityType.ARTIST, EntityType.PERSON},
+                        max_distance=180,
+                        before_only=True,
+                    )
+            if subject is None:
+                subject = self._nearest_entity(
+                    evidence,
+                    entities,
+                    match.start(),
+                    {EntityType.ARTIST, EntityType.PERSON},
+                    max_distance=120,
+                    before_only=True,
+                )
             if subject is None:
                 continue
             year = int(match.group("year") or match.group("year_after"))
@@ -264,9 +293,19 @@ class RuleClaimExtractor:
             return []
         results: list[ClaimCandidate] = []
         for cue_match in re.finditer(r"出道|进入乐坛|進入樂壇", evidence):
-            year_match = self._nearest_year(
-                evidence, cue_match.start(), max_distance=18
-            )
+            year_match = None
+            for candidate in _YEAR_RE.finditer(evidence):
+                if candidate.end() <= cue_match.start():
+                    gap = cue_match.start() - candidate.end()
+                    if gap <= 18:
+                        year_match = candidate
+                elif candidate.start() >= cue_match.end():
+                    gap = candidate.start() - cue_match.end()
+                    between = evidence[cue_match.end() : candidate.start()]
+                    if gap <= 12 and between.strip() in {"于", "於", "在"}:
+                        year_match = candidate
+                if year_match is not None:
+                    break
             artist = self._nearest_entity(
                 evidence,
                 entities,
@@ -291,7 +330,11 @@ class RuleClaimExtractor:
         return results
 
     def _release_claims(
-        self, evidence: str, entities: list[CanonicalEntity]
+        self,
+        evidence: str,
+        entities: list[CanonicalEntity],
+        *,
+        table_context: bool = False,
     ) -> list[ClaimCandidate]:
         if any(
             cue in evidence
@@ -310,9 +353,9 @@ class RuleClaimExtractor:
             for item in entities
             if item.entity_type in {EntityType.ALBUM, EntityType.SONG}
         ]
-        cue_matches = list(
-            re.finditer(r"(?:发行|發行|发布|發布|推出)(?!公司|商|方)", evidence)
-        )
+        if table_context and _YEAR_RE.search(evidence) is None:
+            return []
+        cue_matches = list(re.finditer(r"(?:发行|發行)(?!公司|商|方)", evidence))
         if not cue_matches:
             return []
         results: list[ClaimCandidate] = []
@@ -421,7 +464,18 @@ class RuleClaimExtractor:
     ) -> list[ClaimCandidate]:
         if any(
             cue in evidence
-            for cue in ("未收录", "未收錄", "不包含", "不收录", "不收錄")
+            for cue in (
+                "未收录",
+                "未收錄",
+                "不包含",
+                "不收录",
+                "不收錄",
+                "DVD",
+                "音乐影片",
+                "音樂影片",
+                "电影（加长）版",
+                "電影（加長）版",
+            )
         ):
             return []
         cue_matches = list(re.finditer(r"收录|收錄|包含", evidence))
@@ -525,9 +579,19 @@ class RuleClaimExtractor:
         ]
 
     def _award_claims(
-        self, evidence: str, entities: list[CanonicalEntity]
+        self,
+        evidence: str,
+        entities: list[CanonicalEntity],
+        *,
+        table_context: bool = False,
     ) -> list[ClaimCandidate]:
-        if any(cue in evidence for cue in _AWARD_NEGATIONS):
+        if table_context and not any(
+            cue in evidence for cue in ("获奖", "獲獎", "得奖", "得獎")
+        ):
+            return []
+        if any(cue in evidence for cue in _AWARD_NEGATIONS) or re.search(
+            r"没有.{0,4}(?:获奖|獲獎)", evidence
+        ):
             return []
         if not any(
             cue in evidence for cue in ("获奖", "獲獎", "获得", "獲得", "荣获", "榮獲")
@@ -549,7 +613,7 @@ class RuleClaimExtractor:
                     abs(item.start() - award_anchor), abs(item.end() - award_anchor)
                 ),
             )
-            if min(abs(win.start() - award_anchor), abs(win.end() - award_anchor)) > 80:
+            if min(abs(win.start() - award_anchor), abs(win.end() - award_anchor)) > 45:
                 continue
             subject = self._nearest_entity(
                 evidence,
@@ -584,7 +648,10 @@ class RuleClaimExtractor:
     def _chart_claims(
         self, evidence: str, entities: list[CanonicalEntity]
     ) -> list[ClaimCandidate]:
-        if any(cue in evidence for cue in ("福布斯", "名人榜", "富豪榜")):
+        if any(
+            cue in evidence
+            for cue in ("福布斯", "名人榜", "富豪榜", "超话", "超話", "新浪", "微博")
+        ):
             return []
         position = re.search(r"(?:第\s*\d+\s*名|冠军|冠軍|榜首|排名\s*\d+)", evidence)
         if position is None or not any(
@@ -612,9 +679,15 @@ class RuleClaimExtractor:
         ]
 
     def _performance_claims(
-        self, evidence: str, entities: list[CanonicalEntity]
+        self,
+        evidence: str,
+        entities: list[CanonicalEntity],
+        *,
+        table_context: bool = False,
     ) -> list[ClaimCandidate]:
         if any(cue in evidence for cue in _PERFORMANCE_NEGATIONS):
+            return []
+        if any(cue in evidence for cue in _PERFORMANCE_QUESTION_MARKERS):
             return []
         cue = next(
             (
@@ -649,6 +722,14 @@ class RuleClaimExtractor:
         )
         if artist is None:
             return []
+        artist_span = self._nearest_occurrence(evidence, artist, action_matches[0].start())
+        if (
+            artist_span is not None
+            and artist_span[0] > action_matches[0].start()
+            and any(cue in evidence for cue in ("继", "繼"))
+            and any(cue in evidence for cue in ("之后", "之後"))
+        ):
+            return []
         return [
             ClaimCandidate(
                 statement=f"{artist.canonical_name}参加{cue}",
@@ -661,9 +742,15 @@ class RuleClaimExtractor:
         ]
 
     def _collaboration_claims(
-        self, evidence: str, entities: list[CanonicalEntity]
+        self,
+        evidence: str,
+        entities: list[CanonicalEntity],
+        *,
+        table_context: bool = False,
     ) -> list[ClaimCandidate]:
         if not any(cue in evidence for cue in ("合作", "合唱", "共同创作", "共同創作")):
+            return []
+        if table_context and not any(cue in evidence for cue in ("合作", "合唱")):
             return []
         people = [
             item
@@ -672,7 +759,25 @@ class RuleClaimExtractor:
         ]
         if len(people) < 2:
             return []
-        subject, other = people[0], people[1]
+        cue_matches = list(re.finditer(r"合作|合唱|共同创作|共同創作", evidence))
+        if not cue_matches:
+            return []
+        cue = min(cue_matches, key=lambda item: item.start())
+        ranked = sorted(
+            (
+                min(abs(span[0] - cue.start()), abs(span[1] - cue.start())),
+                entity.entity_id,
+                entity,
+            )
+            for entity in people
+            for span in self._alias_positions(evidence, entity)
+        )
+        nearby = [item[2] for item in ranked if item[0] <= 45]
+        if len({item.entity_id for item in nearby}) < 2:
+            return []
+        subject, other = nearby[0], next(
+            item for item in nearby[1:] if item.entity_id != nearby[0].entity_id
+        )
         return [
             ClaimCandidate(
                 statement=f"{subject.canonical_name}与{other.canonical_name}合作",
