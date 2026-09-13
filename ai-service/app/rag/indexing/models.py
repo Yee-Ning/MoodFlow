@@ -5,13 +5,14 @@ from __future__ import annotations
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
 
 class IndexFailureStage(StrEnum):
     PROJECTION = "projection"
     EMBEDDING = "embedding"
     UPSERT = "upsert"
+    VERIFICATION = "verification"
 
 
 class PreparedIndexDocument(BaseModel):
@@ -48,13 +49,23 @@ class IndexFailure(BaseModel):
 class IndexBuildManifest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    manifest_version: str = Field(default="v2", pattern=r"^v\d+$")
     status: str = Field(pattern=r"^(completed|partial)$")
+    ready_for_retrieval: bool
     created_at: datetime
     indexing_version: str
     schema_version: str
     projection_version: str
     source_path: str
     source_fingerprint: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    source_release_id: str
+    source_release_manifest_path: str
+    source_release_manifest_fingerprint: str = Field(
+        pattern=r"^sha256:[0-9a-f]{64}$"
+    )
+    config_fingerprint: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    projection_path: str
+    projection_fingerprint: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     collection_name: str
     dense_vector_name: str
     dense_model: str
@@ -70,10 +81,24 @@ class IndexBuildManifest(BaseModel):
     parent_count: int = Field(ge=0)
     child_count: int = Field(ge=0)
     eligible_count: int = Field(ge=0)
+    selected_count: int = Field(ge=0)
+    projected_count: int = Field(ge=0)
     excluded_count: int = Field(ge=0)
+    limited_to: int | None = Field(default=None, ge=1)
     indexed_count: int = Field(ge=0)
     skipped_count: int = Field(ge=0)
     failed_count: int = Field(ge=0)
     pruned_count: int = Field(ge=0)
     collection_point_count: int | None = Field(default=None, ge=0)
     warnings: list[str] = Field(default_factory=list, max_length=50)
+
+    @model_validator(mode="after")
+    def ready_requires_complete_full_build(self) -> "IndexBuildManifest":
+        if self.ready_for_retrieval and (
+            self.status != "completed"
+            or self.limited_to is not None
+            or self.failed_count
+            or self.collection_point_count != self.projected_count
+        ):
+            raise ValueError("ready index manifest must describe a complete full build")
+        return self

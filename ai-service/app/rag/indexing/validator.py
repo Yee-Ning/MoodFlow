@@ -23,6 +23,27 @@ class IndexingValidator:
             raise ValueError(f"payload_chunk_id_mismatch:{document.chunk_id}")
         if document.payload.get("parent_id") != document.parent_id:
             raise ValueError(f"payload_parent_id_mismatch:{document.chunk_id}")
+        parent_context = document.payload.get("parent_context")
+        if not isinstance(parent_context, dict):
+            raise ValueError(f"payload_parent_context_missing:{document.chunk_id}")
+        if parent_context.get("chunk_id") != document.parent_id:
+            raise ValueError(f"payload_parent_context_mismatch:{document.chunk_id}")
+        if not str(parent_context.get("content", "")).strip():
+            raise ValueError(f"payload_parent_content_empty:{document.chunk_id}")
+        release_id = document.payload.get("source_release_id")
+        if not isinstance(release_id, str) or not release_id:
+            raise ValueError(f"payload_source_release_missing:{document.chunk_id}")
+        supported_claim_ids = document.payload.get("supported_claim_ids")
+        supported_claims = document.payload.get("supported_claims")
+        if not isinstance(supported_claim_ids, list) or not isinstance(
+            supported_claims, list
+        ):
+            raise ValueError(f"payload_supported_claims_invalid:{document.chunk_id}")
+        projected_claim_ids = [
+            item.get("claim_id") for item in supported_claims if isinstance(item, dict)
+        ]
+        if projected_claim_ids != supported_claim_ids:
+            raise ValueError(f"payload_supported_claim_ids_mismatch:{document.chunk_id}")
         if document.payload.get("index_input_hash") != document.input_hash:
             raise ValueError(f"payload_input_hash_mismatch:{document.chunk_id}")
 

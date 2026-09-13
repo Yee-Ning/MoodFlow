@@ -617,44 +617,57 @@ Embedding、Qdrant、BM25、在线检索、RRF 与 Rerank。
 
 ```text
 KnowledgeEnrichedChunk JSONL
+  + immutable knowledge_release_manifest.json
+  -> verify release artifact hashes, QA approval and pre-embedding gates
   -> validate Parent / Child references
   -> deterministic dense_text / bm25_text / payload projection
+  -> index_projection.jsonl
   -> Qwen3-Embedding-0.6B document embedding (1024d, L2 normalized)
   -> one Qdrant point per Child
        named vector: dense
        named vector: bm25 (qdrant/bm25, multilingual tokenizer, IDF)
-       payload: parent_id + source/enrichment/verified-knowledge metadata
+       payload: compact Parent context + entities + supported claims + provenance
   -> idempotent batch upsert
   -> index_build_manifest.json + index_failures.jsonl
 ```
 
 Dense 文本直接使用现有 `retrieval_content`，不向文档添加 query instruction；BM25
 文本在此基础上确定性追加 topics、keywords、canonical entity names 和 registry aliases。
-只有 `SUPPORTED` Claim 的 ID 会进入 Payload，Claim 文本不会重复拼入向量输入。
+只有 `SUPPORTED` Claim 的紧凑结构和 evidence span 会进入 Payload，Claim 文本不会重复
+拼入向量输入。每个 Child Payload 同时保存对应 Parent 的正文、section path、breadcrumb
+与 token count；不会复制体积过大的原始 `document_metadata`。
 Point ID 由 `chunk_id` 确定性生成 UUID5，完整投影、模型 revision、BM25 配置与版本共同
 生成 `index_input_hash`；Qdrant 中 hash 未变化的 point 会在加载模型前直接跳过。
+CPU/GPU、batch size 与 `local_files_only` 等运行时参数不参与 hash。
 
 默认配置位于 `app/rag/indexing/config/v1.yaml`，固定 Qwen3 模型 revision、1024 维
 Cosine、Dense HNSW `m=16/ef_construct=200`、Qdrant 1.19 和中文
-`multilingual` BM25。Payload Index 只为配置中实际用于后续过滤的字段创建。启动和构建：
+`multilingual` BM25。正式 Collection 名绑定 Knowledge release hash 及索引、Schema、
+Projection 版本，失败或限量构建不会被标记为 `ready_for_retrieval`。Payload Index 只为
+配置中实际用于后续过滤的字段创建。Qdrant 端口仅绑定 Windows 本机。启动和构建：
 
 ```powershell
 docker compose -f docker-compose.qdrant.yml up -d
 
-# 只验证真实 Knowledge JSONL、Parent 引用和索引投影，不加载模型、不连接 Qdrant
+# 验证 Release、QA、Artifact hash、Parent 引用和索引投影；不加载模型、不连接 Qdrant
 python run_index.py --validate-only
 
+# 在正式全量运行前验证少量数据；该构建会保持 partial/not-ready
+python run_index.py --limit 10
+
 # 完整 Dense + BM25 Qdrant 离线索引构建
-python run_index.py
+python run_index.py --local-files-only
 
 # 仅在完整语料成功构建时，显式删除 collection 中已不属于语料的旧 point
 python run_index.py --prune-stale
 ```
 
-构建报告默认写入 `data/indexing/v1/`。单批 Embedding 或 Qdrant upsert 失败后会降级到
+构建产物按 release 写入 `data/indexing/v1/{release_id}/`，包括精确记录 Dense/BM25 输入和
+Payload 的 `index_projection.jsonl`。Manifest 绑定 Release、配置、投影文件的 SHA-256，
+并区分全量 eligible 数和本次 selected 数。单批 Embedding 或 Qdrant upsert 失败后会降级到
 单条隔离，其余 Child 继续处理；存在失败时不会执行 stale prune。`--limit` 运行禁止与
 `--prune-stale` 同时使用。当前阶段明确不包含 Dense/BM25 查询、top-k、`hnsw_ef`、
-RRF、Parent 上下文回填、去重、Rerank 或 `MusicKnowledgeRetriever` 接入。
+RRF、Parent 上下文回填执行、去重、Rerank 或 `MusicKnowledgeRetriever` 接入。
 
 ## WorldLine V1 SubGraph
 

@@ -81,7 +81,12 @@ def latest_knowledge_path(project_root: Path) -> Path:
     candidates: list[tuple[tuple[int, ...], Path]] = []
     for path in root.iterdir() if root.is_dir() else ():
         chunks_path = path / "knowledge_enriched_chunks.jsonl"
-        if not path.is_dir() or not chunks_path.is_file():
+        release_path = path / "knowledge_release_manifest.json"
+        if (
+            not path.is_dir()
+            or not chunks_path.is_file()
+            or not release_path.is_file()
+        ):
             continue
         try:
             version = tuple(

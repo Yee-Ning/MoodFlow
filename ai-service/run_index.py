@@ -27,6 +27,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--config", type=Path, default=DEFAULT_INDEXING_CONFIG_PATH)
     parser.add_argument("--knowledge-path", type=Path)
+    parser.add_argument("--release-manifest", type=Path)
     parser.add_argument("--output-root", type=Path)
     parser.add_argument("--limit", type=int)
     parser.add_argument("--validate-only", action="store_true")
@@ -57,6 +58,7 @@ def main(
             root,
             config,
             knowledge_path=knowledge_path,
+            release_manifest_path=_resolve(root, args.release_manifest),
             output_root=_resolve(root, args.output_root),
         ).run(
             limit=args.limit,
@@ -65,6 +67,7 @@ def main(
         )
         payload = {
             **outcome.summary,
+            "projection": _relative(root, outcome.projection_path),
             "manifest": _relative(root, outcome.manifest_path),
             "failures": _relative(root, outcome.failures_path),
         }

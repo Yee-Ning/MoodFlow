@@ -5,8 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from app.rag.clean.io import atomic_write_json, atomic_write_jsonl
+from app.rag.knowledge.qa import sha256_file
 
-from .models import IndexBuildManifest, IndexFailure
+from .models import IndexBuildManifest, IndexFailure, PreparedIndexDocument
 
 
 class IndexBuildWriter:
@@ -23,6 +24,19 @@ class IndexBuildWriter:
     @property
     def failures_path(self) -> Path:
         return self.output_root / "index_failures.jsonl"
+
+    @property
+    def projection_path(self) -> Path:
+        return self.output_root / "index_projection.jsonl"
+
+    def write_projection(
+        self, documents: list[PreparedIndexDocument]
+    ) -> tuple[Path, str]:
+        atomic_write_jsonl(
+            self.projection_path,
+            (document.model_dump(mode="json") for document in documents),
+        )
+        return self.projection_path, sha256_file(self.projection_path)
 
     def write(
         self, manifest: IndexBuildManifest, failures: list[IndexFailure]

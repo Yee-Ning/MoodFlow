@@ -49,7 +49,7 @@ class QwenDenseEncoder:
                     f"expected={self.config.dimension}:actual={embeddings.shape[1]}"
                 )
             if self.config.normalize:
-                embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1)
+                embeddings = self._normalize_embeddings(embeddings, torch)
         return embeddings.detach().cpu().float().tolist()
 
     def _ensure_loaded(self) -> None:
@@ -89,3 +89,9 @@ class QwenDenseEncoder:
             torch.arange(batch_size, device=last_hidden_states.device),
             sequence_lengths,
         ]
+
+    @staticmethod
+    def _normalize_embeddings(embeddings, torch):  # type: ignore[no-untyped-def]
+        """Normalize in FP32 so BF16 model outputs remain unit length."""
+
+        return torch.nn.functional.normalize(embeddings.float(), p=2, dim=1)

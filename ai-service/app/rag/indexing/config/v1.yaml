@@ -1,6 +1,6 @@
 indexing_version: v1
-schema_version: v1
-projection_version: v1
+schema_version: v2
+projection_version: v2
 embedding_batch_size: 8
 retry_count: 2
 index_partial_knowledge: true
@@ -31,7 +31,8 @@ bm25:
 qdrant:
   url: http://localhost:6333
   api_key_env: QDRANT_API_KEY
-  collection_name: music_knowledge_v1
+  collection_name: music_knowledge_v2
+  append_release_hash: true
   minimum_server_version: 1.19.0
   timeout_seconds: 60
   prefer_grpc: false

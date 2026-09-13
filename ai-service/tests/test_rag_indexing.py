@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import tempfile
 import unittest
+import uuid
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -28,6 +31,9 @@ from app.rag.indexing import (
     IndexCorpusReader,
     IndexDocumentProjector,
     IndexingConfig,
+    IndexingValidator,
+    KnowledgeReleaseError,
+    KnowledgeReleaseValidator,
     OfflineIndexingService,
     PayloadIndexConfig,
     QdrantIndexConfig,
@@ -60,6 +66,7 @@ from run_index import main as run_index_main
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+RELEASE_ID = "knowledge-v2-aaaaaaaaaaaaaaaa"
 
 
 def _config(**updates: object) -> IndexingConfig:
@@ -73,6 +80,7 @@ def _config(**updates: object) -> IndexingConfig:
         ),
         qdrant=QdrantIndexConfig(
             collection_name="test_music_knowledge_v1",
+            append_release_hash=False,
             upsert_batch_size=8,
             payload_indexes=(PayloadIndexConfig(field="doc_id", schema="keyword"),),
         ),
@@ -205,12 +213,42 @@ def _child(
 
 
 def _write_corpus(root: Path, children: list[KnowledgeEnrichedChildChunk]) -> Path:
-    path = root / "knowledge.jsonl"
+    release_root = root / "v2"
+    release_root.mkdir(parents=True, exist_ok=True)
+    path = release_root / "knowledge_enriched_chunks.jsonl"
     rows = [_parent(), *children]
     path.write_text(
         "".join(
             json.dumps(row.model_dump(mode="json"), ensure_ascii=False) + "\n"
             for row in rows
+        ),
+        encoding="utf-8",
+    )
+    fingerprint = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    (release_root / "knowledge_release_manifest.json").write_text(
+        json.dumps(
+            {
+                "release_manifest_version": "v1",
+                "dataset_version": "v2",
+                "release_id": RELEASE_ID,
+                "artifacts": {path.name: fingerprint},
+                "quality": {
+                    "chunk_count": len(rows),
+                    "all_claims_supported": True,
+                    "pre_embedding_release_ready": True,
+                    "pipeline_quality_gates": {
+                        "all_chunks_processed": True,
+                        "zero_failed_chunks": True,
+                        "pre_embedding_ready": True,
+                    },
+                    "qa_attestation": {
+                        "review_status": "approved",
+                        "reviewer": "test-suite",
+                        "rejected_sample_ids": [],
+                    },
+                },
+            },
+            ensure_ascii=False,
         ),
         encoding="utf-8",
     )
@@ -272,9 +310,10 @@ class ProjectionTests(unittest.TestCase):
     ) -> None:
         projector = IndexDocumentProjector(_config())
         chunk = _child()
+        parent = _parent()
 
-        first = projector.project(chunk)
-        second = projector.project(chunk)
+        first = projector.project(chunk, parent, source_release_id=RELEASE_ID)
+        second = projector.project(chunk, parent, source_release_id=RELEASE_ID)
 
         self.assertEqual(first.point_id, second.point_id)
         self.assertEqual(first.input_hash, second.input_hash)
@@ -284,15 +323,86 @@ class ProjectionTests(unittest.TestCase):
         self.assertNotIn("source_explicitly_supports_claim", first.bm25_text)
         self.assertEqual(first.payload["record_type"], "child")
         self.assertEqual(first.payload["parent_id"], "parent-1")
-        self.assertEqual(first.payload["supported_claim_ids"], ["claim:" + "a" * 24])
+        self.assertEqual(first.payload["parent_context"]["content"], parent.content)
+        self.assertEqual(first.payload["source_release_id"], RELEASE_ID)
+        self.assertEqual(
+            first.payload["supported_claim_ids"], ["claim:" + "a" * 24]
+        )
+        self.assertEqual(
+            first.payload["supported_claims"][0]["predicate"], "released"
+        )
+        self.assertEqual(
+            first.payload["supported_claims"][0]["evidence_span"],
+            "2000年，周杰伦发行专辑《Jay》。",
+        )
 
     def test_content_change_changes_index_input_hash(self) -> None:
         projector = IndexDocumentProjector(_config())
+        parent = _parent()
 
-        original = projector.project(_child())
-        changed = projector.project(_child(content="周杰伦发行了另一张专辑。"))
+        original = projector.project(
+            _child(), parent, source_release_id=RELEASE_ID
+        )
+        changed = projector.project(
+            _child(content="周杰伦发行了另一张专辑。"),
+            parent,
+            source_release_id=RELEASE_ID,
+        )
 
         self.assertNotEqual(original.input_hash, changed.input_hash)
+
+    def test_parent_and_release_changes_invalidate_index_input_hash(self) -> None:
+        projector = IndexDocumentProjector(_config())
+        child = _child()
+        parent = _parent()
+        original = projector.project(
+            child, parent, source_release_id=RELEASE_ID
+        )
+
+        changed_parent = projector.project(
+            child,
+            parent.model_copy(update={"content": "更新后的完整父块上下文。"}),
+            source_release_id=RELEASE_ID,
+        )
+        changed_release = projector.project(
+            child,
+            parent,
+            source_release_id="knowledge-v2-bbbbbbbbbbbbbbbb",
+        )
+
+        self.assertNotEqual(original.input_hash, changed_parent.input_hash)
+        self.assertNotEqual(original.input_hash, changed_release.input_hash)
+
+    def test_runtime_only_dense_options_do_not_invalidate_input_hash(self) -> None:
+        base = _config()
+        runtime_changed = base.model_copy(
+            update={
+                "dense": base.dense.model_copy(
+                    update={"device": "cuda", "local_files_only": False}
+                )
+            }
+        )
+
+        original = IndexDocumentProjector(base).project(
+            _child(), _parent(), source_release_id=RELEASE_ID
+        )
+        changed = IndexDocumentProjector(runtime_changed).project(
+            _child(), _parent(), source_release_id=RELEASE_ID
+        )
+
+        self.assertEqual(original.input_hash, changed.input_hash)
+
+    def test_validator_rejects_missing_parent_context(self) -> None:
+        document = IndexDocumentProjector(_config()).project(
+            _child(), _parent(), source_release_id=RELEASE_ID
+        )
+        payload = dict(document.payload)
+        payload.pop("parent_context")
+
+        with self.assertRaisesRegex(ValueError, "payload_parent_context_missing"):
+            IndexingValidator(_config()).validate_document(
+                document.model_copy(update={"payload": payload})
+            )
 
 
 class DensePoolingTests(unittest.TestCase):
@@ -314,6 +424,18 @@ class DensePoolingTests(unittest.TestCase):
         self.assertEqual(left.tolist(), [[3.0, 0.0], [6.0, 0.0]])
         self.assertEqual(right.tolist(), [[2.0, 0.0], [4.0, 0.0]])
 
+    def test_normalization_promotes_low_precision_embeddings_to_float32(self) -> None:
+        import torch
+
+        embeddings = torch.tensor(
+            [[0.125, 0.25, 0.5, 1.0]], dtype=torch.bfloat16
+        )
+
+        normalized = QwenDenseEncoder._normalize_embeddings(embeddings, torch)
+
+        self.assertEqual(normalized.dtype, torch.float32)
+        self.assertAlmostEqual(float(torch.linalg.vector_norm(normalized)), 1.0, places=6)
+
 
 class CorpusTests(unittest.TestCase):
     def test_missing_parent_is_rejected(self) -> None:
@@ -327,6 +449,54 @@ class CorpusTests(unittest.TestCase):
 
             with self.assertRaisesRegex(IndexCorpusError, "missing_parent"):
                 IndexCorpusReader(root, knowledge_path=path).load()
+
+
+class KnowledgeReleaseTests(unittest.TestCase):
+    def test_release_gate_accepts_bound_approved_corpus(self) -> None:
+        with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary:
+            root = Path(temporary)
+            knowledge_path = _write_corpus(root, [_child()])
+
+            release = KnowledgeReleaseValidator(
+                root, knowledge_path=knowledge_path
+            ).validate()
+
+            self.assertEqual(release.release_id, RELEASE_ID)
+            self.assertEqual(release.dataset_version, "v2")
+            self.assertEqual(release.chunk_count, 2)
+
+    def test_release_gate_rejects_corpus_changed_after_approval(self) -> None:
+        with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary:
+            root = Path(temporary)
+            knowledge_path = _write_corpus(root, [_child()])
+            knowledge_path.write_text("{}\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                KnowledgeReleaseError, "artifact_hash_mismatch"
+            ):
+                KnowledgeReleaseValidator(
+                    root, knowledge_path=knowledge_path
+                ).validate()
+
+    def test_collection_name_is_bound_to_release_and_projection_versions(
+        self,
+    ) -> None:
+        config = _config(
+            qdrant=_config().qdrant.model_copy(
+                update={
+                    "collection_name": "music_knowledge_v2",
+                    "append_release_hash": True,
+                }
+            )
+        )
+
+        resolved = config.for_release(RELEASE_ID)
+
+        self.assertEqual(
+            resolved.qdrant.collection_name,
+            "music_knowledge_v2_aaaaaaaaaaaaaaaa_v1_v2_v2",
+        )
+        self.assertFalse(resolved.qdrant.append_release_hash)
 
 
 class OfflineIndexingServiceTests(unittest.TestCase):
@@ -352,7 +522,32 @@ class OfflineIndexingServiceTests(unittest.TestCase):
             self.assertEqual(second.summary["indexed_count"], 0)
             self.assertEqual(second.summary["skipped_count"], 1)
             self.assertEqual(encoder.calls, 1)
+            self.assertTrue(first.summary["ready_for_retrieval"])
+            self.assertTrue(
+                first.projection_path and first.projection_path.is_file()
+            )
             self.assertTrue(second.manifest_path and second.manifest_path.is_file())
+
+    def test_limited_build_is_never_marked_ready(self) -> None:
+        with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary:
+            root = Path(temporary)
+            knowledge_path = _write_corpus(
+                root,
+                [_child(chunk_id="child-1"), _child(chunk_id="child-2")],
+            )
+            outcome = OfflineIndexingService(
+                root,
+                _config(),
+                knowledge_path=knowledge_path,
+                output_root=root / "output",
+                encoder=StaticEncoder(),
+                store=MemoryStore(),
+            ).run(limit=1)
+
+            self.assertEqual(outcome.summary["eligible_count"], 2)
+            self.assertEqual(outcome.summary["selected_count"], 1)
+            self.assertEqual(outcome.summary["status"], "partial")
+            self.assertFalse(outcome.summary["ready_for_retrieval"])
 
     def test_embedding_failure_does_not_drop_other_child(self) -> None:
         with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary:
@@ -446,6 +641,8 @@ class OfflineIndexingServiceTests(unittest.TestCase):
             ).run(validate_only=True)
 
             self.assertEqual(outcome.summary["status"], "validated")
+            self.assertEqual(outcome.summary["source_release_id"], RELEASE_ID)
+            self.assertIsNone(outcome.projection_path)
             self.assertIsNone(outcome.manifest_path)
 
 
@@ -477,7 +674,9 @@ class QdrantStoreTests(unittest.TestCase):
                 self.points = points
 
         config = _config()
-        document = IndexDocumentProjector(config).project(_child())
+        document = IndexDocumentProjector(config).project(
+            _child(), _parent(), source_release_id=RELEASE_ID
+        )
         from app.rag.indexing.models import IndexPoint
 
         client = CapturingClient()
@@ -492,6 +691,47 @@ class QdrantStoreTests(unittest.TestCase):
         self.assertEqual(point.vector["bm25"].options["tokenizer"], "multilingual")
         self.assertEqual(point.vector["bm25"].options["stemmer"], {"type": "none"})
         self.assertEqual(point.vector["bm25"].options["stopwords"], {})
+
+    @unittest.skipUnless(
+        os.getenv("QDRANT_INTEGRATION_URL"),
+        "set QDRANT_INTEGRATION_URL to run against a real Qdrant server",
+    )
+    def test_real_qdrant_accepts_dense_bm25_and_parent_payload(self) -> None:
+        client = QdrantClient(url=os.environ["QDRANT_INTEGRATION_URL"])
+        collection_name = f"moodflow_index_test_{uuid.uuid4().hex[:12]}"
+        config = _config(
+            qdrant=_config().qdrant.model_copy(
+                update={
+                    "collection_name": collection_name,
+                    "append_release_hash": False,
+                }
+            )
+        )
+        store = QdrantIndexStore(config, client=client)
+        document = IndexDocumentProjector(config).project(
+            _child(), _parent(), source_release_id=RELEASE_ID
+        )
+        from app.rag.indexing.models import IndexPoint
+
+        try:
+            store.ensure_collection()
+            store.upsert(
+                [IndexPoint(document=document, dense_vector=[1.0, *([0.0] * 31)])]
+            )
+            records = client.retrieve(
+                collection_name=collection_name,
+                ids=[document.point_id],
+                with_payload=True,
+                with_vectors=True,
+            )
+
+            self.assertEqual(len(records), 1)
+            self.assertEqual(records[0].payload["parent_id"], "parent-1")
+            self.assertIn("dense", records[0].vector)
+            self.assertIn("bm25", records[0].vector)
+        finally:
+            if client.collection_exists(collection_name):
+                client.delete_collection(collection_name)
 
 
 class IndexingCliTests(unittest.TestCase):
@@ -524,6 +764,8 @@ class IndexingCliTests(unittest.TestCase):
             self.assertEqual(status, 0)
             self.assertEqual(payload["status"], "validated")
             self.assertEqual(payload["eligible_count"], 1)
+            self.assertEqual(payload["source_release_id"], RELEASE_ID)
+            self.assertIsNone(payload["projection"])
             self.assertIsNone(payload["manifest"])
 
 
