@@ -119,10 +119,10 @@ class RuleClaimExtractor:
                 *self._signed_claims(context, present),
                 *self._creative_role_claims(context, present),
             ]
-            claims.extend(
-                item.model_copy(update={"evidence_span": evidence})
-                for item in extracted
-            )
+            for item in extracted:
+                if not self._candidate_grounded_in_evidence(item, evidence, entities):
+                    continue
+                claims.append(item.model_copy(update={"evidence_span": evidence}))
         return claims
 
     @staticmethod
@@ -164,6 +164,33 @@ class RuleClaimExtractor:
             for entity in entities
             if any(alias.casefold() in evidence.casefold() for alias in entity.aliases)
         ]
+
+    @classmethod
+    def _candidate_grounded_in_evidence(
+        cls,
+        candidate: ClaimCandidate,
+        evidence: str,
+        entities: list[CanonicalEntity],
+    ) -> bool:
+        """Require referenced entities to occur in the persisted span.
+
+        A table rule may use a column header as context (for example a song
+        title above a one-cell ``收录于专辑…`` row), while the stored evidence
+        span contains only the row.  Such a claim cannot be independently
+        checked from its span, so it is rejected before a stable ID is made.
+        """
+
+        by_id = {entity.entity_id: entity for entity in entities}
+        subject = by_id.get(candidate.subject_entity_id)
+        if subject is None or not cls._alias_positions(evidence, subject):
+            return False
+        if candidate.object_entity_id is not None:
+            object_entity = by_id.get(candidate.object_entity_id)
+            if object_entity is None or not cls._alias_positions(
+                evidence, object_entity
+            ):
+                return False
+        return True
 
     @staticmethod
     def _alias_positions(evidence: str, entity: CanonicalEntity) -> list[tuple[int, int]]:

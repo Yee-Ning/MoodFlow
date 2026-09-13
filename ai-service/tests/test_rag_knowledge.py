@@ -746,6 +746,37 @@ class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(track_pairs, {("album:novembers_chopin", "song:fearless")})
 
+    async def test_single_column_table_does_not_use_header_only_as_evidence(self) -> None:
+        content = "| 青花瓷 |\n| 收录于专辑《我很忙》 |"
+        chunk = _enriched(
+            content,
+            mentions=[
+                ("青花瓷", EntityTypeHint.SONG),
+                ("我很忙", EntityTypeHint.ALBUM),
+            ],
+        ).model_copy(
+            update={
+                "table_data": TableChunkData(
+                    table_id="table-track-header-1",
+                    header_state=TableHeaderState.EXPLICIT,
+                    headers=["青花瓷"],
+                    rows=[["收录于专辑《我很忙》"]],
+                    row_start=0,
+                    row_end=1,
+                    source_row_count=1,
+                )
+            }
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertNotIn(
+            ClaimPredicate.INCLUDES_TRACK, {claim.predicate for claim in result.claims}
+        )
+
     async def test_table_row_is_used_only_when_exactly_grounded_in_content(self) -> None:
         content = "| 专辑 | 收录歌曲 |\n| 七里香 | 晴天 |"
         chunk = _enriched(
