@@ -17,7 +17,11 @@ from .runtime import ClaimVerificationRuntime, ExistingLLMClaimVerificationRunti
 
 
 _PREDICATE_CUES: dict[ClaimPredicate, tuple[str, ...]] = {
-    ClaimPredicate.BORN_ON: ("出生", "生于", "生於"),
+    # Some reviewed music-biography tables abbreviate “born on” as
+    # ``YYYY年MM月DD日生``.  The extractor only emits that form when it is
+    # attached to a winner-profile/date pattern, so accepting the short cue
+    # here keeps deterministic extraction and verification aligned.
+    ClaimPredicate.BORN_ON: ("出生", "生于", "生於", "生"),
     ClaimPredicate.DEBUTED: ("出道", "进入乐坛", "進入樂壇"),
     ClaimPredicate.RELEASED: ("发行", "發行", "发布", "發布", "推出"),
     ClaimPredicate.FIRST_ALBUM_OF: ("首张专辑", "首張專輯", "首张唱片", "首張唱片"),
