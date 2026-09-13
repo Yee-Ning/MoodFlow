@@ -24,6 +24,15 @@ _PREDICATE_CUES: dict[ClaimPredicate, tuple[str, ...]] = {
     ClaimPredicate.INCLUDES_TRACK: ("收录", "收錄", "包含"),
     ClaimPredicate.HAS_GENRE: ("风格", "風格", "曲风", "曲風", "属于", "屬於"),
     ClaimPredicate.CONTAINS_MUSIC_ELEMENT: ("融合", "融入", "结合", "結合"),
+    ClaimPredicate.WON_AWARD: ("获奖", "獲獎", "获得", "獲得", "荣获", "榮獲"),
+    ClaimPredicate.CHART_POSITION: ("榜", "排名", "排行"),
+    ClaimPredicate.PERFORMED_AT: ("演唱会", "演唱會", "演出"),
+    ClaimPredicate.COLLABORATED_WITH: ("合作", "合唱", "共同创作", "共同創作"),
+    ClaimPredicate.SIGNED_TO: ("签约", "簽約", "加盟"),
+    ClaimPredicate.WROTE_LYRICS_FOR: ("作词", "作詞", "填词", "填詞"),
+    ClaimPredicate.COMPOSED_FOR: ("作曲",),
+    ClaimPredicate.ARRANGED: ("编曲", "編曲"),
+    ClaimPredicate.PRODUCED: ("制作", "製作", "制作人", "製作人"),
 }
 
 _NEGATION_CUES: dict[ClaimPredicate, tuple[str, ...]] = {
@@ -65,13 +74,15 @@ class ClaimVerifier:
                 reason="source evidence explicitly negates the claimed predicate",
             )
         if claim.extraction_source == ClaimSource.RULE:
-            return self._verify_rule_claim(claim)
+            return self._verify_rule_claim(claim, chunk)
         if not self.config.llm_enabled:
             return self._insufficient("verification_requires_structured_model")
         try:
             return await self._generate(claim, chunk)
         except Exception as exc:
-            return self._insufficient(f"verification_unavailable:{self._error_code(exc)}")
+            return self._insufficient(
+                f"verification_unavailable:{self._error_code(exc)}"
+            )
 
     @staticmethod
     def _is_contradicted(claim: Claim) -> bool:
@@ -97,15 +108,23 @@ class ClaimVerifier:
             for candidate in candidates
         )
 
-    def _verify_rule_claim(self, claim: Claim) -> ClaimVerification:
+    def _verify_rule_claim(
+        self, claim: Claim, chunk: EnrichedChunk
+    ) -> ClaimVerification:
         cues = _PREDICATE_CUES.get(claim.predicate, ())
-        if cues and not any(cue in claim.evidence_span for cue in cues):
+        if (
+            cues
+            and not any(cue in claim.evidence_span for cue in cues)
+            and not self._table_supports_predicate(claim, chunk, cues)
+        ):
             return self._insufficient("rule_predicate_cue_missing")
         if claim.time is not None:
             raw = claim.time.raw
             year = str(claim.time.year) if claim.time.year is not None else None
-            if raw and raw not in claim.evidence_span and (
-                year is None or year not in claim.evidence_span
+            if (
+                raw
+                and raw not in claim.evidence_span
+                and (year is None or year not in claim.evidence_span)
             ):
                 return self._insufficient("rule_time_not_grounded")
         return ClaimVerification(
@@ -114,6 +133,22 @@ class ClaimVerifier:
             evidence_span=claim.evidence_span,
             reason="deterministic predicate and temporal cues are present in the source evidence",
         )
+
+    @staticmethod
+    def _table_supports_predicate(
+        claim: Claim,
+        chunk: EnrichedChunk,
+        cues: tuple[str, ...],
+    ) -> bool:
+        table = chunk.table_data
+        if table is None or not any(
+            cue in header for cue in cues for header in table.headers
+        ):
+            return False
+        rows = {
+            f"| {' | '.join(str(cell).strip() for cell in row)} |" for row in table.rows
+        }
+        return claim.evidence_span in rows
 
     async def _generate(self, claim: Claim, chunk: EnrichedChunk) -> ClaimVerification:
         payload: dict[str, object] = {

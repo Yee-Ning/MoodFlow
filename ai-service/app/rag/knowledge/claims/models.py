@@ -24,6 +24,10 @@ class ClaimPredicate(StrEnum):
     PERFORMED_AT = "performed_at"
     COLLABORATED_WITH = "collaborated_with"
     SIGNED_TO = "signed_to"
+    WROTE_LYRICS_FOR = "wrote_lyrics_for"
+    COMPOSED_FOR = "composed_for"
+    ARRANGED = "arranged"
+    PRODUCED = "produced"
     OCCURRED_AT = "occurred_at"
     OTHER = "other"
 
@@ -60,7 +64,13 @@ class ClaimTime(BaseModel):
             raise ValueError("claim time start_year must not exceed end_year")
         if not any(
             value is not None
-            for value in (self.year, self.date, self.start_year, self.end_year, self.raw)
+            for value in (
+                self.year,
+                self.date,
+                self.start_year,
+                self.end_year,
+                self.raw,
+            )
         ):
             raise ValueError("empty claim time must be null")
         return self
@@ -72,9 +82,7 @@ class ClaimCandidate(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     statement: str = Field(min_length=1, max_length=2_000)
-    subject_entity_id: str = Field(
-        pattern=r"^[a-z][a-z0-9_]*:[a-z0-9][a-z0-9_]*$"
-    )
+    subject_entity_id: str = Field(pattern=r"^[a-z][a-z0-9_]*:[a-z0-9][a-z0-9_]*$")
     predicate: ClaimPredicate
     object_entity_id: str | None = Field(
         default=None, pattern=r"^[a-z][a-z0-9_]*:[a-z0-9][a-z0-9_]*$"
@@ -96,9 +104,7 @@ class Claim(BaseModel):
 
     claim_id: str = Field(pattern=r"^claim:[0-9a-f]{24}$")
     statement: str = Field(min_length=1, max_length=2_000)
-    subject_entity_id: str = Field(
-        pattern=r"^[a-z][a-z0-9_]*:[a-z0-9][a-z0-9_]*$"
-    )
+    subject_entity_id: str = Field(pattern=r"^[a-z][a-z0-9_]*:[a-z0-9][a-z0-9_]*$")
     predicate: ClaimPredicate
     object_entity_id: str | None = Field(
         default=None, pattern=r"^[a-z][a-z0-9_]*:[a-z0-9][a-z0-9_]*$"

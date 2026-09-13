@@ -48,8 +48,11 @@ class ClaimExtractor:
             if isinstance(entities, EntityLinkingResult)
             else list(entities)
         )
-        rule_candidates = self.rule_extractor.extract(chunk.content, linked)
-        claims = [self._claim(item, chunk.chunk_id, ClaimSource.RULE) for item in rule_candidates]
+        rule_candidates = self.rule_extractor.extract(chunk, linked)
+        claims = [
+            self._claim(item, chunk.chunk_id, ClaimSource.RULE)
+            for item in rule_candidates
+        ]
         warnings: list[str] = []
         status = ClaimExtractionStatus.SUCCESS
 
@@ -58,7 +61,9 @@ class ClaimExtractor:
                 output = await self._generate(chunk, linked)
                 for candidate in output.claims:
                     self._validate_candidate(candidate, chunk, linked)
-                    claims.append(self._claim(candidate, chunk.chunk_id, ClaimSource.LLM))
+                    claims.append(
+                        self._claim(candidate, chunk.chunk_id, ClaimSource.LLM)
+                    )
             except Exception as exc:
                 warnings.append(self._error_code(exc))
                 status = ClaimExtractionStatus.PARTIAL

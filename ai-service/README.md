@@ -530,7 +530,11 @@ python run_enrich.py --validate-only --sample-size 0
 `data/chunked`。本阶段只抽取 mention，不生成 entity ID、不合并 alias，也不包含
 Claim、Embedding、Qdrant、BM25、Hybrid 或 Rerank。
 
-## Music RAG Knowledge Structuring V1
+`quality` 同时记录 `structural_status`、`semantic_status` 与 `index_ready`。关闭或拒绝
+语义 LLM 不再等同于结构失败；只要原 Chunk 保留、继承字段和规则字段通过校验，数据仍可
+标记为 `index_ready=true`。
+
+## Music RAG Knowledge Structuring V2
 
 `app/rag/knowledge/` 在 `EnrichedChunk` 之上追加独立 `knowledge` 对象，原有 chunk
 和 enrichment 字段保持不变：
@@ -543,7 +547,7 @@ EnrichedChunk
   -> KnowledgeEnrichedChunk
 ```
 
-实体注册表位于 `app/rag/knowledge/entity_linking/registry/v1.yaml`。解析优先级为现有
+默认实体注册表位于 `app/rag/knowledge/entity_linking/registry/v2.yaml`。解析优先级为现有
 metadata / registry → 确定性上下文 → Structured Output LLM；不使用外部知识，也不会
 在运行时创建未知 canonical entity。别名共享稳定 ID，短别名或同名实体在证据不足时
 保存在 `unresolved_mentions`。
@@ -553,6 +557,11 @@ Claim 必须只表达一个可判断真假的事实，并携带稳定 `claim_id`
 读取，之后仍会执行实体白名单、证据落地和主观内容检查。验证器只读取当前 chunk，
 输出 `SUPPORTED`、`PARTIALLY_SUPPORTED`、`CONTRADICTED` 或
 `INSUFFICIENT_EVIDENCE`，不会访问互联网或跨文档补证。
+
+V2 本地规则覆盖发行、收录、曲风、音乐元素、获奖、榜单、演出、合作、签约、作词、
+作曲、编曲与制作，并读取有明确短表头且 source row 可逐字落地的表格。相同事实若同时
+出现在 Parent 与 Child，只归属于包含证据的最小 Child。来源 publisher、网站名和非音乐
+组织不会进入音乐实体候选。
 
 ```powershell
 # 默认安全路径：registry + deterministic rules + source verifier
@@ -566,7 +575,8 @@ python run_knowledge.py --validate-only --sample-size 0
 ```
 
 结果原子写入 `knowledge_enriched_chunks.jsonl` 和
-`knowledge_corpus_manifest.jsonl`。三个阶段版本与完整 EnrichedChunk 一同生成
+`knowledge_corpus_manifest.jsonl`，并生成 `knowledge_quality_report.json` 与待审阅的
+`entity_registry_candidates.jsonl`。三个阶段版本与完整 EnrichedChunk 一同生成
 `knowledge_input_hash`；成功结果在输入和版本未变时会标记 `skipped`。本阶段不实现
 Embedding、Qdrant、HNSW、BM25、Hybrid Search 或 Rerank。
 

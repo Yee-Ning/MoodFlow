@@ -5,10 +5,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from app.rag.chunk.models import ChunkType, ParentChunk
+from app.rag.chunk.models import (
+    ChunkType,
+    ParentChunk,
+    TableChunkData,
+    TableHeaderState,
+)
 from app.rag.enrichment.models import (
     ChunkEnrichment,
     ContentMetadata,
+    EnrichedChildChunk,
     EnrichedParentChunk,
     EnrichmentStatus,
     EntityMention,
@@ -30,12 +36,14 @@ from app.rag.knowledge import (
     KnowledgeConfig,
     KnowledgePipeline,
     KnowledgePipelineService,
+    KnowledgeQualityReporter,
     KnowledgeStatus,
     KnowledgeValidator,
     VerificationStatus,
 )
 from app.rag.knowledge.claims import Claim, ClaimPredicate, ClaimSource, ClaimTime
 from app.rag.knowledge.writer import KnowledgeDatasetWriter
+from app.rag.knowledge.ownership import deduplicate_claim_ownership
 from app.rag.knowledge.claims.models import ClaimExtractionOutput
 from app.rag.knowledge.entity_linking.models import EntityDisambiguationOutput
 from app.rag.knowledge.structured import strict_model_schema
@@ -92,6 +100,28 @@ def _enriched(
         ),
     )
     return EnrichedParentChunk(**base.model_dump(), enrichment=enrichment)
+
+
+def _enriched_child(
+    content: str,
+    *,
+    mentions: list[tuple[str, EntityTypeHint]],
+) -> EnrichedChildChunk:
+    enrichment = _enriched(content, mentions=mentions).enrichment
+    return EnrichedChildChunk(
+        doc_id="doc-1",
+        chunk_id="child-1",
+        parent_id="parent-1",
+        chunk_index=0,
+        chunk_type=ChunkType.NARRATIVE,
+        section_path=["音乐资料"],
+        breadcrumb="音乐资料",
+        content=content,
+        token_count=max(1, len(content)),
+        metadata={},
+        retrieval_content=content,
+        enrichment=enrichment,
+    )
 
 
 class EntityLinkingTests(unittest.IsolatedAsyncioTestCase):
@@ -366,6 +396,70 @@ class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertFalse(result.claims)
+
+    async def test_creative_roles_award_and_performance_are_extracted_locally(
+        self,
+    ) -> None:
+        chunk = _enriched(
+            "《青花瓷》由方文山作词，周杰伦作曲，并获得金曲奖后举办演唱会。",
+            mentions=[
+                ("青花瓷", EntityTypeHint.SONG),
+                ("方文山", EntityTypeHint.PERSON),
+                ("周杰伦", EntityTypeHint.ARTIST),
+                ("金曲奖", EntityTypeHint.AWARD),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        predicates = {claim.predicate for claim in result.claims}
+        self.assertIn(ClaimPredicate.WROTE_LYRICS_FOR, predicates)
+        self.assertIn(ClaimPredicate.COMPOSED_FOR, predicates)
+        self.assertIn(ClaimPredicate.WON_AWARD, predicates)
+        self.assertIn(ClaimPredicate.PERFORMED_AT, predicates)
+
+    async def test_table_row_is_used_only_when_exactly_grounded_in_content(self) -> None:
+        content = "| 专辑 | 收录歌曲 |\n| 七里香 | 晴天 |"
+        chunk = _enriched(
+            content,
+            mentions=[
+                ("七里香", EntityTypeHint.ALBUM),
+                ("晴天", EntityTypeHint.SONG),
+            ],
+        ).model_copy(
+            update={
+                "table_data": TableChunkData(
+                    table_id="table-1",
+                    header_state=TableHeaderState.EXPLICIT,
+                    headers=["专辑", "收录歌曲"],
+                    rows=[["七里香", "晴天"]],
+                    row_start=0,
+                    row_end=1,
+                    source_row_count=1,
+                )
+            }
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        track_claims = [
+            claim
+            for claim in result.claims
+            if claim.predicate == ClaimPredicate.INCLUDES_TRACK
+        ]
+        self.assertEqual(len(track_claims), 1)
+        self.assertEqual(track_claims[0].evidence_span, "| 七里香 | 晴天 |")
+
+        verification = await ClaimVerifier(
+            KnowledgeConfig(llm_enabled=False)
+        ).verify(track_claims[0], chunk)
+        self.assertEqual(verification.status, VerificationStatus.SUPPORTED)
 
     async def test_rule_claim_evidence_exists_verbatim_in_chunk(self) -> None:
         chunk = _enriched(
@@ -652,6 +746,41 @@ class KnowledgePipelineTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(ValueError, "knowledge_stats_mismatch"):
             KnowledgeValidator().validate(source, invalid)
+
+    async def test_duplicate_parent_child_claim_is_owned_by_child(self) -> None:
+        content = "周杰伦于2000年出道。"
+        mentions = [("周杰伦", EntityTypeHint.ARTIST)]
+        parent = _enriched(content, mentions=mentions)
+        child = _enriched_child(content, mentions=mentions)
+        pipeline = KnowledgePipeline(self.config)
+        parent_result = await pipeline.process(parent)
+        child_result = await pipeline.process(child)
+
+        results = deduplicate_claim_ownership([parent_result, child_result])
+
+        self.assertEqual(results[0].knowledge.stats.claim_count, 0)
+        self.assertEqual(results[1].knowledge.stats.claim_count, 1)
+
+    async def test_quality_report_writes_unresolved_registry_candidates(self) -> None:
+        source = _enriched(
+            "未知音乐人参与合作。",
+            mentions=[("未知音乐人", EntityTypeHint.ARTIST)],
+        )
+        result = await KnowledgePipeline(self.config).process(source)
+        project_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=project_root) as temporary:
+            reporter = KnowledgeQualityReporter(project_root, Path(temporary))
+
+            report_path, candidates_path, report = reporter.write([result])
+
+            self.assertTrue(report_path.is_file())
+            self.assertTrue(candidates_path.is_file())
+            self.assertEqual(
+                report["entity_linking"]["unresolved_occurrences"],  # type: ignore[index]
+                1,
+            )
+            candidate = json.loads(candidates_path.read_text(encoding="utf-8"))
+            self.assertEqual(candidate["normalized_text"], "未知音乐人")
 
 
 if __name__ == "__main__":

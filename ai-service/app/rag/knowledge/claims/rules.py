@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+from app.rag.enrichment.models import EnrichedChunk
+
 from ..entity_linking.models import CanonicalEntity, EntityType
 from .models import ClaimCandidate, ClaimPredicate, ClaimTime
 
@@ -43,21 +45,64 @@ def is_subjective(text: str) -> bool:
 
 class RuleClaimExtractor:
     def extract(
-        self, content: str, entities: list[CanonicalEntity]
+        self, chunk: EnrichedChunk, entities: list[CanonicalEntity]
     ) -> list[ClaimCandidate]:
         claims: list[ClaimCandidate] = []
-        for match in _SENTENCE_RE.finditer(content):
-            evidence = match.group(0).strip()
+        evidence_units = [
+            (match.group(0).strip(), match.group(0).strip())
+            for match in _SENTENCE_RE.finditer(chunk.content)
+        ]
+        evidence_units.extend(self._table_evidence(chunk))
+        for context, evidence in dict.fromkeys(evidence_units):
             if not evidence or is_subjective(evidence):
                 continue
-            present = self._present_entities(evidence, entities)
-            claims.extend(self._birth_claims(evidence, present))
-            claims.extend(self._debut_claims(evidence, present))
-            claims.extend(self._release_claims(evidence, present))
-            claims.extend(self._first_album_claims(evidence, present))
-            claims.extend(self._track_claims(evidence, present))
-            claims.extend(self._genre_claims(evidence, present))
+            present = self._present_entities(context, entities)
+            extracted = [
+                *self._birth_claims(context, present),
+                *self._debut_claims(context, present),
+                *self._release_claims(context, present),
+                *self._first_album_claims(context, present),
+                *self._track_claims(context, present),
+                *self._genre_claims(context, present),
+                *self._award_claims(context, present),
+                *self._chart_claims(context, present),
+                *self._performance_claims(context, present),
+                *self._collaboration_claims(context, present),
+                *self._signed_claims(context, present),
+                *self._creative_role_claims(context, present),
+            ]
+            claims.extend(
+                item.model_copy(update={"evidence_span": evidence})
+                for item in extracted
+            )
         return claims
+
+    @staticmethod
+    def _table_evidence(chunk: EnrichedChunk) -> list[tuple[str, str]]:
+        table = chunk.table_data
+        if (
+            table is None
+            or not table.headers
+            or len(table.headers) > 20
+            or any(not header.strip() or len(header) > 100 for header in table.headers)
+        ):
+            return []
+        headers = [item.strip() for item in table.headers]
+        results: list[tuple[str, str]] = []
+        for row in table.rows:
+            cells = [str(item).strip() for item in row]
+            if not any(cells):
+                continue
+            evidence = f"| {' | '.join(cells)} |"
+            if evidence not in chunk.content:
+                continue
+            context = " | ".join(
+                f"{header}: {cell}"
+                for header, cell in zip(headers, cells, strict=False)
+                if cell
+            )
+            results.append((context, evidence))
+        return results
 
     @staticmethod
     def _present_entities(
@@ -173,8 +218,7 @@ class RuleClaimExtractor:
         self, evidence: str, entities: list[CanonicalEntity]
     ) -> list[ClaimCandidate]:
         if not any(
-            cue in evidence
-            for cue in ("首张专辑", "首張專輯", "首张唱片", "首張唱片")
+            cue in evidence for cue in ("首张专辑", "首張專輯", "首张唱片", "首張唱片")
         ):
             return []
         artist = self._first(entities, EntityType.ARTIST)
@@ -216,25 +260,215 @@ class RuleClaimExtractor:
     def _genre_claims(
         self, evidence: str, entities: list[CanonicalEntity]
     ) -> list[ClaimCandidate]:
-        if not any(cue in evidence for cue in ("融合", "融入", "结合", "結合")):
+        fusion = any(cue in evidence for cue in ("融合", "融入", "结合", "結合"))
+        genre_statement = any(
+            cue in evidence for cue in ("风格", "風格", "曲风", "曲風", "属于", "屬於")
+        )
+        if not fusion and not genre_statement:
             return []
         genres = [item for item in entities if item.entity_type == EntityType.GENRE]
         subjects = [
             item
             for item in entities
-            if item.entity_type in {EntityType.SONG, EntityType.ALBUM, EntityType.ARTIST}
+            if item.entity_type
+            in {EntityType.SONG, EntityType.ALBUM, EntityType.ARTIST}
         ]
         if not subjects:
             return []
         subject = subjects[0]
+        predicate = (
+            ClaimPredicate.CONTAINS_MUSIC_ELEMENT
+            if fusion
+            else ClaimPredicate.HAS_GENRE
+        )
+        verb = "融合" if fusion else "具有"
         return [
             ClaimCandidate(
-                statement=f"{subject.canonical_name}融合{genre.canonical_name}元素",
+                statement=f"{subject.canonical_name}{verb}{genre.canonical_name}风格",
                 subject_entity_id=subject.entity_id,
-                predicate=ClaimPredicate.CONTAINS_MUSIC_ELEMENT,
+                predicate=predicate,
                 object_entity_id=genre.entity_id,
                 evidence_span=evidence,
                 confidence=0.94,
             )
             for genre in genres
         ]
+
+    def _award_claims(
+        self, evidence: str, entities: list[CanonicalEntity]
+    ) -> list[ClaimCandidate]:
+        if not any(
+            cue in evidence for cue in ("获奖", "獲獎", "获得", "獲得", "荣获", "榮獲")
+        ):
+            return []
+        award = self._first(entities, EntityType.AWARD)
+        subject = next(
+            (
+                item
+                for item in entities
+                if item.entity_type
+                in {EntityType.ALBUM, EntityType.SONG, EntityType.ARTIST}
+            ),
+            None,
+        )
+        if award is None or subject is None:
+            return []
+        return [
+            ClaimCandidate(
+                statement=f"{subject.canonical_name}获得{award.canonical_name}",
+                subject_entity_id=subject.entity_id,
+                predicate=ClaimPredicate.WON_AWARD,
+                object_entity_id=award.entity_id,
+                evidence_span=evidence,
+                confidence=0.96,
+            )
+        ]
+
+    def _chart_claims(
+        self, evidence: str, entities: list[CanonicalEntity]
+    ) -> list[ClaimCandidate]:
+        position = re.search(r"(?:第\s*\d+\s*名|冠军|冠軍|榜首|排名\s*\d+)", evidence)
+        if position is None or not any(
+            cue in evidence for cue in ("榜", "排名", "排行")
+        ):
+            return []
+        subject = next(
+            (
+                item
+                for item in entities
+                if item.entity_type
+                in {EntityType.SONG, EntityType.ALBUM, EntityType.ARTIST}
+            ),
+            None,
+        )
+        if subject is None:
+            return []
+        return [
+            ClaimCandidate(
+                statement=f"{subject.canonical_name}榜单成绩为{position.group(0)}",
+                subject_entity_id=subject.entity_id,
+                predicate=ClaimPredicate.CHART_POSITION,
+                object_value=position.group(0),
+                evidence_span=evidence,
+                confidence=0.94,
+            )
+        ]
+
+    def _performance_claims(
+        self, evidence: str, entities: list[CanonicalEntity]
+    ) -> list[ClaimCandidate]:
+        cue = next(
+            (
+                item
+                for item in ("演唱会", "演唱會", "巡回演出", "巡迴演出", "登台演出")
+                if item in evidence
+            ),
+            None,
+        )
+        artist = self._first(entities, EntityType.ARTIST)
+        if cue is None or artist is None:
+            return []
+        return [
+            ClaimCandidate(
+                statement=f"{artist.canonical_name}参加{cue}",
+                subject_entity_id=artist.entity_id,
+                predicate=ClaimPredicate.PERFORMED_AT,
+                object_value=cue,
+                evidence_span=evidence,
+                confidence=0.92,
+            )
+        ]
+
+    def _collaboration_claims(
+        self, evidence: str, entities: list[CanonicalEntity]
+    ) -> list[ClaimCandidate]:
+        if not any(cue in evidence for cue in ("合作", "合唱", "共同创作", "共同創作")):
+            return []
+        people = [
+            item
+            for item in entities
+            if item.entity_type in {EntityType.ARTIST, EntityType.PERSON}
+        ]
+        if len(people) < 2:
+            return []
+        subject, other = people[0], people[1]
+        return [
+            ClaimCandidate(
+                statement=f"{subject.canonical_name}与{other.canonical_name}合作",
+                subject_entity_id=subject.entity_id,
+                predicate=ClaimPredicate.COLLABORATED_WITH,
+                object_entity_id=other.entity_id,
+                evidence_span=evidence,
+                confidence=0.93,
+            )
+        ]
+
+    def _signed_claims(
+        self, evidence: str, entities: list[CanonicalEntity]
+    ) -> list[ClaimCandidate]:
+        if not any(cue in evidence for cue in ("签约", "簽約", "加盟")):
+            return []
+        artist = self._first(entities, EntityType.ARTIST)
+        label = self._first(entities, EntityType.LABEL)
+        if artist is None or label is None:
+            return []
+        return [
+            ClaimCandidate(
+                statement=f"{artist.canonical_name}签约{label.canonical_name}",
+                subject_entity_id=artist.entity_id,
+                predicate=ClaimPredicate.SIGNED_TO,
+                object_entity_id=label.entity_id,
+                evidence_span=evidence,
+                confidence=0.96,
+            )
+        ]
+
+    def _creative_role_claims(
+        self, evidence: str, entities: list[CanonicalEntity]
+    ) -> list[ClaimCandidate]:
+        work = next(
+            (
+                item
+                for item in entities
+                if item.entity_type in {EntityType.SONG, EntityType.ALBUM}
+            ),
+            None,
+        )
+        if work is None:
+            return []
+        people = [
+            item
+            for item in entities
+            if item.entity_type in {EntityType.ARTIST, EntityType.PERSON}
+        ]
+        role_specs = (
+            (("作词", "作詞", "填词", "填詞"), ClaimPredicate.WROTE_LYRICS_FOR, "作词"),
+            (("作曲",), ClaimPredicate.COMPOSED_FOR, "作曲"),
+            (("编曲", "編曲"), ClaimPredicate.ARRANGED, "编曲"),
+            (("制作", "製作", "制作人", "製作人"), ClaimPredicate.PRODUCED, "制作"),
+        )
+        results: list[ClaimCandidate] = []
+        for person in people:
+            aliases = [re.escape(alias) for alias in person.aliases]
+            if not aliases:
+                continue
+            name = "(?:" + "|".join(aliases) + ")"
+            for cues, predicate, verb in role_specs:
+                cue = "(?:" + "|".join(re.escape(item) for item in cues) + ")"
+                if not re.search(
+                    rf"(?:{name}.{{0,12}}{cue}|{cue}\s*[:：]?\s*.{{0,6}}{name})",
+                    evidence,
+                    re.IGNORECASE,
+                ):
+                    continue
+                results.append(
+                    ClaimCandidate(
+                        statement=f"{person.canonical_name}为{work.canonical_name}{verb}",
+                        subject_entity_id=person.entity_id,
+                        predicate=predicate,
+                        object_entity_id=work.entity_id,
+                        evidence_span=evidence,
+                        confidence=0.95,
+                    )
+                )
+        return results

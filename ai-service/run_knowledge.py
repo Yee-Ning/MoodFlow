@@ -75,6 +75,8 @@ def main(
             **outcome.summary,
             "knowledge_chunks_path": _relative(root, outcome.chunks_path),
             "manifest": _relative(root, outcome.manifest_path),
+            "quality_report": _relative(root, outcome.report_path),
+            "registry_candidates": _relative(root, outcome.candidates_path),
         }
     except (OSError, RuntimeError, ValueError) as exc:
         payload = {"status": "failed", "error": str(exc).splitlines()[0][:500]}

@@ -11,7 +11,9 @@ from app.rag.enrichment.models import EnrichedChunk
 from .config import KnowledgeConfig
 from .corpus import KnowledgeCorpusReader
 from .models import KnowledgeEnrichedChunk, KnowledgeStatus
+from .ownership import deduplicate_claim_ownership
 from .pipeline import KnowledgePipeline
+from .report import KnowledgeQualityReporter
 from .validator import KnowledgeValidator
 from .writer import KnowledgeDatasetWriter
 
@@ -22,6 +24,8 @@ class KnowledgeRunOutcome:
     summary: dict[str, object]
     chunks_path: Path | None
     manifest_path: Path | None
+    report_path: Path | None
+    candidates_path: Path | None
 
 
 class KnowledgePipelineService:
@@ -65,24 +69,33 @@ class KnowledgePipelineService:
         existing = writer.load_existing()
         chunks_path = None
         manifest_path = None
+        report_path = None
+        candidates_path = None
+        reporter = KnowledgeQualityReporter(self.project_root, self.output_root)
         if validate_only:
             chunks = self._validate_existing(
                 source_chunks, existing, full=limit is None
             )
+            quality_report = reporter.build(chunks)
         else:
             chunks = await self.pipeline.process_batch(
                 source_chunks, existing_by_id=existing
             )
+            chunks = deduplicate_claim_ownership(chunks)
             chunks_path, manifest_path = writer.write(
                 chunks,
                 preserve_existing=limit is not None and limit < total_available,
             )
+            report_path, candidates_path, quality_report = reporter.write(chunks)
 
         counts = {status.value: 0 for status in KnowledgeStatus}
         for chunk in chunks:
             counts[chunk.knowledge.quality.status.value] += 1
         rng = random.Random(sample_seed)
         sampled = rng.sample(chunks, min(sample_size, len(chunks))) if chunks else []
+        entity_quality = quality_report["entity_linking"]
+        claim_quality = quality_report["claims"]
+        gates = quality_report["quality_gates"]
         summary: dict[str, object] = {
             "status": "validated" if validate_only else "completed",
             "entity_linking_version": self.config.entity_linking_version,
@@ -96,6 +109,11 @@ class KnowledgePipelineService:
                 chunk.knowledge.stats.entity_count for chunk in chunks
             ),
             "claims": sum(chunk.knowledge.stats.claim_count for chunk in chunks),
+            "unresolved_mentions": entity_quality["unresolved_occurrences"],
+            "unique_unresolved_mentions": entity_quality["unique_unresolved_mentions"],
+            "resolved_occurrence_ratio": entity_quality["resolved_occurrence_ratio"],
+            "verification_status": claim_quality["verification_status"],
+            "pre_embedding_ready": gates["pre_embedding_ready"],
             **counts,
             "samples": [item.model_dump(mode="json") for item in sampled],
         }
@@ -104,6 +122,8 @@ class KnowledgePipelineService:
             summary=summary,
             chunks_path=chunks_path,
             manifest_path=manifest_path,
+            report_path=report_path,
+            candidates_path=candidates_path,
         )
 
     @staticmethod
