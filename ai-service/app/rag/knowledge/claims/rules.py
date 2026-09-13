@@ -152,6 +152,8 @@ class RuleClaimExtractor:
     def _debut_claims(
         self, evidence: str, entities: list[CanonicalEntity]
     ) -> list[ClaimCandidate]:
+        if any(cue in evidence for cue in ("未出道", "没有出道", "沒有出道")):
+            return []
         artist = self._first(entities, EntityType.ARTIST)
         year_match = _YEAR_RE.search(evidence)
         if (
@@ -176,6 +178,18 @@ class RuleClaimExtractor:
     def _release_claims(
         self, evidence: str, entities: list[CanonicalEntity]
     ) -> list[ClaimCandidate]:
+        if any(
+            cue in evidence
+            for cue in (
+                "未发行",
+                "未發行",
+                "没有发行",
+                "沒有發行",
+                "并未推出",
+                "並未推出",
+            )
+        ):
+            return []
         if not any(cue in evidence for cue in ("发行", "發行", "发布", "發布", "推出")):
             return []
         year_match = _YEAR_RE.search(evidence)
@@ -239,6 +253,11 @@ class RuleClaimExtractor:
     def _track_claims(
         self, evidence: str, entities: list[CanonicalEntity]
     ) -> list[ClaimCandidate]:
+        if any(
+            cue in evidence
+            for cue in ("未收录", "未收錄", "不包含", "不收录", "不收錄")
+        ):
+            return []
         if not any(cue in evidence for cue in ("收录", "收錄", "包含")):
             return []
         album = self._first(entities, EntityType.ALBUM)

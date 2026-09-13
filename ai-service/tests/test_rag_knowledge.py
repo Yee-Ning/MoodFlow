@@ -446,6 +446,21 @@ class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(result.claims)
 
+    async def test_negated_release_is_not_emitted_as_positive_rule_claim(self) -> None:
+        chunk = _enriched(
+            "专辑《依然范特西》尚未发行。",
+            mentions=[("依然范特西", EntityTypeHint.ALBUM)],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertFalse(
+            any(claim.predicate == ClaimPredicate.RELEASED for claim in result.claims)
+        )
+
     async def test_creative_roles_award_and_performance_are_extracted_locally(
         self,
     ) -> None:

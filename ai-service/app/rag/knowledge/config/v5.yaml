@@ -1,0 +1,10 @@
+entity_linking_version: v4
+claim_extraction_version: v3
+claim_verification_version: v2
+prompt_version: v1
+registry_version: v3
+llm_enabled: true
+batch_size: 16
+max_concurrency: 4
+timeout_seconds: 45
+retry_count: 2
