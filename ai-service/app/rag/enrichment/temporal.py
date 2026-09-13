@@ -92,12 +92,13 @@ class TemporalExtractor:
         exact_dates = [item.exact_date for item in mentions if item.exact_date]
         ranges = [item.year_range for item in mentions if item.year_range]
         selected_range = ranges[0] if len(ranges) == 1 else None
+        raw_mentions = list(dict.fromkeys(item.raw for item in mentions))[:50]
         return TemporalMetadata(
             year=unique_years[0] if len(unique_years) == 1 else None,
             date=exact_dates[0] if len(exact_dates) == 1 else None,
             start_year=selected_range[0] if selected_range else None,
             end_year=selected_range[1] if selected_range else None,
-            raw_mentions=[item.raw for item in mentions],
+            raw_mentions=raw_mentions,
         )
 
     @staticmethod

@@ -256,6 +256,21 @@ class MetadataEnrichmentTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(enriched.enrichment.temporal.end_year, 2025)
         self.assertEqual(enriched.enrichment.temporal.raw_mentions, ["2019-2025年"])
 
+    async def test_more_than_fifty_time_mentions_are_deduplicated_and_capped(self) -> None:
+        content = "、".join(f"{year}年" for year in range(1900, 1960))
+
+        enriched = await _pipeline(StaticRuntime([_semantic_output()])).enrich_chunk(
+            _parent(content)
+        )
+
+        self.assertEqual(len(enriched.enrichment.temporal.raw_mentions), 50)
+        self.assertEqual(enriched.enrichment.temporal.raw_mentions[0], "1900年")
+        self.assertEqual(enriched.enrichment.temporal.raw_mentions[-1], "1949年")
+        self.assertNotEqual(
+            enriched.enrichment.quality.enrichment_status,
+            EnrichmentStatus.FAILED,
+        )
+
     async def test_source_published_at_is_not_content_event_time(self) -> None:
         chunk = _parent(
             "这是一段没有事件日期的音乐介绍。",
