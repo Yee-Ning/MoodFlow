@@ -547,7 +547,8 @@ EnrichedChunk
   -> KnowledgeEnrichedChunk
 ```
 
-默认实体注册表位于 `app/rag/knowledge/entity_linking/registry/v2.yaml`。解析优先级为现有
+默认实体注册表位于 `app/rag/knowledge/entity_linking/registry/v3.yaml`，通过只读
+`extends` 继承 V2，并追加经过质量报告复核的高频候选而不改写旧版本。解析优先级为现有
 metadata / registry → 确定性上下文 → Structured Output LLM；不使用外部知识，也不会
 在运行时创建未知 canonical entity。别名共享稳定 ID，短别名或同名实体在证据不足时
 保存在 `unresolved_mentions`。

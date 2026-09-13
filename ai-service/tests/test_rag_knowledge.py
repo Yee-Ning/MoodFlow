@@ -182,6 +182,25 @@ class EntityLinkingTests(unittest.IsolatedAsyncioTestCase):
             {"person:vincent_fang", "album:fantasy"},
         )
 
+    async def test_v3_registry_extends_v2_with_reviewed_high_frequency_entities(
+        self,
+    ) -> None:
+        chunk = _enriched(
+            "蔡依林演唱《告白气球》。",
+            mentions=[
+                ("蔡依林", EntityTypeHint.ARTIST),
+                ("告白气球", EntityTypeHint.SONG),
+            ],
+        )
+
+        result = await self.linker.link(chunk)
+
+        self.assertEqual(self.registry.version, "v3")
+        self.assertEqual(
+            {item.entity_id for item in result.linked_entities},
+            {"artist:jolin_tsai", "song:love_confession"},
+        )
+
     async def test_source_publisher_and_non_music_organization_are_not_candidates(
         self,
     ) -> None:

@@ -12,7 +12,7 @@ from app.rag.enrichment.normalizer import normalize_text
 from .models import CanonicalEntity, EntityRegistryDocument, EntityType, RegistryEntity
 
 
-DEFAULT_ENTITY_REGISTRY_PATH = Path(__file__).with_name("registry") / "v2.yaml"
+DEFAULT_ENTITY_REGISTRY_PATH = Path(__file__).with_name("registry") / "v3.yaml"
 
 
 def normalize_alias(value: str) -> str:
@@ -59,6 +59,22 @@ class EntityRegistry:
             payload = yaml.safe_load(selected.read_text(encoding="utf-8"))
             if not isinstance(payload, dict):
                 raise ValueError("entity registry root must be an object")
+            extends = payload.pop("extends", None)
+            if extends is not None:
+                if not isinstance(extends, str) or not extends:
+                    raise ValueError("entity registry extends must be a file name")
+                base_path = (selected.parent / extends).resolve()
+                if base_path.parent != selected.parent or base_path == selected:
+                    raise ValueError("entity registry extends path is unsafe")
+                base = yaml.safe_load(base_path.read_text(encoding="utf-8"))
+                if not isinstance(base, dict) or not isinstance(
+                    base.get("entities"), list
+                ):
+                    raise ValueError("entity registry base is invalid")
+                own_entities = payload.get("entities", [])
+                if not isinstance(own_entities, list):
+                    raise ValueError("entity registry entities must be a list")
+                payload["entities"] = [*base["entities"], *own_entities]
             return cls(EntityRegistryDocument.model_validate(payload))
         except (OSError, ValueError, yaml.YAMLError) as exc:
             raise ValueError(f"entity_registry_invalid:{selected}") from exc
