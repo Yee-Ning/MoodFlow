@@ -12,7 +12,7 @@ from app.rag.enrichment.normalizer import normalize_text
 from .models import CanonicalEntity, EntityRegistryDocument, EntityType, RegistryEntity
 
 
-DEFAULT_ENTITY_REGISTRY_PATH = Path(__file__).with_name("registry") / "v1.yaml"
+DEFAULT_ENTITY_REGISTRY_PATH = Path(__file__).with_name("registry") / "v2.yaml"
 
 
 def normalize_alias(value: str) -> str:
@@ -93,13 +93,18 @@ class EntityRegistry:
                     candidates[0], candidate_ids, 0.99, "registry_typed_match"
                 )
 
-        if len(candidates) == 1 and (candidates[0].entity_id, key) not in self._ambiguous:
+        if (
+            len(candidates) == 1
+            and (candidates[0].entity_id, key) not in self._ambiguous
+        ):
             return RegistryResolution(
                 candidates[0], candidate_ids, 0.98, "registry_exact_match"
             )
 
         if context_type is not None:
-            candidates = [item for item in candidates if item.entity_type == context_type]
+            candidates = [
+                item for item in candidates if item.entity_type == context_type
+            ]
             if not candidates:
                 return RegistryResolution(
                     None, candidate_ids, 0, "registry_candidate_type_mismatch"
@@ -117,7 +122,9 @@ class EntityRegistry:
             return RegistryResolution(
                 None, candidate_ids, 0, "registry_alias_requires_context"
             )
-        return RegistryResolution(candidate, candidate_ids, 0.98, "registry_exact_match")
+        return RegistryResolution(
+            candidate, candidate_ids, 0.98, "registry_exact_match"
+        )
 
     @staticmethod
     def canonical(entity: RegistryEntity, confidence: float) -> CanonicalEntity:

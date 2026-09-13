@@ -47,7 +47,18 @@ _METADATA_ENTITY_FIELDS: dict[str, EntityType] = {
     "genre": EntityType.GENRE,
     "genres": EntityType.GENRE,
     "label": EntityType.LABEL,
-    "publisher": EntityType.LABEL,
+    "record_label": EntityType.LABEL,
+}
+
+_LINKABLE_TYPES = {
+    EntityType.ARTIST,
+    EntityType.SONG,
+    EntityType.ALBUM,
+    EntityType.GENRE,
+    EntityType.AWARD,
+    EntityType.CHART,
+    EntityType.LABEL,
+    EntityType.PERSON,
 }
 
 
@@ -176,6 +187,7 @@ class EntityLinker:
         values.extend(self._metadata_mentions(chunk.metadata))
         values.extend(self._detected_mentions(chunk))
 
+        source_names = self._source_provenance_names(chunk)
         deduplicated: dict[str, _Mention] = {}
         for mention in sorted(
             values,
@@ -186,8 +198,44 @@ class EntityLinker:
             ),
         ):
             key = normalize_alias(mention.text)
+            if not self._is_linkable_mention(mention, key, source_names):
+                continue
             deduplicated.setdefault(key, mention)
         return list(deduplicated.values())
+
+    def _is_linkable_mention(
+        self,
+        mention: _Mention,
+        normalized: str,
+        source_names: set[str],
+    ) -> bool:
+        if not normalized or normalized in source_names:
+            return False
+        if mention.type_hint is not None and mention.type_hint not in _LINKABLE_TYPES:
+            return False
+        if self.registry.candidates(mention.text):
+            return True
+        return len(normalized) >= 2
+
+    @staticmethod
+    def _source_provenance_names(chunk: EnrichedChunk) -> set[str]:
+        values: list[str] = []
+        if chunk.enrichment.source.source_name:
+            values.append(chunk.enrichment.source.source_name)
+
+        def visit(value: object) -> None:
+            if not isinstance(value, dict):
+                return
+            for key, child in value.items():
+                normalized_key = str(key).casefold()
+                if normalized_key in {"publisher", "source", "source_name"}:
+                    if isinstance(child, str) and child.strip():
+                        values.append(child)
+                elif normalized_key in {"document_metadata", "source_metadata"}:
+                    visit(child)
+
+        visit(chunk.metadata)
+        return {normalize_alias(value) for value in values if normalize_alias(value)}
 
     def _metadata_mentions(self, metadata: dict[str, object]) -> list[_Mention]:
         results: list[_Mention] = []
@@ -250,7 +298,9 @@ class EntityLinker:
 
     @staticmethod
     def _infer_context_type(content: str, mention: str) -> EntityType | None:
-        positions = [match.start() for match in re.finditer(re.escape(mention), content, re.I)]
+        positions = [
+            match.start() for match in re.finditer(re.escape(mention), content, re.I)
+        ]
         scores: dict[EntityType, int] = {}
         for position in positions:
             before = content[max(0, position - 16) : position].casefold()
@@ -269,7 +319,9 @@ class EntityLinker:
                     if after_position >= 0:
                         score = max(score, 50 - after_position)
                 scores[entity_type] = max(scores.get(entity_type, 0), score)
-        positive = [(score, entity_type) for entity_type, score in scores.items() if score]
+        positive = [
+            (score, entity_type) for entity_type, score in scores.items() if score
+        ]
         if not positive:
             return None
         positive.sort(key=lambda item: (-item[0], item[1].value))
@@ -332,7 +384,9 @@ class EntityLinker:
         output: EntityDisambiguationOutput, eligible: list[_Pending]
     ) -> None:
         allowed = {
-            normalize_alias(item.mention.text): set(item.resolution.candidate_entity_ids)
+            normalize_alias(item.mention.text): set(
+                item.resolution.candidate_entity_ids
+            )
             for item in eligible
         }
         if len(output.resolutions) != len(eligible):

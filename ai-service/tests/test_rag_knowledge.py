@@ -136,6 +136,41 @@ class EntityLinkingTests(unittest.IsolatedAsyncioTestCase):
             {"artist:jay_chou", "album:qi_li_xiang", "song:qing_tian"},
         )
 
+    async def test_v2_registry_resolves_frequent_album_and_lyricist(self) -> None:
+        chunk = _enriched(
+            "方文山参与创作专辑《范特西》。",
+            mentions=[
+                ("方文山", EntityTypeHint.PERSON),
+                ("范特西", EntityTypeHint.ALBUM),
+            ],
+        )
+
+        result = await self.linker.link(chunk)
+
+        self.assertEqual(
+            {item.entity_id for item in result.linked_entities},
+            {"person:vincent_fang", "album:fantasy"},
+        )
+
+    async def test_source_publisher_and_non_music_organization_are_not_candidates(
+        self,
+    ) -> None:
+        metadata = {
+            "document_metadata": {
+                "source_metadata": {"publisher": "Wikipedia"}
+            }
+        }
+        chunk = _enriched(
+            "Wikipedia 收录了相关资料。",
+            mentions=[("Wikipedia", EntityTypeHint.ORGANIZATION)],
+            metadata=metadata,
+        )
+
+        result = await self.linker.link(chunk)
+
+        self.assertFalse(result.linked_entities)
+        self.assertFalse(result.unresolved_mentions)
+
     async def test_ambiguous_jay_is_not_forced_to_album(self) -> None:
         chunk = _enriched(
             "Jay 在现场受到欢迎。",

@@ -8,17 +8,17 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 
-DEFAULT_KNOWLEDGE_CONFIG_PATH = Path(__file__).with_name("config") / "v1.yaml"
+DEFAULT_KNOWLEDGE_CONFIG_PATH = Path(__file__).with_name("config") / "v2.yaml"
 
 
 class KnowledgeConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    entity_linking_version: str = Field(default="v1", pattern=r"^v\d+$")
-    claim_extraction_version: str = Field(default="v1", pattern=r"^v\d+$")
-    claim_verification_version: str = Field(default="v1", pattern=r"^v\d+$")
+    entity_linking_version: str = Field(default="v2", pattern=r"^v\d+$")
+    claim_extraction_version: str = Field(default="v2", pattern=r"^v\d+$")
+    claim_verification_version: str = Field(default="v2", pattern=r"^v\d+$")
     prompt_version: str = Field(default="v1", pattern=r"^v\d+$")
-    registry_version: str = Field(default="v1", pattern=r"^v\d+$")
+    registry_version: str = Field(default="v2", pattern=r"^v\d+$")
     llm_enabled: bool = True
     batch_size: int = Field(default=16, ge=1, le=200)
     max_concurrency: int = Field(default=4, ge=1, le=32)

@@ -1,0 +1,142 @@
+registry_version: v2
+entities:
+  - entity_id: artist:jay_chou
+    entity_type: artist
+    canonical_name: 周杰伦
+    aliases: [周杰倫, 周董, Jay Chou, JAY CHOU, Chou, Jay]
+    ambiguous_aliases: [Jay]
+  - entity_id: person:vincent_fang
+    entity_type: person
+    canonical_name: 方文山
+    aliases: [Vincent Fang]
+    ambiguous_aliases: []
+  - entity_id: artist:eason_chan
+    entity_type: artist
+    canonical_name: 陈奕迅
+    aliases: [陳奕迅, Eason Chan]
+    ambiguous_aliases: []
+  - entity_id: artist:jacky_wu
+    entity_type: artist
+    canonical_name: 吴宗宪
+    aliases: [吳宗憲, Jacky Wu]
+    ambiguous_aliases: []
+  - entity_id: artist:landy_wen
+    entity_type: artist
+    canonical_name: 温岚
+    aliases: [溫嵐, Landy Wen]
+    ambiguous_aliases: []
+  - entity_id: artist:nan_quan_mama
+    entity_type: artist
+    canonical_name: 南拳妈妈
+    aliases: [南拳媽媽, Nan Quan Mama]
+    ambiguous_aliases: []
+  - entity_id: album:jay_2000
+    entity_type: album
+    canonical_name: Jay
+    aliases: [周杰伦同名专辑, 周杰倫同名專輯]
+    ambiguous_aliases: [Jay]
+  - entity_id: album:fantasy
+    entity_type: album
+    canonical_name: 范特西
+    aliases: [Fantasy]
+    ambiguous_aliases: []
+  - entity_id: album:eight_dimensions
+    entity_type: album
+    canonical_name: 八度空间
+    aliases: [八度空間, The Eight Dimensions]
+    ambiguous_aliases: []
+  - entity_id: album:ye_hui_mei
+    entity_type: album
+    canonical_name: 叶惠美
+    aliases: [葉惠美, 叶惠美专辑, 葉惠美專輯]
+    ambiguous_aliases: [叶惠美, 葉惠美]
+  - entity_id: album:qi_li_xiang
+    entity_type: album
+    canonical_name: 七里香
+    aliases: [七里香专辑, 七里香專輯]
+    ambiguous_aliases: [七里香]
+  - entity_id: album:novembers_chopin
+    entity_type: album
+    canonical_name: 十一月的萧邦
+    aliases: [十一月的蕭邦, 11月的萧邦, 11月的蕭邦, November's Chopin]
+    ambiguous_aliases: []
+  - entity_id: album:still_fantasy
+    entity_type: album
+    canonical_name: 依然范特西
+    aliases: [Still Fantasy]
+    ambiguous_aliases: []
+  - entity_id: album:capricorn
+    entity_type: album
+    canonical_name: 魔杰座
+    aliases: [魔傑座, Capricorn]
+    ambiguous_aliases: []
+  - entity_id: song:qi_li_xiang
+    entity_type: song
+    canonical_name: 七里香
+    aliases: [七里香歌曲]
+    ambiguous_aliases: [七里香]
+  - entity_id: song:qing_tian
+    entity_type: song
+    canonical_name: 晴天
+    aliases: [晴天歌曲]
+    ambiguous_aliases: []
+  - entity_id: song:blue_and_white_porcelain
+    entity_type: song
+    canonical_name: 青花瓷
+    aliases: [Blue and White Porcelain]
+    ambiguous_aliases: []
+  - entity_id: song:east_wind_breaks
+    entity_type: song
+    canonical_name: 东风破
+    aliases: [東風破, East Wind Breaks]
+    ambiguous_aliases: []
+  - entity_id: song:nunchucks
+    entity_type: song
+    canonical_name: 双截棍
+    aliases: [雙截棍, Nunchucks]
+    ambiguous_aliases: []
+  - entity_id: song:dragon_fist
+    entity_type: song
+    canonical_name: 龙拳
+    aliases: [龍拳, Dragon Fist]
+    ambiguous_aliases: []
+  - entity_id: song:my_territory
+    entity_type: song
+    canonical_name: 我的地盘
+    aliases: [我的地盤, My Territory]
+    ambiguous_aliases: []
+  - entity_id: genre:r_and_b
+    entity_type: genre
+    canonical_name: R&B
+    aliases: [R＆B, RnB, Rhythm and Blues, 节奏布鲁斯, 節奏藍調]
+    ambiguous_aliases: []
+  - entity_id: genre:hip_hop
+    entity_type: genre
+    canonical_name: Hip-Hop
+    aliases: [Hip Hop, hiphop, 嘻哈]
+    ambiguous_aliases: []
+  - entity_id: genre:chinese_style
+    entity_type: genre
+    canonical_name: 中国风
+    aliases: [中國風, Zhongguo Feng, Chinese style]
+    ambiguous_aliases: []
+  - entity_id: genre:c_pop
+    entity_type: genre
+    canonical_name: C-pop
+    aliases: [C Pop, Mandopop, 华语流行音乐, 華語流行音樂]
+    ambiguous_aliases: []
+  - entity_id: award:golden_melody_awards
+    entity_type: award
+    canonical_name: 金曲奖
+    aliases: [金曲獎, Golden Melody Awards]
+    ambiguous_aliases: []
+  - entity_id: label:jvr_music
+    entity_type: label
+    canonical_name: 杰威尔音乐
+    aliases: [杰威爾音樂, JVR Music]
+    ambiguous_aliases: []
+  - entity_id: label:sony_music_taiwan
+    entity_type: label
+    canonical_name: 台湾索尼音乐娱乐
+    aliases: [台灣索尼音樂娛樂, Sony Music Taiwan]
+    ambiguous_aliases: []
