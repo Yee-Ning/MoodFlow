@@ -101,10 +101,7 @@ class OfflineIndexingService:
         documents: list[PreparedIndexDocument] = []
         for chunk in eligible_chunks:
             try:
-                document = self.projector.project(
-                    chunk,
-                    corpus.parents[chunk.parent_id],
-                )
+                document = self.projector.project(chunk)
                 self.validator.validate_document(document)
                 documents.append(document)
             except Exception as exc:

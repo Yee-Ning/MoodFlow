@@ -6,10 +6,7 @@ import hashlib
 import json
 import uuid
 
-from app.rag.knowledge.models import (
-    KnowledgeEnrichedChildChunk,
-    KnowledgeEnrichedParentChunk,
-)
+from app.rag.knowledge.models import KnowledgeEnrichedChildChunk
 from app.rag.knowledge.verification.models import VerificationStatus
 
 from .config import IndexingConfig
@@ -23,15 +20,7 @@ class IndexDocumentProjector:
     def __init__(self, config: IndexingConfig) -> None:
         self.config = config
 
-    def project(
-        self,
-        chunk: KnowledgeEnrichedChildChunk,
-        parent: KnowledgeEnrichedParentChunk,
-    ) -> PreparedIndexDocument:
-        if parent.chunk_id != chunk.parent_id:
-            raise ValueError(f"parent_id_mismatch:{chunk.chunk_id}")
-        if parent.doc_id != chunk.doc_id:
-            raise ValueError(f"parent_document_mismatch:{chunk.chunk_id}")
+    def project(self, chunk: KnowledgeEnrichedChildChunk) -> PreparedIndexDocument:
         dense_text = chunk.retrieval_content.strip()
         lexical_terms = self._lexical_terms(chunk)
         bm25_parts = [dense_text]
@@ -39,7 +28,7 @@ class IndexDocumentProjector:
             bm25_parts.append("检索词：" + "；".join(lexical_terms))
         bm25_text = "\n\n".join(bm25_parts)
         point_id = str(uuid.uuid5(POINT_NAMESPACE, chunk.chunk_id))
-        payload = self._payload(chunk, parent, point_id)
+        payload = self._payload(chunk, point_id)
         input_hash = self._input_hash(chunk, dense_text, bm25_text, payload)
         payload["index_input_hash"] = input_hash
         return PreparedIndexDocument(
@@ -71,10 +60,7 @@ class IndexDocumentProjector:
         return result
 
     def _payload(
-        self,
-        chunk: KnowledgeEnrichedChildChunk,
-        parent: KnowledgeEnrichedParentChunk,
-        point_id: str,
+        self, chunk: KnowledgeEnrichedChildChunk, point_id: str
     ) -> dict[str, object]:
         entities = chunk.knowledge.entities.linked_entities
         claims = chunk.knowledge.claims
@@ -101,14 +87,6 @@ class IndexDocumentProjector:
             "content": chunk.content,
             "retrieval_content": chunk.retrieval_content,
             "token_count": chunk.token_count,
-            "parent_context": {
-                "chunk_id": parent.chunk_id,
-                "chunk_type": parent.chunk_type.value,
-                "section_path": list(parent.section_path),
-                "breadcrumb": parent.breadcrumb,
-                "content": parent.content,
-                "token_count": parent.token_count,
-            },
             "language": chunk.enrichment.content.language,
             "content_type": chunk.enrichment.content.content_type.value,
             "topics": list(chunk.enrichment.semantic.topics),
@@ -151,13 +129,7 @@ class IndexDocumentProjector:
             "indexing_version": self.config.indexing_version,
             "schema_version": self.config.schema_version,
             "projection_version": self.config.projection_version,
-            "dense": {
-                "model_name": self.config.dense.model_name,
-                "model_revision": self.config.dense.model_revision,
-                "dimension": self.config.dense.dimension,
-                "max_length": self.config.dense.max_length,
-                "normalize": self.config.dense.normalize,
-            },
+            "dense": self.config.dense.model_dump(mode="json"),
             "bm25": self.config.bm25.model_dump(mode="json"),
         }
         encoded = json.dumps(

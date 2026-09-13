@@ -23,13 +23,6 @@ class IndexingValidator:
             raise ValueError(f"payload_chunk_id_mismatch:{document.chunk_id}")
         if document.payload.get("parent_id") != document.parent_id:
             raise ValueError(f"payload_parent_id_mismatch:{document.chunk_id}")
-        parent_context = document.payload.get("parent_context")
-        if not isinstance(parent_context, dict):
-            raise ValueError(f"payload_parent_context_missing:{document.chunk_id}")
-        if parent_context.get("chunk_id") != document.parent_id:
-            raise ValueError(f"payload_parent_context_mismatch:{document.chunk_id}")
-        if not str(parent_context.get("content", "")).strip():
-            raise ValueError(f"payload_parent_content_empty:{document.chunk_id}")
         if document.payload.get("index_input_hash") != document.input_hash:
             raise ValueError(f"payload_input_hash_mismatch:{document.chunk_id}")
 

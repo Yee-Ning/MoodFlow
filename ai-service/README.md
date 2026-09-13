@@ -623,7 +623,7 @@ KnowledgeEnrichedChunk JSONL
   -> one Qdrant point per Child
        named vector: dense
        named vector: bm25 (qdrant/bm25, multilingual tokenizer, IDF)
-       payload: embedded parent_context + source/enrichment/verified-knowledge metadata
+       payload: parent_id + source/enrichment/verified-knowledge metadata
   -> idempotent batch upsert
   -> index_build_manifest.json + index_failures.jsonl
 ```
@@ -631,11 +631,8 @@ KnowledgeEnrichedChunk JSONL
 Dense 文本直接使用现有 `retrieval_content`，不向文档添加 query instruction；BM25
 文本在此基础上确定性追加 topics、keywords、canonical entity names 和 registry aliases。
 只有 `SUPPORTED` Claim 的 ID 会进入 Payload，Claim 文本不会重复拼入向量输入。
-每个 Child Payload 会冗余保存对应 Parent 的正文、section path、breadcrumb 与 token count，
-因此离线产物已具备后续 Parent context 回填所需的数据，但本阶段不执行回填或检索。
 Point ID 由 `chunk_id` 确定性生成 UUID5，完整投影、模型 revision、BM25 配置与版本共同
 生成 `index_input_hash`；Qdrant 中 hash 未变化的 point 会在加载模型前直接跳过。
-CPU/GPU 选择和 `local_files_only` 等运行时选项不参与 hash，不会导致无意义的全量重算。
 
 默认配置位于 `app/rag/indexing/config/v1.yaml`，固定 Qwen3 模型 revision、1024 维
 Cosine、Dense HNSW `m=16/ef_construct=200`、Qdrant 1.19 和中文
