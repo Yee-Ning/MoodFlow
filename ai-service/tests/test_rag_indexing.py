@@ -28,6 +28,7 @@ from app.rag.indexing import (
     IndexCorpusReader,
     IndexDocumentProjector,
     IndexingConfig,
+    IndexingValidator,
     OfflineIndexingService,
     PayloadIndexConfig,
     QdrantIndexConfig,
@@ -272,9 +273,10 @@ class ProjectionTests(unittest.TestCase):
     ) -> None:
         projector = IndexDocumentProjector(_config())
         chunk = _child()
+        parent = _parent()
 
-        first = projector.project(chunk)
-        second = projector.project(chunk)
+        first = projector.project(chunk, parent)
+        second = projector.project(chunk, parent)
 
         self.assertEqual(first.point_id, second.point_id)
         self.assertEqual(first.input_hash, second.input_hash)
@@ -284,15 +286,64 @@ class ProjectionTests(unittest.TestCase):
         self.assertNotIn("source_explicitly_supports_claim", first.bm25_text)
         self.assertEqual(first.payload["record_type"], "child")
         self.assertEqual(first.payload["parent_id"], "parent-1")
-        self.assertEqual(first.payload["supported_claim_ids"], ["claim:" + "a" * 24])
+        self.assertEqual(first.payload["parent_context"]["chunk_id"], "parent-1")
+        self.assertEqual(first.payload["parent_context"]["content"], parent.content)
+        self.assertEqual(
+            first.payload["supported_claim_ids"], ["claim:" + "a" * 24]
+        )
 
     def test_content_change_changes_index_input_hash(self) -> None:
         projector = IndexDocumentProjector(_config())
+        parent = _parent()
 
-        original = projector.project(_child())
-        changed = projector.project(_child(content="周杰伦发行了另一张专辑。"))
+        original = projector.project(_child(), parent)
+        changed = projector.project(
+            _child(content="周杰伦发行了另一张专辑。"), parent
+        )
 
         self.assertNotEqual(original.input_hash, changed.input_hash)
+
+    def test_parent_content_change_changes_index_input_hash(self) -> None:
+        projector = IndexDocumentProjector(_config())
+        parent = _parent()
+
+        original = projector.project(_child(), parent)
+        changed = projector.project(
+            _child(), parent.model_copy(update={"content": "更新后的完整父块上下文。"})
+        )
+
+        self.assertNotEqual(original.input_hash, changed.input_hash)
+
+    def test_runtime_only_dense_options_do_not_change_index_input_hash(self) -> None:
+        base = _config()
+        runtime_changed = base.model_copy(
+            update={
+                "dense": base.dense.model_copy(
+                    update={"device": "cuda", "local_files_only": False}
+                )
+            }
+        )
+
+        original = IndexDocumentProjector(base).project(_child(), _parent())
+        changed = IndexDocumentProjector(runtime_changed).project(_child(), _parent())
+
+        self.assertEqual(original.input_hash, changed.input_hash)
+
+    def test_parent_mismatch_is_rejected(self) -> None:
+        parent = _parent().model_copy(update={"chunk_id": "parent-other"})
+
+        with self.assertRaisesRegex(ValueError, "parent_id_mismatch"):
+            IndexDocumentProjector(_config()).project(_child(), parent)
+
+    def test_validator_rejects_missing_parent_context(self) -> None:
+        document = IndexDocumentProjector(_config()).project(_child(), _parent())
+        payload = dict(document.payload)
+        payload.pop("parent_context")
+
+        with self.assertRaisesRegex(ValueError, "payload_parent_context_missing"):
+            IndexingValidator(_config()).validate_document(
+                document.model_copy(update={"payload": payload})
+            )
 
 
 class DensePoolingTests(unittest.TestCase):
@@ -477,7 +528,7 @@ class QdrantStoreTests(unittest.TestCase):
                 self.points = points
 
         config = _config()
-        document = IndexDocumentProjector(config).project(_child())
+        document = IndexDocumentProjector(config).project(_child(), _parent())
         from app.rag.indexing.models import IndexPoint
 
         client = CapturingClient()

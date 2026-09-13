@@ -87,8 +87,8 @@ class IndexingConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     indexing_version: str = Field(default="v1", pattern=r"^v\d+$")
-    schema_version: str = Field(default="v1", pattern=r"^v\d+$")
-    projection_version: str = Field(default="v1", pattern=r"^v\d+$")
+    schema_version: str = Field(default="v2", pattern=r"^v\d+$")
+    projection_version: str = Field(default="v2", pattern=r"^v\d+$")
     embedding_batch_size: int = Field(default=8, ge=1, le=256)
     retry_count: int = Field(default=2, ge=0, le=5)
     index_partial_knowledge: bool = True

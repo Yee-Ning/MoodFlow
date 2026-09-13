@@ -1,6 +1,6 @@
 indexing_version: v1
-schema_version: v1
-projection_version: v1
+schema_version: v2
+projection_version: v2
 embedding_batch_size: 8
 retry_count: 2
 index_partial_knowledge: true
