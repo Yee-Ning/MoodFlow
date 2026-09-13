@@ -510,11 +510,17 @@ JSON Schema、Pydantic 和实体文本落地校验；超时、非法结构或未
 冲突保存在 `quality.metadata_conflicts`，不静默覆盖。
 
 ```powershell
-# 默认使用现有 LLM_* 配置进行语义增强
-python run_enrich.py --limit 20 --sample-size 5
-
-# 纯离线 smoke：只跑继承和规则层，不消耗 LLM
+# 默认安全路径：只跑继承和规则层，不消耗 LLM
 python run_enrich.py --limit 20 --sample-size 5 --rule-only
+
+# 只修复已有 failed 行，并保留 success / partial 行
+python run_enrich.py --rule-only --retry-failed-only --sample-size 0
+
+# 付费语义增强必须显式确认
+python run_enrich.py --limit 20 --sample-size 5 --allow-paid-llm
+
+# 只读校验现有输出；不会调用 LLM，也不会写文件
+python run_enrich.py --validate-only --sample-size 0
 ```
 
 配置位于 `app/rag/enrichment/config/v1.yaml`，包括 batch size、并发、单次超时与重试。
@@ -549,12 +555,14 @@ Claim 必须只表达一个可判断真假的事实，并携带稳定 `claim_id`
 `INSUFFICIENT_EVIDENCE`，不会访问互联网或跨文档补证。
 
 ```powershell
-# 使用现有 LLM 配置处理最新 enriched corpus
-python run_knowledge.py --limit 20 --sample-size 5
+# 默认安全路径：registry + deterministic rules + source verifier
+python run_knowledge.py --limit 20 --sample-size 5 --rule-only
 
-# 完全离线 smoke：registry + deterministic rules + source verifier
-python run_knowledge.py --enriched-path .dev/enrichment-smoke/enriched/v1/enriched_chunks.jsonl `
-  --output-root .dev/knowledge-smoke/knowledge/v1 --limit 5 --sample-size 5 --rule-only
+# 付费消歧、Claim 抽取与验证必须显式确认
+python run_knowledge.py --limit 20 --sample-size 5 --allow-paid-llm
+
+# 只读校验现有输出；不会调用 LLM，也不会写文件
+python run_knowledge.py --validate-only --sample-size 0
 ```
 
 结果原子写入 `knowledge_enriched_chunks.jsonl` 和

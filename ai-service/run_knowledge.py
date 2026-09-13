@@ -33,6 +33,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--sample-size", type=int, default=3)
     parser.add_argument("--rule-only", action="store_true")
     parser.add_argument("--validate-only", action="store_true")
+    parser.add_argument(
+        "--allow-paid-llm",
+        action="store_true",
+        help="Explicitly allow billable LLM calls when the config enables them.",
+    )
     return parser.parse_args(argv)
 
 
@@ -49,6 +54,10 @@ def main(
         config = load_knowledge_config(_resolve(root, args.config))
         if args.rule_only:
             config = config.model_copy(update={"llm_enabled": False})
+        if config.llm_enabled and not args.validate_only and not args.allow_paid_llm:
+            raise ValueError(
+                "paid LLM disabled by default; pass --allow-paid-llm or --rule-only"
+            )
         enriched_path = _resolve(root, args.enriched_path) or latest_enriched_path(root)
         outcome = asyncio.run(
             KnowledgePipelineService(

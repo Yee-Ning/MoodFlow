@@ -12,6 +12,7 @@ from .config import EnrichmentConfig
 from .corpus import EnrichmentCorpusReader
 from .models import BaseChunk, EnrichedChunk, EnrichmentStatus
 from .pipeline import MetadataEnrichmentPipeline
+from .validator import EnrichmentValidator
 from .writer import EnrichmentDatasetWriter
 
 
@@ -53,6 +54,7 @@ class MetadataEnrichmentService:
         *,
         limit: int | None = None,
         validate_only: bool = False,
+        retry_failed_only: bool = False,
         sample_size: int = 3,
         sample_seed: int = 17,
     ) -> EnrichmentRunOutcome:
@@ -66,16 +68,34 @@ class MetadataEnrichmentService:
 
         writer = EnrichmentDatasetWriter(self.project_root, self.output_root)
         existing = writer.load_existing()
-        chunks = await self.pipeline.enrich_batch(
-            source_chunks,
-            existing_by_id=existing,
-        )
         chunks_path = None
         manifest_path = None
-        if not validate_only:
+        if validate_only:
+            chunks = self._validate_existing(
+                source_chunks, existing, full=limit is None
+            )
+        else:
+            if retry_failed_only:
+                source_chunks = [
+                    chunk
+                    for chunk in source_chunks
+                    if (
+                        chunk.chunk_id in existing
+                        and existing[
+                            chunk.chunk_id
+                        ].enrichment.quality.enrichment_status
+                        == EnrichmentStatus.FAILED
+                    )
+                ]
+            chunks = await self.pipeline.enrich_batch(
+                source_chunks,
+                existing_by_id=existing,
+            )
             chunks_path, manifest_path = writer.write(
                 chunks,
-                preserve_existing=limit is not None and limit < total_available,
+                preserve_existing=(
+                    retry_failed_only or (limit is not None and limit < total_available)
+                ),
             )
 
         counts = {status.value: 0 for status in EnrichmentStatus}
@@ -100,6 +120,29 @@ class MetadataEnrichmentService:
             chunks_path=chunks_path,
             manifest_path=manifest_path,
         )
+
+    @staticmethod
+    def _validate_existing(
+        source_chunks: list[BaseChunk],
+        existing: dict[str, EnrichedChunk],
+        *,
+        full: bool,
+    ) -> list[EnrichedChunk]:
+        source_ids = {chunk.chunk_id for chunk in source_chunks}
+        missing = source_ids.difference(existing)
+        if missing:
+            raise ValueError(f"enriched_validation_missing_chunks:{len(missing)}")
+        if full:
+            extra = set(existing).difference(source_ids)
+            if extra:
+                raise ValueError(f"enriched_validation_extra_chunks:{len(extra)}")
+        validator = EnrichmentValidator()
+        chunks: list[EnrichedChunk] = []
+        for source in source_chunks:
+            enriched = existing[source.chunk_id]
+            validator.validate(source, enriched)
+            chunks.append(enriched)
+        return chunks
 
     @staticmethod
     def _flatten(documents: list[ChunkedDocument]) -> list[BaseChunk]:

@@ -17,6 +17,7 @@ from .models import (
 )
 from .pipeline import KnowledgePipeline
 from .service import KnowledgePipelineService, KnowledgeRunOutcome
+from .validator import KnowledgeValidationError, KnowledgeValidator
 from .verification import ClaimVerification, ClaimVerifier, VerificationStatus
 
 __all__ = [
@@ -37,6 +38,8 @@ __all__ = [
     "KnowledgePipelineService",
     "KnowledgeRunOutcome",
     "KnowledgeStatus",
+    "KnowledgeValidationError",
+    "KnowledgeValidator",
     "VerificationStatus",
     "latest_enriched_path",
     "load_knowledge_config",

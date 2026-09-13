@@ -5,12 +5,14 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from app.rag.chunk.models import ChildChunk, ChunkType, ParentChunk
 from app.rag.enrichment import (
     EnrichmentConfig,
     EnrichmentStatus,
     MetadataEnrichmentPipeline,
+    MetadataEnrichmentService,
     RuleEnricher,
     SemanticEnricher,
 )
@@ -140,6 +142,16 @@ class ContentRuntime:
         )
 
 
+class ExplodingEnrichmentPipeline:
+    async def enrich_batch(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("validate-only must not execute enrichment")
+
+
+class StaticCorpusReader:
+    def load_all(self) -> list[object]:
+        return []
+
+
 def _pipeline(
     runtime: StaticRuntime | ContentRuntime,
     *,
@@ -256,7 +268,9 @@ class MetadataEnrichmentTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(enriched.enrichment.temporal.end_year, 2025)
         self.assertEqual(enriched.enrichment.temporal.raw_mentions, ["2019-2025年"])
 
-    async def test_more_than_fifty_time_mentions_are_deduplicated_and_capped(self) -> None:
+    async def test_more_than_fifty_time_mentions_are_deduplicated_and_capped(
+        self,
+    ) -> None:
         content = "、".join(f"{year}年" for year in range(1900, 1960))
 
         enriched = await _pipeline(StaticRuntime([_semantic_output()])).enrich_chunk(
@@ -468,6 +482,57 @@ class MetadataEnrichmentTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(row["content"], chunk.content)
             self.assertIn("enrichment", row)
             self.assertTrue(manifest_path.is_file())
+
+    async def test_validate_only_reads_persisted_rows_without_running_pipeline(
+        self,
+    ) -> None:
+        source = _parent("周杰伦于2000年出道。")
+        config = EnrichmentConfig(llm_enabled=False)
+        enriched = await MetadataEnrichmentPipeline(config).enrich_chunk(source)
+        with tempfile.TemporaryDirectory(dir=AI_SERVICE_ROOT) as directory:
+            output_root = Path(directory) / "enriched" / "v1"
+            EnrichmentDatasetWriter(AI_SERVICE_ROOT, output_root).write([enriched])
+            service = MetadataEnrichmentService(
+                AI_SERVICE_ROOT,
+                config,
+                chunked_root=Path(directory),
+                output_root=output_root,
+                pipeline=ExplodingEnrichmentPipeline(),  # type: ignore[arg-type]
+            )
+            service.reader = StaticCorpusReader()  # type: ignore[assignment]
+
+            with patch.object(
+                MetadataEnrichmentService, "_flatten", return_value=[source]
+            ):
+                outcome = await service.run(validate_only=True, sample_size=0)
+
+            self.assertEqual(outcome.summary["status"], "validated")
+            self.assertEqual(outcome.summary["total"], 1)
+            self.assertIsNone(outcome.chunks_path)
+
+    async def test_retry_failed_only_preserves_non_failed_rows(self) -> None:
+        source = _parent("周杰伦于2000年出道。")
+        config = EnrichmentConfig(llm_enabled=False)
+        enriched = await MetadataEnrichmentPipeline(config).enrich_chunk(source)
+        with tempfile.TemporaryDirectory(dir=AI_SERVICE_ROOT) as directory:
+            output_root = Path(directory) / "enriched" / "v1"
+            writer = EnrichmentDatasetWriter(AI_SERVICE_ROOT, output_root)
+            writer.write([enriched])
+            service = MetadataEnrichmentService(
+                AI_SERVICE_ROOT,
+                config,
+                chunked_root=Path(directory),
+                output_root=output_root,
+            )
+            service.reader = StaticCorpusReader()  # type: ignore[assignment]
+
+            with patch.object(
+                MetadataEnrichmentService, "_flatten", return_value=[source]
+            ):
+                outcome = await service.run(retry_failed_only=True, sample_size=0)
+
+            self.assertEqual(outcome.summary["total"], 0)
+            self.assertEqual(writer.load_existing()[source.chunk_id], enriched)
 
 
 if __name__ == "__main__":

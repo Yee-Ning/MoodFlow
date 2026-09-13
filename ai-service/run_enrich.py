@@ -34,6 +34,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--sample-size", type=int, default=3)
     parser.add_argument("--rule-only", action="store_true")
     parser.add_argument("--validate-only", action="store_true")
+    parser.add_argument(
+        "--retry-failed-only",
+        action="store_true",
+        help="Reprocess only persisted failed rows and preserve every other row.",
+    )
+    parser.add_argument(
+        "--allow-paid-llm",
+        action="store_true",
+        help="Explicitly allow billable LLM calls when the config enables them.",
+    )
     return parser.parse_args(argv)
 
 
@@ -47,9 +57,15 @@ def main(
     try:
         if args.sample_size < 0 or args.sample_size > 5:
             raise ValueError("sample-size must be between 0 and 5")
+        if args.validate_only and args.retry_failed_only:
+            raise ValueError("validate-only cannot be combined with retry-failed-only")
         config = load_enrichment_config(_resolve(root, args.config))
         if args.rule_only:
             config = config.model_copy(update={"llm_enabled": False})
+        if config.llm_enabled and not args.validate_only and not args.allow_paid_llm:
+            raise ValueError(
+                "paid LLM disabled by default; pass --allow-paid-llm or --rule-only"
+            )
         chunked_root = _resolve(root, args.chunked_root) or latest_chunked_root(root)
         outcome = asyncio.run(
             MetadataEnrichmentService(
@@ -61,6 +77,7 @@ def main(
             ).run(
                 limit=args.limit,
                 validate_only=args.validate_only,
+                retry_failed_only=args.retry_failed_only,
                 sample_size=args.sample_size,
             )
         )

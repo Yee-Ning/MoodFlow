@@ -29,7 +29,9 @@ from app.rag.knowledge import (
     EntityRegistry,
     KnowledgeConfig,
     KnowledgePipeline,
+    KnowledgePipelineService,
     KnowledgeStatus,
+    KnowledgeValidator,
     VerificationStatus,
 )
 from app.rag.knowledge.claims import Claim, ClaimPredicate, ClaimSource, ClaimTime
@@ -482,6 +484,19 @@ class FailingEntityLinker:
         return await self.delegate.link(chunk)
 
 
+class ExplodingKnowledgePipeline:
+    async def process_batch(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("validate-only must not execute knowledge pipeline")
+
+
+class StaticKnowledgeReader:
+    def __init__(self, chunks):  # type: ignore[no-untyped-def]
+        self.chunks = chunks
+
+    def load_all(self):  # type: ignore[no-untyped-def]
+        return self.chunks
+
+
 class KnowledgePipelineTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.config = KnowledgeConfig(llm_enabled=False, max_concurrency=2)
@@ -557,6 +572,51 @@ class KnowledgePipelineTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(chunks_path.is_file())
             self.assertTrue(manifest_path.is_file())
             self.assertEqual(loaded[result.chunk_id], result)
+
+    async def test_validate_only_reads_persisted_rows_without_running_pipeline(
+        self,
+    ) -> None:
+        source = _enriched(
+            "周杰伦于2000年出道。",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+        )
+        result = await KnowledgePipeline(self.config).process(source)
+        project_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=project_root) as temporary:
+            output_root = Path(temporary) / "knowledge" / "v1"
+            KnowledgeDatasetWriter(project_root, output_root).write([result])
+            service = KnowledgePipelineService(
+                project_root,
+                self.config,
+                enriched_path=Path(temporary) / "unused.jsonl",
+                output_root=output_root,
+                pipeline=ExplodingKnowledgePipeline(),  # type: ignore[arg-type]
+            )
+            service.reader = StaticKnowledgeReader([source])  # type: ignore[assignment]
+
+            outcome = await service.run(validate_only=True, sample_size=0)
+
+            self.assertEqual(outcome.summary["status"], "validated")
+            self.assertEqual(outcome.summary["total"], 1)
+            self.assertIsNone(outcome.chunks_path)
+
+    async def test_knowledge_validator_rejects_inconsistent_stats(self) -> None:
+        source = _enriched(
+            "周杰伦于2000年出道。",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+        )
+        result = await KnowledgePipeline(self.config).process(source)
+        invalid_knowledge = result.knowledge.model_copy(
+            update={
+                "stats": result.knowledge.stats.model_copy(
+                    update={"claim_count": result.knowledge.stats.claim_count + 1}
+                )
+            }
+        )
+        invalid = result.model_copy(update={"knowledge": invalid_knowledge})
+
+        with self.assertRaisesRegex(ValueError, "knowledge_stats_mismatch"):
+            KnowledgeValidator().validate(source, invalid)
 
 
 if __name__ == "__main__":

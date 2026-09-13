@@ -6,10 +6,13 @@ import random
 from dataclasses import dataclass
 from pathlib import Path
 
+from app.rag.enrichment.models import EnrichedChunk
+
 from .config import KnowledgeConfig
 from .corpus import KnowledgeCorpusReader
 from .models import KnowledgeEnrichedChunk, KnowledgeStatus
 from .pipeline import KnowledgePipeline
+from .validator import KnowledgeValidator
 from .writer import KnowledgeDatasetWriter
 
 
@@ -60,12 +63,16 @@ class KnowledgePipelineService:
 
         writer = KnowledgeDatasetWriter(self.project_root, self.output_root)
         existing = writer.load_existing()
-        chunks = await self.pipeline.process_batch(
-            source_chunks, existing_by_id=existing
-        )
         chunks_path = None
         manifest_path = None
-        if not validate_only:
+        if validate_only:
+            chunks = self._validate_existing(
+                source_chunks, existing, full=limit is None
+            )
+        else:
+            chunks = await self.pipeline.process_batch(
+                source_chunks, existing_by_id=existing
+            )
             chunks_path, manifest_path = writer.write(
                 chunks,
                 preserve_existing=limit is not None and limit < total_available,
@@ -98,3 +105,27 @@ class KnowledgePipelineService:
             chunks_path=chunks_path,
             manifest_path=manifest_path,
         )
+
+    @staticmethod
+    def _validate_existing(
+        source_chunks: list[EnrichedChunk],
+        existing: dict[str, KnowledgeEnrichedChunk],
+        *,
+        full: bool,
+    ) -> list[KnowledgeEnrichedChunk]:
+        source_ids = {chunk.chunk_id for chunk in source_chunks}
+        missing = source_ids.difference(existing)
+        if missing:
+            raise ValueError(f"knowledge_validation_missing_chunks:{len(missing)}")
+        if full:
+            extra = set(existing).difference(source_ids)
+            if extra:
+                raise ValueError(f"knowledge_validation_extra_chunks:{len(extra)}")
+        validator = KnowledgeValidator()
+        chunks: list[KnowledgeEnrichedChunk] = []
+        for source in source_chunks:
+            knowledge_chunk = existing[source.chunk_id]
+            validator.validate(source, knowledge_chunk)
+            chunks.append(knowledge_chunk)
+        validator.validate_parent_references(chunks)
+        return chunks
