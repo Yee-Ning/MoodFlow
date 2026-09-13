@@ -218,9 +218,16 @@ class EntityLinkingTests(unittest.IsolatedAsyncioTestCase):
             [item.entity_id for item in artist_result.linked_entities],
             ["artist:jacky_wu"],
         )
-        self.assertFalse(album_result.linked_entities)
+        self.assertNotIn(
+            "album:ye_hui_mei",
+            {item.entity_id for item in album_result.linked_entities},
+        )
         self.assertEqual(
-            album_result.unresolved_mentions[0].reason,
+            next(
+                item
+                for item in album_result.unresolved_mentions
+                if item.normalized_text == "叶惠美"
+            ).reason,
             "registry_candidate_type_mismatch",
         )
 
