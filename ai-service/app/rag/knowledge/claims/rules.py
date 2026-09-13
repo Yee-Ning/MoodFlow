@@ -1008,6 +1008,12 @@ class RuleClaimExtractor:
                 if "奖" in nearby or "獎" in nearby:
                     continue
                 suffix = evidence[cue_match.end() : cue_match.end() + 12]
+                if re.match(r"人(?!\s*[:：])", suffix):
+                    # “作词人/编曲人” is a profession or award-column
+                    # label, not by itself an assignment to the nearby work.
+                    # Keep the explicit ``作词人: Person`` table form, which
+                    # still has a directly grounded assignee.
+                    continue
                 cue_is_assignment = bool(re.match(r"\s*[:：]", suffix))
                 if cue_is_assignment:
                     person = self._nearest_entity(

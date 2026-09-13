@@ -777,6 +777,26 @@ class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
             ClaimPredicate.INCLUDES_TRACK, {claim.predicate for claim in result.claims}
         )
 
+    async def test_profession_label_does_not_assign_lyrics_to_the_nearby_artist(self) -> None:
+        chunk = _enriched(
+            "方文山成为周杰伦专用作词人，并与周杰伦共同制作出许多作品，如《爱在西元前》。",
+            mentions=[
+                ("方文山", EntityTypeHint.PERSON),
+                ("周杰伦", EntityTypeHint.ARTIST),
+                ("爱在西元前", EntityTypeHint.SONG),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertNotIn(
+            ClaimPredicate.WROTE_LYRICS_FOR,
+            {claim.predicate for claim in result.claims},
+        )
+
     async def test_table_row_is_used_only_when_exactly_grounded_in_content(self) -> None:
         content = "| 专辑 | 收录歌曲 |\n| 七里香 | 晴天 |"
         chunk = _enriched(
