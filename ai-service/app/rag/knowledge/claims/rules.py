@@ -72,7 +72,7 @@ _PERFORMANCE_CONTEXT_EXCLUSIONS = (
     "捐赠",
     "捐贈",
 )
-_COLLABORATION_QUESTION_MARKERS = (
+_QUESTION_MARKERS = (
     "?",
     "？",
     "为什么",
@@ -83,6 +83,7 @@ _COLLABORATION_QUESTION_MARKERS = (
     "怎樣",
     "如何",
 )
+_COLLABORATION_QUESTION_MARKERS = _QUESTION_MARKERS
 
 
 def is_subjective(text: str) -> bool:
@@ -508,6 +509,8 @@ class RuleClaimExtractor:
     def _first_album_claims(
         self, evidence: str, entities: list[CanonicalEntity]
     ) -> list[ClaimCandidate]:
+        if any(marker in evidence for marker in _QUESTION_MARKERS):
+            return []
         if not any(
             cue in evidence for cue in ("首张专辑", "首張專輯", "首张唱片", "首張唱片")
         ):
@@ -572,6 +575,14 @@ class RuleClaimExtractor:
             album_span = self._nearest_occurrence(evidence, album, cue_match.start())
             song_span = self._nearest_occurrence(evidence, song, cue_match.start())
             if album_span is None or song_span is None:
+                continue
+            # When a sentence enumerates several songs, a nearest linked song
+            # can be separated from the cue by another (unlinked) title.  Do
+            # not bridge across that title list and attach the wrong album.
+            song_to_cue = evidence[song_span[1] : cue_match.start()]
+            cue_to_album = evidence[cue_match.end() : album_span[0]]
+            title_pair = re.compile(r"[「『《〈“\"].{1,40}[」』》〉”\"]")
+            if title_pair.search(song_to_cue) or title_pair.search(cue_to_album):
                 continue
             relation_start = min(album_span[0], song_span[0], cue_match.start())
             relation_end = max(album_span[1], song_span[1], cue_match.end())

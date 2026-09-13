@@ -720,6 +720,32 @@ class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
             {claim.predicate for claim in result.claims},
         )
 
+    async def test_track_lists_do_not_bridge_to_another_album(self) -> None:
+        content = (
+            "像是「霍元甲」收录在「十一月的萧邦」专辑中、"
+            "「不能说的秘密」及「周大侠」收录在「我很忙」专辑。"
+        )
+        chunk = _enriched(
+            content,
+            mentions=[
+                ("霍元甲", EntityTypeHint.SONG),
+                ("十一月的萧邦", EntityTypeHint.ALBUM),
+                ("我很忙", EntityTypeHint.ALBUM),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+        track_pairs = {
+            (claim.subject_entity_id, claim.object_entity_id)
+            for claim in result.claims
+            if claim.predicate == ClaimPredicate.INCLUDES_TRACK
+        }
+
+        self.assertEqual(track_pairs, {("album:novembers_chopin", "song:fearless")})
+
     async def test_table_row_is_used_only_when_exactly_grounded_in_content(self) -> None:
         content = "| 专辑 | 收录歌曲 |\n| 七里香 | 晴天 |"
         chunk = _enriched(
