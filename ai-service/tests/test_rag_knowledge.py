@@ -490,6 +490,122 @@ class ClaimExtractionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(ClaimPredicate.WON_AWARD, predicates)
         self.assertIn(ClaimPredicate.PERFORMED_AT, predicates)
 
+    async def test_creative_roles_bind_to_the_nearest_named_person(self) -> None:
+        chunk = _enriched(
+            "青花瓷是方文山作词、钟兴民编曲、周杰伦作曲的歌曲。",
+            mentions=[
+                ("青花瓷", EntityTypeHint.SONG),
+                ("方文山", EntityTypeHint.PERSON),
+                ("钟兴民", EntityTypeHint.PERSON),
+                ("周杰伦", EntityTypeHint.ARTIST),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        roles = {
+            (claim.predicate, claim.subject_entity_id)
+            for claim in result.claims
+            if claim.predicate
+            in {
+                ClaimPredicate.WROTE_LYRICS_FOR,
+                ClaimPredicate.ARRANGED,
+                ClaimPredicate.COMPOSED_FOR,
+            }
+        }
+        self.assertEqual(
+            roles,
+            {
+                (ClaimPredicate.WROTE_LYRICS_FOR, "person:vincent_fang"),
+                (ClaimPredicate.ARRANGED, "person:chung_hing_man"),
+                (ClaimPredicate.COMPOSED_FOR, "artist:jay_chou"),
+            },
+        )
+
+    async def test_negated_award_and_performance_are_not_emitted(self) -> None:
+        chunk = _enriched(
+            "八度空间虽然获得金曲奖提名，但没有获奖；方文山以不参加演唱会作为条件。",
+            mentions=[
+                ("八度空间", EntityTypeHint.ALBUM),
+                ("金曲奖", EntityTypeHint.AWARD),
+                ("方文山", EntityTypeHint.PERSON),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertNotIn(
+            ClaimPredicate.WON_AWARD, {claim.predicate for claim in result.claims}
+        )
+        self.assertNotIn(
+            ClaimPredicate.PERFORMED_AT, {claim.predicate for claim in result.claims}
+        )
+
+    async def test_release_only_binds_the_work_governed_by_release_cue(self) -> None:
+        chunk = _enriched(
+            "专辑依然范特西的名字来自周杰伦于2001年发行的专辑范特西。",
+            mentions=[
+                ("依然范特西", EntityTypeHint.ALBUM),
+                ("周杰伦", EntityTypeHint.ARTIST),
+                ("范特西", EntityTypeHint.ALBUM),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        released_objects = {
+            claim.object_entity_id
+            for claim in result.claims
+            if claim.predicate == ClaimPredicate.RELEASED
+        }
+        self.assertEqual(released_objects, {"album:fantasy"})
+
+    async def test_release_does_not_use_an_artist_mentioned_after_the_work(self) -> None:
+        chunk = _enriched(
+            "2008年发行第9张专辑魔杰座，成为继王菲之后的新纪录。",
+            mentions=[
+                ("魔杰座", EntityTypeHint.ALBUM),
+                ("王菲", EntityTypeHint.ARTIST),
+            ],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        release = next(
+            claim
+            for claim in result.claims
+            if claim.predicate == ClaimPredicate.RELEASED
+        )
+        self.assertEqual(release.subject_entity_id, "album:capricorn")
+        self.assertIsNone(release.object_entity_id)
+
+    async def test_navigation_concert_label_is_not_a_performance(self) -> None:
+        chunk = _enriched(
+            "周杰伦 音乐作品 创作作品 演唱会 奖项与提名",
+            mentions=[("周杰伦", EntityTypeHint.ARTIST)],
+        )
+        entities = await self._entities(chunk)
+
+        result = await ClaimExtractor(KnowledgeConfig(llm_enabled=False)).extract(
+            chunk, entities
+        )
+
+        self.assertNotIn(
+            ClaimPredicate.PERFORMED_AT, {claim.predicate for claim in result.claims}
+        )
+
     async def test_table_row_is_used_only_when_exactly_grounded_in_content(self) -> None:
         content = "| 专辑 | 收录歌曲 |\n| 七里香 | 晴天 |"
         chunk = _enriched(
