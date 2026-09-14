@@ -97,10 +97,11 @@ class ResolvedQueryEntity(BaseModel):
                 raise ValueError("resolved query entity requires canonical type and name")
         elif self.knowledge_entity_id is not None:
             raise ValueError("unresolved query entity cannot have a knowledge id")
-        if self.status is QueryEntityStatus.AMBIGUOUS and len(
-            self.candidate_knowledge_ids
-        ) < 2:
-            raise ValueError("ambiguous query entity requires multiple candidates")
+        if (
+            self.status is QueryEntityStatus.AMBIGUOUS
+            and not self.candidate_knowledge_ids
+        ):
+            raise ValueError("ambiguous query entity requires candidates")
         return self
 
 

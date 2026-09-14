@@ -65,7 +65,10 @@ class AnalyzedQueryTypes:
 
 
 _TYPE_RULES: tuple[tuple[QueryType, re.Pattern[str]], ...] = (
-    (QueryType.COMPARISON, re.compile(r"比较|對比|对比|区别|差异|異同|相比")),
+    (
+        QueryType.COMPARISON,
+        re.compile(r"比较|對比|对比|区别|差异|异同|異同|相比"),
+    ),
     (
         QueryType.TIMELINE,
         re.compile(

@@ -144,6 +144,18 @@ class QueryAnalysisTests(unittest.TestCase):
         self.assertEqual(result.status, QueryUnderstandingStatus.READY)
         self.assertIn("song:qi_li_xiang", result.analysis.constraints.entity_ids)
 
+    def test_alias_that_requires_context_does_not_silently_resolve(self) -> None:
+        result = asyncio.run(service().understand("霍元甲的创作背景"))
+
+        self.assertEqual(result.status, QueryUnderstandingStatus.NEEDS_INPUT)
+
+    def test_unknown_entity_remains_unfiltered_and_is_flagged(self) -> None:
+        result = asyncio.run(service().understand("Taylor Swift 的音乐风格"))
+
+        self.assertEqual(result.status, QueryUnderstandingStatus.READY)
+        self.assertEqual(result.analysis.constraints.entity_ids, [])
+        self.assertIn("no_resolved_query_entity", result.search_plan.warnings)
+
     def test_catalog_and_knowledge_id_are_kept_separate(self) -> None:
         result = asyncio.run(
             service().understand(

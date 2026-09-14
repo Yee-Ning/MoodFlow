@@ -132,6 +132,13 @@ class QueryUnderstandingService:
         constraints, constraint_warnings = extract_query_constraints(
             standalone, entities
         )
+        entity_warnings = (
+            []
+            if any(
+                item.status is QueryEntityStatus.RESOLVED for item in entities
+            )
+            else ["no_resolved_query_entity"]
+        )
         confidences = [analyzed_types.confidence]
         confidences.extend(item.confidence for item in entities if item.confidence)
         return QueryAnalysis(
@@ -143,7 +150,13 @@ class QueryUnderstandingService:
             context=context,
             confidence=min(confidences),
             warnings=list(
-                dict.fromkeys([*analyzed_types.warnings, *constraint_warnings])
+                dict.fromkeys(
+                    [
+                        *analyzed_types.warnings,
+                        *constraint_warnings,
+                        *entity_warnings,
+                    ]
+                )
             ),
         )
 

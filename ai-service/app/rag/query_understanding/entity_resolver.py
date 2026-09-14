@@ -40,14 +40,16 @@ def infer_entity_type(query: str, surface: str) -> EntityType | None:
     return matches[0] if len(matches) == 1 else None
 
 
-def _surface_in_query(query: str, surface: str) -> bool:
+def _surface_span(query: str, surface: str) -> tuple[int, int] | None:
     if surface.isascii() and surface.replace(" ", "").isalnum():
-        return re.search(
+        match = re.search(
             rf"(?<![A-Za-z0-9]){re.escape(surface)}(?![A-Za-z0-9])",
             query,
             re.IGNORECASE,
-        ) is not None
-    return surface.casefold() in query.casefold()
+        )
+        return match.span() if match is not None else None
+    start = query.casefold().find(surface.casefold())
+    return (start, start + len(surface)) if start >= 0 else None
 
 
 class QueryEntityResolver:
@@ -92,17 +94,23 @@ class QueryEntityResolver:
             seen_catalog.add(key)
 
         seen_surfaces: set[str] = set()
+        occupied_spans: list[tuple[int, int]] = []
         occupied_ids = set(seen_knowledge_ids)
         for surface in self.registry.detectable_aliases():
             normalized_surface = normalize_alias(surface)
-            if (
-                normalized_surface in seen_surfaces
-                or not _surface_in_query(query, surface)
-            ):
+            span = _surface_span(query, surface)
+            if normalized_surface in seen_surfaces or span is None:
+                continue
+            if any(span[0] < end and start < span[1] for start, end in occupied_spans):
                 continue
             seen_surfaces.add(normalized_surface)
+            occupied_spans.append(span)
             type_hint = infer_entity_type(query, surface)
             resolution = self.registry.resolve(surface, type_hint=type_hint)
+            if resolution.candidate_entity_ids and set(
+                resolution.candidate_entity_ids
+            ) <= occupied_ids:
+                continue
             if resolution.entity is not None:
                 if resolution.entity.entity_id in occupied_ids:
                     continue
@@ -121,7 +129,7 @@ class QueryEntityResolver:
                     )
                 )
                 occupied_ids.add(canonical.entity_id)
-            elif len(resolution.candidate_entity_ids) > 1:
+            elif resolution.candidate_entity_ids:
                 result.append(
                     ResolvedQueryEntity(
                         surface=surface,
