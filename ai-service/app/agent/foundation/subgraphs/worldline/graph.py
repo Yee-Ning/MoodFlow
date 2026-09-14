@@ -26,8 +26,8 @@ from app.agent.foundation.subgraphs.worldline.music_service import (
     WorldLineMusicService,
 )
 from app.agent.foundation.subgraphs.worldline.retrieval import (
-    EmptyMusicKnowledgeRetriever,
     MusicKnowledgeRetriever,
+    get_worldline_retrieval_runtime,
 )
 from app.agent.foundation.subgraphs.worldline.state import WorldLineState
 from app.rag.knowledge.entity_linking.models import EntityType as KnowledgeEntityType
@@ -146,9 +146,20 @@ def build_worldline_subgraph(
     query_understanding: QueryUnderstandingService | None = None,
 ) -> StateGraph:
     service = music_service or JavaMusicEntityService()
-    knowledge_retriever = retriever or EmptyMusicKnowledgeRetriever()
+    retrieval_runtime = (
+        get_worldline_retrieval_runtime() if retriever is None else None
+    )
+    knowledge_retriever = (
+        retriever if retriever is not None else retrieval_runtime.retriever
+    )
     worldline_generator = generator or StructuredWorldLineGenerator()
-    query_service = query_understanding or QueryUnderstandingService()
+    query_service = query_understanding or QueryUnderstandingService(
+        index_profile=(
+            retrieval_runtime.index_profile
+            if retrieval_runtime is not None
+            else None
+        )
+    )
     query_graph = create_query_understanding_graph(service=query_service)
 
     async def prepare_query_context(

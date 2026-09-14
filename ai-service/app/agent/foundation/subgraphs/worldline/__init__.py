@@ -10,12 +10,24 @@ from app.agent.foundation.subgraphs.worldline.models import (
     WorldLineRequest,
     WorldLineResult,
 )
+from app.agent.foundation.subgraphs.worldline.retrieval import (
+    EmptyMusicKnowledgeRetriever,
+    HybridMusicKnowledgeRetriever,
+    RetrievalRuntimeSettings,
+    ShadowMusicKnowledgeRetriever,
+    create_worldline_retrieval_runtime,
+)
 
 __all__ = [
     "WorldLineState",
     "WorldLineResult",
     "WorldLineRequest",
+    "EmptyMusicKnowledgeRetriever",
+    "HybridMusicKnowledgeRetriever",
+    "RetrievalRuntimeSettings",
+    "ShadowMusicKnowledgeRetriever",
     "create_worldline_state",
     "build_worldline_subgraph",
     "create_worldline_subgraph",
+    "create_worldline_retrieval_runtime",
 ]
