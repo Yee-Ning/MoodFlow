@@ -2,6 +2,11 @@
 
 from .config import QueryUnderstandingConfig, load_query_understanding_config
 from .filters import build_metadata_filter
+from .graph import (
+    build_query_understanding_graph,
+    create_query_understanding_graph,
+    create_query_understanding_state,
+)
 from .models import (
     CatalogReference,
     ContextDependency,
@@ -49,6 +54,9 @@ __all__ = [
     "RetrievalStrategy",
     "SearchPlan",
     "build_metadata_filter",
+    "build_query_understanding_graph",
     "build_search_plan",
+    "create_query_understanding_graph",
+    "create_query_understanding_state",
     "load_query_understanding_config",
 ]

@@ -5,10 +5,8 @@ from __future__ import annotations
 import re
 from typing import Protocol
 
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
-from app.agent.foundation.history import select_recent_history
-from app.agent.foundation.routing import RoutingContext
 from app.context.music import MusicContextProvider
 from app.rag.knowledge.entity_linking.models import EntityType
 from app.rag.knowledge.entity_linking.registry import EntityRegistry
@@ -21,6 +19,7 @@ from app.rag.query_understanding.models import (
     ResolvedQueryEntity,
 )
 from app.schemas.context import SongContext
+from app.schemas.player import PlayerContext
 
 
 CURRENT_SONG_CLARIFICATION = "请先选择并播放一首歌曲，或直接告诉我歌曲名称。"
@@ -35,6 +34,8 @@ _CONVERSATION_REFERENCE = re.compile(
 _REFERENCE_REPLACEMENTS = re.compile(
     r"(?:他|她|它|这个歌手|这位歌手|这张专辑|那张专辑)"
 )
+_MAX_HISTORY_MESSAGES = 12
+_MAX_HISTORY_CHARACTERS = 12_000
 
 
 class CurrentSongProvider(Protocol):
@@ -44,6 +45,32 @@ class CurrentSongProvider(Protocol):
 def _message_text(message: BaseMessage) -> str:
     text = getattr(message, "text", None)
     return str(text if text is not None else message.content)
+
+
+def _select_recent_history(
+    messages: list[BaseMessage], current_input: str
+) -> list[BaseMessage]:
+    history = [
+        message
+        for message in messages
+        if isinstance(message, (HumanMessage, AIMessage))
+    ]
+    if history and isinstance(history[-1], HumanMessage):
+        history.pop()
+    selected: list[BaseMessage] = []
+    used_characters = len(current_input)
+    for message in reversed(history):
+        length = len(_message_text(message))
+        if selected and used_characters + length > _MAX_HISTORY_CHARACTERS:
+            break
+        if length > _MAX_HISTORY_CHARACTERS:
+            continue
+        selected.append(message)
+        used_characters += length
+        if len(selected) >= _MAX_HISTORY_MESSAGES:
+            break
+    selected.reverse()
+    return selected
 
 
 class QueryContextResolver:
@@ -61,14 +88,14 @@ class QueryContextResolver:
         query: str,
         *,
         messages: list[BaseMessage] | None = None,
-        routing_context: RoutingContext | None = None,
+        routing_context: PlayerContext | None = None,
     ) -> ContextResolution:
         normalized = " ".join(query.split())
         if not normalized:
             raise ValueError("query must not be blank")
         if _CURRENT_SONG_REFERENCE.search(normalized):
             return await self._resolve_current_song(
-                normalized, routing_context or RoutingContext()
+                normalized, routing_context or PlayerContext()
             )
         if _CONVERSATION_REFERENCE.search(normalized):
             history_entity = self._latest_history_entity(
@@ -99,7 +126,7 @@ class QueryContextResolver:
         )
 
     async def _resolve_current_song(
-        self, query: str, routing_context: RoutingContext
+        self, query: str, routing_context: PlayerContext
     ) -> ContextResolution:
         if not routing_context.has_current_song or routing_context.current_song_id is None:
             return ContextResolution(
@@ -161,7 +188,7 @@ class QueryContextResolver:
     def _latest_history_entity(
         self, messages: list[BaseMessage], current_input: str
     ) -> ResolvedQueryEntity | None:
-        history = select_recent_history(messages, current_input)
+        history = _select_recent_history(messages, current_input)
         surfaces = self.registry.detectable_aliases()
         for message in reversed(history):
             content = _message_text(message).casefold()

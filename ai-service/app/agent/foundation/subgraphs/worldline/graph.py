@@ -36,6 +36,10 @@ from app.rag.query_understanding.models import (
     ContextResolutionStatus,
     QueryUnderstandingStatus,
 )
+from app.rag.query_understanding.graph import (
+    create_query_understanding_graph,
+    create_query_understanding_state,
+)
 from app.rag.query_understanding.service import QueryUnderstandingService
 
 logger = logging.getLogger(__name__)
@@ -145,6 +149,7 @@ def build_worldline_subgraph(
     knowledge_retriever = retriever or EmptyMusicKnowledgeRetriever()
     worldline_generator = generator or StructuredWorldLineGenerator()
     query_service = query_understanding or QueryUnderstandingService()
+    query_graph = create_query_understanding_graph(service=query_service)
 
     async def prepare_query_context(
         state: WorldLineState,
@@ -293,20 +298,25 @@ def build_worldline_subgraph(
         if len(parts) == 3 and parts[0] == entity.source:
             raw_catalog_id = parts[2]
         try:
-            result = await query_service.understand(
-                state["current_input"],
-                messages=state["messages"],
-                routing_context=state["routing_context"],
-                context=context,
-                catalog_references=[
-                    CatalogReference(
-                        provider=entity.source,
-                        entity_id=raw_catalog_id,
-                        entity_type=KnowledgeEntityType(entity.entity_type.value),
-                        name=entity.name,
-                    )
-                ],
+            query_output = await query_graph.ainvoke(
+                create_query_understanding_state(
+                    state["current_input"],
+                    messages=state["messages"],
+                    routing_context=state["routing_context"],
+                    context=context,
+                    catalog_references=[
+                        CatalogReference(
+                            provider=entity.source,
+                            entity_id=raw_catalog_id,
+                            entity_type=KnowledgeEntityType(
+                                entity.entity_type.value
+                            ),
+                            name=entity.name,
+                        )
+                    ],
+                )
             )
+            result = query_output["result"]
         except Exception:
             _log_node(
                 "worldline.understand_query",

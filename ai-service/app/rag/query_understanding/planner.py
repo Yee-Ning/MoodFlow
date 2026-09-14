@@ -8,7 +8,9 @@ from app.rag.query_understanding.expansion import expand_queries
 from app.rag.query_understanding.filters import build_metadata_filter
 from app.rag.query_understanding.models import (
     IndexProfile,
+    MetadataFilter,
     QueryAnalysis,
+    QueryVariant,
     RetrievalStrategy,
     SearchPlan,
 )
@@ -19,15 +21,17 @@ def build_search_plan(
     config: QueryUnderstandingConfig,
     *,
     index_profile: IndexProfile | None = None,
+    queries: list[QueryVariant] | None = None,
+    metadata_filter: MetadataFilter | None = None,
 ) -> SearchPlan:
-    queries = expand_queries(
+    resolved_queries = queries or expand_queries(
         analysis,
         maximum=config.max_query_variants,
         enable_hyde=config.enable_hyde,
     )
     strategy = (
         RetrievalStrategy.HYBRID
-        if len(queries) == 1
+        if len(resolved_queries) == 1
         else RetrievalStrategy.MULTI_QUERY_HYBRID
     )
     warnings = list(analysis.warnings)
@@ -38,7 +42,7 @@ def build_search_plan(
         warnings.append("catalog_entity_has_no_knowledge_index_id")
     material = {
         "analysis": analysis.model_dump(mode="json"),
-        "queries": [item.model_dump(mode="json") for item in queries],
+        "queries": [item.model_dump(mode="json") for item in resolved_queries],
         "config": config.model_dump(mode="json"),
         "index_profile": (
             index_profile.model_dump(mode="json") if index_profile is not None else None
@@ -54,12 +58,12 @@ def build_search_plan(
         standalone_query=analysis.standalone_query,
         query_types=analysis.query_types,
         entities=analysis.entities,
-        queries=queries,
-        metadata_filter=build_metadata_filter(analysis),
+        queries=resolved_queries,
+        metadata_filter=metadata_filter or build_metadata_filter(analysis),
         strategy=strategy,
         candidate_top_k=config.candidate_top_k,
         final_top_k=config.final_top_k,
-        needs_rerank=len(queries) > 1,
+        needs_rerank=len(resolved_queries) > 1,
         analysis_version=config.analysis_version,
         prompt_version=config.prompt_version,
         index_profile=index_profile,
