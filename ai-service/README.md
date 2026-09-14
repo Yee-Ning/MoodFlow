@@ -716,6 +716,74 @@ schema、projection 和 registry 版本写入计划。默认参数位于
 `app/rag/query_understanding/config/v1.yaml`；60 条离线 Golden Set 位于
 `tests/fixtures/query_understanding/golden_v1.jsonl`。
 
+## Online Hybrid Retrieval V1（Pre-Rerank）
+
+`app/rag/retrieval/` 消费已经绑定正式索引版本的 `SearchPlan`，执行在线 Dense + BM25
+混合检索，并严格停止在 rerank 前的 Parent 级候选池：
+
+```text
+SearchPlan (candidate_top_k=40)
+  -> versioned Qwen query instruction + query embedding
+  -> whitelisted Metadata Filter AST -> Qdrant Filter
+  -> bounded retrieval legs
+       Dense named vector (Cosine / hnsw_ef=128)
+       BM25 named vector (qdrant/bm25 / multilingual)
+  -> one Qdrant Batch Query (individual-leg fallback on batch failure)
+  -> application-side weighted RRF (k=60; raw channel scores are not mixed)
+  -> exact negative-term post filter
+  -> Parent collapse + document/source caps + recall refill
+  -> Parent context expansion from the indexed payload
+  -> Candidate Pool Top 40
+  -> [future Reranker: Top 10-15; not implemented in V1]
+  -> WorldLine Context Adapter
+  -> final Top 6-10 (default 8, token budget 6000)
+```
+
+每个候选保留命中的 Child、Parent、文档与来源 ID，以及每个 query variant/channel 的
+rank、raw score、weight 和融合分数，便于 Shadow 对照及问题追踪。在线启动前会校验
+Qdrant 服务版本、named-vector schema、Dense 维度、BM25 vector、point count，并要求
+`SearchPlan.index_profile` 与不可变 Manifest 完全一致；不一致会 fail closed。Dense 编码
+失败时可降级到 BM25，全部通道失败则返回类型化 `unavailable`，不会把内部异常或不完整
+结果伪装成成功。
+
+本阶段不实现 Cross-Encoder/LLM Reranker，也不实现 MMR。Reranker 的固定插入点位于
+`Candidate Pool Top 40` 与 `WorldLineContextAdapter` 之间；因此后续加入 Top 10-15
+重排时无需修改 Qdrant 检索合同或 WorldLine 文档合同。当前尚未安装 Reranker 时，
+Top 40 会直接交给适配器，由适配器按顺序、文档数和 token budget 生成最终上下文。
+
+独立运行一次真实检索（只输出候选池，不生成答案）：
+
+```powershell
+python run_retrieval.py "周杰伦《晴天》的创作背景" --no-llm `
+  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+```
+
+WorldLine 在线开关：
+
+```dotenv
+AI_AGENT_GRAPH_MODE=foundation
+AI_RAG_RETRIEVAL_MODE=shadow
+AI_RAG_INDEX_MANIFEST=data/indexing/v1/<release_id>/index_build_manifest.json
+```
+
+`empty`（默认）不访问索引；`shadow` 执行完整检索并记录安全的状态、耗时和候选数，但不
+改变回答；`hybrid` 才会把适配后的最终上下文交给 WorldLine。评测集采用一行一个对象的
+JSONL，必填字段为 `case_id`、`query`、`relevant_parent_ids`，可选
+`current_song_id` 和 `tags`。以下命令计算候选池 Recall@20/40、MRR@10 和 nDCG@10：
+
+```powershell
+python run_retrieval_eval.py --no-llm `
+  --dataset data/evaluation/retrieval_golden_v1.jsonl `
+  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+
+# 启动真实 Qdrant 后执行 Dense + BM25 条件集成测试
+$env:QDRANT_INTEGRATION_URL="http://127.0.0.1:6333"
+python -m unittest tests.test_retrieval_fusion_qdrant -v
+```
+
+仓库只提供评测合同和执行器，不内置虚构的相关性标签；正式质量结论必须来自项目人工标注
+的 Parent ID 集合。
+
 ## WorldLine V1 SubGraph
 
 `app/agent/foundation/subgraphs/worldline` 是独立的、无 FastAPI request 依赖的 LangGraph 子图：
@@ -741,7 +809,7 @@ worldline/
   state.py            # 仅在子图内存在的 WorldLineState
   entity_resolver.py  # 规则化 query/type 提取、真实候选匹配与消歧
   music_service.py    # 复用 MusicServiceClient 的事实适配层
-  retrieval.py        # 消费 SearchPlan 的 Retriever 接口与空检索降级实现
+  retrieval.py        # 候选池编排、未来 Rerank 插槽与 WorldLine Context Adapter
   builder.py          # 只从有证据的事实构建有界图
   prompts.py          # Grounded Narrative / Branch 系统提示
   generation.py       # LLM JSON Schema 调用、重试与分支落地校验
@@ -752,10 +820,12 @@ worldline/
 实体解析先从用户文本提取实体名称与可选类型，再通过 Spring Boot 的 `/api/music/entities/search` 搜索网易云真实候选。只有规范化名称唯一精确匹配时才选择 canonical entity；同名歌曲/专辑或同名不同演唱者会返回 ambiguous，不把模型猜测当作事实。详情通过 `/api/music/entities/{type}/{id}` 加载；歌曲会尽力补充最多 5 首网易云相似作品，歌手和专辑详情会携带最多 8 个真实相关作品。相似作品加载失败不会丢失歌曲、歌手、专辑等基础事实。
 
 WorldLine 会先把上下文补全后的独立问题与目录解析结果交给 Query Understanding，并将生成的
-`SearchPlan` 传给 `MusicKnowledgeRetriever`。当前 Retriever 默认实现仍是
-`EmptyMusicKnowledgeRetriever`，不是正式 RAG；空结果或异常时，图仍可由 Music API facts
-构建，Narrative 会明确标注知识范围。未来接入 Qdrant + BM25 + Hybrid Search + Reranker 时，
-只需实现现有 `(ResolvedEntity, SearchPlan)` 接口；如果检索结果提供经过验证的
+`SearchPlan` 传给 `MusicKnowledgeRetriever`。默认模式仍是明确的
+`EmptyMusicKnowledgeRetriever`；配置 `shadow` 或 `hybrid` 后会使用正式的 Qdrant
+Dense + BM25 候选池。`WorldLineContextAdapter` 把候选转换为最多 6-10 条（默认 8 条）
+有来源、受 token budget 约束的文档，图节点另有 10 条硬上限。空结果或异常时，图仍可由
+Music API facts 构建，Narrative 会明确标注知识范围。未来 Reranker 只需插入已经隔离的
+Top 40 与 Adapter 边界；如果检索结果提供经过验证的
 `metadata.graph_nodes/graph_edges`，builder 会将其纳入图并绑定 evidence，普通检索文本本身
 不会自动造边。
 
