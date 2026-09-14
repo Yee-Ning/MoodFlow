@@ -1,0 +1,48 @@
+retrieval_version: v1
+
+dense:
+  vector_name: dense
+  model_name: Qwen/Qwen3-Embedding-0.6B
+  model_revision: 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3
+  dimension: 1024
+  max_length: 8192
+  normalize: true
+  device: auto
+  local_files_only: false
+  batch_size: 8
+  query_instruction: "Retrieve grounded music knowledge passages that answer the query."
+
+bm25:
+  vector_name: bm25
+  model_name: qdrant/bm25
+  tokenizer: multilingual
+  k: 1.2
+  b: 0.75
+  average_length: 256
+  lowercase: true
+  disable_stemming: true
+  disable_stopwords: true
+
+qdrant:
+  url: http://localhost:6333
+  api_key_env: QDRANT_API_KEY
+  timeout_seconds: 5
+  prefer_grpc: false
+  minimum_server_version: 1.19.0
+  hnsw_ef: 128
+
+fusion:
+  rrf_k: 60
+  dense_weight: 1.0
+  lexical_weight: 1.0
+  per_leg_top_k: 80
+  overfetch_multiplier: 2
+  maximum_legs: 6
+
+selection:
+  maximum_candidates: 100
+  default_document_cap: 2
+  broad_document_cap: 4
+  source_cap: 5
+  worldline_document_limit: 8
+  worldline_token_budget: 6000
