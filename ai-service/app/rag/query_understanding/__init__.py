@@ -7,6 +7,7 @@ from .graph import (
     create_query_understanding_graph,
     create_query_understanding_state,
 )
+from .index_profile import load_index_profile
 from .models import (
     CatalogReference,
     ContextDependency,
@@ -59,4 +60,5 @@ __all__ = [
     "create_query_understanding_graph",
     "create_query_understanding_state",
     "load_query_understanding_config",
+    "load_index_profile",
 ]
