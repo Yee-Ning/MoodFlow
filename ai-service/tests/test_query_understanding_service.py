@@ -181,6 +181,7 @@ class QueryAnalysisTests(unittest.TestCase):
 
         self.assertEqual(result.status, QueryUnderstandingStatus.READY)
         self.assertEqual(result.analysis.constraints.negative_terms, ["现场版"])
+        self.assertEqual(result.search_plan.post_exclusions, ["现场版"])
         self.assertNotIn(
             "现场版", result.search_plan.metadata_filter.model_dump_json()
         )

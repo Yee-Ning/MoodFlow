@@ -280,6 +280,7 @@ class SearchPlan(BaseModel):
     entities: list[ResolvedQueryEntity] = Field(default_factory=list, max_length=20)
     queries: list[QueryVariant] = Field(min_length=1, max_length=10)
     metadata_filter: MetadataFilter
+    post_exclusions: list[str] = Field(default_factory=list, max_length=20)
     strategy: RetrievalStrategy
     candidate_top_k: int = Field(ge=1, le=200)
     final_top_k: int = Field(ge=1, le=50)
@@ -298,6 +299,11 @@ class SearchPlan(BaseModel):
         texts = [item.text.casefold() for item in self.queries]
         if len(texts) != len(set(texts)):
             raise ValueError("search-plan queries must be unique")
+        exclusions = [item.casefold() for item in self.post_exclusions]
+        if any(not item.strip() for item in self.post_exclusions):
+            raise ValueError("search-plan exclusions cannot be blank")
+        if len(exclusions) != len(set(exclusions)):
+            raise ValueError("search-plan exclusions must be unique")
         return self
 
 

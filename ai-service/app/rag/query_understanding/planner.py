@@ -60,6 +60,7 @@ def build_search_plan(
         entities=analysis.entities,
         queries=resolved_queries,
         metadata_filter=metadata_filter or build_metadata_filter(analysis),
+        post_exclusions=analysis.constraints.negative_terms,
         strategy=strategy,
         candidate_top_k=config.candidate_top_k,
         final_top_k=config.final_top_k,
