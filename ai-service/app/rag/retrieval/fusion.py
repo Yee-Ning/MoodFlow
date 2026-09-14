@@ -55,6 +55,11 @@ def weighted_rrf(
             payloads.setdefault(hit.point_id, hit.payload)
             evidence.setdefault(hit.point_id, []).append(
                 ChannelEvidence(
+                    chunk_id=(
+                        hit.payload.get("chunk_id")
+                        if isinstance(hit.payload.get("chunk_id"), str)
+                        else hit.point_id
+                    ),
                     variant_index=result.leg.variant_index,
                     variant_kind=result.leg.variant_kind,
                     channel=result.leg.channel,

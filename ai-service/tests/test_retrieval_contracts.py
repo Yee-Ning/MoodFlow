@@ -40,6 +40,7 @@ def candidate() -> RetrievalCandidate:
         fusion_score=0.4,
         channel_evidence=[
             ChannelEvidence(
+                chunk_id="child-1",
                 variant_index=0,
                 variant_kind=QueryVariantKind.ORIGINAL,
                 channel=SearchChannel.DENSE,

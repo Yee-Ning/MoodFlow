@@ -29,6 +29,8 @@ PAYLOAD_FIELDS = [
     "source_id",
     "source_name",
     "source_url",
+    "topics",
+    "keywords",
     "entity_ids",
     "entity_types",
     "supported_claims",

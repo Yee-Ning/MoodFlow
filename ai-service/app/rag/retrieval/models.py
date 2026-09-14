@@ -32,6 +32,7 @@ class ChannelEvidence(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    chunk_id: str = Field(min_length=1, max_length=128)
     variant_index: int = Field(ge=0, le=9)
     variant_kind: QueryVariantKind
     channel: SearchChannel
@@ -75,7 +76,7 @@ class RetrievalCandidate(BaseModel):
         if len(self.matched_child_ids) != len(set(self.matched_child_ids)):
             raise ValueError("matched child ids must be unique")
         evidence_keys = [
-            (item.variant_index, item.channel, item.rank)
+            (item.chunk_id, item.variant_index, item.channel, item.rank)
             for item in self.channel_evidence
         ]
         if len(evidence_keys) != len(set(evidence_keys)):

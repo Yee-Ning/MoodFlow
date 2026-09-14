@@ -132,6 +132,10 @@ class RetrievalLegAndFusionTests(unittest.TestCase):
         self.assertEqual([item.point_id for item in fused], ["b", "a", "c"])
         self.assertEqual(len(fused[0].evidence), 2)
         self.assertAlmostEqual(fused[0].fusion_score, 1 / 62 + 1 / 61)
+        self.assertEqual(
+            {item.chunk_id for item in fused[0].evidence},
+            {"b"},
+        )
 
 
 class QdrantHybridSearchBackendTests(unittest.IsolatedAsyncioTestCase):

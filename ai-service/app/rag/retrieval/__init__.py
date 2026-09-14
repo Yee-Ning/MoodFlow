@@ -19,10 +19,13 @@ from .models import (
     RetrievalStatus,
     RetrievalTimings,
 )
+from .selection import select_candidates
+from .service import HybridRetrievalService
 
 __all__ = [
     "ChannelEvidence",
     "FusedSearchHit",
+    "HybridRetrievalService",
     "LegSearchResult",
     "RawSearchHit",
     "RetrievalIndexBinding",
@@ -40,5 +43,6 @@ __all__ = [
     "failed_channels",
     "load_retrieval_index_binding",
     "load_retrieval_config",
+    "select_candidates",
     "weighted_rrf",
 ]
