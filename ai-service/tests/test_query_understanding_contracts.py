@@ -113,6 +113,17 @@ class QueryUnderstandingContractTests(unittest.TestCase):
 
         self.assertEqual(encoded.count('"match_value"'), 2)
 
+    def test_single_query_hybrid_plan_still_requests_reranking(self) -> None:
+        config = load_query_understanding_config().model_copy(
+            update={"max_query_variants": 1}
+        )
+
+        plan = build_search_plan(analysis(), config)
+
+        self.assertEqual(plan.strategy.value, "hybrid")
+        self.assertEqual(len(plan.queries), 1)
+        self.assertTrue(plan.needs_rerank)
+
     def test_hyde_cannot_be_enabled_in_v1(self) -> None:
         config = load_query_understanding_config().model_copy(
             update={"enable_hyde": True}

@@ -64,7 +64,10 @@ def build_search_plan(
         strategy=strategy,
         candidate_top_k=config.candidate_top_k,
         final_top_k=config.final_top_k,
-        needs_rerank=len(resolved_queries) > 1,
+        # Reranking is the standard post-retrieval stage for both single-query
+        # hybrid and multi-query hybrid plans. Runtime rollout mode still decides
+        # whether it is off, observed in shadow, or applied to answer context.
+        needs_rerank=True,
         analysis_version=config.analysis_version,
         prompt_version=config.prompt_version,
         index_profile=index_profile,

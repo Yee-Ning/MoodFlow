@@ -61,6 +61,7 @@ class RerankResult(BaseModel):
     index_profile: IndexProfile
     model_name: str = Field(min_length=1, max_length=300)
     model_revision: str = Field(pattern=r"^[0-9a-f]{40}$")
+    rerank_version: str = Field(pattern=r"^v\d+$")
     prompt_version: str = Field(pattern=r"^v\d+$")
     candidate_pool_status: RetrievalStatus
     candidate_pool_warnings: list[str] = Field(default_factory=list, max_length=50)

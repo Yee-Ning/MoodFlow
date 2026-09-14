@@ -15,6 +15,14 @@ from app.agent.foundation.subgraphs.worldline.models import (
 )
 from app.config.settings import ENV_FILE
 from app.rag.query_understanding.models import IndexProfile, SearchPlan
+from app.rag.reranking import (
+    CandidateReranker,
+    QwenCandidateReranker,
+    RerankedCandidate,
+    RerankResult,
+    RerankStatus,
+    load_rerank_config,
+)
 from app.rag.retrieval import (
     HybridRetrievalService,
     RetrievalCandidate,
@@ -26,6 +34,7 @@ from app.rag.retrieval import (
 )
 
 logger = logging.getLogger(__name__)
+RerankMode = Literal["off", "shadow", "on"]
 
 
 class MusicKnowledgeRetriever(Protocol):
@@ -64,13 +73,16 @@ class WorldLineContextAdapter:
     ) -> None:
         self.config = config or load_retrieval_config()
 
-    def adapt(self, result: RetrievalResult) -> list[MusicKnowledgeDocument]:
-        if result.status in {RetrievalStatus.EMPTY, RetrievalStatus.UNAVAILABLE}:
+    def adapt(
+        self,
+        result: RetrievalResult | RerankResult,
+    ) -> list[MusicKnowledgeDocument]:
+        if _result_has_no_context(result):
             return []
         documents: list[MusicKnowledgeDocument] = []
         used_tokens = 0
         selection = self.config.selection
-        for candidate in result.candidates:
+        for candidate, reranked in _iter_ranked_candidates(result):
             candidate_tokens = max(
                 candidate.parent_context.token_count,
                 candidate.primary_child_token_count,
@@ -81,7 +93,7 @@ class WorldLineContextAdapter:
                 and used_tokens + candidate_tokens > selection.worldline_token_budget
             ):
                 continue
-            metadata = {
+            metadata: dict[str, object] = {
                 "point_id": candidate.point_id,
                 "chunk_id": candidate.primary_child_id,
                 "parent_id": candidate.parent_id,
@@ -93,11 +105,28 @@ class WorldLineContextAdapter:
                 "channel_evidence": [
                     item.model_dump(mode="json") for item in candidate.channel_evidence
                 ],
-                "retrieval_status": result.status.value,
+                "retrieval_status": _retrieval_status(result).value,
                 "retrieval_version": self.config.retrieval_version,
                 "index_profile": result.index_profile.model_dump(mode="json"),
-                "retrieval_warnings": result.warnings,
+                "retrieval_warnings": _retrieval_warnings(result),
             }
+            if reranked is None:
+                metadata["rerank_status"] = "off"
+            else:
+                metadata.update(
+                    {
+                        "retrieval_rank": reranked.retrieval_rank,
+                        "rerank_rank": reranked.rerank_rank,
+                        "rerank_score": reranked.rerank_score,
+                        "rerank_status": result.status.value,
+                        "rerank_version": result.rerank_version,
+                        "rerank_prompt_version": result.prompt_version,
+                        "rerank_model": result.model_name,
+                        "rerank_model_revision": result.model_revision,
+                        "rerank_fallback_used": result.fallback_used,
+                        "rerank_warnings": result.warnings,
+                    }
+                )
             documents.append(
                 MusicKnowledgeDocument(
                     id=candidate.parent_id,
@@ -112,6 +141,32 @@ class WorldLineContextAdapter:
             if len(documents) >= selection.worldline_document_limit:
                 break
         return documents
+
+
+def _result_has_no_context(result: RetrievalResult | RerankResult) -> bool:
+    if isinstance(result, RerankResult):
+        return result.status in {RerankStatus.EMPTY, RerankStatus.UNAVAILABLE}
+    return result.status in {RetrievalStatus.EMPTY, RetrievalStatus.UNAVAILABLE}
+
+
+def _iter_ranked_candidates(
+    result: RetrievalResult | RerankResult,
+) -> list[tuple[RetrievalCandidate, RerankedCandidate | None]]:
+    if isinstance(result, RerankResult):
+        return [(item.candidate, item) for item in result.candidates]
+    return [(candidate, None) for candidate in result.candidates]
+
+
+def _retrieval_status(result: RetrievalResult | RerankResult) -> RetrievalStatus:
+    if isinstance(result, RerankResult):
+        return result.candidate_pool_status
+    return result.status
+
+
+def _retrieval_warnings(result: RetrievalResult | RerankResult) -> list[str]:
+    if isinstance(result, RerankResult):
+        return result.candidate_pool_warnings
+    return result.warnings
 
 
 def _expand_parent_context(candidate: RetrievalCandidate) -> str:
@@ -137,10 +192,16 @@ class HybridMusicKnowledgeRetriever:
         config: RetrievalConfig | None = None,
         *,
         context_adapter: WorldLineContextAdapter | None = None,
+        reranker: CandidateReranker | None = None,
+        rerank_mode: RerankMode = "off",
     ) -> None:
         self.candidate_provider = service
         self.config = config or load_retrieval_config()
         self.context_adapter = context_adapter or WorldLineContextAdapter(self.config)
+        self.reranker = reranker
+        self.rerank_mode = rerank_mode
+        if rerank_mode != "off" and reranker is None:
+            raise ValueError("reranker is required when reranking is enabled")
 
     async def retrieve(
         self,
@@ -149,17 +210,31 @@ class HybridMusicKnowledgeRetriever:
     ) -> list[MusicKnowledgeDocument]:
         candidate_pool = await self.candidate_provider.retrieve(plan)
         _log_retrieval_result(candidate_pool, shadow=False)
-        # The future reranker is inserted at this exact boundary. It will reduce the
-        # Top-40 pool to Top 10-15 before the adapter runs; no identity reranker is
-        # installed while reranking is deliberately out of scope.
-        return self.context_adapter.adapt(candidate_pool)
+        if self.rerank_mode == "off":
+            return self.context_adapter.adapt(candidate_pool)
+        assert self.reranker is not None
+        reranked = await self.reranker.rerank(plan, candidate_pool)
+        _log_rerank_result(reranked, shadow=self.rerank_mode == "shadow")
+        if self.rerank_mode == "shadow":
+            return self.context_adapter.adapt(candidate_pool)
+        return self.context_adapter.adapt(reranked)
 
 
 class ShadowMusicKnowledgeRetriever:
     """Execute and observe retrieval without changing user-visible answers."""
 
-    def __init__(self, service: CandidatePoolProvider) -> None:
+    def __init__(
+        self,
+        service: CandidatePoolProvider,
+        *,
+        reranker: CandidateReranker | None = None,
+        rerank_mode: RerankMode = "off",
+    ) -> None:
         self.service = service
+        self.reranker = reranker
+        self.rerank_mode = rerank_mode
+        if rerank_mode != "off" and reranker is None:
+            raise ValueError("reranker is required when reranking is enabled")
 
     async def retrieve(
         self,
@@ -168,6 +243,10 @@ class ShadowMusicKnowledgeRetriever:
     ) -> list[MusicKnowledgeDocument]:
         result = await self.service.retrieve(plan)
         _log_retrieval_result(result, shadow=True)
+        if self.rerank_mode != "off":
+            assert self.reranker is not None
+            reranked = await self.reranker.rerank(plan, result)
+            _log_rerank_result(reranked, shadow=True)
         return []
 
 
@@ -182,6 +261,10 @@ class RetrievalRuntimeSettings(BaseSettings):
     retrieval_mode: Literal["empty", "shadow", "hybrid"] = Field(
         default="empty",
         validation_alias="AI_RAG_RETRIEVAL_MODE",
+    )
+    rerank_mode: RerankMode = Field(
+        default="off",
+        validation_alias="AI_RAG_RERANK_MODE",
     )
     index_manifest: str | None = Field(
         default=None,
@@ -210,10 +293,22 @@ def create_worldline_retrieval_runtime(
     config = load_retrieval_config()
     binding = load_retrieval_index_binding(root, Path(raw_manifest), config)
     service = HybridRetrievalService(binding, config=config)
+    reranker: CandidateReranker | None = None
+    if runtime_settings.rerank_mode != "off":
+        reranker = QwenCandidateReranker(load_rerank_config())
     if runtime_settings.retrieval_mode == "shadow":
-        retriever: MusicKnowledgeRetriever = ShadowMusicKnowledgeRetriever(service)
+        retriever: MusicKnowledgeRetriever = ShadowMusicKnowledgeRetriever(
+            service,
+            reranker=reranker,
+            rerank_mode=runtime_settings.rerank_mode,
+        )
     else:
-        retriever = HybridMusicKnowledgeRetriever(service, config)
+        retriever = HybridMusicKnowledgeRetriever(
+            service,
+            config,
+            reranker=reranker,
+            rerank_mode=runtime_settings.rerank_mode,
+        )
     return WorldLineRetrievalRuntime(retriever, binding.profile)
 
 
@@ -233,6 +328,28 @@ def _log_retrieval_result(result: RetrievalResult, *, shadow: bool) -> None:
             "failed_channels": [item.value for item in result.failed_channels],
             "retrieval_warnings": result.warnings,
             "retrieval_total_ms": round(result.timings.total_ms, 2),
+            "shadow": shadow,
+        },
+    )
+
+
+def _log_rerank_result(result: RerankResult, *, shadow: bool) -> None:
+    logger.info(
+        "worldline.rerank_result",
+        extra={
+            "plan_id": result.plan_id,
+            "collection_name": result.index_profile.collection_name,
+            "rerank_status": result.status.value,
+            "candidate_count": result.input_count,
+            "reranked_count": len(result.candidates),
+            "rerank_model": result.model_name,
+            "rerank_model_revision": result.model_revision,
+            "rerank_version": result.rerank_version,
+            "rerank_prompt_version": result.prompt_version,
+            "rerank_fallback_used": result.fallback_used,
+            "rerank_warnings": result.warnings,
+            "rerank_inference_ms": round(result.timings.inference_ms, 2),
+            "rerank_total_ms": round(result.timings.total_ms, 2),
             "shadow": shadow,
         },
     )

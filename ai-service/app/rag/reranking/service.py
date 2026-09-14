@@ -200,6 +200,7 @@ class QwenCandidateReranker:
             index_profile=candidate_pool.index_profile,
             model_name=self.config.model.name,
             model_revision=self.config.model.revision,
+            rerank_version=self.config.rerank_version,
             prompt_version=self.config.prompt_version,
             candidate_pool_status=candidate_pool.status,
             candidate_pool_warnings=candidate_pool.warnings,

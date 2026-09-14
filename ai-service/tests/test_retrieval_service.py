@@ -48,7 +48,7 @@ def plan(*, exclusions=None, index_profile=None) -> SearchPlan:
         strategy=RetrievalStrategy.HYBRID,
         candidate_top_k=40,
         final_top_k=10,
-        needs_rerank=False,
+        needs_rerank=True,
         analysis_version="v1",
         prompt_version="v1",
         index_profile=index_profile or profile(),

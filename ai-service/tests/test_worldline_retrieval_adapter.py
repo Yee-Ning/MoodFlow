@@ -24,6 +24,7 @@ from app.rag.query_understanding.models import (
     SearchChannel,
     SearchPlan,
 )
+from app.rag.reranking import RerankedCandidate, RerankResult, RerankStatus
 from app.rag.retrieval import (
     ChannelEvidence,
     DeferredParentContext,
@@ -62,7 +63,7 @@ def plan() -> SearchPlan:
         strategy=RetrievalStrategy.HYBRID,
         candidate_top_k=40,
         final_top_k=10,
-        needs_rerank=False,
+        needs_rerank=True,
         analysis_version="v1",
         prompt_version="v1",
         index_profile=profile(),
@@ -117,6 +118,44 @@ class FakeRetrievalService:
         return self.result
 
 
+class FakeReranker:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def rerank(
+        self,
+        search_plan: SearchPlan,
+        candidate_pool: RetrievalResult,
+    ) -> RerankResult:
+        self.calls += 1
+        selected = list(enumerate(candidate_pool.candidates, start=1))[::-1][:12]
+        return RerankResult(
+            status=RerankStatus.SUCCESS,
+            plan_id=search_plan.plan_id,
+            index_profile=search_plan.index_profile,
+            model_name="Qwen/Qwen3-Reranker-0.6B",
+            model_revision="a" * 40,
+            rerank_version="v1",
+            prompt_version="v1",
+            candidate_pool_status=candidate_pool.status,
+            candidate_pool_warnings=candidate_pool.warnings,
+            input_count=len(candidate_pool.candidates),
+            output_top_k=12,
+            candidates=[
+                RerankedCandidate(
+                    candidate=item,
+                    retrieval_rank=retrieval_rank,
+                    rerank_rank=rerank_rank,
+                    rerank_score=1 - (rerank_rank - 1) / 100,
+                )
+                for rerank_rank, (retrieval_rank, item) in enumerate(
+                    selected,
+                    start=1,
+                )
+            ],
+        )
+
+
 def entity() -> ResolvedEntity:
     return ResolvedEntity(
         entity_id="netease:song:185809",
@@ -140,6 +179,7 @@ class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(documents[0].id, "parent-1")
         self.assertEqual(documents[0].metadata["chunk_id"], "child-1")
         self.assertEqual(documents[0].metadata["retrieval_status"], "success")
+        self.assertEqual(documents[0].metadata["rerank_status"], "off")
         self.assertIn("完整父级上下文", documents[0].content)
         self.assertNotIn("命中证据", documents[0].content)
 
@@ -159,6 +199,68 @@ class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(result.candidates), 40)
         self.assertEqual(len(documents), 8)
         self.assertEqual(service.calls, 1)
+
+    async def test_rerank_shadow_observes_but_preserves_rrf_context_order(self) -> None:
+        result = RetrievalResult(
+            status=RetrievalStatus.SUCCESS,
+            plan_id=plan().plan_id,
+            index_profile=profile(),
+            candidates=[candidate(index) for index in range(1, 21)],
+        )
+        service = FakeRetrievalService(result)
+        reranker = FakeReranker()
+        retriever = HybridMusicKnowledgeRetriever(
+            service,
+            reranker=reranker,
+            rerank_mode="shadow",
+        )
+
+        documents = await retriever.retrieve(entity(), plan())
+
+        self.assertEqual(reranker.calls, 1)
+        self.assertEqual(documents[0].id, "parent-1")
+        self.assertEqual(documents[0].metadata["rerank_status"], "off")
+
+    async def test_rerank_on_reduces_top_40_to_top_12_before_adapter_top_8(
+        self,
+    ) -> None:
+        result = RetrievalResult(
+            status=RetrievalStatus.SUCCESS,
+            plan_id=plan().plan_id,
+            index_profile=profile(),
+            candidates=[candidate(index) for index in range(1, 41)],
+        )
+        service = FakeRetrievalService(result)
+        reranker = FakeReranker()
+        retriever = HybridMusicKnowledgeRetriever(
+            service,
+            reranker=reranker,
+            rerank_mode="on",
+        )
+
+        documents = await retriever.retrieve(entity(), plan())
+
+        self.assertEqual(len(result.candidates), 40)
+        self.assertEqual(reranker.calls, 1)
+        self.assertEqual(len(documents), 8)
+        self.assertEqual(documents[0].id, "parent-40")
+        self.assertEqual(documents[0].metadata["retrieval_rank"], 40)
+        self.assertEqual(documents[0].metadata["rerank_rank"], 1)
+        self.assertEqual(documents[0].metadata["rerank_status"], "success")
+        self.assertEqual(documents[0].metadata["rerank_version"], "v1")
+        self.assertIn("完整父级上下文", documents[0].content)
+
+    async def test_enabled_rerank_requires_explicit_reranker(self) -> None:
+        result = RetrievalResult(
+            status=RetrievalStatus.EMPTY,
+            plan_id=plan().plan_id,
+            index_profile=profile(),
+        )
+        with self.assertRaisesRegex(ValueError, "reranker is required"):
+            HybridMusicKnowledgeRetriever(
+                FakeRetrievalService(result),
+                rerank_mode="on",
+            )
 
     async def test_worldline_token_budget_skips_oversized_later_context(self) -> None:
         base = load_retrieval_config()
@@ -196,6 +298,27 @@ class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(unavailable, [])
         self.assertEqual(shadow, [])
         self.assertEqual(service.calls, 2)
+
+    async def test_retrieval_shadow_can_exercise_reranker_without_answer_context(
+        self,
+    ) -> None:
+        result = RetrievalResult(
+            status=RetrievalStatus.SUCCESS,
+            plan_id=plan().plan_id,
+            index_profile=profile(),
+            candidates=[candidate(index) for index in range(1, 13)],
+        )
+        service = FakeRetrievalService(result)
+        reranker = FakeReranker()
+
+        documents = await ShadowMusicKnowledgeRetriever(
+            service,
+            reranker=reranker,
+            rerank_mode="on",
+        ).retrieve(entity(), plan())
+
+        self.assertEqual(documents, [])
+        self.assertEqual(reranker.calls, 1)
 
     async def test_empty_runtime_mode_uses_explicit_empty_retriever(self) -> None:
         runtime = create_worldline_retrieval_runtime(
@@ -240,6 +363,38 @@ class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsInstance(runtime.retriever, HybridMusicKnowledgeRetriever)
         self.assertEqual(runtime.index_profile, profile())
+
+    async def test_hybrid_runtime_constructs_reranker_only_when_enabled(self) -> None:
+        fake_binding = SimpleNamespace(profile=profile())
+        fake_reranker = SimpleNamespace()
+        with (
+            patch(
+                "app.agent.foundation.subgraphs.worldline.retrieval."
+                "load_retrieval_index_binding",
+                return_value=fake_binding,
+            ),
+            patch(
+                "app.agent.foundation.subgraphs.worldline.retrieval."
+                "HybridRetrievalService"
+            ),
+            patch(
+                "app.agent.foundation.subgraphs.worldline.retrieval."
+                "QwenCandidateReranker",
+                return_value=fake_reranker,
+            ) as reranker_factory,
+        ):
+            runtime = create_worldline_retrieval_runtime(
+                settings=RetrievalRuntimeSettings(
+                    retrieval_mode="hybrid",
+                    rerank_mode="on",
+                    index_manifest="data/indexing/manifest.json",
+                    _env_file=None,
+                )
+            )
+
+        self.assertIs(runtime.retriever.reranker, fake_reranker)
+        self.assertEqual(runtime.retriever.rerank_mode, "on")
+        reranker_factory.assert_called_once()
 
 
 if __name__ == "__main__":
