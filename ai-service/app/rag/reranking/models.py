@@ -8,7 +8,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.rag.query_understanding.models import IndexProfile
-from app.rag.retrieval.models import RetrievalCandidate
+from app.rag.retrieval.models import RetrievalCandidate, RetrievalStatus
 
 
 class RerankStatus(StrEnum):
@@ -37,11 +37,11 @@ class RerankedCandidate(BaseModel):
     candidate: RetrievalCandidate
     retrieval_rank: int = Field(ge=1, le=40)
     rerank_rank: int = Field(ge=1, le=15)
-    rerank_score: float = Field(ge=0, le=1)
+    rerank_score: float | None = Field(default=None, ge=0, le=1)
 
     @model_validator(mode="after")
     def validate_score(self) -> "RerankedCandidate":
-        if not math.isfinite(self.rerank_score):
+        if self.rerank_score is not None and not math.isfinite(self.rerank_score):
             raise ValueError("rerank score must be finite")
         return self
 
@@ -62,7 +62,9 @@ class RerankResult(BaseModel):
     model_name: str = Field(min_length=1, max_length=300)
     model_revision: str = Field(pattern=r"^[0-9a-f]{40}$")
     prompt_version: str = Field(pattern=r"^v\d+$")
-    input_count: int = Field(ge=0, le=40)
+    candidate_pool_status: RetrievalStatus
+    candidate_pool_warnings: list[str] = Field(default_factory=list, max_length=50)
+    input_count: int = Field(ge=0, le=200)
     output_top_k: int = Field(ge=10, le=15)
     candidates: list[RerankedCandidate] = Field(default_factory=list, max_length=15)
     fallback_used: bool = False
@@ -75,6 +77,10 @@ class RerankResult(BaseModel):
             raise ValueError("rerank output exceeds its bounded input")
         if self.status is RerankStatus.SUCCESS and not self.candidates:
             raise ValueError("successful reranking requires candidates")
+        if self.status is RerankStatus.SUCCESS and any(
+            item.rerank_score is None for item in self.candidates
+        ):
+            raise ValueError("successful reranking requires model scores")
         if self.status is RerankStatus.EMPTY:
             if self.input_count != 0 or self.candidates:
                 raise ValueError("empty reranking cannot contain candidates")
@@ -82,6 +88,10 @@ class RerankResult(BaseModel):
             raise ValueError("unavailable reranking cannot contain candidates")
         if self.status is RerankStatus.DEGRADED and not self.fallback_used:
             raise ValueError("degraded reranking must identify fallback use")
+        if self.status is RerankStatus.DEGRADED and any(
+            item.rerank_score is not None for item in self.candidates
+        ):
+            raise ValueError("fallback candidates cannot claim rerank scores")
         if self.status is RerankStatus.SUCCESS and self.fallback_used:
             raise ValueError("successful reranking cannot use fallback")
         parent_ids = [item.candidate.parent_id for item in self.candidates]

@@ -53,6 +53,7 @@ class RerankingContractTests(unittest.TestCase):
             model_name="Qwen/Qwen3-Reranker-0.6B",
             model_revision="a" * 40,
             prompt_version="v1",
+            candidate_pool_status="success",
             input_count=40,
             output_top_k=12,
             candidates=[item],
@@ -77,6 +78,7 @@ class RerankingContractTests(unittest.TestCase):
                 model_name="model",
                 model_revision="a" * 40,
                 prompt_version="v1",
+                candidate_pool_status="success",
                 input_count=1,
                 output_top_k=12,
                 candidates=[
