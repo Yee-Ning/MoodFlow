@@ -17,6 +17,7 @@ from app.config.settings import ENV_FILE
 from app.rag.query_understanding.models import IndexProfile, SearchPlan
 from app.rag.retrieval import (
     HybridRetrievalService,
+    RetrievalCandidate,
     RetrievalConfig,
     RetrievalResult,
     RetrievalStatus,
@@ -70,7 +71,11 @@ class WorldLineContextAdapter:
         used_tokens = 0
         selection = self.config.selection
         for candidate in result.candidates:
-            candidate_tokens = max(candidate.expanded_token_count, 1)
+            candidate_tokens = max(
+                candidate.parent_context.token_count,
+                candidate.primary_child_token_count,
+                1,
+            )
             if (
                 documents
                 and used_tokens + candidate_tokens > selection.worldline_token_budget
@@ -78,7 +83,7 @@ class WorldLineContextAdapter:
                 continue
             metadata = {
                 "point_id": candidate.point_id,
-                "chunk_id": candidate.chunk_id,
+                "chunk_id": candidate.primary_child_id,
                 "parent_id": candidate.parent_id,
                 "doc_id": candidate.doc_id,
                 "matched_child_ids": candidate.matched_child_ids,
@@ -97,7 +102,7 @@ class WorldLineContextAdapter:
                 MusicKnowledgeDocument(
                     id=candidate.parent_id,
                     title=candidate.title,
-                    content=candidate.expanded_content[:8_000],
+                    content=_expand_parent_context(candidate)[:8_000],
                     source=candidate.source_name,
                     url=candidate.source_url,
                     metadata=metadata,
@@ -107,6 +112,20 @@ class WorldLineContextAdapter:
             if len(documents) >= selection.worldline_document_limit:
                 break
         return documents
+
+
+def _expand_parent_context(candidate: RetrievalCandidate) -> str:
+    """Perform Parent Expansion only for candidates selected for WorldLine."""
+    parts = [
+        value.strip()
+        for value in (
+            candidate.parent_context.breadcrumb,
+            candidate.primary_child_breadcrumb,
+            candidate.parent_context.content,
+        )
+        if value.strip()
+    ]
+    return "\n\n".join(dict.fromkeys(parts))
 
 
 class HybridMusicKnowledgeRetriever:

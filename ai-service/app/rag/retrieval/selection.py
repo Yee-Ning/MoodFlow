@@ -11,7 +11,7 @@ from app.rag.query_understanding.models import QueryType, SearchPlan
 
 from .config import RetrievalConfig
 from .fusion import FusedSearchHit
-from .models import ChannelEvidence, RetrievalCandidate
+from .models import ChannelEvidence, DeferredParentContext, RetrievalCandidate
 
 
 BROAD_QUERY_TYPES = {
@@ -115,12 +115,6 @@ def _candidate_from_hit(hit: FusedSearchHit) -> RetrievalCandidate:
     if _string(parent, "chunk_id") != parent_id:
         raise ValueError("parent identity mismatch")
     parent_content = _string(parent, "content")
-    expanded_content = _expanded_content(
-        breadcrumb,
-        child_content,
-        parent_content,
-        _optional_string(payload.get("retrieval_content")),
-    )
     source_id = _string(payload, "source_id")
     source_name = _optional_string(payload.get("source_name")) or source_id
     entity_ids = _string_list(payload.get("entity_ids"))
@@ -145,13 +139,19 @@ def _candidate_from_hit(hit: FusedSearchHit) -> RetrievalCandidate:
     }
     return RetrievalCandidate(
         point_id=hit.point_id,
-        chunk_id=chunk_id,
         parent_id=parent_id,
         doc_id=doc_id,
         title=breadcrumb or source_name,
-        child_content=child_content,
-        expanded_content=expanded_content,
-        breadcrumb=breadcrumb,
+        primary_child_id=chunk_id,
+        primary_child_content=child_content,
+        primary_child_breadcrumb=breadcrumb,
+        primary_child_token_count=child_tokens,
+        parent_context=DeferredParentContext(
+            chunk_id=parent_id,
+            content=parent_content,
+            token_count=parent_tokens,
+            breadcrumb=_optional_string(parent.get("breadcrumb")) or "",
+        ),
         source_id=source_id,
         source_name=source_name,
         source_url=_optional_string(payload.get("source_url")),
@@ -160,8 +160,6 @@ def _candidate_from_hit(hit: FusedSearchHit) -> RetrievalCandidate:
         fusion_score=hit.fusion_score,
         channel_evidence=hit.evidence,
         matched_child_ids=[chunk_id],
-        child_token_count=child_tokens,
-        expanded_token_count=max(child_tokens, parent_tokens),
         metadata=metadata,
     )
 
@@ -170,6 +168,8 @@ def _merge_parent(
     primary: RetrievalCandidate,
     additional: RetrievalCandidate,
 ) -> RetrievalCandidate:
+    if additional.fusion_score > primary.fusion_score:
+        primary, additional = additional, primary
     child_ids = list(
         dict.fromkeys([*primary.matched_child_ids, *additional.matched_child_ids])
     )[:20]
@@ -184,18 +184,6 @@ def _merge_parent(
     payload["matched_child_ids"] = child_ids
     payload["channel_evidence"] = evidence[:20]
     return RetrievalCandidate.model_validate(payload)
-
-
-def _expanded_content(
-    breadcrumb: str,
-    child_content: str,
-    parent_content: str,
-    retrieval_content: str | None,
-) -> str:
-    if parent_content.strip() == child_content.strip() and retrieval_content:
-        return retrieval_content.strip()
-    parts = [value.strip() for value in (breadcrumb, parent_content) if value.strip()]
-    return "\n\n".join(dict.fromkeys(parts))
 
 
 def _string(payload: dict[str, Any], field: str) -> str:

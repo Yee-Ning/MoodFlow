@@ -33,6 +33,8 @@ class ChannelEvidence(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     chunk_id: str = Field(min_length=1, max_length=128)
+    subquery_id: str = Field(min_length=1, max_length=128)
+    retrieval_leg: str = Field(min_length=1, max_length=160)
     variant_index: int = Field(ge=0, le=9)
     variant_kind: QueryVariantKind
     channel: SearchChannel
@@ -41,19 +43,31 @@ class ChannelEvidence(BaseModel):
     weight: float = Field(gt=0, le=10)
 
 
+class DeferredParentContext(BaseModel):
+    """Parent payload carried through retrieval but expanded only after reranking."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    chunk_id: str = Field(min_length=1, max_length=128)
+    content: str = Field(min_length=1, max_length=20_000)
+    token_count: int = Field(ge=0)
+    breadcrumb: str = Field(default="", max_length=2_000)
+
+
 class RetrievalCandidate(BaseModel):
-    """One parent-level candidate with traceable child evidence."""
+    """One Parent candidate represented by its highest-RRF matched Child."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     point_id: str = Field(min_length=1, max_length=128)
-    chunk_id: str = Field(min_length=1, max_length=128)
     parent_id: str = Field(min_length=1, max_length=128)
     doc_id: str = Field(min_length=1, max_length=300)
     title: str = Field(min_length=1, max_length=500)
-    child_content: str = Field(min_length=1, max_length=8_000)
-    expanded_content: str = Field(min_length=1, max_length=20_000)
-    breadcrumb: str = Field(default="", max_length=2_000)
+    primary_child_id: str = Field(min_length=1, max_length=128)
+    primary_child_content: str = Field(min_length=1, max_length=8_000)
+    primary_child_breadcrumb: str = Field(default="", max_length=2_000)
+    primary_child_token_count: int = Field(ge=0)
+    parent_context: DeferredParentContext
     source_id: str = Field(min_length=1, max_length=300)
     source_name: str = Field(min_length=1, max_length=500)
     source_url: HttpUrl | None = None
@@ -65,14 +79,18 @@ class RetrievalCandidate(BaseModel):
     fusion_score: float = Field(ge=0)
     channel_evidence: list[ChannelEvidence] = Field(min_length=1, max_length=20)
     matched_child_ids: list[str] = Field(min_length=1, max_length=20)
-    child_token_count: int = Field(ge=0)
-    expanded_token_count: int = Field(ge=0)
     metadata: dict[str, JsonValue] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_candidate(self) -> "RetrievalCandidate":
-        if self.chunk_id not in self.matched_child_ids:
+        if self.primary_child_id not in self.matched_child_ids:
             raise ValueError("primary chunk must be one of the matched children")
+        if not any(
+            item.chunk_id == self.primary_child_id for item in self.channel_evidence
+        ):
+            raise ValueError("primary chunk must have retrieval evidence")
+        if self.parent_context.chunk_id != self.parent_id:
+            raise ValueError("deferred parent context must match parent id")
         if len(self.matched_child_ids) != len(set(self.matched_child_ids)):
             raise ValueError("matched child ids must be unique")
         evidence_keys = [

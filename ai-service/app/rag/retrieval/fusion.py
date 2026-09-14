@@ -60,6 +60,8 @@ def weighted_rrf(
                         if isinstance(hit.payload.get("chunk_id"), str)
                         else hit.point_id
                     ),
+                    subquery_id=result.leg.subquery_id,
+                    retrieval_leg=result.leg.retrieval_leg,
                     variant_index=result.leg.variant_index,
                     variant_kind=result.leg.variant_kind,
                     channel=result.leg.channel,

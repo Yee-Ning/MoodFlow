@@ -21,6 +21,7 @@ from .fusion import (
 from .legs import RetrievalLeg, build_retrieval_legs, dense_variant_indexes
 from .models import (
     ChannelEvidence,
+    DeferredParentContext,
     RetrievalCandidate,
     RetrievalResult,
     RetrievalStatus,
@@ -31,6 +32,7 @@ from .service import HybridRetrievalService
 
 __all__ = [
     "ChannelEvidence",
+    "DeferredParentContext",
     "FusedSearchHit",
     "HybridRetrievalService",
     "LegSearchResult",

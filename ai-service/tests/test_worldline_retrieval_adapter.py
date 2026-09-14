@@ -26,6 +26,7 @@ from app.rag.query_understanding.models import (
 )
 from app.rag.retrieval import (
     ChannelEvidence,
+    DeferredParentContext,
     RetrievalCandidate,
     RetrievalResult,
     RetrievalStatus,
@@ -71,12 +72,18 @@ def plan() -> SearchPlan:
 def candidate(index: int, tokens: int = 500) -> RetrievalCandidate:
     return RetrievalCandidate(
         point_id=f"point-{index}",
-        chunk_id=f"child-{index}",
         parent_id=f"parent-{index}",
         doc_id=f"doc-{index}",
         title=f"资料 {index}",
-        child_content="命中证据",
-        expanded_content="完整父级上下文",
+        primary_child_id=f"child-{index}",
+        primary_child_content="命中证据",
+        primary_child_breadcrumb=f"资料 {index} > 证据",
+        primary_child_token_count=100,
+        parent_context=DeferredParentContext(
+            chunk_id=f"parent-{index}",
+            content="完整父级上下文",
+            token_count=tokens,
+        ),
         source_id=f"source-{index}",
         source_name="测试知识库",
         source_url="https://example.com/source",
@@ -86,6 +93,8 @@ def candidate(index: int, tokens: int = 500) -> RetrievalCandidate:
         channel_evidence=[
             ChannelEvidence(
                 chunk_id=f"child-{index}",
+                subquery_id="q0:original",
+                retrieval_leg="q0:original:dense",
                 variant_index=0,
                 variant_kind=QueryVariantKind.ORIGINAL,
                 channel=SearchChannel.DENSE,
@@ -95,8 +104,6 @@ def candidate(index: int, tokens: int = 500) -> RetrievalCandidate:
             )
         ],
         matched_child_ids=[f"child-{index}"],
-        child_token_count=100,
-        expanded_token_count=tokens,
     )
 
 
@@ -133,6 +140,8 @@ class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(documents[0].id, "parent-1")
         self.assertEqual(documents[0].metadata["chunk_id"], "child-1")
         self.assertEqual(documents[0].metadata["retrieval_status"], "success")
+        self.assertIn("完整父级上下文", documents[0].content)
+        self.assertNotIn("命中证据", documents[0].content)
 
     async def test_candidate_pool_stays_separate_from_context_adapter(self) -> None:
         result = RetrievalResult(

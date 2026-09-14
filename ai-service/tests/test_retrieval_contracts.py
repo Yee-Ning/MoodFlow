@@ -9,6 +9,7 @@ from app.rag.query_understanding.models import (
 )
 from app.rag.retrieval import (
     ChannelEvidence,
+    DeferredParentContext,
     RetrievalCandidate,
     RetrievalResult,
     RetrievalStatus,
@@ -29,18 +30,26 @@ def profile() -> IndexProfile:
 def candidate() -> RetrievalCandidate:
     return RetrievalCandidate(
         point_id="point-1",
-        chunk_id="child-1",
         parent_id="parent-1",
         doc_id="doc-1",
         title="资料标题",
-        child_content="命中的证据内容",
-        expanded_content="展开后的父级上下文",
+        primary_child_id="child-1",
+        primary_child_content="命中的证据内容",
+        primary_child_breadcrumb="资料 > 背景",
+        primary_child_token_count=10,
+        parent_context=DeferredParentContext(
+            chunk_id="parent-1",
+            content="尚未展开的父级上下文",
+            token_count=20,
+        ),
         source_id="source-1",
         source_name="测试来源",
         fusion_score=0.4,
         channel_evidence=[
             ChannelEvidence(
                 chunk_id="child-1",
+                subquery_id="q0:original",
+                retrieval_leg="q0:original:dense",
                 variant_index=0,
                 variant_kind=QueryVariantKind.ORIGINAL,
                 channel=SearchChannel.DENSE,
@@ -50,8 +59,6 @@ def candidate() -> RetrievalCandidate:
             )
         ],
         matched_child_ids=["child-1"],
-        child_token_count=10,
-        expanded_token_count=20,
     )
 
 
@@ -74,7 +81,7 @@ class RetrievalContractTests(unittest.TestCase):
                 index_profile=profile(),
             )
 
-        duplicate = candidate().model_copy(update={"chunk_id": "child-2"})
+        duplicate = candidate().model_copy(update={"point_id": "point-2"})
         with self.assertRaises(ValidationError):
             RetrievalResult(
                 status=RetrievalStatus.SUCCESS,

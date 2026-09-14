@@ -22,6 +22,14 @@ class RetrievalLeg:
     weight: float
     dense_vector: list[float] | None = None
 
+    @property
+    def subquery_id(self) -> str:
+        return f"q{self.variant_index}:{self.variant_kind.value}"
+
+    @property
+    def retrieval_leg(self) -> str:
+        return f"{self.subquery_id}:{self.channel.value}"
+
 
 def dense_variant_indexes(plan: SearchPlan) -> list[int]:
     return [

@@ -173,7 +173,22 @@ class HybridRetrievalServiceTests(unittest.IsolatedAsyncioTestCase):
             result.candidates[0].matched_child_ids,
             ["child-2", "child-1"],
         )
+        self.assertEqual(result.candidates[0].primary_child_id, "child-2")
+        self.assertEqual(
+            result.candidates[0].primary_child_content,
+            "补充创作信息。",
+        )
         self.assertEqual(len(result.candidates[0].channel_evidence), 3)
+        self.assertEqual(
+            {
+                (item.subquery_id, item.retrieval_leg)
+                for item in result.candidates[0].channel_evidence
+            },
+            {
+                ("q0:original", "q0:original:dense"),
+                ("q0:original", "q0:original:lexical"),
+            },
+        )
         self.assertEqual(backend.limit, 80)
         self.assertEqual(backend.validation_calls, 1)
 
