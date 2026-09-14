@@ -51,6 +51,7 @@ GRAPH_UNAVAILABLE_MESSAGE = "现有事实不足以构建音乐世界线，请换
 NARRATIVE_UNAVAILABLE_MESSAGE = "音乐世界线叙事暂时无法生成，请稍后再试。"
 BRANCHES_UNAVAILABLE_MESSAGE = "音乐世界线分支暂时无法生成，请稍后再试。"
 QUERY_UNDERSTANDING_UNAVAILABLE_MESSAGE = "暂时无法理解这次音乐查询，请稍后再试。"
+MAX_WORLDLINE_RETRIEVAL_DOCUMENTS = 10
 
 
 def _thread_id(config: RunnableConfig) -> str | None:
@@ -427,7 +428,7 @@ def build_worldline_subgraph(
                 entity,
                 plan,
             )
-            documents = documents[:20]
+            documents = documents[:MAX_WORLDLINE_RETRIEVAL_DOCUMENTS]
         except Exception:
             _log_node(
                 "worldline.retrieve",

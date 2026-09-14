@@ -15,6 +15,7 @@ from app.agent.foundation.subgraphs.worldline.retrieval import (
     HybridMusicKnowledgeRetriever,
     RetrievalRuntimeSettings,
     ShadowMusicKnowledgeRetriever,
+    WorldLineContextAdapter,
     create_worldline_retrieval_runtime,
 )
 
@@ -26,6 +27,7 @@ __all__ = [
     "HybridMusicKnowledgeRetriever",
     "RetrievalRuntimeSettings",
     "ShadowMusicKnowledgeRetriever",
+    "WorldLineContextAdapter",
     "create_worldline_state",
     "build_worldline_subgraph",
     "create_worldline_subgraph",

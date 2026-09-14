@@ -11,6 +11,7 @@ from app.agent.foundation.subgraphs.worldline.retrieval import (
     HybridMusicKnowledgeRetriever,
     RetrievalRuntimeSettings,
     ShadowMusicKnowledgeRetriever,
+    WorldLineContextAdapter,
     create_worldline_retrieval_runtime,
 )
 from app.rag.query_understanding.models import (
@@ -119,22 +120,35 @@ def entity() -> ResolvedEntity:
 
 
 class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
-    async def test_candidate_pool_is_bounded_and_traceable_for_worldline(self) -> None:
+    async def test_context_adapter_bounds_and_traces_final_worldline_context(self) -> None:
         result = RetrievalResult(
             status=RetrievalStatus.SUCCESS,
             plan_id=plan().plan_id,
             index_profile=profile(),
             candidates=[candidate(index) for index in range(1, 13)],
         )
-        service = FakeRetrievalService(result)
-        adapter = HybridMusicKnowledgeRetriever(service)
-
-        documents = await adapter.retrieve(entity(), plan())
+        documents = WorldLineContextAdapter().adapt(result)
 
         self.assertEqual(len(documents), 8)
         self.assertEqual(documents[0].id, "parent-1")
         self.assertEqual(documents[0].metadata["chunk_id"], "child-1")
         self.assertEqual(documents[0].metadata["retrieval_status"], "success")
+
+    async def test_candidate_pool_stays_separate_from_context_adapter(self) -> None:
+        result = RetrievalResult(
+            status=RetrievalStatus.SUCCESS,
+            plan_id=plan().plan_id,
+            index_profile=profile(),
+            candidates=[candidate(index) for index in range(1, 41)],
+        )
+        service = FakeRetrievalService(result)
+        retriever = HybridMusicKnowledgeRetriever(service)
+
+        documents = await retriever.retrieve(entity(), plan())
+
+        self.assertEqual(plan().candidate_top_k, 40)
+        self.assertEqual(len(result.candidates), 40)
+        self.assertEqual(len(documents), 8)
         self.assertEqual(service.calls, 1)
 
     async def test_worldline_token_budget_skips_oversized_later_context(self) -> None:
@@ -152,9 +166,7 @@ class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
             index_profile=profile(),
             candidates=[candidate(1, 700), candidate(2, 700), candidate(3, 200)],
         )
-        adapter = HybridMusicKnowledgeRetriever(FakeRetrievalService(result), config)
-
-        documents = await adapter.retrieve(entity(), plan())
+        documents = WorldLineContextAdapter(config).adapt(result)
 
         self.assertEqual([item.id for item in documents], ["parent-1", "parent-3"])
 

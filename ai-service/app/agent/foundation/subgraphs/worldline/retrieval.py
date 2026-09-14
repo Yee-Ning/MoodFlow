@@ -48,33 +48,24 @@ class EmptyMusicKnowledgeRetriever:
         return []
 
 
-class RetrievalExecutor(Protocol):
+class CandidatePoolProvider(Protocol):
+    """Produce the fused and diversified pre-rerank candidate pool."""
+
     async def retrieve(self, plan: SearchPlan) -> RetrievalResult: ...
 
 
-class HybridMusicKnowledgeRetriever:
-    """Adapt a general candidate pool to WorldLine's bounded document contract."""
+class WorldLineContextAdapter:
+    """Adapt ranked candidates to WorldLine's final 6-10 document context."""
 
     def __init__(
         self,
-        service: RetrievalExecutor,
         config: RetrievalConfig | None = None,
     ) -> None:
-        self.service = service
         self.config = config or load_retrieval_config()
 
-    async def retrieve(
-        self,
-        entity: ResolvedEntity,
-        plan: SearchPlan,
-    ) -> list[MusicKnowledgeDocument]:
-        result = await self.service.retrieve(plan)
-        _log_retrieval_result(result, shadow=False)
+    def adapt(self, result: RetrievalResult) -> list[MusicKnowledgeDocument]:
         if result.status in {RetrievalStatus.EMPTY, RetrievalStatus.UNAVAILABLE}:
             return []
-        return self._documents(result)
-
-    def _documents(self, result: RetrievalResult) -> list[MusicKnowledgeDocument]:
         documents: list[MusicKnowledgeDocument] = []
         used_tokens = 0
         selection = self.config.selection
@@ -118,10 +109,37 @@ class HybridMusicKnowledgeRetriever:
         return documents
 
 
+class HybridMusicKnowledgeRetriever:
+    """Orchestrate the candidate-pool boundary consumed by WorldLine."""
+
+    def __init__(
+        self,
+        service: CandidatePoolProvider,
+        config: RetrievalConfig | None = None,
+        *,
+        context_adapter: WorldLineContextAdapter | None = None,
+    ) -> None:
+        self.candidate_provider = service
+        self.config = config or load_retrieval_config()
+        self.context_adapter = context_adapter or WorldLineContextAdapter(self.config)
+
+    async def retrieve(
+        self,
+        entity: ResolvedEntity,
+        plan: SearchPlan,
+    ) -> list[MusicKnowledgeDocument]:
+        candidate_pool = await self.candidate_provider.retrieve(plan)
+        _log_retrieval_result(candidate_pool, shadow=False)
+        # The future reranker is inserted at this exact boundary. It will reduce the
+        # Top-40 pool to Top 10-15 before the adapter runs; no identity reranker is
+        # installed while reranking is deliberately out of scope.
+        return self.context_adapter.adapt(candidate_pool)
+
+
 class ShadowMusicKnowledgeRetriever:
     """Execute and observe retrieval without changing user-visible answers."""
 
-    def __init__(self, service: RetrievalExecutor) -> None:
+    def __init__(self, service: CandidatePoolProvider) -> None:
         self.service = service
 
     async def retrieve(

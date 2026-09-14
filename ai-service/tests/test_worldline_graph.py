@@ -349,7 +349,7 @@ class WorldLineGraphTests(unittest.TestCase):
         output = asyncio.run(invoke(graph, "歌曲《晴天》的世界线"))
 
         sources = output["task_result"].data["worldline_result"]["sources"]
-        self.assertEqual(len(sources), 21)
+        self.assertEqual(len(sources), 11)
 
     def test_retriever_receives_typed_plan_with_knowledge_entity_id(self) -> None:
         song = entity(185809, EntityType.SONG, "晴天")
