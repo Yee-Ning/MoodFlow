@@ -6,7 +6,6 @@ from app.agent.foundation.subgraphs.worldline.models import (
     EntityResolution,
     EntityResolutionStatus,
     EntityType,
-    ResolvedEntity,
 )
 from app.agent.foundation.subgraphs.worldline.music_service import (
     WorldLineMusicService,

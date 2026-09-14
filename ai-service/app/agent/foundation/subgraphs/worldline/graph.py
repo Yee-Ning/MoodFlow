@@ -30,6 +30,13 @@ from app.agent.foundation.subgraphs.worldline.retrieval import (
     MusicKnowledgeRetriever,
 )
 from app.agent.foundation.subgraphs.worldline.state import WorldLineState
+from app.rag.knowledge.entity_linking.models import EntityType as KnowledgeEntityType
+from app.rag.query_understanding.models import (
+    CatalogReference,
+    ContextResolutionStatus,
+    QueryUnderstandingStatus,
+)
+from app.rag.query_understanding.service import QueryUnderstandingService
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +46,7 @@ MUSIC_SERVICE_UNAVAILABLE_MESSAGE = "音乐实体资料暂时无法加载，请�
 GRAPH_UNAVAILABLE_MESSAGE = "现有事实不足以构建音乐世界线，请换一个实体再试。"
 NARRATIVE_UNAVAILABLE_MESSAGE = "音乐世界线叙事暂时无法生成，请稍后再试。"
 BRANCHES_UNAVAILABLE_MESSAGE = "音乐世界线分支暂时无法生成，请稍后再试。"
+QUERY_UNDERSTANDING_UNAVAILABLE_MESSAGE = "暂时无法理解这次音乐查询，请稍后再试。"
 
 
 def _thread_id(config: RunnableConfig) -> str | None:
@@ -131,10 +139,58 @@ def build_worldline_subgraph(
     music_service: WorldLineMusicService | None = None,
     retriever: MusicKnowledgeRetriever | None = None,
     generator: WorldLineGenerator | None = None,
+    query_understanding: QueryUnderstandingService | None = None,
 ) -> StateGraph:
     service = music_service or JavaMusicEntityService()
     knowledge_retriever = retriever or EmptyMusicKnowledgeRetriever()
     worldline_generator = generator or StructuredWorldLineGenerator()
+    query_service = query_understanding or QueryUnderstandingService()
+
+    async def prepare_query_context(
+        state: WorldLineState,
+        config: RunnableConfig,
+    ) -> dict[str, Any]:
+        started_at = perf_counter()
+        try:
+            context = await query_service.resolve_context(
+                state["current_input"],
+                messages=state["messages"],
+                routing_context=state["routing_context"],
+            )
+        except Exception:
+            _log_node(
+                "worldline.prepare_query_context",
+                started_at=started_at,
+                config=config,
+                success=False,
+                error_code="query_context_failed",
+            )
+            return _failed_result(
+                state,
+                QUERY_UNDERSTANDING_UNAVAILABLE_MESSAGE,
+                "query_context_failed",
+            )
+        if context.status is ContextResolutionStatus.NEEDS_INPUT:
+            message = context.clarification_question or ENTITY_NOT_FOUND_MESSAGE
+            _log_node(
+                "worldline.prepare_query_context",
+                started_at=started_at,
+                config=config,
+                success=False,
+                error_code="query_context_needs_input",
+            )
+            update = _needs_input_result(
+                state, message, "query_context_needs_input"
+            )
+            update["query_context"] = context
+            return update
+        _log_node(
+            "worldline.prepare_query_context",
+            started_at=started_at,
+            config=config,
+            success=True,
+        )
+        return {"query_context": context}
 
     async def resolve_entity(
         state: WorldLineState,
@@ -144,7 +200,11 @@ def build_worldline_subgraph(
         try:
             resolution = await resolve_music_entity(
                 service,
-                state["current_input"],
+                (
+                    state["query_context"].standalone_query
+                    if state.get("query_context") is not None
+                    else state["current_input"]
+                ),
             )
         except ValueError:
             update = _needs_input_result(
@@ -219,6 +279,78 @@ def build_worldline_subgraph(
         )
         return update
 
+    async def understand_query(
+        state: WorldLineState,
+        config: RunnableConfig,
+    ) -> dict[str, Any]:
+        started_at = perf_counter()
+        entity = state.get("resolved_entity")
+        context = state.get("query_context")
+        if entity is None or context is None:
+            raise RuntimeError("WorldLine query inputs are unavailable")
+        raw_catalog_id = entity.entity_id
+        parts = entity.entity_id.split(":", 2)
+        if len(parts) == 3 and parts[0] == entity.source:
+            raw_catalog_id = parts[2]
+        try:
+            result = await query_service.understand(
+                state["current_input"],
+                messages=state["messages"],
+                routing_context=state["routing_context"],
+                context=context,
+                catalog_references=[
+                    CatalogReference(
+                        provider=entity.source,
+                        entity_id=raw_catalog_id,
+                        entity_type=KnowledgeEntityType(entity.entity_type.value),
+                        name=entity.name,
+                    )
+                ],
+            )
+        except Exception:
+            _log_node(
+                "worldline.understand_query",
+                started_at=started_at,
+                config=config,
+                success=False,
+                entity_id=entity.entity_id,
+                entity_type=entity.entity_type.value,
+                error_code="query_understanding_failed",
+            )
+            return _failed_result(
+                state,
+                QUERY_UNDERSTANDING_UNAVAILABLE_MESSAGE,
+                "query_understanding_failed",
+            )
+        if result.status is QueryUnderstandingStatus.NEEDS_INPUT:
+            message = result.clarification_question or ENTITY_AMBIGUOUS_MESSAGE
+            _log_node(
+                "worldline.understand_query",
+                started_at=started_at,
+                config=config,
+                success=False,
+                entity_id=entity.entity_id,
+                entity_type=entity.entity_type.value,
+                error_code="query_understanding_needs_input",
+            )
+            return _needs_input_result(
+                state, message, "query_understanding_needs_input"
+            )
+        if result.analysis is None or result.search_plan is None:
+            raise RuntimeError("Query understanding returned no search plan")
+        _log_node(
+            "worldline.understand_query",
+            started_at=started_at,
+            config=config,
+            success=True,
+            entity_id=entity.entity_id,
+            entity_type=entity.entity_type.value,
+        )
+        return {
+            "query_analysis": result.analysis,
+            "search_plan": result.search_plan,
+        }
+
     async def load_entity_facts(
         state: WorldLineState,
         config: RunnableConfig,
@@ -267,9 +399,12 @@ def build_worldline_subgraph(
         if entity is None:
             raise RuntimeError("WorldLine entity facts were not loaded")
         try:
+            plan = state.get("search_plan")
+            if plan is None:
+                raise RuntimeError("WorldLine search plan is unavailable")
             documents = await knowledge_retriever.retrieve(
                 entity,
-                state["entity_query"] or state["current_input"],
+                plan,
             )
             documents = documents[:20]
         except Exception:
@@ -441,15 +576,27 @@ def build_worldline_subgraph(
         }
 
     builder = StateGraph(WorldLineState, output_schema=SubGraphOutput)
+    builder.add_node("prepare_query_context", prepare_query_context)
     builder.add_node("resolve_entity", resolve_entity)
+    builder.add_node("understand_query", understand_query)
     builder.add_node("load_entity_facts", load_entity_facts)
     builder.add_node("retrieve_music_knowledge", retrieve_music_knowledge)
     builder.add_node("build_worldline_graph", build_graph)
     builder.add_node("generate_narrative", generate_narrative)
     builder.add_node("generate_branches", generate_branches)
-    builder.add_edge(START, "resolve_entity")
+    builder.add_edge(START, "prepare_query_context")
+    builder.add_conditional_edges(
+        "prepare_query_context",
+        _route_or_end("resolve_entity"),
+        {"resolve_entity": "resolve_entity", END: END},
+    )
     builder.add_conditional_edges(
         "resolve_entity",
+        _route_or_end("understand_query"),
+        {"understand_query": "understand_query", END: END},
+    )
+    builder.add_conditional_edges(
+        "understand_query",
         _route_or_end("load_entity_facts"),
         {"load_entity_facts": "load_entity_facts", END: END},
     )
@@ -478,9 +625,11 @@ def create_worldline_subgraph(
     music_service: WorldLineMusicService | None = None,
     retriever: MusicKnowledgeRetriever | None = None,
     generator: WorldLineGenerator | None = None,
+    query_understanding: QueryUnderstandingService | None = None,
 ) -> CompiledStateGraph:
     return build_worldline_subgraph(
         music_service=music_service,
         retriever=retriever,
         generator=generator,
+        query_understanding=query_understanding,
     ).compile()

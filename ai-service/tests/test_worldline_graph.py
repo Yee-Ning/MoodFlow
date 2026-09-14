@@ -9,6 +9,7 @@ from app.agent.foundation import (
     create_main_state,
 )
 from app.agent.foundation.models import TaskStatus
+from app.agent.foundation.routing import RoutingContext
 from app.agent.foundation.subgraphs.worldline.graph import (
     create_worldline_subgraph,
 )
@@ -118,6 +119,15 @@ class ManyDocsRetriever:
         ]
 
 
+class CapturingRetriever:
+    def __init__(self) -> None:
+        self.plan = None
+
+    async def retrieve(self, entity, plan):
+        self.plan = plan
+        return []
+
+
 class FakeGenerator:
     def __init__(self, *, fail_branches: bool = False) -> None:
         self.fail_branches = fail_branches
@@ -160,7 +170,11 @@ def initial_state(query: str) -> dict:
         "messages": [HumanMessage(content=query)],
         "current_input": query,
         "task_id": "worldline-test",
+        "routing_context": RoutingContext(),
         "user_query": query,
+        "query_context": None,
+        "query_analysis": None,
+        "search_plan": None,
         "entity_query": None,
         "expected_entity_type": None,
         "candidate_entities": [],
@@ -337,6 +351,28 @@ class WorldLineGraphTests(unittest.TestCase):
         sources = output["task_result"].data["worldline_result"]["sources"]
         self.assertEqual(len(sources), 21)
 
+    def test_retriever_receives_typed_plan_with_knowledge_entity_id(self) -> None:
+        song = entity(185809, EntityType.SONG, "晴天")
+        retriever = CapturingRetriever()
+        graph = create_worldline_subgraph(
+            music_service=FakeMusicService(song),
+            retriever=retriever,
+            generator=FakeGenerator(),
+        )
+
+        output = asyncio.run(invoke(graph, "歌曲《晴天》的世界线"))
+
+        self.assertEqual(output["task_result"].status, TaskStatus.SUCCESS)
+        self.assertIsNotNone(retriever.plan)
+        self.assertEqual(
+            retriever.plan.entities[0].knowledge_entity_id,
+            "song:qing_tian",
+        )
+        self.assertEqual(
+            retriever.plan.entities[0].catalog_reference.entity_id,
+            "185809",
+        )
+
     def test_branch_failure_returns_safe_failed_result(self) -> None:
         song = entity(1, EntityType.SONG, "晴天")
         graph = create_worldline_subgraph(
@@ -364,7 +400,9 @@ class WorldLineGraphTests(unittest.TestCase):
             set(graph.nodes),
             {
                 "__start__",
+                "prepare_query_context",
                 "resolve_entity",
+                "understand_query",
                 "load_entity_facts",
                 "retrieve_music_knowledge",
                 "build_worldline_graph",

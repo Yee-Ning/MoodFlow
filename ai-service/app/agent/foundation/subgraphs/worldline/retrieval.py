@@ -4,6 +4,7 @@ from app.agent.foundation.subgraphs.worldline.models import (
     MusicKnowledgeDocument,
     ResolvedEntity,
 )
+from app.rag.query_understanding.models import SearchPlan
 
 
 class MusicKnowledgeRetriever(Protocol):
@@ -12,7 +13,7 @@ class MusicKnowledgeRetriever(Protocol):
     async def retrieve(
         self,
         entity: ResolvedEntity,
-        query: str,
+        plan: SearchPlan,
     ) -> list[MusicKnowledgeDocument]: ...
 
 
@@ -22,6 +23,6 @@ class EmptyMusicKnowledgeRetriever:
     async def retrieve(
         self,
         entity: ResolvedEntity,
-        query: str,
+        plan: SearchPlan,
     ) -> list[MusicKnowledgeDocument]:
         return []

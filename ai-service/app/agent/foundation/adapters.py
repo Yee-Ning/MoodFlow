@@ -108,7 +108,11 @@ def create_subgraph_adapter(
             )
         elif route_key is RouteKey.WORLDLINE:
             common_input.update(
+                routing_context=state["routing_context"],
                 user_query=common_input["current_input"],
+                query_context=None,
+                query_analysis=None,
+                search_plan=None,
                 entity_query=None,
                 expected_entity_type=None,
                 candidate_entities=[],
