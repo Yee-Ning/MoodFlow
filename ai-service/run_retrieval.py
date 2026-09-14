@@ -18,6 +18,13 @@ from app.rag.query_understanding import (
     load_query_understanding_config,
 )
 from app.rag.query_understanding.models import SearchPlan
+from app.rag.reranking import (
+    CandidateReranker,
+    QwenCandidateReranker,
+    RerankConfig,
+    RerankStatus,
+    load_rerank_config,
+)
 from app.rag.retrieval import (
     HybridRetrievalService,
     RetrievalConfig,
@@ -40,6 +47,7 @@ class CandidatePoolRetriever(Protocol):
 RetrievalFactory = Callable[
     [RetrievalIndexBinding, RetrievalConfig], CandidatePoolRetriever
 ]
+RerankFactory = Callable[[RerankConfig], CandidateReranker]
 
 
 def _default_retrieval_factory(
@@ -47,6 +55,10 @@ def _default_retrieval_factory(
     config: RetrievalConfig,
 ) -> CandidatePoolRetriever:
     return HybridRetrievalService(binding, config=config)
+
+
+def _default_rerank_factory(config: RerankConfig) -> CandidateReranker:
+    return QwenCandidateReranker(config)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -68,6 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Use deterministic rules only for query-type analysis",
     )
+    parser.add_argument(
+        "--rerank",
+        action="store_true",
+        help="Apply Qwen3 reranking and return the Top-12 candidate pool",
+    )
     return parser
 
 
@@ -75,6 +92,7 @@ async def _run(
     args: argparse.Namespace,
     project_root: Path,
     retrieval_factory: RetrievalFactory,
+    rerank_factory: RerankFactory,
 ) -> tuple[int, str]:
     retrieval_config = load_retrieval_config()
     binding = load_retrieval_index_binding(
@@ -117,6 +135,28 @@ async def _run(
     plan = understanding.search_plan
     assert plan is not None
     retrieval = await retrieval_factory(binding, retrieval_config).retrieve(plan)
+    if args.rerank:
+        rerank_config = load_rerank_config()
+        reranked = await rerank_factory(rerank_config).rerank(plan, retrieval)
+        if retrieval.status is RetrievalStatus.UNAVAILABLE:
+            status = 3
+        elif reranked.status is RerankStatus.UNAVAILABLE:
+            status = 4
+        else:
+            status = 0
+        return status, json.dumps(
+            {
+                "pipeline_stage": "reranked_candidate_pool",
+                "candidate_pool_limit": plan.candidate_top_k,
+                "rerank_top_k": rerank_config.top_k,
+                "rerank_applied": reranked.status is RerankStatus.SUCCESS,
+                "query_understanding": understanding.model_dump(mode="json"),
+                "retrieval": retrieval.model_dump(mode="json"),
+                "reranking": reranked.model_dump(mode="json"),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
     status = 3 if retrieval.status is RetrievalStatus.UNAVAILABLE else 0
     return status, json.dumps(
         {
@@ -136,11 +176,17 @@ def main(
     *,
     project_root: Path = PROJECT_ROOT,
     retrieval_factory: RetrievalFactory = _default_retrieval_factory,
+    rerank_factory: RerankFactory = _default_rerank_factory,
 ) -> int:
     args = build_parser().parse_args(argv)
     try:
         status, payload = asyncio.run(
-            _run(args, project_root.resolve(), retrieval_factory)
+            _run(
+                args,
+                project_root.resolve(),
+                retrieval_factory,
+                rerank_factory,
+            )
         )
     except (OSError, RuntimeError, ValueError) as exc:
         print(

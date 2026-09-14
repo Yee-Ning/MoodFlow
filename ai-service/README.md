@@ -716,10 +716,10 @@ schema、projection 和 registry 版本写入计划。默认参数位于
 `app/rag/query_understanding/config/v1.yaml`；60 条离线 Golden Set 位于
 `tests/fixtures/query_understanding/golden_v1.jsonl`。
 
-## Online Hybrid Retrieval V1（Pre-Rerank）
+## Online Hybrid Retrieval + Rerank V1
 
 `app/rag/retrieval/` 消费已经绑定正式索引版本的 `SearchPlan`，执行在线 Dense + BM25
-混合检索，并严格停止在 rerank 前的 Parent 级候选池：
+混合检索；`app/rag/reranking/` 在独立边界执行 Qwen3 Cross-Encoder 重排：
 
 ```text
 SearchPlan (candidate_top_k=40)
@@ -732,29 +732,40 @@ SearchPlan (candidate_top_k=40)
   -> application-side weighted RRF (k=60; raw channel scores are not mixed)
   -> exact negative-term post filter
   -> Parent collapse + document/source caps + recall refill
-  -> Parent context expansion from the indexed payload
   -> Candidate Pool Top 40
-  -> [future Reranker: Top 10-15; not implemented in V1]
+  -> Qwen/Qwen3-Reranker-0.6B (primary Child evidence only)
+  -> Rerank Top 12
+  -> Parent context expansion from the indexed payload
   -> WorldLine Context Adapter
   -> final Top 6-10 (default 8, token budget 6000)
 ```
 
 每个候选保留命中的 Child、Parent、文档与来源 ID，以及每个 query variant/channel 的
-rank、raw score、weight 和融合分数，便于 Shadow 对照及问题追踪。在线启动前会校验
+rank、raw score、weight、融合分数、`subquery_id` 和 `retrieval_leg`，便于 Shadow 对照、
+问题追踪以及后续 Multi-query rerank 扩展。同一 Parent 的 `primary_child_content` 明确定义为
+Parent 内 fusion score 最高的 `best_matched_child`；Reranker 不读取尚未展开的 Parent 全文。
+在线启动前会校验
 Qdrant 服务版本、named-vector schema、Dense 维度、BM25 vector、point count，并要求
 `SearchPlan.index_profile` 与不可变 Manifest 完全一致；不一致会 fail closed。Dense 编码
 失败时可降级到 BM25，全部通道失败则返回类型化 `unavailable`，不会把内部异常或不完整
 结果伪装成成功。
 
-本阶段不实现 Cross-Encoder/LLM Reranker，也不实现 MMR。Reranker 的固定插入点位于
-`Candidate Pool Top 40` 与 `WorldLineContextAdapter` 之间；因此后续加入 Top 10-15
-重排时无需修改 Qdrant 检索合同或 WorldLine 文档合同。当前尚未安装 Reranker 时，
-Top 40 会直接交给适配器，由适配器按顺序、文档数和 token budget 生成最终上下文。
+Reranker 使用固定 revision 的 `Qwen/Qwen3-Reranker-0.6B`，通过 `yes/no` logits 直接打分，
+附带简短的 music-domain instruction。单条输入 1024 token 是 MoodFlow 为延迟和显存设置的
+工程上限，不是 Qwen3-Reranker 的模型上限；query 保留独立 token budget，Child 命中证据
+优先于标题和 breadcrumb 被保留。首版不设 score threshold、不混合 RRF 与 rerank score、
+不使用 MMR。模型超时、推理异常或非法分数会降级为原 RRF Top 12，并在结果与日志中显式
+记录 fallback；绑定错误或超过 Top 40 则 fail closed。Parent Expansion 只对 Adapter 最终
+选择的候选执行。
 
 独立运行一次真实检索（只输出候选池，不生成答案）：
 
 ```powershell
 python run_retrieval.py "周杰伦《晴天》的创作背景" --no-llm `
+  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+
+# 在同一边界真实执行 Qwen3 Reranker，输出 Top 12（不生成答案）
+python run_retrieval.py "周杰伦《晴天》的创作背景" --no-llm --rerank `
   --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
 ```
 
@@ -763,16 +774,27 @@ WorldLine 在线开关：
 ```dotenv
 AI_AGENT_GRAPH_MODE=foundation
 AI_RAG_RETRIEVAL_MODE=shadow
+AI_RAG_RERANK_MODE=off
 AI_RAG_INDEX_MANIFEST=data/indexing/v1/<release_id>/index_build_manifest.json
 ```
 
 `empty`（默认）不访问索引；`shadow` 执行完整检索并记录安全的状态、耗时和候选数，但不
-改变回答；`hybrid` 才会把适配后的最终上下文交给 WorldLine。评测集采用一行一个对象的
+改变回答；`hybrid` 才会把适配后的最终上下文交给 WorldLine。Rerank 独立支持 `off`
+（默认）、`shadow`（执行和记录但仍按 RRF 顺序构造上下文）和 `on`（应用 Top 12 新顺序）。
+推荐依次以 `retrieval=shadow/rerank=on`、`retrieval=hybrid/rerank=shadow`、
+`retrieval=hybrid/rerank=on` 三阶段发布。
+
+评测集采用一行一个对象的
 JSONL，必填字段为 `case_id`、`query`、`relevant_parent_ids`，可选
 `current_song_id` 和 `tags`。以下命令计算候选池 Recall@20/40、MRR@10 和 nDCG@10：
 
 ```powershell
 python run_retrieval_eval.py --no-llm `
+  --dataset data/evaluation/retrieval_golden_v1.jsonl `
+  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+
+# 同时比较 Top 40 与 Rerank Top 12 的 Recall、MRR、nDCG，统计 fallback 和 P50/P95 延迟
+python run_retrieval_eval.py --no-llm --rerank `
   --dataset data/evaluation/retrieval_golden_v1.jsonl `
   --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
 
@@ -809,7 +831,7 @@ worldline/
   state.py            # 仅在子图内存在的 WorldLineState
   entity_resolver.py  # 规则化 query/type 提取、真实候选匹配与消歧
   music_service.py    # 复用 MusicServiceClient 的事实适配层
-  retrieval.py        # 候选池编排、未来 Rerank 插槽与 WorldLine Context Adapter
+  retrieval.py        # 候选池、Rerank rollout 与 WorldLine Context Adapter 编排
   builder.py          # 只从有证据的事实构建有界图
   prompts.py          # Grounded Narrative / Branch 系统提示
   generation.py       # LLM JSON Schema 调用、重试与分支落地校验
@@ -822,10 +844,10 @@ worldline/
 WorldLine 会先把上下文补全后的独立问题与目录解析结果交给 Query Understanding，并将生成的
 `SearchPlan` 传给 `MusicKnowledgeRetriever`。默认模式仍是明确的
 `EmptyMusicKnowledgeRetriever`；配置 `shadow` 或 `hybrid` 后会使用正式的 Qdrant
-Dense + BM25 候选池。`WorldLineContextAdapter` 把候选转换为最多 6-10 条（默认 8 条）
+Dense + BM25 候选池，并按运行模式执行或观测 Qwen3 Reranker。
+`WorldLineContextAdapter` 把重排后的 Top 12 转换为最多 6-10 条（默认 8 条）
 有来源、受 token budget 约束的文档，图节点另有 10 条硬上限。空结果或异常时，图仍可由
-Music API facts 构建，Narrative 会明确标注知识范围。未来 Reranker 只需插入已经隔离的
-Top 40 与 Adapter 边界；如果检索结果提供经过验证的
+Music API facts 构建，Narrative 会明确标注知识范围。如果检索结果提供经过验证的
 `metadata.graph_nodes/graph_edges`，builder 会将其纳入图并绑定 evidence，普通检索文本本身
 不会自动造边。
 

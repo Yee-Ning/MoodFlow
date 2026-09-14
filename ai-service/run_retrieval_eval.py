@@ -18,13 +18,19 @@ from app.rag.query_understanding import (
     load_query_understanding_config,
 )
 from app.rag.query_understanding.models import SearchPlan
+from app.rag.reranking import (
+    CandidateReranker,
+    QwenCandidateReranker,
+    RerankConfig,
+    evaluate_reranking,
+    load_rerank_config,
+)
 from app.rag.retrieval import (
     HybridRetrievalService,
     RetrievalConfig,
     RetrievalEvaluationCase,
     RetrievalIndexBinding,
     RetrievalResult,
-    RetrievalStatus,
     evaluate_candidate_pool,
     load_evaluation_cases,
     load_retrieval_config,
@@ -43,6 +49,7 @@ class CandidatePoolRetriever(Protocol):
 RetrievalFactory = Callable[
     [RetrievalIndexBinding, RetrievalConfig], CandidatePoolRetriever
 ]
+RerankFactory = Callable[[RerankConfig], CandidateReranker]
 
 
 def _default_retrieval_factory(
@@ -50,6 +57,10 @@ def _default_retrieval_factory(
     config: RetrievalConfig,
 ) -> CandidatePoolRetriever:
     return HybridRetrievalService(binding, config=config)
+
+
+def _default_rerank_factory(config: RerankConfig) -> CandidateReranker:
+    return QwenCandidateReranker(config)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -63,6 +74,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Use deterministic rules only for query-type analysis",
     )
+    parser.add_argument(
+        "--rerank",
+        action="store_true",
+        help="Evaluate Qwen3 Top-12 reranking against the same labels",
+    )
     return parser
 
 
@@ -70,6 +86,7 @@ async def _run(
     args: argparse.Namespace,
     project_root: Path,
     retrieval_factory: RetrievalFactory,
+    rerank_factory: RerankFactory,
 ) -> str:
     dataset_path = (
         args.dataset
@@ -94,32 +111,61 @@ async def _run(
     )
     graph = create_query_understanding_graph(service=understanding_service)
     retriever = retrieval_factory(binding, retrieval_config)
-    rankings: dict[str, list[str]] = {}
-    case_statuses: dict[str, str] = {}
-    for case in cases:
-        ranking, status = await _retrieve_case(case, graph, retriever)
-        rankings[case.case_id] = ranking
-        case_statuses[case.case_id] = status
-    report = evaluate_candidate_pool(cases, rankings)
-    return json.dumps(
-        {
-            "pipeline_stage": "candidate_pool_evaluation",
-            "candidate_pool_limit": understanding_config.candidate_top_k,
-            "rerank_applied": False,
-            "index_profile": binding.profile.model_dump(mode="json"),
-            "case_statuses": case_statuses,
-            "metrics": report.model_dump(mode="json"),
-        },
-        ensure_ascii=False,
-        indent=2,
+    reranker = (
+        rerank_factory(load_rerank_config())
+        if args.rerank
+        else None
     )
+    rankings: dict[str, list[str]] = {}
+    reranked_rankings: dict[str, list[str]] = {}
+    fallback_by_case: dict[str, bool] = {}
+    latency_ms_by_case: dict[str, float] = {}
+    case_statuses: dict[str, str | dict[str, str]] = {}
+    for case in cases:
+        ranking, retrieval_status, reranked, rerank_status, fallback, latency_ms = (
+            await _retrieve_case(case, graph, retriever, reranker)
+        )
+        rankings[case.case_id] = ranking
+        if reranker is None:
+            case_statuses[case.case_id] = retrieval_status
+            continue
+        reranked_rankings[case.case_id] = reranked
+        fallback_by_case[case.case_id] = fallback
+        latency_ms_by_case[case.case_id] = latency_ms
+        case_statuses[case.case_id] = {
+            "retrieval": retrieval_status,
+            "rerank": rerank_status,
+        }
+    report = evaluate_candidate_pool(cases, rankings)
+    payload = {
+        "pipeline_stage": (
+            "rerank_evaluation" if reranker is not None else "candidate_pool_evaluation"
+        ),
+        "candidate_pool_limit": understanding_config.candidate_top_k,
+        "rerank_applied": reranker is not None,
+        "index_profile": binding.profile.model_dump(mode="json"),
+        "case_statuses": case_statuses,
+        "metrics": report.model_dump(mode="json"),
+    }
+    if reranker is not None:
+        rerank_config = load_rerank_config()
+        payload["rerank_top_k"] = rerank_config.top_k
+        payload["rerank_metrics"] = evaluate_reranking(
+            cases,
+            rankings,
+            reranked_rankings,
+            fallback_by_case=fallback_by_case,
+            latency_ms_by_case=latency_ms_by_case,
+        ).model_dump(mode="json")
+    return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
 async def _retrieve_case(
     case: RetrievalEvaluationCase,
     graph,
     retriever: CandidatePoolRetriever,
-) -> tuple[list[str], str]:
+    reranker: CandidateReranker | None,
+) -> tuple[list[str], str, list[str], str, bool, float]:
     output = await graph.ainvoke(
         create_query_understanding_state(
             case.query,
@@ -132,13 +178,29 @@ async def _retrieve_case(
     )
     understanding = output["result"]
     if understanding.status is not QueryUnderstandingStatus.READY:
-        return [], "query_understanding_needs_input"
+        return (
+            [],
+            "query_understanding_needs_input",
+            [],
+            "not_run",
+            False,
+            0,
+        )
     plan = understanding.search_plan
     assert plan is not None
     result = await retriever.retrieve(plan)
-    if result.status is RetrievalStatus.UNAVAILABLE:
-        return [], result.status.value
-    return [item.parent_id for item in result.candidates], result.status.value
+    ranking = [item.parent_id for item in result.candidates]
+    if reranker is None:
+        return ranking, result.status.value, [], "not_run", False, 0
+    reranked = await reranker.rerank(plan, result)
+    return (
+        ranking,
+        result.status.value,
+        [item.candidate.parent_id for item in reranked.candidates],
+        reranked.status.value,
+        reranked.fallback_used,
+        reranked.timings.total_ms,
+    )
 
 
 def main(
@@ -146,10 +208,18 @@ def main(
     *,
     project_root: Path = PROJECT_ROOT,
     retrieval_factory: RetrievalFactory = _default_retrieval_factory,
+    rerank_factory: RerankFactory = _default_rerank_factory,
 ) -> int:
     args = build_parser().parse_args(argv)
     try:
-        payload = asyncio.run(_run(args, project_root.resolve(), retrieval_factory))
+        payload = asyncio.run(
+            _run(
+                args,
+                project_root.resolve(),
+                retrieval_factory,
+                rerank_factory,
+            )
+        )
     except (OSError, RuntimeError, ValueError) as exc:
         print(
             json.dumps(
