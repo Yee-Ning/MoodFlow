@@ -65,7 +65,7 @@ def _default_rerank_factory(config: RerankConfig) -> CandidateReranker:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Evaluate the pre-rerank Top-40 retrieval candidate pool."
+        description="Evaluate Top-40 retrieval and optional Top-12 reranking."
     )
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--index-manifest", type=Path, required=True)

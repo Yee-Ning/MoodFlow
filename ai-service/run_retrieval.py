@@ -64,7 +64,7 @@ def _default_rerank_factory(config: RerankConfig) -> CandidateReranker:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Understand one music query and retrieve its pre-rerank candidate pool."
+            "Understand one music query, retrieve Top 40, and optionally rerank Top 12."
         )
     )
     parser.add_argument("query", help="Music knowledge query to retrieve")
