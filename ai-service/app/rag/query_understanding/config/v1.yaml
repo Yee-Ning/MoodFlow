@@ -1,0 +1,8 @@
+analysis_version: v1
+prompt_version: v1
+max_query_variants: 3
+candidate_top_k: 40
+final_top_k: 10
+enable_hyde: false
+llm_fallback_enabled: true
+llm_confidence_threshold: 0.72
