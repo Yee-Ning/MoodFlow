@@ -9,6 +9,7 @@ from .models import (
     RerankStatus,
     RerankTimings,
 )
+from .runtime import QwenRerankScorer, RerankScorer
 
 __all__ = [
     "RerankConfig",
@@ -16,8 +17,10 @@ __all__ = [
     "RerankModelConfig",
     "RerankedCandidate",
     "RerankResult",
+    "RerankScorer",
     "RerankStatus",
     "RerankTimings",
+    "QwenRerankScorer",
     "build_rerank_inputs",
     "load_rerank_config",
 ]

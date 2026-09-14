@@ -42,12 +42,12 @@ def build_rerank_inputs(
 
 def _document_text(candidate: RetrievalCandidate) -> str:
     parts = [
+        f"Evidence: {candidate.primary_child_content.strip()}",
         f"Title: {candidate.title.strip()}",
         (
             f"Breadcrumb: {candidate.primary_child_breadcrumb.strip()}"
             if candidate.primary_child_breadcrumb.strip()
             else ""
         ),
-        f"Evidence: {candidate.primary_child_content.strip()}",
     ]
     return "\n".join(item for item in parts if item)
