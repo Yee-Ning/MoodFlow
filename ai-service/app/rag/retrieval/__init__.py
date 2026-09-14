@@ -1,8 +1,17 @@
 """Online hybrid retrieval before reranking."""
 
+from .binding import RetrievalIndexBinding, load_retrieval_index_binding
 from .config import RetrievalConfig, load_retrieval_config
 from .encoder import QueryEncoder, QwenQueryEncoder
 from .filter_compiler import compile_qdrant_filter
+from .fusion import (
+    FusedSearchHit,
+    LegSearchResult,
+    RawSearchHit,
+    failed_channels,
+    weighted_rrf,
+)
+from .legs import RetrievalLeg, build_retrieval_legs, dense_variant_indexes
 from .models import (
     ChannelEvidence,
     RetrievalCandidate,
@@ -13,6 +22,11 @@ from .models import (
 
 __all__ = [
     "ChannelEvidence",
+    "FusedSearchHit",
+    "LegSearchResult",
+    "RawSearchHit",
+    "RetrievalIndexBinding",
+    "RetrievalLeg",
     "RetrievalCandidate",
     "RetrievalConfig",
     "RetrievalResult",
@@ -20,6 +34,11 @@ __all__ = [
     "RetrievalTimings",
     "QueryEncoder",
     "QwenQueryEncoder",
+    "build_retrieval_legs",
     "compile_qdrant_filter",
+    "dense_variant_indexes",
+    "failed_channels",
+    "load_retrieval_index_binding",
     "load_retrieval_config",
+    "weighted_rrf",
 ]

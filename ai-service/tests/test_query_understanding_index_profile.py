@@ -8,6 +8,10 @@ from pathlib import Path
 
 from app.rag.indexing.models import IndexBuildManifest
 from app.rag.query_understanding import load_index_profile
+from app.rag.retrieval import (
+    load_retrieval_config,
+    load_retrieval_index_binding,
+)
 from run_query_understanding import main as run_query_understanding_main
 
 
@@ -90,6 +94,38 @@ class IndexProfileTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "not_ready"):
                 load_index_profile(root, path)
+
+    def test_retrieval_binding_requires_exact_model_and_bm25_versions(self) -> None:
+        config = load_retrieval_config()
+        value = manifest().model_copy(
+            update={
+                "dense_vector_name": config.dense.vector_name,
+                "dense_model": config.dense.model_name,
+                "dense_model_revision": config.dense.model_revision,
+                "dense_dimension": config.dense.dimension,
+                "dense_distance": "cosine",
+                "dense_normalized": config.dense.normalize,
+                "bm25_vector_name": config.bm25.vector_name,
+                "bm25_model": config.bm25.model_name,
+                "bm25_options": config.bm25.query_options(),
+            }
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = write_release(root, value)
+
+            binding = load_retrieval_index_binding(root, path, config)
+
+            self.assertEqual(binding.profile.collection_name, "music_knowledge_test")
+            self.assertEqual(binding.manifest.dense_dimension, 1024)
+
+    def test_retrieval_binding_rejects_runtime_model_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = write_release(root, manifest())
+
+            with self.assertRaisesRegex(ValueError, "runtime_mismatch"):
+                load_retrieval_index_binding(root, path, load_retrieval_config())
 
     def test_manifest_outside_project_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as project, tempfile.TemporaryDirectory() as other:
