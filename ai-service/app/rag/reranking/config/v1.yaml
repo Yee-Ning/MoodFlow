@@ -1,0 +1,17 @@
+rerank_version: v1
+prompt_version: v1
+maximum_candidates: 40
+top_k: 12
+timeout_seconds: 30
+maximum_concurrency: 1
+
+model:
+  name: Qwen/Qwen3-Reranker-0.6B
+  revision: e61197ed45024b0ed8a2d74b80b4d909f1255473
+  # MoodFlow performance ceiling; the upstream model supports a longer context.
+  input_token_limit: 1024
+  query_token_budget: 256
+  batch_size: 8
+  device: auto
+  local_files_only: false
+  instruction: "Judge whether this document provides grounded evidence that directly answers the music knowledge query."
