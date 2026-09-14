@@ -1,6 +1,10 @@
+import os
 import unittest
+import uuid
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+
+from qdrant_client import AsyncQdrantClient, models
 
 from app.rag.query_understanding.models import (
     ContextDependency,
@@ -206,6 +210,123 @@ class QdrantHybridSearchBackendTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsNone(results[0].error_code)
         self.assertEqual(results[1].error_code, "lexical_query_failed")
+
+    @unittest.skipUnless(
+        os.getenv("QDRANT_INTEGRATION_URL"),
+        "set QDRANT_INTEGRATION_URL to run against a real Qdrant server",
+    )
+    async def test_real_qdrant_runs_named_dense_and_bm25_legs(self) -> None:
+        qdrant_url = os.environ["QDRANT_INTEGRATION_URL"]
+        collection_name = f"moodflow_retrieval_test_{uuid.uuid4().hex[:12]}"
+        base = load_retrieval_config()
+        config = base.model_copy(
+            update={
+                "dense": base.dense.model_copy(update={"dimension": 32}),
+                "qdrant": base.qdrant.model_copy(update={"url": qdrant_url}),
+            }
+        )
+        client = AsyncQdrantClient(url=qdrant_url, timeout=10)
+        test_binding = SimpleNamespace(
+            profile=IndexProfile(
+                collection_name=collection_name,
+                source_release_id="knowledge-v2-integration",
+                index_schema_version="v2",
+                projection_version="v2",
+                registry_version="v3",
+            ),
+            manifest=SimpleNamespace(projected_count=2),
+        )
+        point_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
+        payloads = [
+            {
+                "chunk_id": "sunny-background",
+                "parent_id": "sunny-parent",
+                "doc_id": "sunny-doc",
+                "content": "《晴天》由周杰伦创作，歌曲带有校园与青春回忆。",
+                "retrieval_content": "晴天 周杰伦 创作背景 校园 青春",
+                "source_id": "integration",
+                "source_name": "integration-test",
+            },
+            {
+                "chunk_id": "jazz-history",
+                "parent_id": "jazz-parent",
+                "doc_id": "jazz-doc",
+                "content": "爵士乐在二十世纪初形成并持续发展。",
+                "retrieval_content": "爵士乐 历史 发展",
+                "source_id": "integration",
+                "source_name": "integration-test",
+            },
+        ]
+        try:
+            await client.create_collection(
+                collection_name=collection_name,
+                vectors_config={
+                    config.dense.vector_name: models.VectorParams(
+                        size=config.dense.dimension,
+                        distance=models.Distance.COSINE,
+                    )
+                },
+                sparse_vectors_config={
+                    config.bm25.vector_name: models.SparseVectorParams(
+                        index=models.SparseIndexParams(),
+                        modifier=models.Modifier.IDF,
+                    )
+                },
+            )
+            await client.upsert(
+                collection_name=collection_name,
+                points=[
+                    models.PointStruct(
+                        id=point_id,
+                        vector={
+                            config.dense.vector_name: [
+                                1.0 if index == 0 else 0.0,
+                                1.0 if index == 1 else 0.0,
+                                *([0.0] * 30),
+                            ],
+                            config.bm25.vector_name: models.Document(
+                                text=payload["retrieval_content"],
+                                model=config.bm25.model_name,
+                                options=config.bm25.query_options(),
+                            ),
+                        },
+                        payload=payload,
+                    )
+                    for index, (point_id, payload) in enumerate(
+                        zip(point_ids, payloads, strict=True)
+                    )
+                ],
+                wait=True,
+            )
+            backend = QdrantHybridSearchBackend(config, client=client)
+            await backend.validate_binding(test_binding)
+            legs = [
+                RetrievalLeg(
+                    variant_index=0,
+                    variant_kind=QueryVariantKind.ORIGINAL,
+                    channel=SearchChannel.DENSE,
+                    text="晴天创作背景",
+                    weight=1,
+                    dense_vector=[1.0, *([0.0] * 31)],
+                ),
+                RetrievalLeg(
+                    variant_index=0,
+                    variant_kind=QueryVariantKind.ORIGINAL,
+                    channel=SearchChannel.LEXICAL,
+                    text="晴天 周杰伦 创作背景",
+                    weight=1,
+                ),
+            ]
+
+            results = await backend.search(test_binding, legs, None, limit=2)
+
+            self.assertEqual(len(results), 2)
+            self.assertEqual(results[0].hits[0].point_id, point_ids[0])
+            self.assertEqual(results[1].hits[0].point_id, point_ids[0])
+        finally:
+            if await client.collection_exists(collection_name):
+                await client.delete_collection(collection_name)
+            await client.close()
 
 
 if __name__ == "__main__":
