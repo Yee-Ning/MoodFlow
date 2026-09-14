@@ -56,6 +56,11 @@ class RetrievalStrategy(StrEnum):
     MULTI_QUERY_HYBRID = "multi_query_hybrid"
 
 
+class QueryUnderstandingStatus(StrEnum):
+    READY = "ready"
+    NEEDS_INPUT = "needs_input"
+
+
 class CatalogReference(BaseModel):
     """Provider-specific identity kept separate from knowledge-index identity."""
 
@@ -292,4 +297,28 @@ class SearchPlan(BaseModel):
         texts = [item.text.casefold() for item in self.queries]
         if len(texts) != len(set(texts)):
             raise ValueError("search-plan queries must be unique")
+        return self
+
+
+class QueryUnderstandingResult(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    status: QueryUnderstandingStatus
+    context: ContextResolution
+    analysis: QueryAnalysis | None = None
+    search_plan: SearchPlan | None = None
+    clarification_question: str | None = Field(default=None, max_length=1_000)
+
+    @model_validator(mode="after")
+    def validate_result(self) -> "QueryUnderstandingResult":
+        if self.status is QueryUnderstandingStatus.READY:
+            if self.analysis is None or self.search_plan is None:
+                raise ValueError("ready query understanding requires analysis and plan")
+            if self.clarification_question is not None:
+                raise ValueError("ready query understanding cannot ask for clarification")
+        else:
+            if self.analysis is not None or self.search_plan is not None:
+                raise ValueError("input request cannot contain analysis or plan")
+            if not self.clarification_question:
+                raise ValueError("input request requires a clarification question")
         return self

@@ -16,12 +16,15 @@ from .models import (
     QueryAnalysis,
     QueryConstraints,
     QueryType,
+    QueryUnderstandingResult,
+    QueryUnderstandingStatus,
     QueryVariant,
     ResolvedQueryEntity,
     RetrievalStrategy,
     SearchPlan,
 )
 from .planner import build_search_plan
+from .service import QueryUnderstandingService
 
 __all__ = [
     "CatalogReference",
@@ -38,6 +41,9 @@ __all__ = [
     "QueryConstraints",
     "QueryType",
     "QueryUnderstandingConfig",
+    "QueryUnderstandingResult",
+    "QueryUnderstandingService",
+    "QueryUnderstandingStatus",
     "QueryVariant",
     "ResolvedQueryEntity",
     "RetrievalStrategy",
