@@ -669,13 +669,62 @@ Payload 的 `index_projection.jsonl`。Manifest 绑定 Release、配置、投影
 `--prune-stale` 同时使用。当前阶段明确不包含 Dense/BM25 查询、top-k、`hnsw_ef`、
 RRF、Parent 上下文回填执行、去重、Rerank 或 `MusicKnowledgeRetriever` 接入。
 
+## Online Query Understanding V1
+
+`app/rag/query_understanding/` 是在线检索前的独立 LangGraph。它不访问 Qdrant，也不生成
+最终答案；输入用户问题、最近对话、只读播放器上下文及可选目录实体，输出严格的
+`QueryUnderstandingResult`。当上下文或实体不能安全确定时，流程返回 `needs_input`，不会
+带着猜测进入检索。
+
+```text
+START
+  -> resolve_context
+  -> resolve_entities
+  -> analyze_query
+  -> [expand_query || build_filter]
+  -> plan_search
+  -> END
+```
+
+V1 先用确定性规则完成上下文依赖判断、Registry V3 实体链接、时间/语言/内容类型/否定词
+约束抽取和查询类型识别；只有规则置信度不足时才允许一次结构化 LLM fallback。查询扩展最多
+产生 3 个去重变体，支持原问题、实体别名、语义补充和比较/关系问题拆分；HyDE 默认并强制
+关闭。元数据过滤器只能使用当前 Qdrant Payload 已建立索引的白名单字段，单年份和跨年份
+区间分别生成不同的过滤表达式。
+
+最终 `SearchPlan` 包含稳定 `plan_id`、独立问题、查询类型、知识库实体 ID 与目录实体引用、
+查询变体、Metadata Filter AST、Hybrid/Multi-query Hybrid 策略、candidate/final top-k、
+rerank 标志以及分析/提示词版本。知识库 ID 与网易云目录 ID 始终分开保存，避免把
+`netease:song:*` 错当作离线知识索引的 `song:*`。
+
+可以在不执行在线检索的情况下查看分析结果和计划：
+
+```powershell
+# 纯规则模式，不调用 LLM
+python run_query_understanding.py "周杰伦 2000 到 2005 年的音乐风格如何演变" --no-llm
+
+# 同时校验并绑定一个 ready_for_retrieval 的正式索引 Manifest
+python run_query_understanding.py "晴天的创作背景" --no-llm `
+  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+
+# 为“这首歌”等指代提供只读播放器上下文
+python run_query_understanding.py "这首歌受谁影响" --current-song-id 185809 --no-llm
+```
+
+索引绑定会校验 Manifest 位于项目目录内、全量构建已就绪、release ID 一致，并把 collection、
+schema、projection 和 registry 版本写入计划。默认参数位于
+`app/rag/query_understanding/config/v1.yaml`；60 条离线 Golden Set 位于
+`tests/fixtures/query_understanding/golden_v1.jsonl`。
+
 ## WorldLine V1 SubGraph
 
 `app/agent/foundation/subgraphs/worldline` 是独立的、无 FastAPI request 依赖的 LangGraph 子图：
 
 ```text
 START
+  -> prepare_query_context
   -> resolve_entity
+  -> understand_query
   -> load_entity_facts
   -> retrieve_music_knowledge
   -> build_worldline_graph
@@ -692,7 +741,7 @@ worldline/
   state.py            # 仅在子图内存在的 WorldLineState
   entity_resolver.py  # 规则化 query/type 提取、真实候选匹配与消歧
   music_service.py    # 复用 MusicServiceClient 的事实适配层
-  retrieval.py        # MusicKnowledgeRetriever 接口与空检索降级实现
+  retrieval.py        # 消费 SearchPlan 的 Retriever 接口与空检索降级实现
   builder.py          # 只从有证据的事实构建有界图
   prompts.py          # Grounded Narrative / Branch 系统提示
   generation.py       # LLM JSON Schema 调用、重试与分支落地校验
@@ -702,7 +751,13 @@ worldline/
 
 实体解析先从用户文本提取实体名称与可选类型，再通过 Spring Boot 的 `/api/music/entities/search` 搜索网易云真实候选。只有规范化名称唯一精确匹配时才选择 canonical entity；同名歌曲/专辑或同名不同演唱者会返回 ambiguous，不把模型猜测当作事实。详情通过 `/api/music/entities/{type}/{id}` 加载；歌曲会尽力补充最多 5 首网易云相似作品，歌手和专辑详情会携带最多 8 个真实相关作品。相似作品加载失败不会丢失歌曲、歌手、专辑等基础事实。
 
-当前 `MusicKnowledgeRetriever` 默认实现是 `EmptyMusicKnowledgeRetriever`，不是正式 RAG。空结果或 Retriever 异常时，图仍可由 Music API facts 构建，Narrative 会明确标注知识范围。未来接入 Qdrant + BM25 + Hybrid Search + Reranker 时，只需替换该接口实现；如果检索结果提供经过验证的 `metadata.graph_nodes/graph_edges`，builder 会将其纳入图并绑定 evidence，普通检索文本本身不会自动造边。
+WorldLine 会先把上下文补全后的独立问题与目录解析结果交给 Query Understanding，并将生成的
+`SearchPlan` 传给 `MusicKnowledgeRetriever`。当前 Retriever 默认实现仍是
+`EmptyMusicKnowledgeRetriever`，不是正式 RAG；空结果或异常时，图仍可由 Music API facts
+构建，Narrative 会明确标注知识范围。未来接入 Qdrant + BM25 + Hybrid Search + Reranker 时，
+只需实现现有 `(ResolvedEntity, SearchPlan)` 接口；如果检索结果提供经过验证的
+`metadata.graph_nodes/graph_edges`，builder 会将其纳入图并绑定 evidence，普通检索文本本身
+不会自动造边。
 
 SubGraph 的候选、facts、retrieved docs、graph intermediate data 均保留在 `WorldLineState`。通过 MainGraph 执行时只返回统一 `TaskResult`，且成功载荷只有 `data.worldline_result`。显式“构建歌曲《七里香》的音乐世界线”等请求可由 Foundation Router 派发；生产 `/api/ai/chat` 仍需设置 `AI_AGENT_GRAPH_MODE=foundation` 才使用 Foundation MainGraph。
 
