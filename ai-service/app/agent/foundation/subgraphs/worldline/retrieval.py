@@ -14,6 +14,11 @@ from app.agent.foundation.subgraphs.worldline.models import (
     ResolvedEntity,
 )
 from app.config.settings import ENV_FILE
+from app.rag.context_packing import (
+    ContextPack,
+    ContextPackBuilder,
+    EvidenceSufficiencyStatus,
+)
 from app.rag.query_understanding.models import IndexProfile, SearchPlan
 from app.rag.reranking import (
     CandidateReranker,
@@ -70,13 +75,31 @@ class WorldLineContextAdapter:
     def __init__(
         self,
         config: RetrievalConfig | None = None,
+        *,
+        pack_builder: ContextPackBuilder | None = None,
     ) -> None:
         self.config = config or load_retrieval_config()
+        self.pack_builder = pack_builder or ContextPackBuilder()
+
+    def build_pack(
+        self,
+        plan: SearchPlan,
+        result: RetrievalResult | RerankResult,
+    ) -> ContextPack:
+        return self.pack_builder.build(plan, result)
 
     def adapt(
         self,
         result: RetrievalResult | RerankResult,
+        plan: SearchPlan | None = None,
     ) -> list[MusicKnowledgeDocument]:
+        if plan is not None:
+            pack = self.build_pack(plan, result)
+            _log_context_pack(pack)
+            if pack.sufficiency.status is not EvidenceSufficiencyStatus.SUFFICIENT:
+                return []
+            return _pack_documents(pack, result, self.config)
+        # Backward-compatible path for callers that do not propagate SearchPlan.
         if _result_has_no_context(result):
             return []
         documents: list[MusicKnowledgeDocument] = []
@@ -183,6 +206,93 @@ def _expand_parent_context(candidate: RetrievalCandidate) -> str:
     return "\n\n".join(dict.fromkeys(parts))
 
 
+def _pack_documents(
+    pack: ContextPack,
+    result: RetrievalResult | RerankResult,
+    config: RetrievalConfig,
+) -> list[MusicKnowledgeDocument]:
+    ranked = {
+        candidate.parent_id: (candidate, reranked)
+        for candidate, reranked in _iter_ranked_candidates(result)
+    }
+    documents: list[MusicKnowledgeDocument] = []
+    for item in pack.items[: config.selection.worldline_document_limit]:
+        candidate, reranked = ranked[item.parent_id]
+        metadata: dict[str, object] = {
+            "point_id": candidate.point_id,
+            "chunk_id": item.child_id,
+            "parent_id": item.parent_id,
+            "doc_id": item.doc_id,
+            "matched_child_ids": candidate.matched_child_ids,
+            "entity_ids": item.entity_ids,
+            "supported_claims": candidate.supported_claims,
+            "fusion_score": candidate.fusion_score,
+            "channel_evidence": [
+                evidence.model_dump(mode="json")
+                for evidence in candidate.channel_evidence
+            ],
+            "retrieval_status": _retrieval_status(result).value,
+            "retrieval_version": config.retrieval_version,
+            "index_profile": result.index_profile.model_dump(mode="json"),
+            "retrieval_warnings": _retrieval_warnings(result),
+            "context_version": pack.context_version,
+            "context_pack_rank": item.pack_rank,
+            "context_source_rank": item.source_rank,
+            "context_token_count": item.token_count,
+            "context_token_budget": pack.token_budget,
+            "evidence_span": item.exact_text,
+            "subquery_ids": item.subquery_ids,
+            "retrieval_legs": item.retrieval_legs,
+            "sufficiency_status": pack.sufficiency.status.value,
+        }
+        if reranked is None:
+            metadata["rerank_status"] = "off"
+        else:
+            metadata.update(
+                {
+                    "retrieval_rank": reranked.retrieval_rank,
+                    "rerank_rank": reranked.rerank_rank,
+                    "rerank_score": reranked.rerank_score,
+                    "rerank_status": result.status.value,
+                    "rerank_version": result.rerank_version,
+                    "rerank_prompt_version": result.prompt_version,
+                    "rerank_model": result.model_name,
+                    "rerank_model_revision": result.model_revision,
+                    "rerank_fallback_used": result.fallback_used,
+                    "rerank_warnings": result.warnings,
+                }
+            )
+        documents.append(
+            MusicKnowledgeDocument(
+                id=item.parent_id,
+                title=item.title,
+                content=item.context,
+                source=item.source_name,
+                url=item.source_url,
+                metadata=metadata,
+            )
+        )
+    return documents
+
+
+def _log_context_pack(pack: ContextPack) -> None:
+    logger.info(
+        "worldline.context_pack",
+        extra={
+            "plan_id": pack.plan_id,
+            "context_version": pack.context_version,
+            "sufficiency_status": pack.sufficiency.status.value,
+            "sufficiency_reasons": pack.sufficiency.reasons,
+            "context_count": len(pack.items),
+            "context_token_count": pack.token_count,
+            "context_token_budget": pack.token_budget,
+            "missing_subquery_ids": pack.sufficiency.missing_subquery_ids,
+            "missing_entity_ids": pack.sufficiency.missing_entity_ids,
+            "context_warnings": pack.warnings,
+        },
+    )
+
+
 class HybridMusicKnowledgeRetriever:
     """Orchestrate the candidate-pool boundary consumed by WorldLine."""
 
@@ -211,13 +321,13 @@ class HybridMusicKnowledgeRetriever:
         candidate_pool = await self.candidate_provider.retrieve(plan)
         _log_retrieval_result(candidate_pool, shadow=False)
         if self.rerank_mode == "off":
-            return self.context_adapter.adapt(candidate_pool)
+            return self.context_adapter.adapt(candidate_pool, plan)
         assert self.reranker is not None
         reranked = await self.reranker.rerank(plan, candidate_pool)
         _log_rerank_result(reranked, shadow=self.rerank_mode == "shadow")
         if self.rerank_mode == "shadow":
-            return self.context_adapter.adapt(candidate_pool)
-        return self.context_adapter.adapt(reranked)
+            return self.context_adapter.adapt(candidate_pool, plan)
+        return self.context_adapter.adapt(reranked, plan)
 
 
 class ShadowMusicKnowledgeRetriever:

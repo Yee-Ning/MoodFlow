@@ -1,0 +1,18 @@
+context_version: v1
+
+gate:
+  # A decomposed query represents a required sub-question, not an optional alias.
+  require_decomposed_query_coverage: true
+  # Comparison answers must retrieve evidence for every resolved compared entity.
+  require_comparison_entity_coverage: true
+
+compression:
+  max_evidence_tokens: 400
+  max_item_tokens: 1200
+  neighbor_window: 1
+
+selection:
+  max_items: 8
+  token_budget: 6000
+  source_cap: 3
+  near_duplicate_threshold: 0.92
