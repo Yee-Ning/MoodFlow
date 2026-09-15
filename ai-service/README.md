@@ -806,6 +806,23 @@ python -m unittest tests.test_retrieval_fusion_qdrant -v
 仓库只提供评测合同和执行器，不内置虚构的相关性标签；正式质量结论必须来自项目人工标注
 的 Parent ID 集合。
 
+## RAG Eval Harness V0
+
+`app/rag/evaluation/` 在已有 Retrieval/Rerank 指标之上提供完整链路的版本化评测合同。
+它记录 Top40、Top12、最终 Top8（合同允许 6-10）、答案引用、token 预算、各阶段状态与版本，
+并校验后续候选必须来自前一阶段、引用必须指向最终上下文。确定性报告统一计算
+Query Outcome、Retrieval、Rerank、Context Recall、引用合法性与预算合规率。
+
+首批 50 条真实项目查询位于 `evals/datasets/rag_eval_v0.pending.jsonl`。所有样本均为
+`pending`，其中不包含伪造的 Parent 标签、证据或参考答案；至少 30 条完成人工复核并改为
+`approved` 后，才形成可用于质量结论的 Baseline V0。
+
+DeepEval 仅用于显式/nightly LLM-as-a-Judge。由于其依赖版本与在线 Hugging Face 栈冲突，
+Runner 固定放在独立 `.venv-eval` 中，主工程先导出框架无关 JSONL，再由隔离进程计算
+Faithfulness、Answer Relevancy、Contextual Precision 和 Contextual Recall。完整的标注字段、
+命令和分层 CI 流程见 `evals/README.md`。RAGAS 在 V0 Baseline 稳定后再作为交叉验证接入，
+当前不进入主依赖或发布门禁。
+
 ## WorldLine V1 SubGraph
 
 `app/agent/foundation/subgraphs/worldline` 是独立的、无 FastAPI request 依赖的 LangGraph 子图：
