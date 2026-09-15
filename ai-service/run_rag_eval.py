@@ -11,6 +11,7 @@ from typing import Sequence
 from app.rag.evaluation import (
     AnnotationStatus,
     build_deepeval_payloads,
+    build_annotation_review_markdown,
     build_pending_dataset,
     evaluate_traces,
     load_evaluation_cases,
@@ -61,6 +62,14 @@ def build_parser() -> argparse.ArgumentParser:
     export_deepeval.add_argument("--dataset", type=Path, required=True)
     export_deepeval.add_argument("--traces", type=Path, required=True)
     export_deepeval.add_argument("--output", type=Path, required=True)
+
+    review = subparsers.add_parser(
+        "export-review-pack",
+        help="Render canonical traces as a human-readable annotation pack",
+    )
+    review.add_argument("--dataset", type=Path, required=True)
+    review.add_argument("--traces", type=Path, required=True)
+    review.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -117,6 +126,27 @@ def _execute(args: argparse.Namespace, root: Path) -> dict[str, object]:
             "status": "success",
             "command": args.command,
             "case_count": len(payloads),
+            "output": str(output),
+        }
+    if args.command == "export-review-pack":
+        cases = load_evaluation_cases(_resolve(args.dataset, root))
+        traces = load_evaluation_traces(_resolve(args.traces, root))
+        output = _resolve(args.output, root)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        temporary = output.with_suffix(output.suffix + ".tmp")
+        try:
+            temporary.write_text(
+                build_annotation_review_markdown(cases, traces),
+                encoding="utf-8",
+            )
+            temporary.replace(output)
+        except OSError:
+            temporary.unlink(missing_ok=True)
+            raise
+        return {
+            "status": "success",
+            "command": args.command,
+            "case_count": len(cases),
             "output": str(output),
         }
     if args.command == "evaluate":

@@ -29,6 +29,7 @@ def build_evaluation_trace(
     context_token_budget: int | None = None,
     retrieval_version: str | None = None,
     context_version: str | None = None,
+    context_status: str | None = None,
     generation_prompt_version: str | None = None,
     generation_model: str | None = None,
     generation_status: str = "not_run",
@@ -80,7 +81,11 @@ def build_evaluation_trace(
             query_understanding="ready",
             retrieval=retrieval.status.value,
             rerank=rerank.status.value if rerank is not None else "not_run",
-            context="success" if final_context else "not_run",
+            context=(
+                context_status
+                if context_status is not None
+                else ("success" if final_context else "not_run")
+            ),
             generation=generation_status,
         ),
         candidate_pool=candidates,

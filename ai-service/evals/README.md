@@ -53,9 +53,41 @@ python -m venv .venv-eval
   --output evals\artifacts\baseline-v0\deterministic-report.json
 ```
 
-应用侧使用 `build_evaluation_trace(...)` 把当前 `SearchPlan`、`RetrievalResult`、
-`RerankResult` 和 Context Adapter 输出装入统一 Trace。答案生成尚未接入时，可以先记录
-Top40/Top12/Top8 并运行确定性评测；`actual_answer` 和引用齐备后才能导出 Judge 用例。
+### 采集真实 Top40 / Top12 / Top8
+
+先启动已经持久化正式索引的 Qdrant，再用独立采集入口执行与线上一致的 Query
+Understanding、Hybrid Retrieval、Qwen Reranker 和 WorldLine Context Adapter：
+
+```powershell
+docker compose -f docker-compose.qdrant.yml up -d
+
+.\.venv\Scripts\python.exe run_rag_trace_collection.py `
+  --dataset evals\datasets\rag_eval_v0.pending.jsonl `
+  --index-manifest data\indexing\v1\knowledge-v2-8608ffc2fa72e441\index_build_manifest.json `
+  --output evals\artifacts\baseline-v0\traces.jsonl `
+  --run-id rag-baseline-v0-20260915 `
+  --no-llm `
+  --rerank
+```
+
+`--no-llm` 只关闭 Query Understanding 的 LLM fallback，不会关闭 Dense Embedding 或
+Qwen Reranker。采集按样本隔离失败：单条异常会写入 Trace 并令进程返回 `2`，不会丢失其余
+结果；索引或配置级错误返回 `1`。产物包含 Top40、Top12 和最终 Top8 的 Parent 血缘、
+版本、状态与耗时。
+
+然后生成可读审核包，人工只需围绕真实候选选择 relevant Parent、核对 supporting span，
+并填写 required facts 与 reference answer：
+
+```powershell
+.\.venv\Scripts\python.exe run_rag_eval.py export-review-pack `
+  --dataset evals\datasets\rag_eval_v0.pending.jsonl `
+  --traces evals\artifacts\baseline-v0\traces.jsonl `
+  --output evals\artifacts\baseline-v0\annotation-review.md
+```
+
+审核包中的勾选框只是阅读辅助，不是正式标签。确认后的字段仍需写入新的
+`rag_eval_v0.approved.jsonl`；不要覆盖 pending 原始骨架。答案生成尚未接入时，可以先完成
+Top40/Top12/Top8 的确定性评测；只有 `actual_answer` 和引用齐备后才能导出 Judge 用例。
 
 ## DeepEval Judge
 
