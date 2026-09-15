@@ -6,6 +6,8 @@ from fastapi.testclient import TestClient
 
 from app.agent.foundation.subgraphs.worldline.models import (
     EntityType,
+    EvidenceSource,
+    EvidenceType,
     ResolvedEntity,
     WorldLineBranch,
     WorldLineBranchTarget,
@@ -36,10 +38,16 @@ def result_fixture() -> WorldLineResult:
         type=WorldLineNodeType.SONG,
         name=root.name,
     )
+    source = EvidenceSource(
+        id="music-api:song:185809",
+        source_type=EvidenceType.MUSIC_API,
+        title="晴天目录资料",
+        source="MoodFlow Java Music Service",
+    )
     return WorldLineResult(
         root_entity=root,
         graph=WorldLineGraph(root=node.id, nodes=[node]),
-        narrative="当前内容仅基于音乐目录事实。",
+        narrative="当前内容仅基于音乐目录事实。[music-api:song:185809]",
         branches=[
             WorldLineBranch(
                 id=f"branch-{index}",
@@ -54,6 +62,8 @@ def result_fixture() -> WorldLineResult:
             )
             for index in range(1, 4)
         ],
+        sources=[source],
+        citations=[source],
     )
 
 
@@ -74,6 +84,7 @@ class WorldLineApiTests(unittest.TestCase):
         self.assertEqual(payload["root_entity"]["entity_type"], "song")
         self.assertEqual(payload["graph"]["root"], "netease:song:185809")
         self.assertEqual(len(payload["branches"]), 3)
+        self.assertEqual(payload["citations"][0]["id"], "music-api:song:185809")
         generator.assert_awaited_once_with("歌曲《晴天》的世界线")
 
     def test_worldline_ambiguous_entity_returns_conflict(self) -> None:

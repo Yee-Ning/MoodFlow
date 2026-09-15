@@ -20,6 +20,7 @@ from app.agent.foundation.subgraphs.worldline.models import (
     MusicEntityFacts,
     MusicFact,
     MusicKnowledgeDocument,
+    NarrativeOutput,
     ResolvedEntity,
     WorldLineBranch,
     WorldLineBranchTarget,
@@ -129,12 +130,25 @@ class CapturingRetriever:
 
 
 class FakeGenerator:
-    def __init__(self, *, fail_branches: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        fail_branches: bool = False,
+        grounded: bool = False,
+    ) -> None:
         self.fail_branches = fail_branches
+        self.grounded = grounded
 
     async def generate_narrative(self, entity, facts, documents, graph, sources):
         scope = "仅基于目录事实" if not documents else "基于目录与知识资料"
-        return f"{scope}，{entity.name}连接了图中的真实音乐实体。"
+        narrative = f"{scope}，{entity.name}连接了图中的真实音乐实体。"
+        if not self.grounded:
+            return narrative
+        citation_id = sources[0].id
+        return NarrativeOutput(
+            narrative=f"{narrative}[{citation_id}]",
+            citation_ids=[citation_id],
+        )
 
     async def generate_branches(self, entity, graph, sources):
         if self.fail_branches:
@@ -184,6 +198,7 @@ def initial_state(query: str) -> dict:
         "retrieved_docs": [],
         "worldline_graph": None,
         "narrative": None,
+        "citation_ids": [],
         "branches": [],
         "sources": [],
         "error_code": None,
@@ -201,6 +216,23 @@ async def invoke(graph, query: str) -> dict:
 
 
 class WorldLineGraphTests(unittest.TestCase):
+    def test_grounded_narrative_citations_reach_worldline_result(self) -> None:
+        song = entity(1, EntityType.SONG, "晴天")
+        graph = create_worldline_subgraph(
+            music_service=FakeMusicService(song),
+            retriever=EmptyRetriever(),
+            generator=FakeGenerator(grounded=True),
+        )
+
+        output = asyncio.run(invoke(graph, "歌曲《晴天》的世界线"))
+        result = output["task_result"].data["worldline_result"]
+
+        self.assertEqual(
+            result["citations"][0]["id"],
+            "music-api:song:1",
+        )
+        self.assertIn("[music-api:song:1]", result["narrative"])
+
     def test_main_graph_receives_only_worldline_result_payload(self) -> None:
         song = entity(1, EntityType.SONG, "晴天")
         subgraph = create_worldline_subgraph(

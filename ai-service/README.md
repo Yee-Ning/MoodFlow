@@ -735,7 +735,10 @@ SearchPlan (candidate_top_k=40)
   -> Candidate Pool Top 40
   -> Qwen/Qwen3-Reranker-0.6B (primary Child evidence only)
   -> Rerank Top 12
-  -> Parent context expansion from the indexed payload
+  -> Evidence Sufficiency Gate
+  -> matched-Child evidence span + Parent/neighbor compression
+  -> evidence dedup + decomposed-query/comparison-entity coverage
+  -> ContextPack Builder
   -> WorldLine Context Adapter
   -> final Top 6-10 (default 8, token budget 6000)
 ```
@@ -757,6 +760,12 @@ Reranker 使用固定 revision 的 `Qwen/Qwen3-Reranker-0.6B`，通过 `yes/no` 
 不使用 MMR。模型超时、推理异常或非法分数会降级为原 RRF Top 12，并在结果与日志中显式
 记录 fallback；绑定错误或超过 Top 40 则 fail closed。Parent Expansion 只对 Adapter 最终
 选择的候选执行。
+
+`app/rag/context_packing/` 承担 Rerank 后处理。V1 不使用未经评测校准的 rerank score
+阈值：空结果和不可用结果直接关闭知识上下文；Multi-query 分解出的必答子问题必须全部有
+检索腿命中；比较查询必须覆盖全部已解析实体。通过门禁后，以命中 Child 作为逐字证据锚点，
+只保留 Parent 中最相关段落及相邻窗口，按来源上限、近重复阈值、Top8 和 6000-token 总预算
+生成可追溯 ContextPack。参数固定在 `app/rag/context_packing/config/v1.yaml`。
 
 独立运行一次真实检索（只输出候选池，不生成答案）：
 
@@ -851,6 +860,7 @@ worldline/
   entity_resolver.py  # 规则化 query/type 提取、真实候选匹配与消歧
   music_service.py    # 复用 MusicServiceClient 的事实适配层
   retrieval.py        # 候选池、Rerank rollout 与 WorldLine Context Adapter 编排
+  grounding.py        # 引用来源、内联锚点与段落级引用门禁
   builder.py          # 只从有证据的事实构建有界图
   prompts.py          # Grounded Narrative / Branch 系统提示
   generation.py       # LLM JSON Schema 调用、重试与分支落地校验
@@ -864,11 +874,17 @@ WorldLine 会先把上下文补全后的独立问题与目录解析结果交给 
 `SearchPlan` 传给 `MusicKnowledgeRetriever`。默认模式仍是明确的
 `EmptyMusicKnowledgeRetriever`；配置 `shadow` 或 `hybrid` 后会使用正式的 Qdrant
 Dense + BM25 候选池，并按运行模式执行或观测 Qwen3 Reranker。
-`WorldLineContextAdapter` 把重排后的 Top 12 转换为最多 6-10 条（默认 8 条）
-有来源、受 token budget 约束的文档，图节点另有 10 条硬上限。空结果或异常时，图仍可由
+`WorldLineContextAdapter` 先把重排后的 Top 12 交给 Evidence Sufficiency Gate 与
+ContextPack Builder，再转换为最多 6-10 条（默认 8 条）有来源、受 token budget 约束的
+压缩文档，图节点另有 10 条硬上限。空结果或异常时，图仍可由
 Music API facts 构建，Narrative 会明确标注知识范围。如果检索结果提供经过验证的
 `metadata.graph_nodes/graph_edges`，builder 会将其纳入图并绑定 evidence，普通检索文本本身
 不会自动造边。
+
+Narrative 的结构化输出同时包含 `citation_ids`，每个事实段落都必须使用 `[source_id]`
+内联引用。Grounding Validator 会拒绝未知来源、空知识证据、引用数组与正文顺序不一致及
+无引用的事实段落，并允许生成器自动重试一次。最终 `WorldLineResult.citations` 只返回本次
+答案实际使用的完整来源对象，前端无需从全部 `sources` 中自行猜测引用关系。
 
 SubGraph 的候选、facts、retrieved docs、graph intermediate data 均保留在 `WorldLineState`。通过 MainGraph 执行时只返回统一 `TaskResult`，且成功载荷只有 `data.worldline_result`。显式“构建歌曲《七里香》的音乐世界线”等请求可由 Foundation Router 派发；生产 `/api/ai/chat` 仍需设置 `AI_AGENT_GRAPH_MODE=foundation` 才使用 Foundation MainGraph。
 

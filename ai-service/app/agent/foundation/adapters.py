@@ -122,6 +122,7 @@ def create_subgraph_adapter(
                 retrieved_docs=[],
                 worldline_graph=None,
                 narrative=None,
+                citation_ids=[],
                 branches=[],
                 sources=[],
                 error_code=None,

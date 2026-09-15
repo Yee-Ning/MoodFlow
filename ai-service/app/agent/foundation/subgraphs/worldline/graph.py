@@ -19,6 +19,7 @@ from app.agent.foundation.subgraphs.worldline.generation import (
 )
 from app.agent.foundation.subgraphs.worldline.models import (
     EntityResolutionStatus,
+    NarrativeOutput,
     WorldLineResult,
 )
 from app.agent.foundation.subgraphs.worldline.music_service import (
@@ -504,13 +505,24 @@ def build_worldline_subgraph(
         if entity is None or facts is None or graph is None:
             raise RuntimeError("WorldLine narrative inputs are unavailable")
         try:
-            narrative = await worldline_generator.generate_narrative(
+            generated = await worldline_generator.generate_narrative(
                 entity,
                 facts,
                 state.get("retrieved_docs", []),
                 graph,
                 state.get("sources", []),
             )
+            if isinstance(generated, str):
+                narrative = generated
+                citation_ids: list[str] = []
+            else:
+                output = (
+                    generated
+                    if isinstance(generated, NarrativeOutput)
+                    else NarrativeOutput.model_validate(generated)
+                )
+                narrative = output.narrative
+                citation_ids = output.citation_ids
         except Exception:
             _log_node(
                 "worldline.generate_narrative",
@@ -534,7 +546,7 @@ def build_worldline_subgraph(
             entity_id=entity.entity_id,
             entity_type=entity.entity_type.value,
         )
-        return {"narrative": narrative}
+        return {"narrative": narrative, "citation_ids": citation_ids}
 
     async def generate_branches(
         state: WorldLineState,
@@ -552,12 +564,16 @@ def build_worldline_subgraph(
                 graph,
                 state.get("sources", []),
             )
+            sources = state.get("sources", [])
+            source_by_id = {item.id: item for item in sources}
+            citations = [source_by_id[item] for item in state.get("citation_ids", [])]
             result = WorldLineResult(
                 root_entity=entity,
                 graph=graph,
                 narrative=narrative,
                 branches=branches,
-                sources=state.get("sources", []),
+                sources=sources,
+                citations=citations,
             )
         except Exception:
             _log_node(

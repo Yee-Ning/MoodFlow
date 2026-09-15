@@ -231,12 +231,34 @@ class WorldLineResult(BaseModel):
     narrative: str = Field(min_length=1, max_length=6_000)
     branches: list[WorldLineBranch] = Field(min_length=3, max_length=3)
     sources: list[EvidenceSource] = Field(default_factory=list, max_length=30)
+    citations: list[EvidenceSource] = Field(default_factory=list, max_length=30)
+
+    @model_validator(mode="after")
+    def validate_citations(self) -> "WorldLineResult":
+        source_by_id = {item.id: item for item in self.sources}
+        citation_ids = [item.id for item in self.citations]
+        if len(citation_ids) != len(set(citation_ids)):
+            raise ValueError("worldline citations must be unique")
+        if not set(citation_ids).issubset(source_by_id):
+            raise ValueError("worldline citations must reference result sources")
+        if any(source_by_id[item.id] != item for item in self.citations):
+            raise ValueError("worldline citations must equal their result sources")
+        if any(f"[{citation_id}]" not in self.narrative for citation_id in citation_ids):
+            raise ValueError("worldline citations must have inline narrative anchors")
+        return self
 
 
 class NarrativeOutput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     narrative: str = Field(min_length=1, max_length=6_000)
+    citation_ids: list[str] = Field(max_length=30)
+
+    @model_validator(mode="after")
+    def unique_citation_ids(self) -> "NarrativeOutput":
+        if len(self.citation_ids) != len(set(self.citation_ids)):
+            raise ValueError("narrative citation ids must be unique")
+        return self
 
 
 class BranchesOutput(BaseModel):

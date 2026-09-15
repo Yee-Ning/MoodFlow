@@ -1,7 +1,11 @@
 import json
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
+
+from app.agent.foundation.subgraphs.worldline.grounding import (
+    WorldLineGroundingValidator,
+)
 
 from app.agent.foundation.subgraphs.worldline.models import (
     BranchesOutput,
@@ -90,7 +94,7 @@ class WorldLineGenerator(Protocol):
         documents: list[MusicKnowledgeDocument],
         graph: WorldLineGraph,
         sources: list[EvidenceSource],
-    ) -> str: ...
+    ) -> NarrativeOutput: ...
 
     async def generate_branches(
         self,
@@ -100,15 +104,15 @@ class WorldLineGenerator(Protocol):
     ) -> list[WorldLineBranch]: ...
 
 
-SchemaModel = TypeVar("SchemaModel", bound=BaseModel)
-
-
 class StructuredWorldLineGenerator:
     def __init__(
         self,
         runtime: WorldLineStructuredRuntime | None = None,
+        *,
+        grounding_validator: WorldLineGroundingValidator | None = None,
     ) -> None:
         self._runtime = runtime or ProviderWorldLineRuntime()
+        self._grounding_validator = grounding_validator or WorldLineGroundingValidator()
 
     async def generate_narrative(
         self,
@@ -117,7 +121,7 @@ class StructuredWorldLineGenerator:
         documents: list[MusicKnowledgeDocument],
         graph: WorldLineGraph,
         sources: list[EvidenceSource],
-    ) -> str:
+    ) -> NarrativeOutput:
         payload = {
             "root_entity": entity.model_dump(mode="json"),
             "entity_facts": facts.model_dump(mode="json"),
@@ -128,18 +132,30 @@ class StructuredWorldLineGenerator:
             "worldline_graph": graph.model_dump(mode="json"),
             "sources": [item.model_dump(mode="json") for item in sources],
         }
-        output = await self._validated_output(
-            payload,
-            instructions=NARRATIVE_SYSTEM_PROMPT,
-            schema_model=NarrativeOutput,
-            schema_name="worldline_narrative",
-        )
-        narrative = output.narrative.strip()
-        if not documents:
-            prefix = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
-            if not narrative.startswith(prefix):
-                narrative = f"{prefix}{narrative}"
-        return narrative
+        last_error: Exception | None = None
+        for attempt in range(2):
+            raw = await self._runtime.generate(
+                payload,
+                instructions=NARRATIVE_SYSTEM_PROMPT,
+                schema=NarrativeOutput.model_json_schema(),
+                schema_name="worldline_narrative",
+                retry=bool(attempt),
+            )
+            try:
+                output = NarrativeOutput.model_validate_json(raw)
+                narrative = output.narrative.strip()
+                if not documents:
+                    prefix = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
+                    if not narrative.startswith(prefix):
+                        narrative = f"{prefix}{narrative}"
+                    output = output.model_copy(update={"narrative": narrative})
+                self._grounding_validator.validate(output, sources)
+                return output
+            except (ValidationError, ValueError) as exc:
+                last_error = exc
+        raise WorldLineGenerationError(
+            "worldline narrative failed schema or grounding validation twice"
+        ) from last_error
 
     async def generate_branches(
         self,
@@ -170,32 +186,6 @@ class StructuredWorldLineGenerator:
         raise WorldLineGenerationError(
             "WorldLine branch output failed validation twice"
         ) from last_error
-
-    async def _validated_output(
-        self,
-        payload: dict[str, Any],
-        *,
-        instructions: str,
-        schema_model: type[SchemaModel],
-        schema_name: str,
-    ) -> SchemaModel:
-        last_error: ValidationError | None = None
-        for attempt in range(2):
-            raw = await self._runtime.generate(
-                payload,
-                instructions=instructions,
-                schema=schema_model.model_json_schema(),
-                schema_name=schema_name,
-                retry=bool(attempt),
-            )
-            try:
-                return schema_model.model_validate_json(raw)
-            except ValidationError as exc:
-                last_error = exc
-        raise WorldLineGenerationError(
-            f"{schema_name} output failed validation twice"
-        ) from last_error
-
 
 _BRANCH_TARGET_TYPES = {
     WorldLineBranchType.ARTIST: {WorldLineNodeType.ARTIST},

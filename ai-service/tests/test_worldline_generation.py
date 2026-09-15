@@ -8,7 +8,10 @@ from app.agent.foundation.subgraphs.worldline.generation import (
 )
 from app.agent.foundation.subgraphs.worldline.models import (
     EntityType,
+    EvidenceSource,
+    EvidenceType,
     MusicEntityFacts,
+    MusicKnowledgeDocument,
     ResolvedEntity,
     WorldLineGraph,
     WorldLineNode,
@@ -108,7 +111,11 @@ def valid_branches() -> str:
 class WorldLineGenerationTests(unittest.TestCase):
     def test_narrative_retries_invalid_structured_output_and_marks_empty_rag(self) -> None:
         runtime = ScriptedRuntime(
-            ["not-json", '{"narrative":"《晴天》连接了歌曲、歌手与专辑。"}']
+            [
+                "not-json",
+                '{"narrative":"《晴天》连接了歌曲、歌手与专辑。",'
+                '"citation_ids":[]}',
+            ]
         )
         generator = StructuredWorldLineGenerator(runtime)
 
@@ -122,7 +129,43 @@ class WorldLineGenerationTests(unittest.TestCase):
             )
         )
 
-        self.assertTrue(narrative.startswith("当前未检索到补充音乐知识"))
+        self.assertTrue(narrative.narrative.startswith("当前未检索到补充音乐知识"))
+        self.assertEqual([call["retry"] for call in runtime.calls], [False, True])
+
+    def test_narrative_retries_unknown_citation_then_returns_grounded_ids(self) -> None:
+        evidence = EvidenceSource(
+            id="knowledge:parent-1",
+            source_type=EvidenceType.KNOWLEDGE,
+            title="晴天资料",
+            source="测试知识库",
+            excerpt="《晴天》收录于《叶惠美》。",
+        )
+        document = MusicKnowledgeDocument(
+            id="parent-1",
+            title="晴天资料",
+            content="《晴天》收录于《叶惠美》。",
+            source="测试知识库",
+        )
+        runtime = ScriptedRuntime(
+            [
+                '{"narrative":"《晴天》收录于《叶惠美》。[knowledge:missing]",'
+                '"citation_ids":["knowledge:missing"]}',
+                '{"narrative":"《晴天》收录于《叶惠美》。[knowledge:parent-1]",'
+                '"citation_ids":["knowledge:parent-1"]}',
+            ]
+        )
+
+        output = asyncio.run(
+            StructuredWorldLineGenerator(runtime).generate_narrative(
+                entity(),
+                MusicEntityFacts(entity=entity()),
+                [document],
+                graph(),
+                [evidence],
+            )
+        )
+
+        self.assertEqual(output.citation_ids, ["knowledge:parent-1"])
         self.assertEqual([call["retry"] for call in runtime.calls], [False, True])
 
     def test_branches_retry_target_not_in_graph(self) -> None:

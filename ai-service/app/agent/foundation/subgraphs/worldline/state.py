@@ -38,6 +38,7 @@ class WorldLineState(BaseAgentState):
     retrieved_docs: list[MusicKnowledgeDocument]
     worldline_graph: WorldLineGraph | None
     narrative: str | None
+    citation_ids: list[str]
     branches: list[WorldLineBranch]
     sources: list[EvidenceSource]
     error_code: str | None
@@ -71,6 +72,7 @@ def create_worldline_state(
         retrieved_docs=[],
         worldline_graph=None,
         narrative=None,
+        citation_ids=[],
         branches=[],
         sources=[],
         error_code=None,
