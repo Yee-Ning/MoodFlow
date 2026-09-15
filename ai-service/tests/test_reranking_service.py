@@ -22,7 +22,24 @@ class StaticScorer:
         return self.scores
 
 
+class PreparingScorer(StaticScorer):
+    def __init__(self) -> None:
+        super().__init__()
+        self.prepare_calls = 0
+
+    def prepare(self) -> None:
+        self.prepare_calls += 1
+
+
 class RerankingServiceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_prepare_loads_runtime_outside_inference_timeout(self) -> None:
+        scorer = PreparingScorer()
+        reranker = QwenCandidateReranker(scorer=scorer)
+
+        await reranker.prepare()
+
+        self.assertEqual(scorer.prepare_calls, 1)
+
     async def test_top_40_is_scored_and_reduced_to_top_12(self) -> None:
         scores = [index / 40 for index in range(40)]
         reranker = QwenCandidateReranker(scorer=StaticScorer(scores))

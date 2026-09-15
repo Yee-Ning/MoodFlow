@@ -42,6 +42,14 @@ class QwenCandidateReranker:
         self.scorer = scorer or QwenRerankScorer(self.config.model)
         self._inference_slots = asyncio.Semaphore(self.config.maximum_concurrency)
 
+    async def prepare(self) -> None:
+        """Warm the local model without consuming a request inference timeout."""
+        prepare = getattr(self.scorer, "prepare", None)
+        if prepare is None:
+            return
+        async with self._inference_slots:
+            await asyncio.to_thread(prepare)
+
     async def rerank(
         self,
         plan: SearchPlan,

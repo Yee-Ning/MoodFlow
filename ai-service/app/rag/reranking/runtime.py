@@ -45,6 +45,10 @@ class QwenRerankScorer:
         self._torch = torch_module
         self._device = device
 
+    def prepare(self) -> None:
+        """Load the pinned runtime outside any per-request timeout budget."""
+        self._ensure_loaded()
+
     def score(self, inputs: Sequence[RerankInput]) -> list[float]:
         if not inputs:
             return []

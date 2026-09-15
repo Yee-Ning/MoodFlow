@@ -88,6 +88,8 @@ async def _run(
     )
     retriever = retrieval_factory(binding, retrieval_config)
     reranker = rerank_factory(load_rerank_config()) if args.rerank else None
+    if isinstance(reranker, QwenCandidateReranker):
+        await reranker.prepare()
     adapter = WorldLineContextAdapter(retrieval_config)
     traces = await collect_evaluation_traces(
         cases,

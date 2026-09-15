@@ -71,9 +71,10 @@ docker compose -f docker-compose.qdrant.yml up -d
 ```
 
 `--no-llm` 只关闭 Query Understanding 的 LLM fallback，不会关闭 Dense Embedding 或
-Qwen Reranker。采集按样本隔离失败：单条异常会写入 Trace 并令进程返回 `2`，不会丢失其余
-结果；索引或配置级错误返回 `1`。产物包含 Top40、Top12 和最终 Top8 的 Parent 血缘、
-版本、状态与耗时。
+Qwen Reranker。采集器会在批次开始前加载并预热本地 Reranker，模型下载和冷启动不计入
+单条 30 秒推理超时。采集按样本隔离失败：单条异常会写入 Trace 并令进程返回 `2`，不会
+丢失其余结果；索引或配置级错误返回 `1`。产物包含 Top40、Top12 和最终 Top8 的 Parent
+血缘、版本、状态与耗时。
 
 然后生成可读审核包，人工只需围绕真实候选选择 relevant Parent、核对 supporting span，
 并填写 required facts 与 reference answer：

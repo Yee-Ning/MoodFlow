@@ -54,6 +54,17 @@ class FakeModel:
 
 
 class QwenRerankScorerTests(unittest.TestCase):
+    def test_prepare_accepts_a_complete_injected_runtime(self) -> None:
+        scorer = QwenRerankScorer(
+            load_rerank_config().model,
+            tokenizer=FakeTokenizer(),
+            model=FakeModel([1.0]),
+            torch_module=torch,
+            device="cpu",
+        )
+
+        scorer.prepare()
+
     def test_scores_yes_no_logits_without_generating_text(self) -> None:
         config = load_rerank_config().model
         tokenizer = FakeTokenizer()
