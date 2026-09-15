@@ -7,6 +7,7 @@ from app.rag.evaluation.io import (
 )
 from app.rag.evaluation.config import EvaluationConfig, load_evaluation_config
 from app.rag.evaluation.dataset import build_pending_dataset
+from app.rag.evaluation.deepeval_adapter import build_deepeval_payloads
 from app.rag.evaluation.models import (
     AnnotationStatus,
     DeepEvalCasePayload,
@@ -37,6 +38,7 @@ __all__ = [
     "SupportingSpanAnnotation",
     "TraceStageStatuses",
     "build_evaluation_trace",
+    "build_deepeval_payloads",
     "build_pending_dataset",
     "evaluate_traces",
     "load_evaluation_cases",

@@ -1,5 +1,7 @@
 .env
 .venv/
+.venv-eval/
+.deepeval/
 __pycache__/
 .pytest_cache/
 *.py[cod]
@@ -23,3 +25,4 @@ data/clean/**
 data/cleaned/**
 data/indexing/**
 tmp/
+evals/artifacts/

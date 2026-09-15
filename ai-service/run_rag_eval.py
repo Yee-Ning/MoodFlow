@@ -10,6 +10,7 @@ from typing import Sequence
 
 from app.rag.evaluation import (
     AnnotationStatus,
+    build_deepeval_payloads,
     build_pending_dataset,
     evaluate_traces,
     load_evaluation_cases,
@@ -52,6 +53,14 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument("--dataset", type=Path, required=True)
     evaluate.add_argument("--traces", type=Path, required=True)
     evaluate.add_argument("--output", type=Path)
+
+    export_deepeval = subparsers.add_parser(
+        "export-deepeval",
+        help="Export approved generated traces for the isolated DeepEval runner",
+    )
+    export_deepeval.add_argument("--dataset", type=Path, required=True)
+    export_deepeval.add_argument("--traces", type=Path, required=True)
+    export_deepeval.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -97,6 +106,18 @@ def _execute(args: argparse.Namespace, root: Path) -> dict[str, object]:
             "command": args.command,
             "trace_count": len(traces),
             "run_ids": sorted({item.run_id for item in traces}),
+        }
+    if args.command == "export-deepeval":
+        cases = load_evaluation_cases(_resolve(args.dataset, root))
+        traces = load_evaluation_traces(_resolve(args.traces, root))
+        payloads = build_deepeval_payloads(cases, traces)
+        output = _resolve(args.output, root)
+        write_jsonl(output, payloads)
+        return {
+            "status": "success",
+            "command": args.command,
+            "case_count": len(payloads),
+            "output": str(output),
         }
     if args.command == "evaluate":
         cases = load_evaluation_cases(_resolve(args.dataset, root))
