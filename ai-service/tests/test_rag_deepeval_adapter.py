@@ -19,7 +19,12 @@ from app.rag.evaluation import (
     build_deepeval_payloads,
     write_jsonl,
 )
-from evals.run_deepeval import load_payloads, run_judge, serialize_result
+from evals.run_deepeval import (
+    load_judge_config,
+    load_payloads,
+    run_judge,
+    serialize_result,
+)
 
 
 def approved_case() -> RAGEvaluationCase:
@@ -160,6 +165,47 @@ class RAGDeepEvalAdapterTests(unittest.TestCase):
             run_judge([], model="", threshold=0.5, max_concurrent=4)
         with self.assertRaisesRegex(ValueError, "threshold"):
             run_judge([], model="fixture", threshold=2, max_concurrent=4)
+
+    def test_runner_loads_versioned_non_secret_judge_config(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "judge.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "v0",
+                        "model": "gpt-5.4-mini",
+                        "threshold": 0.5,
+                        "max_concurrent": 4,
+                        "api_key_env": "OPENAI_API_KEY",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            config = load_judge_config(path)
+
+        self.assertEqual(config["model"], "gpt-5.4-mini")
+        self.assertEqual(config["api_key_env"], "OPENAI_API_KEY")
+
+    def test_runner_rejects_secret_values_in_judge_config(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "judge.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "v0",
+                        "model": "gpt-5.4-mini",
+                        "threshold": 0.5,
+                        "max_concurrent": 4,
+                        "api_key_env": "OPENAI_API_KEY",
+                        "api_key": "must-not-be-stored-here",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "deepeval_config_invalid"):
+                load_judge_config(path)
 
     def test_result_serializer_keeps_case_and_metric_diagnostics(self) -> None:
         metric = SimpleNamespace(

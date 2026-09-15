@@ -6,7 +6,18 @@ import argparse
 import json
 import os
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Sequence, TypedDict
+
+
+DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent / "config" / "judge_v0.json"
+
+
+class JudgeConfig(TypedDict):
+    schema_version: str
+    model: str
+    threshold: float
+    max_concurrent: int
+    api_key_env: str
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -14,15 +25,53 @@ def build_parser() -> argparse.ArgumentParser:
         description="Run explicit DeepEval Judge metrics over exported MoodFlow cases"
     )
     parser.add_argument("--dataset", type=Path, required=True)
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument(
         "--model",
-        default=os.getenv("DEEPEVAL_JUDGE_MODEL"),
-        help="DeepEval judge model name; may also use DEEPEVAL_JUDGE_MODEL",
+        help=(
+            "DeepEval judge model; CLI overrides DEEPEVAL_JUDGE_MODEL and config"
+        ),
     )
-    parser.add_argument("--threshold", type=float, default=0.5)
-    parser.add_argument("--max-concurrent", type=int, default=4)
+    parser.add_argument("--threshold", type=float)
+    parser.add_argument("--max-concurrent", type=int)
     parser.add_argument("--output", type=Path)
     return parser
+
+
+def load_judge_config(path: Path) -> JudgeConfig:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"deepeval_config_invalid:{path}") from exc
+    required = {
+        "schema_version",
+        "model",
+        "threshold",
+        "max_concurrent",
+        "api_key_env",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise ValueError(f"deepeval_config_invalid:{path}")
+    if (
+        payload.get("schema_version") != "v0"
+        or not isinstance(payload.get("model"), str)
+        or not payload["model"].strip()
+        or not isinstance(payload.get("threshold"), (int, float))
+        or isinstance(payload.get("threshold"), bool)
+        or not 0 <= payload["threshold"] <= 1
+        or not isinstance(payload.get("max_concurrent"), int)
+        or isinstance(payload.get("max_concurrent"), bool)
+        or not 1 <= payload["max_concurrent"] <= 20
+        or payload.get("api_key_env") != "OPENAI_API_KEY"
+    ):
+        raise ValueError(f"deepeval_config_invalid:{path}")
+    return JudgeConfig(
+        schema_version="v0",
+        model=payload["model"],
+        threshold=float(payload["threshold"]),
+        max_concurrent=payload["max_concurrent"],
+        api_key_env=payload["api_key_env"],
+    )
 
 
 def load_payloads(path: Path) -> list[dict[str, Any]]:
@@ -91,6 +140,10 @@ def run_judge(
         raise ValueError("DeepEval threshold must be between 0 and 1")
     if not 1 <= max_concurrent <= 20:
         raise ValueError("DeepEval maximum concurrency must be between 1 and 20")
+    if model.startswith("gpt-") and not os.getenv("OPENAI_API_KEY"):
+        raise ValueError(
+            "OPENAI_API_KEY is required in the Judge process environment"
+        )
 
     # Avoid reading MoodFlow's runtime .env in the isolated evaluation process.
     os.environ.setdefault("DEEPEVAL_DISABLE_DOTENV", "1")
@@ -180,14 +233,30 @@ def serialize_result(result: Any) -> dict[str, Any]:
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        config = load_judge_config(args.config.resolve())
+        model = args.model or os.getenv("DEEPEVAL_JUDGE_MODEL") or config["model"]
+        threshold = (
+            args.threshold if args.threshold is not None else config["threshold"]
+        )
+        max_concurrent = (
+            args.max_concurrent
+            if args.max_concurrent is not None
+            else config["max_concurrent"]
+        )
         payloads = load_payloads(args.dataset.resolve())
         result = run_judge(
             payloads,
-            model=args.model,
-            threshold=args.threshold,
-            max_concurrent=args.max_concurrent,
+            model=model,
+            threshold=threshold,
+            max_concurrent=max_concurrent,
         )
         payload = serialize_result(result)
+        payload["judge"] = {
+            "config_version": config["schema_version"],
+            "model": model,
+            "threshold": threshold,
+            "max_concurrent": max_concurrent,
+        }
         if args.output is not None:
             output = args.output.resolve()
             output.parent.mkdir(parents=True, exist_ok=True)

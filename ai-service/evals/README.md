@@ -129,18 +129,23 @@ Silver 数据集：
   --output evals\artifacts\baseline-v0\deepeval-cases.silver.jsonl
 ```
 
-再在隔离环境显式选择 Judge 模型。Runner 会设置
+再在隔离环境运行 Judge。非敏感默认值保存在
+`evals/config/judge_v0.json`：`gpt-5.4-mini`、阈值 `0.5`、并发数 `4`。
+CLI 参数优先于 `DEEPEVAL_JUDGE_MODEL`，环境变量又优先于配置文件。Runner 会设置
 `DEEPEVAL_DISABLE_DOTENV=1`，避免 DeepEval 自动读取 MoodFlow 的运行时 `.env`；模型凭证
 必须通过 Judge 进程环境注入，不写入数据集或 Trace。
 
 ```powershell
-$env:DEEPEVAL_JUDGE_MODEL="gpt-4.1-mini"
+$env:OPENAI_API_KEY="<在本机或 CI Secret 中设置，不要写入仓库>"
 .\.venv-eval\Scripts\python.exe evals\run_deepeval.py `
+  --config evals\config\judge_v0.json `
   --dataset evals\artifacts\baseline-v0\deepeval-cases.silver.jsonl `
-  --threshold 0.5 `
-  --max-concurrent 4 `
   --output evals\artifacts\baseline-v0\deepeval-report.json
 ```
+
+`gpt-5.4-mini` 用于日常和 Nightly 回归；发布候选若要提高裁判强度，可通过
+`--model gpt-5.4-2026-03-05` 使用固定快照复核。Judge 报告会保存实际模型、阈值和
+并发数，便于同配置横向比较；不要混用不同 Judge 模型的绝对分数。
 
 V0 Judge 指标为 Faithfulness、Answer Relevancy、Contextual Precision 和 Contextual
 Recall。阈值 0.5 只是首轮观测值；在第一份人工审批 Baseline 产生前，不用它阻断发布。
