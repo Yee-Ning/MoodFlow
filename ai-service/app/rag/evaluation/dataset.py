@@ -1,0 +1,72 @@
+"""Seed the RAG V0 review set from existing project query fixtures."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from app.rag.evaluation.models import ExpectedOutcome, RAGEvaluationCase
+
+
+def build_pending_dataset(source: Path, *, limit: int = 50) -> list[RAGEvaluationCase]:
+    """Create pending cases without inventing retrieval or answer labels."""
+    if limit < 1:
+        raise ValueError("evaluation dataset limit must be positive")
+    try:
+        lines = source.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        raise ValueError(f"evaluation_seed_unreadable:{source}") from exc
+    rows: list[dict[str, object]] = []
+    for line_number, raw_line in enumerate(lines, start=1):
+        if not raw_line.strip():
+            continue
+        try:
+            payload = json.loads(raw_line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"evaluation_seed_invalid:{source}:{line_number}") from exc
+        if not isinstance(payload, dict) or not isinstance(payload.get("query"), str):
+            raise ValueError(f"evaluation_seed_invalid:{source}:{line_number}")
+        if payload.get("status") not in {"ready", "needs_input"}:
+            raise ValueError(f"evaluation_seed_status_invalid:{source}:{line_number}")
+        rows.append(payload)
+    if len(rows) < limit:
+        raise ValueError(f"evaluation_seed_too_small:{source}:{len(rows)}<{limit}")
+
+    needs_input = [item for item in rows if item["status"] == "needs_input"]
+    reserved_needs_input = needs_input[: min(5, limit)]
+    ready_limit = limit - len(reserved_needs_input)
+    selected = [item for item in rows if item["status"] == "ready"][:ready_limit]
+    selected.extend(reserved_needs_input)
+    if len(selected) != limit:
+        raise ValueError(f"evaluation_seed_distribution_invalid:{source}")
+    return [
+        _build_case(index, payload)
+        for index, payload in enumerate(selected, start=1)
+    ]
+
+
+def _build_case(index: int, payload: dict[str, object]) -> RAGEvaluationCase:
+    needs_input = payload["status"] == "needs_input"
+    entity_ids = payload.get("entity_ids", [])
+    query_types = payload.get("query_types", [])
+    if not isinstance(entity_ids, list) or not all(
+        isinstance(item, str) for item in entity_ids
+    ):
+        raise ValueError(f"evaluation_seed_entity_ids_invalid:{index}")
+    if not isinstance(query_types, list) or not all(
+        isinstance(item, str) for item in query_types
+    ):
+        raise ValueError(f"evaluation_seed_query_types_invalid:{index}")
+    return RAGEvaluationCase(
+        case_id=f"rag-v0-{index:03d}",
+        query=str(payload["query"]),
+        expected_outcome=(
+            ExpectedOutcome.NEEDS_INPUT
+            if needs_input
+            else ExpectedOutcome.ANSWERABLE
+        ),
+        expected_entity_ids=entity_ids,
+        expected_query_types=query_types,
+        tags=["query_understanding_v1", payload["status"]],
+        notes="待人工补充并复核检索证据、事实和参考答案。",
+    )

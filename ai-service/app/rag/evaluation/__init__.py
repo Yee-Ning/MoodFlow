@@ -5,6 +5,8 @@ from app.rag.evaluation.io import (
     load_evaluation_traces,
     write_jsonl,
 )
+from app.rag.evaluation.config import EvaluationConfig, load_evaluation_config
+from app.rag.evaluation.dataset import build_pending_dataset
 from app.rag.evaluation.models import (
     AnnotationStatus,
     DeepEvalCasePayload,
@@ -16,18 +18,29 @@ from app.rag.evaluation.models import (
     SupportingSpanAnnotation,
     TraceStageStatuses,
 )
+from app.rag.evaluation.service import (
+    DeterministicEvaluationReport,
+    evaluate_traces,
+)
+from app.rag.evaluation.trace_builder import build_evaluation_trace
 
 __all__ = [
     "AnnotationStatus",
     "DeepEvalCasePayload",
+    "DeterministicEvaluationReport",
     "EvaluationContext",
+    "EvaluationConfig",
     "EvaluationVersions",
     "ExpectedOutcome",
     "RAGEvaluationCase",
     "RAGEvaluationTrace",
     "SupportingSpanAnnotation",
     "TraceStageStatuses",
+    "build_evaluation_trace",
+    "build_pending_dataset",
+    "evaluate_traces",
     "load_evaluation_cases",
     "load_evaluation_traces",
+    "load_evaluation_config",
     "write_jsonl",
 ]
