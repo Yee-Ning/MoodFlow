@@ -8,6 +8,12 @@ from app.rag.evaluation.io import (
 from app.rag.evaluation.config import EvaluationConfig, load_evaluation_config
 from app.rag.evaluation.dataset import build_pending_dataset
 from app.rag.evaluation.deepeval_adapter import build_deepeval_payloads
+from app.rag.evaluation.generation import (
+    CitationAwareAnswer,
+    CitationAwareAnswerGenerator,
+    CitationAwareGenerationRuntime,
+    generate_evaluation_answers,
+)
 from app.rag.evaluation.models import (
     AnnotationStatus,
     DeepEvalCasePayload,
@@ -30,6 +36,9 @@ from app.rag.evaluation.trace_builder import build_evaluation_trace
 
 __all__ = [
     "AnnotationStatus",
+    "CitationAwareAnswer",
+    "CitationAwareAnswerGenerator",
+    "CitationAwareGenerationRuntime",
     "DeepEvalCasePayload",
     "DeterministicEvaluationReport",
     "EvaluationContext",
@@ -47,6 +56,7 @@ __all__ = [
     "bootstrap_silver_dataset",
     "collect_evaluation_traces",
     "evaluate_traces",
+    "generate_evaluation_answers",
     "load_evaluation_cases",
     "load_evaluation_traces",
     "load_evaluation_config",

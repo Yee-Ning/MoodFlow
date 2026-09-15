@@ -108,13 +108,25 @@ Silver 数据集：
 
 ## DeepEval Judge
 
+先用主工程已经配置的回答模型消费最终 Top8，并生成带 Parent 引用的 Trace。生成器不会读取
+数据集中的 `reference_answer`，每条事实必须使用 `[parent_id]` 内联引用；未知引用、引用数组
+与正文不一致会自动重试一次，单条失败不会丢掉整批结果：
+
+```powershell
+.\.venv\Scripts\python.exe run_rag_answer_generation.py `
+  --dataset evals\datasets\rag_eval_v0.approved.silver.jsonl `
+  --traces evals\artifacts\baseline-v0\traces.jsonl `
+  --output evals\artifacts\baseline-v0\traces.generated.jsonl `
+  --max-concurrent 4
+```
+
 先由主工程把审批后的标签和真实 Trace 转成依赖无关的交换文件：
 
 ```powershell
 .\.venv\Scripts\python.exe run_rag_eval.py export-deepeval `
-  --dataset evals\datasets\rag_eval_v0.approved.jsonl `
-  --traces evals\artifacts\baseline-v0\traces.jsonl `
-  --output evals\artifacts\baseline-v0\deepeval-cases.jsonl
+  --dataset evals\datasets\rag_eval_v0.approved.silver.jsonl `
+  --traces evals\artifacts\baseline-v0\traces.generated.jsonl `
+  --output evals\artifacts\baseline-v0\deepeval-cases.silver.jsonl
 ```
 
 再在隔离环境显式选择 Judge 模型。Runner 会设置
@@ -124,7 +136,7 @@ Silver 数据集：
 ```powershell
 $env:DEEPEVAL_JUDGE_MODEL="gpt-4.1-mini"
 .\.venv-eval\Scripts\python.exe evals\run_deepeval.py `
-  --dataset evals\artifacts\baseline-v0\deepeval-cases.jsonl `
+  --dataset evals\artifacts\baseline-v0\deepeval-cases.silver.jsonl `
   --threshold 0.5 `
   --max-concurrent 4 `
   --output evals\artifacts\baseline-v0\deepeval-report.json
