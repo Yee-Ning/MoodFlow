@@ -79,7 +79,7 @@ class RAGTraceCollectionTests(unittest.IsolatedAsyncioTestCase):
             run_id="failed-run",
             graph=FailingGraph(),
             retriever=CandidateRetriever(),
-            context_adapter=lambda result: [],
+            context_adapter=lambda result, plan: [],
             context_token_budget=6_000,
         )
 
@@ -146,7 +146,12 @@ class RAGTraceCollectionTests(unittest.IsolatedAsyncioTestCase):
                 [item.parent_id for item in traces[0].final_context],
                 ["parent-2", "parent-1"],
             )
-            self.assertEqual(traces[0].context_token_count, 1_000)
+            self.assertEqual(
+                traces[0].context_token_count,
+                sum(item.token_count for item in traces[0].final_context),
+            )
+            self.assertEqual(traces[0].context_token_count, 56)
+            self.assertEqual(traces[0].versions.context, "context-pack-v1")
             self.assertEqual(traces[1].statuses.query_understanding, "needs_input")
             self.assertEqual(traces[1].statuses.retrieval, "not_run")
 

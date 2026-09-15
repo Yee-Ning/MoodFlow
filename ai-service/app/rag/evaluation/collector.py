@@ -43,7 +43,7 @@ class EvaluationContextDocument(Protocol):
 
 
 ContextAdapter = Callable[
-    [RetrievalResult | RerankResult],
+    [RetrievalResult | RerankResult, SearchPlan],
     Sequence[EvaluationContextDocument],
 ]
 
@@ -57,7 +57,7 @@ async def collect_evaluation_traces(
     context_adapter: ContextAdapter,
     reranker: CandidateReranker | None = None,
     retrieval_version: str | None = None,
-    context_version: str = "worldline-adapter-v1",
+    context_version: str = "context-pack-v1",
     context_token_budget: int,
 ) -> list[RAGEvaluationTrace]:
     """Run every case independently so one failure does not erase the batch."""
@@ -128,7 +128,7 @@ async def _collect_case(
     retrieval = await retriever.retrieve(plan)
     rerank = await reranker.rerank(plan, retrieval) if reranker is not None else None
     ranked: RetrievalResult | RerankResult = rerank or retrieval
-    documents = context_adapter(ranked)
+    documents = context_adapter(ranked, plan)
     final_context = _build_final_context(documents, retrieval)
     return build_evaluation_trace(
         run_id=run_id,
@@ -166,11 +166,21 @@ def _build_final_context(
                 source_name=document.source,
                 source_url=document.url,
                 matched_child_id=candidate.primary_child_id,
-                token_count=max(
-                    candidate.parent_context.token_count,
-                    candidate.primary_child_token_count,
-                    1,
-                ),
+                token_count=_document_token_count(document, candidate),
             )
         )
     return contexts
+
+
+def _document_token_count(
+    document: EvaluationContextDocument,
+    candidate,
+) -> int:
+    packed = document.metadata.get("context_token_count")
+    if isinstance(packed, int) and packed > 0:
+        return packed
+    return max(
+        candidate.parent_context.token_count,
+        candidate.primary_child_token_count,
+        1,
+    )
