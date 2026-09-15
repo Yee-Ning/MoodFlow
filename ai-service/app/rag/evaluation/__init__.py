@@ -23,6 +23,7 @@ from app.rag.evaluation.service import (
     DeterministicEvaluationReport,
     evaluate_traces,
 )
+from app.rag.evaluation.silver import bootstrap_silver_dataset
 from app.rag.evaluation.collector import collect_evaluation_traces
 from app.rag.evaluation.review import build_annotation_review_markdown
 from app.rag.evaluation.trace_builder import build_evaluation_trace
@@ -43,6 +44,7 @@ __all__ = [
     "build_deepeval_payloads",
     "build_annotation_review_markdown",
     "build_pending_dataset",
+    "bootstrap_silver_dataset",
     "collect_evaluation_traces",
     "evaluate_traces",
     "load_evaluation_cases",

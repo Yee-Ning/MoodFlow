@@ -16,6 +16,7 @@ from app.rag.evaluation import (
     TraceStageStatuses,
     build_evaluation_trace,
     build_pending_dataset,
+    bootstrap_silver_dataset,
     evaluate_traces,
     load_evaluation_config,
 )
@@ -54,6 +55,151 @@ def approved_answerable_case() -> RAGEvaluationCase:
 
 
 class RAGEvaluationServiceTests(unittest.TestCase):
+    def test_silver_bootstrap_approves_answerable_case_with_trace_provenance(self) -> None:
+        pending = approved_answerable_case().model_copy(
+            update={
+                "annotation_status": AnnotationStatus.PENDING,
+                "relevant_parent_ids": [],
+                "supporting_spans": [],
+                "required_facts": [],
+                "reference_answer": None,
+            }
+        )
+        trace = RAGEvaluationTrace(
+            run_id="run-001",
+            case_id=pending.case_id,
+            query=pending.query,
+            statuses=TraceStageStatuses(
+                query_understanding="ready",
+                retrieval="success",
+                rerank="success",
+                context="success",
+            ),
+            candidate_pool=[final_context("parent-2")],
+            reranked_context=[final_context("parent-2")],
+            final_context=[final_context("parent-2")],
+        )
+
+        approved = bootstrap_silver_dataset([pending], [trace])[0]
+
+        self.assertEqual(approved.annotation_status, AnnotationStatus.APPROVED)
+        self.assertEqual(approved.relevant_parent_ids, ["parent-2"])
+        self.assertEqual(approved.supporting_spans[0].source_id, "source-parent-2")
+        self.assertIn(approved.supporting_spans[0].exact_text, trace.final_context[0].content)
+        self.assertIn("silver_bootstrap_v0", approved.tags)
+        self.assertIn("不属于逐条人工复核", approved.notes or "")
+
+    def test_silver_bootstrap_deduplicates_identical_required_facts(self) -> None:
+        pending = approved_answerable_case().model_copy(
+            update={
+                "annotation_status": AnnotationStatus.PENDING,
+                "relevant_parent_ids": [],
+                "supporting_spans": [],
+                "required_facts": [],
+                "reference_answer": None,
+            }
+        )
+        first = final_context("parent-1", 1)
+        second = final_context("parent-2", 2).model_copy(
+            update={"content": first.content}
+        )
+        trace = RAGEvaluationTrace(
+            run_id="run-001",
+            case_id=pending.case_id,
+            query=pending.query,
+            statuses=TraceStageStatuses(
+                query_understanding="ready",
+                retrieval="success",
+                rerank="success",
+                context="success",
+            ),
+            candidate_pool=[first, second],
+            reranked_context=[first, second],
+            final_context=[first, second],
+        )
+
+        approved = bootstrap_silver_dataset([pending], [trace])[0]
+
+        self.assertEqual(len(approved.supporting_spans), 2)
+        self.assertEqual(approved.required_facts, [first.content])
+
+    def test_silver_bootstrap_marks_empty_retrieval_as_insufficient_evidence(self) -> None:
+        pending = approved_answerable_case().model_copy(
+            update={
+                "annotation_status": AnnotationStatus.PENDING,
+                "relevant_parent_ids": [],
+                "supporting_spans": [],
+                "required_facts": [],
+                "reference_answer": None,
+            }
+        )
+        trace = RAGEvaluationTrace(
+            run_id="run-001",
+            case_id=pending.case_id,
+            query=pending.query,
+            statuses=TraceStageStatuses(
+                query_understanding="ready",
+                retrieval="empty",
+                rerank="empty",
+                context="empty",
+            ),
+        )
+
+        approved = bootstrap_silver_dataset([pending], [trace])[0]
+        report = evaluate_traces(
+            [approved, approved_answerable_case().model_copy(update={"case_id": "ok"})],
+            [
+                trace,
+                RAGEvaluationTrace(
+                    run_id="run-001",
+                    case_id="ok",
+                    query="晴天的创作背景",
+                    statuses=TraceStageStatuses(
+                        query_understanding="ready",
+                        retrieval="success",
+                        rerank="success",
+                        context="success",
+                    ),
+                    candidate_pool=[final_context("parent-2")],
+                    reranked_context=[final_context("parent-2")],
+                    final_context=[final_context("parent-2")],
+                ),
+            ],
+        )
+
+        self.assertEqual(approved.expected_outcome, ExpectedOutcome.INSUFFICIENT_EVIDENCE)
+        self.assertFalse(approved.relevant_parent_ids)
+        self.assertEqual(report.expected_outcome_accuracy, 1)
+
+    def test_silver_bootstrap_approves_needs_input_without_evidence(self) -> None:
+        pending = RAGEvaluationCase(
+            case_id="rag-v0-050",
+            query="那他呢",
+            expected_outcome=ExpectedOutcome.NEEDS_INPUT,
+        )
+        trace = RAGEvaluationTrace(
+            run_id="run-001",
+            case_id=pending.case_id,
+            query=pending.query,
+            statuses=TraceStageStatuses(query_understanding="needs_input"),
+        )
+
+        approved = bootstrap_silver_dataset([pending], [trace])[0]
+
+        self.assertEqual(approved.annotation_status, AnnotationStatus.APPROVED)
+        self.assertFalse(approved.supporting_spans)
+        self.assertIsNone(approved.reference_answer)
+
+    def test_silver_bootstrap_rejects_missing_trace(self) -> None:
+        pending = RAGEvaluationCase(
+            case_id="rag-v0-050",
+            query="那他呢",
+            expected_outcome=ExpectedOutcome.NEEDS_INPUT,
+        )
+
+        with self.assertRaisesRegex(ValueError, "traces missing cases:rag-v0-050"):
+            bootstrap_silver_dataset([pending], [])
+
     def test_config_locks_current_pipeline_boundaries(self) -> None:
         config = load_evaluation_config()
 

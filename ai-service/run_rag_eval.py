@@ -13,6 +13,7 @@ from app.rag.evaluation import (
     build_deepeval_payloads,
     build_annotation_review_markdown,
     build_pending_dataset,
+    bootstrap_silver_dataset,
     evaluate_traces,
     load_evaluation_cases,
     load_evaluation_config,
@@ -46,6 +47,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate canonical evaluation traces",
     )
     validate_traces.add_argument("--traces", type=Path, required=True)
+
+    bootstrap = subparsers.add_parser(
+        "bootstrap-silver",
+        help="Bulk-approve a non-Gold Silver set from persisted final contexts",
+    )
+    bootstrap.add_argument("--dataset", type=Path, required=True)
+    bootstrap.add_argument("--traces", type=Path, required=True)
+    bootstrap.add_argument("--output", type=Path, required=True)
+    bootstrap.add_argument("--max-evidence", type=int, default=3)
 
     evaluate = subparsers.add_parser(
         "evaluate",
@@ -115,6 +125,26 @@ def _execute(args: argparse.Namespace, root: Path) -> dict[str, object]:
             "command": args.command,
             "trace_count": len(traces),
             "run_ids": sorted({item.run_id for item in traces}),
+        }
+    if args.command == "bootstrap-silver":
+        cases = load_evaluation_cases(_resolve(args.dataset, root))
+        traces = load_evaluation_traces(_resolve(args.traces, root))
+        approved = bootstrap_silver_dataset(
+            cases,
+            traces,
+            max_evidence=args.max_evidence,
+        )
+        output = _resolve(args.output, root)
+        write_jsonl(output, approved)
+        outcomes = Counter(item.expected_outcome.value for item in approved)
+        return {
+            "status": "success",
+            "command": args.command,
+            "case_count": len(approved),
+            "annotation_status": AnnotationStatus.APPROVED.value,
+            "label_tier": "silver",
+            "expected_outcomes": dict(outcomes),
+            "output": str(output),
         }
     if args.command == "export-deepeval":
         cases = load_evaluation_cases(_resolve(args.dataset, root))

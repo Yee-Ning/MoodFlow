@@ -168,7 +168,10 @@ def _outcome_matches(case: RAGEvaluationCase, trace: RAGEvaluationTrace) -> bool
     if case.expected_outcome is ExpectedOutcome.NEEDS_INPUT:
         return trace.statuses.query_understanding == "needs_input"
     if case.expected_outcome is ExpectedOutcome.INSUFFICIENT_EVIDENCE:
-        return trace.statuses.generation == "insufficient_evidence"
+        return trace.statuses.generation == "insufficient_evidence" or (
+            trace.statuses.generation == "not_run"
+            and trace.statuses.retrieval == "empty"
+        )
     return (
         trace.statuses.query_understanding == "ready"
         and trace.statuses.retrieval not in {"empty", "unavailable", "not_run"}

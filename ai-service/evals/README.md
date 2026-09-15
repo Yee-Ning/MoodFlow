@@ -90,6 +90,22 @@ Qwen Reranker。采集器会在批次开始前加载并预热本地 Reranker，�
 `rag_eval_v0.approved.jsonl`；不要覆盖 pending 原始骨架。答案生成尚未接入时，可以先完成
 Top40/Top12/Top8 的确定性评测；只有 `actual_answer` 和引用齐备后才能导出 Judge 用例。
 
+若项目负责人明确选择整批通过、暂不逐条审核，可从已落盘的真实 Trace 生成一份单独的
+Silver 数据集：
+
+```powershell
+.\.venv\Scripts\python.exe run_rag_eval.py bootstrap-silver `
+  --dataset evals\datasets\rag_eval_v0.pending.jsonl `
+  --traces evals\artifacts\baseline-v0\traces.jsonl `
+  --output evals\datasets\rag_eval_v0.approved.silver.jsonl `
+  --max-evidence 3
+```
+
+该命令会给每条记录增加 `silver_bootstrap_v0` 和 `user_bulk_approved` 标签：成功检索的
+样本从最终 Top8 的前三个 Parent 抽取可追溯证据；空检索样本标为
+`insufficient_evidence`；追问样本不生成伪证据。Silver 标签由当前链路结果反向生成，
+因此只能用于合同、血缘和回归冒烟，不能当作独立人工 Gold 证明检索质量。
+
 ## DeepEval Judge
 
 先由主工程把审批后的标签和真实 Trace 转成依赖无关的交换文件：
