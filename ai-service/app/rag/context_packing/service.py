@@ -57,18 +57,20 @@ class EvidenceSufficiencyGate:
                 reasons=["candidate_pool_empty"],
             )
 
-        covered_subqueries = list(
-            dict.fromkeys(
-                evidence.subquery_id
-                for candidate in candidates
-                for evidence in candidate.channel_evidence
-            )
+        candidate_subqueries = set(
+            evidence.subquery_id
+            for candidate in candidates
+            for evidence in candidate.channel_evidence
         )
-        covered_entities = list(
-            dict.fromkeys(
-                entity_id for candidate in candidates for entity_id in candidate.entity_ids
-            )
+        candidate_entities = set(
+            entity_id for candidate in candidates for entity_id in candidate.entity_ids
         )
+        covered_subqueries = [
+            item for item in required_subqueries if item in candidate_subqueries
+        ]
+        covered_entities = [
+            item for item in required_entities if item in candidate_entities
+        ]
         missing_subqueries = [
             item for item in required_subqueries if item not in covered_subqueries
         ]

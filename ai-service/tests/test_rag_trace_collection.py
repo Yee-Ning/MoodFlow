@@ -66,6 +66,10 @@ class FailingGraph:
         raise RuntimeError("query service unavailable")
 
 
+def failing_context_adapter(result, plan):
+    raise RuntimeError("context adapter unavailable")
+
+
 class RAGTraceCollectionTests(unittest.IsolatedAsyncioTestCase):
     async def test_collector_keeps_a_failed_case_in_the_batch(self) -> None:
         case = RAGEvaluationCase(
@@ -85,7 +89,36 @@ class RAGTraceCollectionTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(traces), 1)
         self.assertEqual(traces[0].statuses.query_understanding, "failed")
-        self.assertEqual(traces[0].warnings, ["trace_collection_failed:RuntimeError"])
+        self.assertEqual(
+            traces[0].warnings,
+            ["trace_collection_failed:query_understanding:RuntimeError"],
+        )
+
+    async def test_collector_attributes_context_failure_to_context_stage(self) -> None:
+        case = RAGEvaluationCase(
+            case_id="rag-v0-001",
+            query="歌曲《晴天》的创作背景是什么？",
+            expected_outcome=ExpectedOutcome.ANSWERABLE,
+        )
+
+        traces = await collect_evaluation_traces(
+            [case],
+            run_id="failed-context-run",
+            graph=run_rag_trace_collection.create_query_understanding_graph(),
+            retriever=CandidateRetriever(),
+            context_adapter=failing_context_adapter,
+            reranker=ReversingReranker(),
+            context_token_budget=6_000,
+        )
+
+        self.assertEqual(traces[0].statuses.query_understanding, "ready")
+        self.assertEqual(traces[0].statuses.retrieval, "success")
+        self.assertEqual(traces[0].statuses.rerank, "success")
+        self.assertEqual(traces[0].statuses.context, "failed")
+        self.assertEqual(
+            traces[0].warnings,
+            ["trace_collection_failed:context:RuntimeError"],
+        )
 
     def test_cli_collects_ready_and_needs_input_then_exports_review_pack(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

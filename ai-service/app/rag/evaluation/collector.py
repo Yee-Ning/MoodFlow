@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 from langchain_core.messages import HumanMessage
@@ -48,6 +49,13 @@ ContextAdapter = Callable[
 ]
 
 
+@dataclass(frozen=True, slots=True)
+class _TraceStageFailure(Exception):
+    stage: str
+    statuses: TraceStageStatuses
+    cause: Exception
+
+
 async def collect_evaluation_traces(
     cases: Sequence[RAGEvaluationCase],
     *,
@@ -78,13 +86,25 @@ async def collect_evaluation_traces(
                 )
             )
         except Exception as exc:  # noqa: BLE001 - batch artifact must retain failures
+            failure = (
+                exc
+                if isinstance(exc, _TraceStageFailure)
+                else _TraceStageFailure(
+                    stage="unknown",
+                    statuses=TraceStageStatuses(query_understanding="failed"),
+                    cause=exc,
+                )
+            )
             traces.append(
                 RAGEvaluationTrace(
                     run_id=run_id,
                     case_id=case.case_id,
                     query=case.query,
-                    statuses=TraceStageStatuses(query_understanding="failed"),
-                    warnings=[f"trace_collection_failed:{type(exc).__name__}"],
+                    statuses=failure.statuses,
+                    warnings=[
+                        "trace_collection_failed:"
+                        f"{failure.stage}:{type(failure.cause).__name__}"
+                    ],
                 )
             )
     return traces
@@ -102,19 +122,26 @@ async def _collect_case(
     context_version: str,
     context_token_budget: int,
 ) -> RAGEvaluationTrace:
-    output = await graph.ainvoke(
-        create_query_understanding_state(
-            case.query,
-            messages=[HumanMessage(content=case.query)],
-            routing_context=PlayerContext(
-                has_current_song=case.current_song_id is not None,
-                current_song_id=case.current_song_id,
-            ),
+    try:
+        output = await graph.ainvoke(
+            create_query_understanding_state(
+                case.query,
+                messages=[HumanMessage(content=case.query)],
+                routing_context=PlayerContext(
+                    has_current_song=case.current_song_id is not None,
+                    current_song_id=case.current_song_id,
+                ),
+            )
         )
-    )
-    understanding = output.get("result")
-    if not isinstance(understanding, QueryUnderstandingResult):
-        raise ValueError("query understanding graph returned an invalid result")
+        understanding = output.get("result")
+        if not isinstance(understanding, QueryUnderstandingResult):
+            raise ValueError("query understanding graph returned an invalid result")
+    except Exception as exc:  # noqa: BLE001 - annotate the failing pipeline stage
+        raise _TraceStageFailure(
+            stage="query_understanding",
+            statuses=TraceStageStatuses(query_understanding="failed"),
+            cause=exc,
+        ) from exc
     if understanding.status is QueryUnderstandingStatus.NEEDS_INPUT:
         return RAGEvaluationTrace(
             run_id=run_id,
@@ -124,12 +151,51 @@ async def _collect_case(
         )
     plan = understanding.search_plan
     if plan is None:
-        raise ValueError("ready query understanding omitted its search plan")
-    retrieval = await retriever.retrieve(plan)
-    rerank = await reranker.rerank(plan, retrieval) if reranker is not None else None
+        raise _TraceStageFailure(
+            stage="query_understanding",
+            statuses=TraceStageStatuses(query_understanding="failed"),
+            cause=ValueError("ready query understanding omitted its search plan"),
+        )
+    try:
+        retrieval = await retriever.retrieve(plan)
+    except Exception as exc:  # noqa: BLE001 - annotate the failing pipeline stage
+        raise _TraceStageFailure(
+            stage="retrieval",
+            statuses=TraceStageStatuses(
+                query_understanding="ready",
+                retrieval="failed",
+            ),
+            cause=exc,
+        ) from exc
+    try:
+        rerank = (
+            await reranker.rerank(plan, retrieval) if reranker is not None else None
+        )
+    except Exception as exc:  # noqa: BLE001 - annotate the failing pipeline stage
+        raise _TraceStageFailure(
+            stage="rerank",
+            statuses=TraceStageStatuses(
+                query_understanding="ready",
+                retrieval=retrieval.status.value,
+                rerank="failed",
+            ),
+            cause=exc,
+        ) from exc
     ranked: RetrievalResult | RerankResult = rerank or retrieval
-    documents = context_adapter(ranked, plan)
-    final_context = _build_final_context(documents, retrieval)
+    try:
+        documents = context_adapter(ranked, plan)
+        final_context = _build_final_context(documents, retrieval)
+    except Exception as exc:  # noqa: BLE001 - annotate the failing pipeline stage
+        raise _TraceStageFailure(
+            stage="context",
+            statuses=TraceStageStatuses(
+                query_understanding="ready",
+                retrieval=retrieval.status.value,
+                rerank=rerank.status.value if rerank is not None else "not_run",
+                context="failed",
+            ),
+            cause=exc,
+        ) from exc
     return build_evaluation_trace(
         run_id=run_id,
         case_id=case.case_id,

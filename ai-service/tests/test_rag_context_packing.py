@@ -155,6 +155,27 @@ class RAGContextPackingTests(unittest.TestCase):
         )
         self.assertEqual(pack.sufficiency.missing_entity_ids, ["artist:jj_lin"])
 
+    def test_gate_only_records_entity_coverage_required_by_the_query(self) -> None:
+        result = RetrievalResult(
+            status=RetrievalStatus.SUCCESS,
+            plan_id=plan().plan_id,
+            index_profile=profile(),
+            candidates=[
+                candidate(index).model_copy(
+                    update={"entity_ids": [f"artist:unrelated-{index}"]}
+                )
+                for index in range(1, 26)
+            ],
+        )
+
+        pack = ContextPackBuilder().build(plan(), result)
+
+        self.assertEqual(
+            pack.sufficiency.status,
+            EvidenceSufficiencyStatus.SUFFICIENT,
+        )
+        self.assertEqual(pack.sufficiency.covered_entity_ids, [])
+
     def test_pack_removes_near_duplicate_evidence(self) -> None:
         first = candidate(1)
         duplicate = candidate(2).model_copy(
