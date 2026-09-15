@@ -20,11 +20,14 @@ python -m venv .venv-eval
 
 ## 数据与 Trace 合同
 
-- `datasets/rag_eval_v0.pending.jsonl`：来自项目现有 Query Understanding Golden Set
-  的 50 条待审样本；45 条预期可回答、5 条预期追问。
+- `datasets/rag_eval_v0.pending.jsonl`：从项目现有 Query Understanding Golden Set 中按
+  `jay_chou_corpus_v1` 范围筛选的 50 条待审样本；45 条预期可回答、5 条预期追问。
+  独立的蔡依林、林俊杰、王菲、张学友、G.E.M.、S.H.E 等查询不进入主 Baseline；只有
+  明确涉及周杰伦合作或对比的跨艺人问题才保留。
 - `annotation_status=pending` 表示不能进入正式指标或 LLM Judge。
 - 可回答样本改为 `approved` 前，必须人工填写 `relevant_parent_ids`、
   `supporting_spans`、`required_facts` 和 `reference_answer`。
+- `notes` 是可选审核备注，不要求填写；仅记录歧义、排除原因或特殊判定。
 - `RAGEvaluationTrace` 同时保存 Top40、Top12、最终上下文、引用、版本和耗时。
   合同会阻止跨阶段来源不一致、重复排名和引用未知 Parent。
 

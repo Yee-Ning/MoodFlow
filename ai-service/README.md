@@ -815,7 +815,9 @@ Query Outcome、Retrieval、Rerank、Context Recall、引用合法性与预算�
 
 首批 50 条真实项目查询位于 `evals/datasets/rag_eval_v0.pending.jsonl`。所有样本均为
 `pending`，其中不包含伪造的 Parent 标签、证据或参考答案；至少 30 条完成人工复核并改为
-`approved` 后，才形成可用于质量结论的 Baseline V0。
+`approved` 后，才形成可用于质量结论的 Baseline V0。该集合严格限定在
+`jay_chou_corpus_v1`：非周杰伦独立查询不会混入主 Baseline，跨艺人查询只有在明确涉及
+周杰伦合作或对比时才保留。
 
 DeepEval 仅用于显式/nightly LLM-as-a-Judge。由于其依赖版本与在线 Hugging Face 栈冲突，
 Runner 固定放在独立 `.venv-eval` 中，主工程先导出框架无关 JSONL，再由隔离进程计算

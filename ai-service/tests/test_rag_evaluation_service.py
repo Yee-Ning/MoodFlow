@@ -165,6 +165,30 @@ class RAGEvaluationServiceTests(unittest.TestCase):
         )
         self.assertTrue(all(not item.relevant_parent_ids for item in cases))
         self.assertTrue(all(item.reference_answer is None for item in cases))
+        self.assertTrue(all(item.notes is None for item in cases))
+        self.assertTrue(all("jay_chou_corpus_v1" in item.tags for item in cases))
+        queries = {item.query for item in cases}
+        self.assertTrue(
+            {
+                "周杰伦与蔡依林合作过什么",
+                "比较周杰伦和林俊杰的音乐风格",
+                "王力宏和周杰伦的音乐风格异同",
+            }.issubset(queries)
+        )
+        self.assertTrue(
+            {
+                "蔡依林的音乐风格",
+                "林俊杰受到过哪些影响",
+                "王菲的音乐生涯介绍",
+                "歌手张学友的音乐故事",
+                "G.E.M. 的音乐风格如何",
+                "歌手S.H.E有什么代表性风格",
+                "对比蔡依林与张惠妹的影响力",
+                "Taylor Swift 的音乐风格",
+                "华语音乐的发展有什么特点",
+                "说点有意思的音乐故事",
+            }.isdisjoint(queries)
+        )
 
     def test_cli_generates_and_validates_pending_dataset(self) -> None:
         fixture = Path(__file__).parent / "fixtures/query_understanding/golden_v1.jsonl"

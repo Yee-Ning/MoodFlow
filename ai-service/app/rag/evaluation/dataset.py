@@ -7,9 +7,44 @@ from pathlib import Path
 
 from app.rag.evaluation.models import ExpectedOutcome, RAGEvaluationCase
 
+JAY_CHOU_CORPUS_SCOPE = "jay_chou_corpus_v1"
+JAY_CHOU_CORE_ENTITY_IDS = frozenset(
+    {
+        "artist:jay_chou",
+        "album:eight_dimensions",
+        "album:fantasy",
+        "album:greatest_works_of_art",
+        "album:novembers_chopin",
+        "album:qi_li_xiang",
+        "album:still_fantasy",
+        "album:the_era",
+        "album:ye_hui_mei",
+        "song:blue_and_white_porcelain",
+        "song:dragon_fist",
+        "song:east_wind_breaks",
+        "song:far_away",
+        "song:fearless",
+        "song:love_confession",
+        "song:nocturne",
+        "song:nunchucks",
+        "song:qi_li_xiang",
+        "song:qing_tian",
+        "song:rice_field",
+    }
+)
+JAY_CHOU_CONTEXT_CASES = frozenset(
+    {
+        "七里香的创作背景",
+        "霍元甲的创作背景",
+        "这首歌的创作背景",
+        "这张专辑有什么故事",
+        "他的音乐风格有什么变化",
+    }
+)
+
 
 def build_pending_dataset(source: Path, *, limit: int = 50) -> list[RAGEvaluationCase]:
-    """Create pending cases without inventing retrieval or answer labels."""
+    """Create a Jay Chou corpus-scoped set without inventing answer labels."""
     if limit < 1:
         raise ValueError("evaluation dataset limit must be positive")
     try:
@@ -28,9 +63,10 @@ def build_pending_dataset(source: Path, *, limit: int = 50) -> list[RAGEvaluatio
             raise ValueError(f"evaluation_seed_invalid:{source}:{line_number}")
         if payload.get("status") not in {"ready", "needs_input"}:
             raise ValueError(f"evaluation_seed_status_invalid:{source}:{line_number}")
-        rows.append(payload)
+        if _is_jay_chou_corpus_case(payload):
+            rows.append(payload)
     if len(rows) < limit:
-        raise ValueError(f"evaluation_seed_too_small:{source}:{len(rows)}<{limit}")
+        raise ValueError(f"evaluation_scoped_seed_too_small:{source}:{len(rows)}<{limit}")
 
     needs_input = [item for item in rows if item["status"] == "needs_input"]
     reserved_needs_input = needs_input[: min(5, limit)]
@@ -67,6 +103,17 @@ def _build_case(index: int, payload: dict[str, object]) -> RAGEvaluationCase:
         ),
         expected_entity_ids=entity_ids,
         expected_query_types=query_types,
-        tags=["query_understanding_v1", payload["status"]],
-        notes="待人工补充并复核检索证据、事实和参考答案。",
+        tags=[JAY_CHOU_CORPUS_SCOPE, "query_understanding_v1", payload["status"]],
+    )
+
+
+def _is_jay_chou_corpus_case(payload: dict[str, object]) -> bool:
+    query = str(payload["query"])
+    if payload["status"] == "needs_input":
+        return query in JAY_CHOU_CONTEXT_CASES
+    entity_ids = payload.get("entity_ids", [])
+    return isinstance(entity_ids, list) and bool(
+        JAY_CHOU_CORE_ENTITY_IDS.intersection(
+            item for item in entity_ids if isinstance(item, str)
+        )
     )
