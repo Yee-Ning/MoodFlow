@@ -171,6 +171,7 @@ class RAGTraceCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(status, 0)
             payload = json.loads(collection_stdout.getvalue())
             self.assertEqual(payload["query_understanding_statuses"], {"ready": 1, "needs_input": 1})
+            self.assertEqual(payload["context_statuses"], {"success": 1, "not_run": 1})
             traces = load_evaluation_traces(traces_path)
             self.assertEqual(traces[0].statuses.retrieval, "success")
             self.assertEqual(traces[0].statuses.rerank, "success")

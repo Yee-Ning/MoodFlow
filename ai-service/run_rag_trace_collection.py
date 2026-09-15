@@ -102,17 +102,24 @@ async def _run(
         context_token_budget=retrieval_config.selection.worldline_token_budget,
     )
     write_jsonl(output, traces)
-    query_statuses = Counter(item.statuses.query_understanding for item in traces)
-    retrieval_statuses = Counter(item.statuses.retrieval for item in traces)
-    failed_count = query_statuses["failed"]
+    stage_statuses = {
+        stage: Counter(getattr(item.statuses, stage) for item in traces)
+        for stage in ("query_understanding", "retrieval", "rerank", "context")
+    }
+    failed_count = sum(
+        any(getattr(item.statuses, stage) == "failed" for stage in stage_statuses)
+        for item in traces
+    )
     return {
         "status": "partial" if failed_count else "success",
         "run_id": args.run_id,
         "case_count": len(cases),
         "trace_count": len(traces),
         "failed_count": failed_count,
-        "query_understanding_statuses": dict(query_statuses),
-        "retrieval_statuses": dict(retrieval_statuses),
+        **{
+            f"{stage}_statuses": dict(counts)
+            for stage, counts in stage_statuses.items()
+        },
         "rerank_enabled": args.rerank,
         "output": str(output),
     }
