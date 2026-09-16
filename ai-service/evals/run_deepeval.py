@@ -23,6 +23,12 @@ SEMANTIC_METRICS = (
 )
 ENV_NAME_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]{1,99}$")
 
+# ``python evals/run_deepeval.py`` puts only the ``evals`` directory on
+# ``sys.path``. Keep the documented direct-script entry point able to import
+# the project-local ``evals.judges`` package without requiring PYTHONPATH.
+if __package__ in {None, ""} and str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 
 class JudgeProviderConfig(TypedDict):
     provider: str

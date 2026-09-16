@@ -1,5 +1,7 @@
 import json
 import os
+import runpy
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -104,6 +106,17 @@ def generated_trace() -> RAGEvaluationTrace:
 
 
 class RAGDeepEvalAdapterTests(unittest.TestCase):
+    def test_direct_script_execution_adds_project_root_to_import_path(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        script_path = project_root / "evals" / "run_deepeval.py"
+        original_path = sys.path[:]
+        try:
+            sys.path[:] = [str(script_path.parent), *sys.path[1:]]
+            runpy.run_path(str(script_path), run_name="deepeval_direct_script_test")
+            self.assertIn(str(project_root), sys.path)
+        finally:
+            sys.path[:] = original_path
+
     def test_export_maps_reviewed_evidence_and_final_context(self) -> None:
         payloads = build_deepeval_payloads([approved_case()], [generated_trace()])
 
