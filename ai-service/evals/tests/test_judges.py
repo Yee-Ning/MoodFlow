@@ -5,6 +5,7 @@ from unittest.mock import patch
 from pydantic import BaseModel
 
 from evals.judges import DeepSeekJudge, OpenAICompatibleJudge, create_judge
+from evals.run_deepeval import run_judge
 
 
 class Verdict(BaseModel):
@@ -86,6 +87,42 @@ class JudgeAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, Verdict(score=1))
         self.assertEqual(self.async_completions.requests[0]["model"], "judge-model")
+
+    def test_runner_records_provider_errors_instead_of_aborting_batch(self) -> None:
+        judge = self.create()
+        expected = SimpleNamespace(test_results=[])
+        payload = {
+            "case_id": "rag-v0-001",
+            "input": "question",
+            "actual_output": "answer",
+            "expected_output": "reference",
+            "reference_context": ["reference evidence"],
+            "retrieval_context": ["retrieved evidence"],
+            "metadata": {},
+            "tags": [],
+        }
+        with (
+            patch("evals.judges.create_judge", return_value=judge),
+            patch("deepeval.evaluate", return_value=expected) as evaluate,
+        ):
+            result = run_judge(
+                [payload],
+                judge_config={
+                    "provider": "deepseek",
+                    "model": "judge-model",
+                    "base_url": "https://judge.example/v1",
+                    "api_key_env": "JUDGE_KEY",
+                    "api_key_env_file": None,
+                    "temperature": 0.0,
+                    "timeout_seconds": 30,
+                },
+                api_key="fixture-secret",
+                threshold=0.5,
+                max_concurrent=2,
+            )
+
+        self.assertIs(result, expected)
+        self.assertTrue(evaluate.call_args.kwargs["error_config"].ignore_errors)
 
 
 if __name__ == "__main__":

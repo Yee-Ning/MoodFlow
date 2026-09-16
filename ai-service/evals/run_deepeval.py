@@ -300,7 +300,12 @@ def run_judge(
     os.environ.setdefault("DEEPEVAL_DISABLE_DOTENV", "1")
     try:
         from deepeval import evaluate
-        from deepeval.evaluate import AsyncConfig, CacheConfig, DisplayConfig
+        from deepeval.evaluate import (
+            AsyncConfig,
+            CacheConfig,
+            DisplayConfig,
+            ErrorConfig,
+        )
         from deepeval.metrics import (
             AnswerRelevancyMetric,
             ContextualPrecisionMetric,
@@ -356,6 +361,10 @@ def run_judge(
                 inspect_after_run=False,
             ),
             cache_config=CacheConfig(write_cache=False, use_cache=False),
+            error_config=ErrorConfig(
+                ignore_errors=True,
+                skip_on_missing_params=False,
+            ),
         )
     except Exception as exc:  # noqa: BLE001 - sanitize provider/SDK failures
         raise RuntimeError(f"deepeval_judge_failed:{type(exc).__name__}") from exc
