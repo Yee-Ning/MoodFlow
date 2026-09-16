@@ -282,3 +282,21 @@ Coverage、Citation Presence / Validity、Token Budget Compliance 和状态门�
 RAGAS 暂不加入 V0。等至少 30 条样本完成双人复核并得到稳定 Baseline 后，再将相同交换
 文件接入 RAGAS 做二次交叉验证；它不替换项目自己的确定性门禁，也不与 DeepEval 同时成为
 唯一质量裁决者。
+
+## Gold V2 检索/精排投影对照
+
+`run_retrieval_eval.py` 的 `--rag-gold` 只读取已审批且 `answerable`、带相关 Parent 的
+案例；`needs_input` 不计入召回分母。用 `--no-llm` 关闭 Query Understanding 的 LLM
+fallback，用 `--rerank` 才加载本地精排模型。示例（V3）：
+
+```powershell
+.\.venv\Scripts\python.exe run_retrieval_eval.py `
+  --dataset evals\datasets\rag_eval_gold_v2.ai_assisted_source_review.jsonl `
+  --rag-gold --no-llm --rerank `
+  --index-manifest data\indexing\v1\knowledge-v2-8608ffc2fa72e441\v3\index_build_manifest.json `
+  --output evals\reports\gold_v2_retrieval_v3_rerank.json
+```
+
+同命令将 manifest 换成 release 根目录下的 V2 版本即可得到同 Gold 对照；本次结果及
+限制见 `reports/gold_v2_retrieval_projection_v3_20260916.md`。这些命令不调用 DeepEval
+或付费 Judge。V3 完整构建应使用本地模型缓存并单独的版本目录，不覆盖旧 V2 产物。

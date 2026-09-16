@@ -10,6 +10,11 @@ from typing import Callable, Protocol, Sequence
 
 from langchain_core.messages import HumanMessage
 
+from app.rag.evaluation import (
+    AnnotationStatus,
+    ExpectedOutcome,
+    load_evaluation_cases as load_rag_cases,
+)
 from app.rag.query_understanding import (
     QueryUnderstandingService,
     QueryUnderstandingStatus,
@@ -70,6 +75,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--index-manifest", type=Path, required=True)
     parser.add_argument(
+        "--rag-gold",
+        action="store_true",
+        help="Read approved answerable cases from the canonical RAG Gold dataset",
+    )
+    parser.add_argument(
         "--no-llm",
         action="store_true",
         help="Use deterministic rules only for query-type analysis",
@@ -79,6 +89,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Evaluate Qwen3 Top-12 reranking against the same labels",
     )
+    parser.add_argument("--output", type=Path, help="Write the deterministic report as JSON")
     return parser
 
 
@@ -93,7 +104,24 @@ async def _run(
         if args.dataset.is_absolute()
         else project_root / args.dataset
     ).resolve()
-    cases = load_evaluation_cases(dataset_path)
+    if args.rag_gold:
+        cases = [
+            RetrievalEvaluationCase(
+                case_id=item.case_id,
+                query=item.query,
+                relevant_parent_ids=item.relevant_parent_ids,
+                current_song_id=item.current_song_id,
+                tags=item.tags,
+            )
+            for item in load_rag_cases(dataset_path)
+            if item.annotation_status is AnnotationStatus.APPROVED
+            and item.expected_outcome is ExpectedOutcome.ANSWERABLE
+            and item.relevant_parent_ids
+        ]
+        if not cases:
+            raise ValueError("retrieval_gold_has_no_answerable_labeled_cases")
+    else:
+        cases = load_evaluation_cases(dataset_path)
     retrieval_config = load_retrieval_config()
     binding = load_retrieval_index_binding(
         project_root,
@@ -146,6 +174,7 @@ async def _run(
         "index_profile": binding.profile.model_dump(mode="json"),
         "case_statuses": case_statuses,
         "metrics": report.model_dump(mode="json"),
+        "dataset": str(dataset_path),
     }
     if reranker is not None:
         rerank_config = load_rerank_config()
@@ -220,6 +249,10 @@ def main(
                 rerank_factory,
             )
         )
+        if args.output is not None:
+            output_path = args.output if args.output.is_absolute() else project_root / args.output
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(payload + "\n", encoding="utf-8")
     except (OSError, RuntimeError, ValueError) as exc:
         print(
             json.dumps(

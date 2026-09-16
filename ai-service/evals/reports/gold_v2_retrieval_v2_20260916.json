@@ -1,0 +1,186 @@
+{
+  "pipeline_stage": "candidate_pool_evaluation",
+  "candidate_pool_limit": 40,
+  "rerank_applied": false,
+  "index_profile": {
+    "collection_name": "music_knowledge_v2_8608ffc2fa72e441_v1_v2_v2",
+    "source_release_id": "knowledge-v2-8608ffc2fa72e441",
+    "index_schema_version": "v2",
+    "projection_version": "v2",
+    "registry_version": "v3"
+  },
+  "case_statuses": {
+    "rag-v0-001": "success",
+    "rag-v0-002": "success",
+    "rag-v0-003": "success",
+    "rag-v0-004": "success",
+    "rag-v0-006": "success",
+    "rag-v0-007": "success",
+    "rag-v0-023": "success",
+    "rag-v0-024": "success",
+    "rag-v0-026": "success",
+    "rag-v0-034": "success",
+    "rag-v0-036": "success",
+    "rag-v0-037": "success",
+    "rag-v0-038": "success",
+    "rag-v0-039": "success",
+    "rag-v0-040": "success",
+    "rag-v0-042": "success",
+    "rag-v0-043": "success",
+    "rag-v0-044": "success"
+  },
+  "metrics": {
+    "case_count": 18,
+    "recall_at_20": 0.5240740740740741,
+    "recall_at_40": 0.5981481481481481,
+    "mrr_at_10": 0.20714285714285716,
+    "ndcg_at_10": 0.19130471632777898,
+    "cases": [
+      {
+        "case_id": "rag-v0-001",
+        "retrieved_count": 40,
+        "recall_at_20": 0.3333333333333333,
+        "recall_at_40": 0.3333333333333333,
+        "reciprocal_rank_at_10": 0.0,
+        "ndcg_at_10": 0.0
+      },
+      {
+        "case_id": "rag-v0-002",
+        "retrieved_count": 40,
+        "recall_at_20": 0.5,
+        "recall_at_40": 0.75,
+        "reciprocal_rank_at_10": 0.2,
+        "ndcg_at_10": 0.15101961822780524
+      },
+      {
+        "case_id": "rag-v0-003",
+        "retrieved_count": 40,
+        "recall_at_20": 0.5,
+        "recall_at_40": 0.5,
+        "reciprocal_rank_at_10": 0.5,
+        "ndcg_at_10": 0.4144299250118475
+      },
+      {
+        "case_id": "rag-v0-004",
+        "retrieved_count": 40,
+        "recall_at_20": 0.3333333333333333,
+        "recall_at_40": 0.6666666666666666,
+        "reciprocal_rank_at_10": 0.0,
+        "ndcg_at_10": 0.0
+      },
+      {
+        "case_id": "rag-v0-006",
+        "retrieved_count": 6,
+        "recall_at_20": 0.0,
+        "recall_at_40": 0.0,
+        "reciprocal_rank_at_10": 0.0,
+        "ndcg_at_10": 0.0
+      },
+      {
+        "case_id": "rag-v0-007",
+        "retrieved_count": 40,
+        "recall_at_20": 1.0,
+        "recall_at_40": 1.0,
+        "reciprocal_rank_at_10": 0.2,
+        "ndcg_at_10": 0.23719771276929622
+      },
+      {
+        "case_id": "rag-v0-023",
+        "retrieved_count": 40,
+        "recall_at_20": 1.0,
+        "recall_at_40": 1.0,
+        "reciprocal_rank_at_10": 1.0,
+        "ndcg_at_10": 0.7039180890341347
+      },
+      {
+        "case_id": "rag-v0-024",
+        "retrieved_count": 40,
+        "recall_at_20": 1.0,
+        "recall_at_40": 1.0,
+        "reciprocal_rank_at_10": 0.2,
+        "ndcg_at_10": 0.430624116386567
+      },
+      {
+        "case_id": "rag-v0-026",
+        "retrieved_count": 16,
+        "recall_at_20": 1.0,
+        "recall_at_40": 1.0,
+        "reciprocal_rank_at_10": 0.14285714285714285,
+        "ndcg_at_10": 0.3333333333333333
+      },
+      {
+        "case_id": "rag-v0-034",
+        "retrieved_count": 40,
+        "recall_at_20": 0.5,
+        "recall_at_40": 1.0,
+        "reciprocal_rank_at_10": 0.0,
+        "ndcg_at_10": 0.0
+      },
+      {
+        "case_id": "rag-v0-036",
+        "retrieved_count": 40,
+        "recall_at_20": 0.5,
+        "recall_at_40": 0.5,
+        "reciprocal_rank_at_10": 1.0,
+        "ndcg_at_10": 0.3903800499921017
+      },
+      {
+        "case_id": "rag-v0-037",
+        "retrieved_count": 26,
+        "recall_at_20": 0.3333333333333333,
+        "recall_at_40": 0.3333333333333333,
+        "reciprocal_rank_at_10": 0.14285714285714285,
+        "ndcg_at_10": 0.15642624200758548
+      },
+      {
+        "case_id": "rag-v0-038",
+        "retrieved_count": 40,
+        "recall_at_20": 1.0,
+        "recall_at_40": 1.0,
+        "reciprocal_rank_at_10": 0.2,
+        "ndcg_at_10": 0.42177340954886444
+      },
+      {
+        "case_id": "rag-v0-039",
+        "retrieved_count": 34,
+        "recall_at_20": 0.0,
+        "recall_at_40": 0.0,
+        "reciprocal_rank_at_10": 0.0,
+        "ndcg_at_10": 0.0
+      },
+      {
+        "case_id": "rag-v0-040",
+        "retrieved_count": 40,
+        "recall_at_20": 0.6,
+        "recall_at_40": 0.6,
+        "reciprocal_rank_at_10": 0.0,
+        "ndcg_at_10": 0.0
+      },
+      {
+        "case_id": "rag-v0-042",
+        "retrieved_count": 40,
+        "recall_at_20": 0.3333333333333333,
+        "recall_at_40": 0.3333333333333333,
+        "reciprocal_rank_at_10": 0.0,
+        "ndcg_at_10": 0.0
+      },
+      {
+        "case_id": "rag-v0-043",
+        "retrieved_count": 40,
+        "recall_at_20": 0.0,
+        "recall_at_40": 0.25,
+        "reciprocal_rank_at_10": 0.0,
+        "ndcg_at_10": 0.0
+      },
+      {
+        "case_id": "rag-v0-044",
+        "retrieved_count": 18,
+        "recall_at_20": 0.5,
+        "recall_at_40": 0.5,
+        "reciprocal_rank_at_10": 0.14285714285714285,
+        "ndcg_at_10": 0.20438239758848611
+      }
+    ]
+  },
+  "dataset": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\evals\\datasets\\rag_eval_gold_v2.ai_assisted_source_review.jsonl"
+}

@@ -74,6 +74,57 @@ class ReversingReranker:
 
 
 class RunRetrievalEvaluationTests(unittest.TestCase):
+    def test_cli_reads_only_approved_answerable_gold_and_writes_report(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            dataset = root / "gold.jsonl"
+            answerable = {
+                "case_id": "rag-001",
+                "query": "晴天创作背景",
+                "expected_outcome": "answerable",
+                "annotation_status": "approved",
+                "relevant_parent_ids": ["parent-a"],
+                "supporting_spans": [
+                    {"parent_id": "parent-a", "exact_text": "一段证据"}
+                ],
+                "required_facts": ["一项事实"],
+                "reference_answer": "一段回答",
+            }
+            needs_input = {
+                "case_id": "rag-002",
+                "query": "七里香的创作背景",
+                "expected_outcome": "needs_input",
+                "annotation_status": "approved",
+            }
+            dataset.write_text(
+                "\n".join(json.dumps(item, ensure_ascii=False) for item in (answerable, needs_input)),
+                encoding="utf-8",
+            )
+            report_path = root / "report.json"
+            output = StringIO()
+            with (
+                patch.object(
+                    run_retrieval_eval,
+                    "load_retrieval_index_binding",
+                    return_value=SimpleNamespace(profile=profile()),
+                ),
+                redirect_stdout(output),
+            ):
+                status = run_retrieval_eval.main(
+                    [
+                        "--dataset", str(dataset),
+                        "--index-manifest", "manifest.json",
+                        "--rag-gold", "--no-llm",
+                        "--output", str(report_path),
+                    ],
+                    project_root=root,
+                    retrieval_factory=lambda binding, config: EmptyRetriever(),
+                )
+
+            self.assertEqual(status, 0)
+            self.assertEqual(json.loads(output.getvalue())["metrics"]["case_count"], 1)
+            self.assertEqual(json.loads(report_path.read_text(encoding="utf-8"))["metrics"]["case_count"], 1)
+
     def test_cli_scores_empty_candidate_pool_without_applying_rerank(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
