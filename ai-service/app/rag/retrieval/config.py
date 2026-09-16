@@ -85,6 +85,7 @@ class SelectionConfig(BaseModel):
     default_document_cap: int = Field(default=2, ge=1, le=20)
     broad_document_cap: int = Field(default=4, ge=1, le=20)
     source_cap: int = Field(default=5, ge=1, le=50)
+    exploratory_entity_fallback_below: int = Field(default=12, ge=0, le=40)
     worldline_document_limit: int = Field(default=8, ge=6, le=10)
     worldline_token_budget: int = Field(default=6_000, ge=500, le=30_000)
 

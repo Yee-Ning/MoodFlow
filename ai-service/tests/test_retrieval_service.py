@@ -2,7 +2,11 @@ import unittest
 from types import SimpleNamespace
 
 from app.rag.query_understanding.models import (
+    FilterCondition,
+    FilterGroup,
+    FilterOperator,
     IndexProfile,
+    MetadataField,
     MetadataFilter,
     QueryType,
     QueryVariant,
@@ -140,11 +144,117 @@ class FakeBackend:
         return results
 
 
+class SparseEntityBackend(FakeBackend):
+    def __init__(self, *, fail_relaxed: bool = False) -> None:
+        super().__init__()
+        self.fail_relaxed = fail_relaxed
+        self.filters = []
+
+    async def search(self, binding, legs, query_filter, *, limit):
+        self.search_calls += 1
+        self.filters.append(query_filter)
+        if query_filter is None and self.fail_relaxed:
+            raise RuntimeError("relaxed search failed")
+        hits = [RawSearchHit("p1", 0.9, payload("child-1", "parent-1"))]
+        if query_filter is None:
+            hits.append(
+                RawSearchHit(
+                    "p2",
+                    0.8,
+                    payload("child-2", "parent-2", source_id="source-2"),
+                )
+            )
+        return [
+            LegSearchResult(leg=leg, hits=hits if index == 0 else [])
+            for index, leg in enumerate(legs)
+        ]
+
+
+def sparse_exploratory_plan() -> SearchPlan:
+    entity_filter = MetadataFilter(
+        root=FilterGroup(
+            operator="all",
+            children=[
+                FilterCondition(
+                    field=MetadataField.ENTITY_IDS,
+                    operator=FilterOperator.MATCH_ANY,
+                    value=["song:qing_tian"],
+                )
+            ],
+        )
+    )
+    return plan().model_copy(
+        update={
+            "query_types": [QueryType.EXPLORATORY],
+            "metadata_filter": entity_filter,
+        }
+    )
+
+
 def binding() -> SimpleNamespace:
     return SimpleNamespace(profile=profile())
 
 
 class HybridRetrievalServiceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_sparse_exploratory_entity_filter_recovers_broad_candidates(self) -> None:
+        backend = SparseEntityBackend()
+        encoder = FakeEncoder()
+        service = HybridRetrievalService(binding(), encoder=encoder, backend=backend)
+
+        result = await service.retrieve(sparse_exploratory_plan())
+
+        self.assertEqual(result.status, RetrievalStatus.SUCCESS)
+        self.assertEqual([item.parent_id for item in result.candidates], ["parent-1", "parent-2"])
+        self.assertEqual(backend.search_calls, 2)
+        self.assertIsNotNone(backend.filters[0])
+        self.assertIsNone(backend.filters[1])
+        self.assertEqual(encoder.calls, 1)
+        self.assertIn("exploratory_entity_filter_relaxed_for_recall", result.warnings)
+
+    async def test_relaxed_query_failure_keeps_strict_results(self) -> None:
+        backend = SparseEntityBackend(fail_relaxed=True)
+        service = HybridRetrievalService(
+            binding(), encoder=FakeEncoder(), backend=backend
+        )
+
+        result = await service.retrieve(sparse_exploratory_plan())
+
+        self.assertEqual(result.status, RetrievalStatus.SUCCESS)
+        self.assertEqual([item.parent_id for item in result.candidates], ["parent-1"])
+        self.assertIn("exploratory_entity_fallback_failed", result.warnings)
+
+    async def test_entity_fallback_does_not_relax_fact_or_other_constraints(self) -> None:
+        for test_plan in (
+            sparse_exploratory_plan().model_copy(update={"query_types": [QueryType.FACT]}),
+            sparse_exploratory_plan().model_copy(
+                update={
+                    "metadata_filter": MetadataFilter(
+                        root=FilterGroup(
+                            operator="all",
+                            children=[
+                                *sparse_exploratory_plan().metadata_filter.root.children,
+                                FilterCondition(
+                                    field=MetadataField.YEAR,
+                                    operator=FilterOperator.RANGE,
+                                    gte=2004,
+                                    lte=2004,
+                                ),
+                            ],
+                        )
+                    )
+                }
+            ),
+        ):
+            backend = SparseEntityBackend()
+            service = HybridRetrievalService(
+                binding(), encoder=FakeEncoder(), backend=backend
+            )
+
+            result = await service.retrieve(test_plan)
+
+            self.assertEqual(result.status, RetrievalStatus.SUCCESS)
+            self.assertEqual(backend.search_calls, 1)
+
     async def test_hybrid_retrieval_collapses_parent_and_tracks_channels(self) -> None:
         backend = FakeBackend(
             hits=[

@@ -735,6 +735,7 @@ SearchPlan (candidate_top_k=40)
   -> application-side weighted RRF (k=60; raw channel scores are not mixed)
   -> exact negative-term post filter
   -> Parent collapse + document/source caps + recall refill
+  -> sparse exploratory single-entity queries only: bounded entity-filter fallback
   -> Candidate Pool Top 40
   -> Qwen/Qwen3-Reranker-0.6B (primary Child evidence only)
   -> Rerank Top 12
@@ -755,6 +756,11 @@ Qdrant 服务版本、named-vector schema、Dense 维度、BM25 vector、point c
 `SearchPlan.index_profile` 与不可变 Manifest 完全一致；不一致会 fail closed。Dense 编码
 失败时可降级到 BM25，全部通道失败则返回类型化 `unavailable`，不会把内部异常或不完整
 结果伪装成成功。
+
+探索类查询若仅有一个实体 ID 硬过滤、且严格检索少于 12 个候选，会在保持原候选优先的
+前提下补查一次无实体过滤的候选；事实、关系、比较查询及含时间/语言等复合约束的查询
+不会触发。补查失败保留严格检索结果，结果中的 warning 标明已放宽或失败。该策略只
+提高稀疏实体标注下的候选召回，不能代替后续精排与证据验证。
 
 Reranker 使用固定 revision 的 `Qwen/Qwen3-Reranker-0.6B`，通过 `yes/no` logits 直接打分，
 附带简短的 music-domain instruction。单条输入 1024 token 是 MoodFlow 为延迟和显存设置的

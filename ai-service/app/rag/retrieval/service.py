@@ -5,7 +5,14 @@ from __future__ import annotations
 import asyncio
 from time import perf_counter
 
-from app.rag.query_understanding.models import SearchChannel, SearchPlan
+from app.rag.query_understanding.models import (
+    FilterCondition,
+    FilterOperator,
+    MetadataField,
+    QueryType,
+    SearchChannel,
+    SearchPlan,
+)
 
 from .binding import RetrievalIndexBinding
 from .config import RetrievalConfig, load_retrieval_config
@@ -141,6 +148,43 @@ class HybridRetrievalService:
         )
         warnings.extend(selection_warnings)
         processing_ms = (perf_counter() - processing_started) * 1_000
+        if _needs_exploratory_entity_fallback(plan, len(candidates), self.config):
+            fallback_started = perf_counter()
+            try:
+                relaxed_results = await self.backend.search(
+                    self.binding,
+                    legs,
+                    None,
+                    limit=per_leg_limit,
+                )
+            except Exception:
+                qdrant_ms += (perf_counter() - fallback_started) * 1_000
+                warnings.append("exploratory_entity_fallback_failed")
+            else:
+                qdrant_ms += (perf_counter() - fallback_started) * 1_000
+                fallback_processing_started = perf_counter()
+                if any(item.error_code is None for item in relaxed_results):
+                    relaxed_fused = weighted_rrf(
+                        relaxed_results, k=self.config.fusion.rrf_k
+                    )[:fused_limit]
+                    relaxed_candidates, relaxed_warnings = select_candidates(
+                        relaxed_fused, plan, self.config
+                    )
+                    seen = {item.parent_id for item in candidates}
+                    for item in relaxed_candidates:
+                        if len(candidates) >= min(
+                            plan.candidate_top_k,
+                            self.config.selection.maximum_candidates,
+                        ):
+                            break
+                        if item.parent_id not in seen:
+                            candidates.append(item)
+                            seen.add(item.parent_id)
+                    warnings.extend(relaxed_warnings)
+                    warnings.append("exploratory_entity_filter_relaxed_for_recall")
+                else:
+                    warnings.append("exploratory_entity_fallback_failed")
+                processing_ms += (perf_counter() - fallback_processing_started) * 1_000
         if candidates:
             status = RetrievalStatus.DEGRADED if failed else RetrievalStatus.SUCCESS
         else:
@@ -192,3 +236,28 @@ class HybridRetrievalService:
                 total_ms=(perf_counter() - started_at) * 1_000,
             ),
         )
+
+
+def _needs_exploratory_entity_fallback(
+    plan: SearchPlan,
+    candidate_count: int,
+    config: RetrievalConfig,
+) -> bool:
+    threshold = config.selection.exploratory_entity_fallback_below
+    if (
+        threshold == 0
+        or candidate_count >= min(threshold, plan.candidate_top_k)
+        or QueryType.EXPLORATORY not in plan.query_types
+    ):
+        return False
+    root = plan.metadata_filter.root
+    if root is None or root.operator != "all" or len(root.children) != 1:
+        return False
+    only = root.children[0]
+    return (
+        isinstance(only, FilterCondition)
+        and only.field is MetadataField.ENTITY_IDS
+        and only.operator is FilterOperator.MATCH_ANY
+        and isinstance(only.value, list)
+        and len(only.value) == 1
+    )

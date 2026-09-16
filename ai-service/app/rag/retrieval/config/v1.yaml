@@ -45,5 +45,6 @@ selection:
   default_document_cap: 2
   broad_document_cap: 4
   source_cap: 5
+  exploratory_entity_fallback_below: 12
   worldline_document_limit: 8
   worldline_token_budget: 6000
