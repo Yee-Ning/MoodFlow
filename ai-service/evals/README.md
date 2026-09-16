@@ -129,26 +129,39 @@ Silver 数据集：
   --output evals\artifacts\baseline-v0\deepeval-cases.silver.jsonl
 ```
 
-再在隔离环境运行 Judge。非敏感默认值保存在
-`evals/config/judge_v0.json`：`gpt-5.4-mini`、阈值 `0.5`、并发数 `4`。
-CLI 参数优先于 `DEEPEVAL_JUDGE_MODEL`，环境变量又优先于配置文件。Runner 会设置
-`DEEPEVAL_DISABLE_DOTENV=1`，避免 DeepEval 自动读取 MoodFlow 的运行时 `.env`；模型凭证
-必须通过 Judge 进程环境注入，不写入数据集或 Trace。
+再在隔离环境运行 Judge。V0 默认配置保存在 `evals/config/judge_v0.json`，使用项目现有
+DeepSeek 接口：Provider `deepseek`、模型 `deepseek-v4-flash`、Base URL
+`https://api.deepseek.com`、密钥变量名 `LLM_API_KEY`、temperature `0`。Runner 通过
+自定义 `DeepSeekJudge(DeepEvalBaseLLM)` 访问 OpenAI-compatible Chat Completions，
+不会实例化 OpenAI Judge。
+
+默认配置允许从项目根目录 `.env` 中只读取配置指定的 `LLM_API_KEY`；环境中已存在同名
+变量时优先使用环境值。密钥值不会写入配置、数据集、Trace 或报告。DeepEval 自身的隐式
+dotenv 读取仍由 `DEEPEVAL_DISABLE_DOTENV=1` 关闭。
 
 ```powershell
-$env:OPENAI_API_KEY="<在本机或 CI Secret 中设置，不要写入仓库>"
 .\.venv-eval\Scripts\python.exe evals\run_deepeval.py `
   --config evals\config\judge_v0.json `
   --dataset evals\artifacts\baseline-v0\deepeval-cases.silver.jsonl `
   --output evals\artifacts\baseline-v0\deepeval-report.json
 ```
 
-`gpt-5.4-mini` 用于日常和 Nightly 回归；发布候选若要提高裁判强度，可通过
-`--model gpt-5.4-2026-03-05` 使用固定快照复核。Judge 报告会保存实际模型、阈值和
-并发数，便于同配置横向比较；不要混用不同 Judge 模型的绝对分数。
+Provider、模型、Base URL、API Key 环境变量名、temperature 和 timeout 均可在 JSON
+配置，也可分别由 `--provider`、`--model`、`--base-url`、`--api-key-env`、
+`--temperature`、`--timeout-seconds` 覆盖。对应环境覆盖为
+`DEEPEVAL_JUDGE_PROVIDER`、`DEEPEVAL_JUDGE_MODEL`、`DEEPEVAL_JUDGE_BASE_URL`、
+`DEEPEVAL_JUDGE_API_KEY_ENV`、`DEEPEVAL_JUDGE_TEMPERATURE` 和
+`DEEPEVAL_JUDGE_TIMEOUT_SECONDS`。未来切换 OpenAI 或其他兼容接口时使用 Provider
+`openai` / `openai_compatible` 并提供对应 URL 与密钥变量即可，不需要修改指标代码。
 
-V0 Judge 指标为 Faithfulness、Answer Relevancy、Contextual Precision 和 Contextual
-Recall。阈值 0.5 只是首轮观测值；在第一份人工审批 Baseline 产生前，不用它阻断发布。
+Judge 报告会保存实际 Provider、模型、Base URL、密钥变量名、temperature、阈值和并发
+数，但绝不保存密钥值；不要混用不同 Judge 配置的绝对分数。
+
+V0 只有 Faithfulness、Answer Relevancy、Contextual Precision 和 Contextual Recall
+调用 Judge。Recall@K、MRR、nDCG、最终 Context Coverage、Citation Presence / Validity、
+Token Budget Compliance 和状态门禁全部由主环境 `run_rag_eval.py evaluate` 确定性计算，
+不会导入 DeepEval、读取 Judge Key 或发起网络请求。阈值 0.5 只是首轮观测值；在第一份
+人工审批 Baseline 产生前，不用它阻断发布。
 
 ## 分层执行策略
 

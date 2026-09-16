@@ -1,10 +1,12 @@
 import json
+import os
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import run_rag_eval
 from app.rag.evaluation import (
@@ -22,9 +24,28 @@ from app.rag.evaluation import (
 from evals.run_deepeval import (
     load_judge_config,
     load_payloads,
+    resolve_api_key,
+    resolve_judge_config,
     run_judge,
     serialize_result,
 )
+
+
+def judge_config_payload() -> dict:
+    return {
+        "schema_version": "v0",
+        "judge": {
+            "provider": "deepseek",
+            "model": "deepseek-v4-flash",
+            "base_url": "https://api.deepseek.com",
+            "api_key_env": "LLM_API_KEY",
+            "api_key_env_file": ".env",
+            "temperature": 0.0,
+            "timeout_seconds": 60,
+        },
+        "threshold": 0.5,
+        "max_concurrent": 4,
+    }
 
 
 def approved_case() -> RAGEvaluationCase:
@@ -160,47 +181,109 @@ class RAGDeepEvalAdapterTests(unittest.TestCase):
         self.assertEqual(result["case_count"], 1)
         self.assertEqual(loaded[0]["case_id"], "rag-v0-001")
 
+    def test_deterministic_evaluation_never_invokes_judge(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            dataset = root / "dataset.jsonl"
+            traces = root / "traces.jsonl"
+            report = root / "report.json"
+            write_jsonl(dataset, [approved_case()])
+            write_jsonl(traces, [generated_trace()])
+            output = StringIO()
+            with (
+                patch(
+                    "evals.run_deepeval.run_judge",
+                    side_effect=AssertionError("Judge must not run"),
+                ) as judge,
+                redirect_stdout(output),
+            ):
+                status = run_rag_eval.main(
+                    [
+                        "evaluate",
+                        "--dataset",
+                        str(dataset),
+                        "--traces",
+                        str(traces),
+                        "--output",
+                        str(report),
+                    ],
+                    project_root=root,
+                )
+
+            payload = json.loads(output.getvalue())
+
+        judge.assert_not_called()
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["report"]["citation_id_validity"], 1)
+
     def test_runner_validates_judge_configuration_before_loading_dependency(self) -> None:
-        with self.assertRaisesRegex(ValueError, "model is required"):
-            run_judge([], model="", threshold=0.5, max_concurrent=4)
         with self.assertRaisesRegex(ValueError, "threshold"):
-            run_judge([], model="fixture", threshold=2, max_concurrent=4)
+            run_judge(
+                [],
+                judge_config=judge_config_payload()["judge"],
+                api_key="fixture-key",
+                threshold=2,
+                max_concurrent=4,
+            )
 
     def test_runner_loads_versioned_non_secret_judge_config(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "judge.json"
             path.write_text(
-                json.dumps(
-                    {
-                        "schema_version": "v0",
-                        "model": "gpt-5.4-mini",
-                        "threshold": 0.5,
-                        "max_concurrent": 4,
-                        "api_key_env": "OPENAI_API_KEY",
-                    }
-                ),
+                json.dumps(judge_config_payload()),
                 encoding="utf-8",
             )
 
             config = load_judge_config(path)
 
-        self.assertEqual(config["model"], "gpt-5.4-mini")
-        self.assertEqual(config["api_key_env"], "OPENAI_API_KEY")
+        self.assertEqual(config["judge"]["provider"], "deepseek")
+        self.assertEqual(config["judge"]["model"], "deepseek-v4-flash")
+        self.assertEqual(config["judge"]["api_key_env"], "LLM_API_KEY")
+        self.assertEqual(config["judge"]["temperature"], 0)
+
+    def test_runner_resolves_openai_compatible_provider_overrides(self) -> None:
+        config = judge_config_payload()
+        with patch.dict(
+            "os.environ",
+            {
+                "DEEPEVAL_JUDGE_PROVIDER": "openai_compatible",
+                "DEEPEVAL_JUDGE_MODEL": "future-judge",
+                "DEEPEVAL_JUDGE_BASE_URL": "https://judge.example/v1",
+                "DEEPEVAL_JUDGE_API_KEY_ENV": "FUTURE_JUDGE_KEY",
+                "DEEPEVAL_JUDGE_TEMPERATURE": "0.2",
+            },
+            clear=False,
+        ):
+            resolved = resolve_judge_config(config)
+
+        self.assertEqual(resolved["provider"], "openai_compatible")
+        self.assertEqual(resolved["model"], "future-judge")
+        self.assertEqual(resolved["base_url"], "https://judge.example/v1")
+        self.assertEqual(resolved["api_key_env"], "FUTURE_JUDGE_KEY")
+        self.assertEqual(resolved["temperature"], 0.2)
+
+    def test_api_key_can_come_from_configured_env_file_without_leaking(self) -> None:
+        config = judge_config_payload()["judge"]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / ".env").write_text(
+                "LLM_API_KEY=fixture-secret\nUNRELATED_SECRET=do-not-load\n",
+                encoding="utf-8",
+            )
+            with patch.dict("os.environ", {}, clear=True):
+                api_key = resolve_api_key(config, root)
+
+                self.assertNotIn("UNRELATED_SECRET", os.environ)
+
+        self.assertEqual(api_key, "fixture-secret")
 
     def test_runner_rejects_secret_values_in_judge_config(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "judge.json"
+            payload = judge_config_payload()
+            payload["judge"]["api_key"] = "must-not-be-stored-here"
             path.write_text(
-                json.dumps(
-                    {
-                        "schema_version": "v0",
-                        "model": "gpt-5.4-mini",
-                        "threshold": 0.5,
-                        "max_concurrent": 4,
-                        "api_key_env": "OPENAI_API_KEY",
-                        "api_key": "must-not-be-stored-here",
-                    }
-                ),
+                json.dumps(payload),
                 encoding="utf-8",
             )
 

@@ -1,3 +1,4 @@
 # Install only in .venv-eval. DeepEval 4.2.x constrains click below the version
 # required by MoodFlow's Hugging Face runtime, so it must not enter requirements.txt.
 deepeval==4.2.3
+openai==3.14.0

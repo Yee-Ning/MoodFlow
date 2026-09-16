@@ -1,7 +1,14 @@
 {
   "schema_version": "v0",
-  "model": "gpt-5.4-mini",
+  "judge": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "api_key_env": "LLM_API_KEY",
+    "api_key_env_file": ".env",
+    "temperature": 0.0,
+    "timeout_seconds": 60
+  },
   "threshold": 0.5,
-  "max_concurrent": 4,
-  "api_key_env": "OPENAI_API_KEY"
+  "max_concurrent": 4
 }

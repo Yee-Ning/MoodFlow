@@ -1,37 +1,58 @@
-"""Run LLM-as-a-Judge metrics in an isolated DeepEval environment."""
+"""Run semantic LLM-as-a-Judge metrics in an isolated DeepEval environment."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
+import sys
 from pathlib import Path
 from typing import Any, Sequence, TypedDict
+from urllib.parse import urlsplit
 
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent / "config" / "judge_v0.json"
+SUPPORTED_PROVIDERS = frozenset({"deepseek", "openai", "openai_compatible"})
+SEMANTIC_METRICS = (
+    "Faithfulness",
+    "Answer Relevancy",
+    "Contextual Precision",
+    "Contextual Recall",
+)
+ENV_NAME_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]{1,99}$")
+
+
+class JudgeProviderConfig(TypedDict):
+    provider: str
+    model: str
+    base_url: str
+    api_key_env: str
+    api_key_env_file: str | None
+    temperature: float
+    timeout_seconds: float
 
 
 class JudgeConfig(TypedDict):
     schema_version: str
-    model: str
+    judge: JudgeProviderConfig
     threshold: float
     max_concurrent: int
-    api_key_env: str
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run explicit DeepEval Judge metrics over exported MoodFlow cases"
+        description="Run semantic DeepEval metrics with a configurable Judge provider"
     )
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
-    parser.add_argument(
-        "--model",
-        help=(
-            "DeepEval judge model; CLI overrides DEEPEVAL_JUDGE_MODEL and config"
-        ),
-    )
+    parser.add_argument("--provider")
+    parser.add_argument("--model")
+    parser.add_argument("--base-url")
+    parser.add_argument("--api-key-env")
+    parser.add_argument("--temperature", type=float)
+    parser.add_argument("--timeout-seconds", type=float)
     parser.add_argument("--threshold", type=float)
     parser.add_argument("--max-concurrent", type=int)
     parser.add_argument("--output", type=Path)
@@ -43,35 +64,148 @@ def load_judge_config(path: Path) -> JudgeConfig:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"deepeval_config_invalid:{path}") from exc
-    required = {
+    if not isinstance(payload, dict) or set(payload) != {
         "schema_version",
-        "model",
+        "judge",
         "threshold",
         "max_concurrent",
-        "api_key_env",
-    }
-    if not isinstance(payload, dict) or set(payload) != required:
+    }:
         raise ValueError(f"deepeval_config_invalid:{path}")
+    judge = payload.get("judge")
+    if not isinstance(judge, dict) or set(judge) != {
+        "provider",
+        "model",
+        "base_url",
+        "api_key_env",
+        "api_key_env_file",
+        "temperature",
+        "timeout_seconds",
+    }:
+        raise ValueError(f"deepeval_config_invalid:{path}")
+    normalized = JudgeConfig(
+        schema_version=payload.get("schema_version"),
+        judge=JudgeProviderConfig(
+            provider=judge.get("provider"),
+            model=judge.get("model"),
+            base_url=judge.get("base_url"),
+            api_key_env=judge.get("api_key_env"),
+            api_key_env_file=judge.get("api_key_env_file"),
+            temperature=judge.get("temperature"),
+            timeout_seconds=judge.get("timeout_seconds"),
+        ),
+        threshold=payload.get("threshold"),
+        max_concurrent=payload.get("max_concurrent"),
+    )
+    _validate_config(normalized, path)
+    return normalized
+
+
+def _validate_config(config: JudgeConfig, path: Path) -> None:
+    judge = config["judge"]
+    env_file = judge["api_key_env_file"]
     if (
-        payload.get("schema_version") != "v0"
-        or not isinstance(payload.get("model"), str)
-        or not payload["model"].strip()
-        or not isinstance(payload.get("threshold"), (int, float))
-        or isinstance(payload.get("threshold"), bool)
-        or not 0 <= payload["threshold"] <= 1
-        or not isinstance(payload.get("max_concurrent"), int)
-        or isinstance(payload.get("max_concurrent"), bool)
-        or not 1 <= payload["max_concurrent"] <= 20
-        or payload.get("api_key_env") != "OPENAI_API_KEY"
+        config["schema_version"] != "v0"
+        or judge["provider"] not in SUPPORTED_PROVIDERS
+        or not isinstance(judge["model"], str)
+        or not judge["model"].strip()
+        or not _valid_base_url(judge["base_url"])
+        or not isinstance(judge["api_key_env"], str)
+        or ENV_NAME_PATTERN.fullmatch(judge["api_key_env"]) is None
+        or not (env_file is None or isinstance(env_file, str) and env_file.strip())
+        or not _number_between(judge["temperature"], 0, 2)
+        or not _number_between(judge["timeout_seconds"], 1, 300)
+        or not _number_between(config["threshold"], 0, 1)
+        or not isinstance(config["max_concurrent"], int)
+        or isinstance(config["max_concurrent"], bool)
+        or not 1 <= config["max_concurrent"] <= 20
     ):
         raise ValueError(f"deepeval_config_invalid:{path}")
-    return JudgeConfig(
-        schema_version="v0",
-        model=payload["model"],
-        threshold=float(payload["threshold"]),
-        max_concurrent=payload["max_concurrent"],
-        api_key_env=payload["api_key_env"],
+
+
+def _number_between(value: Any, minimum: float, maximum: float) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and minimum <= value <= maximum
     )
+
+
+def _valid_base_url(value: Any) -> bool:
+    if not isinstance(value, str) or not value.strip():
+        return False
+    parsed = urlsplit(value)
+    return (
+        parsed.scheme in {"http", "https"}
+        and parsed.hostname is not None
+        and parsed.username is None
+        and parsed.password is None
+        and not parsed.query
+        and not parsed.fragment
+    )
+
+
+def resolve_judge_config(
+    config: JudgeConfig,
+    *,
+    provider: str | None = None,
+    model: str | None = None,
+    base_url: str | None = None,
+    api_key_env: str | None = None,
+    temperature: float | None = None,
+    timeout_seconds: float | None = None,
+) -> JudgeProviderConfig:
+    current = config["judge"]
+    resolved = JudgeProviderConfig(
+        provider=(
+            provider
+            or os.getenv("DEEPEVAL_JUDGE_PROVIDER")
+            or current["provider"]
+        ),
+        model=model or os.getenv("DEEPEVAL_JUDGE_MODEL") or current["model"],
+        base_url=(
+            base_url or os.getenv("DEEPEVAL_JUDGE_BASE_URL") or current["base_url"]
+        ),
+        api_key_env=(
+            api_key_env
+            or os.getenv("DEEPEVAL_JUDGE_API_KEY_ENV")
+            or current["api_key_env"]
+        ),
+        api_key_env_file=current["api_key_env_file"],
+        temperature=_configured_float(
+            temperature,
+            "DEEPEVAL_JUDGE_TEMPERATURE",
+            current["temperature"],
+        ),
+        timeout_seconds=_configured_float(
+            timeout_seconds,
+            "DEEPEVAL_JUDGE_TIMEOUT_SECONDS",
+            current["timeout_seconds"],
+        ),
+    )
+    candidate = JudgeConfig(
+        schema_version=config["schema_version"],
+        judge=resolved,
+        threshold=config["threshold"],
+        max_concurrent=config["max_concurrent"],
+    )
+    _validate_config(candidate, DEFAULT_CONFIG_PATH)
+    return resolved
+
+
+def _configured_float(
+    cli_value: float | None,
+    env_name: str,
+    default: float,
+) -> float:
+    if cli_value is not None:
+        return cli_value
+    raw = os.getenv(env_name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except ValueError as exc:
+        raise ValueError(f"deepeval_environment_invalid:{env_name}") from exc
 
 
 def load_payloads(path: Path) -> list[dict[str, Any]]:
@@ -127,25 +261,36 @@ def load_payloads(path: Path) -> list[dict[str, Any]]:
     return payloads
 
 
+def resolve_api_key(config: JudgeProviderConfig, project_root: Path) -> str:
+    env_name = config["api_key_env"]
+    api_key = os.getenv(env_name)
+    env_file = config["api_key_env_file"]
+    if not api_key and env_file:
+        from dotenv import dotenv_values
+
+        selected = Path(env_file)
+        selected = selected if selected.is_absolute() else project_root / selected
+        values = dotenv_values(selected.resolve())
+        api_key = values.get(env_name)
+    if not isinstance(api_key, str) or not api_key.strip():
+        raise ValueError(f"{env_name} is required in the Judge process environment")
+    return api_key
+
+
 def run_judge(
     payloads: Sequence[dict[str, Any]],
     *,
-    model: str,
+    judge_config: JudgeProviderConfig,
+    api_key: str,
     threshold: float,
     max_concurrent: int,
 ) -> Any:
-    if not model or not model.strip():
-        raise ValueError("DeepEval judge model is required")
     if not 0 <= threshold <= 1:
         raise ValueError("DeepEval threshold must be between 0 and 1")
     if not 1 <= max_concurrent <= 20:
         raise ValueError("DeepEval maximum concurrency must be between 1 and 20")
-    if model.startswith("gpt-") and not os.getenv("OPENAI_API_KEY"):
-        raise ValueError(
-            "OPENAI_API_KEY is required in the Judge process environment"
-        )
 
-    # Avoid reading MoodFlow's runtime .env in the isolated evaluation process.
+    _ensure_utf8_console()
     os.environ.setdefault("DEEPEVAL_DISABLE_DOTENV", "1")
     try:
         from deepeval import evaluate
@@ -157,11 +302,20 @@ def run_judge(
             FaithfulnessMetric,
         )
         from deepeval.test_case import LLMTestCase
+        from evals.judges import create_judge
     except ImportError as exc:
         raise RuntimeError(
             "DeepEval is unavailable; install evals/requirements.txt in .venv-eval"
         ) from exc
 
+    judge = create_judge(
+        provider=judge_config["provider"],
+        model=judge_config["model"],
+        base_url=judge_config["base_url"],
+        api_key=api_key,
+        temperature=judge_config["temperature"],
+        timeout_seconds=judge_config["timeout_seconds"],
+    )
     test_cases = [
         LLMTestCase(
             name=payload["case_id"],
@@ -176,26 +330,36 @@ def run_judge(
         for payload in payloads
     ]
     metrics = [
-        FaithfulnessMetric(threshold=threshold, model=model),
-        AnswerRelevancyMetric(threshold=threshold, model=model),
-        ContextualPrecisionMetric(threshold=threshold, model=model),
-        ContextualRecallMetric(threshold=threshold, model=model),
+        FaithfulnessMetric(threshold=threshold, model=judge),
+        AnswerRelevancyMetric(threshold=threshold, model=judge),
+        ContextualPrecisionMetric(threshold=threshold, model=judge),
+        ContextualRecallMetric(threshold=threshold, model=judge),
     ]
-    return evaluate(
-        test_cases=test_cases,
-        metrics=metrics,
-        async_config=AsyncConfig(
-            run_async=True,
-            max_concurrent=max_concurrent,
-            throttle_value=0,
-        ),
-        display_config=DisplayConfig(
-            show_indicator=True,
-            print_results=True,
-            inspect_after_run=False,
-        ),
-        cache_config=CacheConfig(write_cache=False, use_cache=False),
-    )
+    try:
+        return evaluate(
+            test_cases=test_cases,
+            metrics=metrics,
+            async_config=AsyncConfig(
+                run_async=True,
+                max_concurrent=max_concurrent,
+                throttle_value=0,
+            ),
+            display_config=DisplayConfig(
+                show_indicator=False,
+                print_results=False,
+                inspect_after_run=False,
+            ),
+            cache_config=CacheConfig(write_cache=False, use_cache=False),
+        )
+    except Exception as exc:  # noqa: BLE001 - sanitize provider/SDK failures
+        raise RuntimeError(f"deepeval_judge_failed:{type(exc).__name__}") from exc
+
+
+def _ensure_utf8_console() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8")
 
 
 def serialize_result(result: Any) -> dict[str, Any]:
@@ -222,7 +386,9 @@ def serialize_result(result: Any) -> dict[str, Any]:
             }
         )
     return {
-        "status": "success" if cases and all(item["success"] for item in cases) else "failed",
+        "status": (
+            "success" if cases and all(item["success"] for item in cases) else "failed"
+        ),
         "case_count": len(cases),
         "passed_case_count": sum(bool(item["success"]) for item in cases),
         "cases": cases,
@@ -234,10 +400,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         config = load_judge_config(args.config.resolve())
-        model = args.model or os.getenv("DEEPEVAL_JUDGE_MODEL") or config["model"]
-        threshold = (
-            args.threshold if args.threshold is not None else config["threshold"]
+        judge_config = resolve_judge_config(
+            config,
+            provider=args.provider,
+            model=args.model,
+            base_url=args.base_url,
+            api_key_env=args.api_key_env,
+            temperature=args.temperature,
+            timeout_seconds=args.timeout_seconds,
         )
+        threshold = args.threshold if args.threshold is not None else config["threshold"]
         max_concurrent = (
             args.max_concurrent
             if args.max_concurrent is not None
@@ -246,16 +418,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         payloads = load_payloads(args.dataset.resolve())
         result = run_judge(
             payloads,
-            model=model,
+            judge_config=judge_config,
+            api_key=resolve_api_key(judge_config, PROJECT_ROOT),
             threshold=threshold,
             max_concurrent=max_concurrent,
         )
         payload = serialize_result(result)
         payload["judge"] = {
             "config_version": config["schema_version"],
-            "model": model,
+            "provider": judge_config["provider"],
+            "model": judge_config["model"],
+            "base_url": judge_config["base_url"],
+            "api_key_env": judge_config["api_key_env"],
+            "temperature": judge_config["temperature"],
+            "timeout_seconds": judge_config["timeout_seconds"],
             "threshold": threshold,
             "max_concurrent": max_concurrent,
+            "semantic_metrics": list(SEMANTIC_METRICS),
         }
         if args.output is not None:
             output = args.output.resolve()
