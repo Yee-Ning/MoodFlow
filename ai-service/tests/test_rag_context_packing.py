@@ -56,10 +56,10 @@ class RAGContextPackingTests(unittest.TestCase):
         config = load_context_packing_config()
 
         self.assertEqual(config.context_version, "v1")
-        self.assertEqual(config.selection.max_items, 4)
+        self.assertEqual(config.selection.max_items, 6)
         self.assertEqual(config.selection.token_budget, 3_000)
         self.assertEqual(config.compression.max_item_tokens, 900)
-        self.assertEqual(config.compression.neighbor_window, 2)
+        self.assertEqual(config.compression.neighbor_window, 0)
         self.assertEqual(config.selection.near_duplicate_threshold, 0.90)
 
     def test_pack_extracts_child_span_and_compresses_parent_with_lineage(self) -> None:
@@ -69,7 +69,7 @@ class RAGContextPackingTests(unittest.TestCase):
             pack.sufficiency.status,
             EvidenceSufficiencyStatus.SUFFICIENT,
         )
-        self.assertEqual(len(pack.items), 4)
+        self.assertEqual(len(pack.items), 6)
         self.assertEqual(pack.items[0].parent_id, "parent-1")
         self.assertIn(pack.items[0].exact_text, pack.items[0].context)
         self.assertEqual(pack.items[0].subquery_ids, ["q0:original"])

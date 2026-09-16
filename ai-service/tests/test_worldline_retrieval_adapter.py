@@ -197,7 +197,7 @@ class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(plan().candidate_top_k, 40)
         self.assertEqual(len(result.candidates), 40)
-        self.assertEqual(len(documents), 4)
+        self.assertEqual(len(documents), 6)
         self.assertEqual(service.calls, 1)
 
     async def test_rerank_shadow_observes_but_preserves_rrf_context_order(self) -> None:
@@ -221,7 +221,7 @@ class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(documents[0].id, "parent-1")
         self.assertEqual(documents[0].metadata["rerank_status"], "off")
 
-    async def test_rerank_on_reduces_top_40_to_top_12_before_adapter_top_4(
+    async def test_rerank_on_reduces_top_40_to_top_12_before_adapter_top_6(
         self,
     ) -> None:
         result = RetrievalResult(
@@ -242,7 +242,7 @@ class WorldLineRetrievalAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(result.candidates), 40)
         self.assertEqual(reranker.calls, 1)
-        self.assertEqual(len(documents), 4)
+        self.assertEqual(len(documents), 6)
         self.assertEqual(documents[0].id, "parent-40")
         self.assertEqual(documents[0].metadata["retrieval_rank"], 40)
         self.assertEqual(documents[0].metadata["rerank_rank"], 1)

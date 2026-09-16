@@ -1,0 +1,583 @@
+{
+  "schema_version": "v1",
+  "dataset_case_count": 30,
+  "tuning_case_count": 18,
+  "experiment_policy": "sequential_single_variable_scan",
+  "upstream_provenance": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\evals\\artifacts\\gold_v2_trace_v3_fallback_20260916.jsonl",
+  "warnings": [
+    "Top40/Top12、Parent 内容和阶段延迟来自固定真实 trace；原 trace 未持久化 subquery retrieval leg，5 个分解查询样本的 leg 归属按原 Context Pack 顺序恢复。"
+  ],
+  "baseline_experiment": "baseline-current",
+  "control_experiment": "control-fixed",
+  "recommended_experiment": "token_budget-3000",
+  "experiments": [
+    {
+      "parameters": {
+        "name": "baseline-current",
+        "varied_parameter": null,
+        "varied_value": null,
+        "context_top_k": 4,
+        "neighbor_window": 2,
+        "source_cap": 3,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.16666666666666666,
+        "final_context_recall": 0.2777777777777778,
+        "supporting_span_coverage": 0.2592592592592593,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 4.0,
+        "average_token_usage": 2119.222222222222,
+        "token_usage_p50": 2246.0,
+        "token_usage_p95": 2627.6,
+        "token_usage_p99": 2752.72,
+        "maximum_token_usage": 2784,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 16.558299997996073,
+          "p95_ms": 22.049949989741428,
+          "p99_ms": 24.767909994552603
+        },
+        "quality_score": 0.44907407407407407
+      }
+    },
+    {
+      "parameters": {
+        "name": "context_top_k-4",
+        "varied_parameter": "context_top_k",
+        "varied_value": 4,
+        "context_top_k": 4,
+        "neighbor_window": 2,
+        "source_cap": 3,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.16666666666666666,
+        "final_context_recall": 0.2777777777777778,
+        "supporting_span_coverage": 0.2592592592592593,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 4.0,
+        "average_token_usage": 2119.222222222222,
+        "token_usage_p50": 2246.0,
+        "token_usage_p95": 2627.6,
+        "token_usage_p99": 2752.72,
+        "maximum_token_usage": 2784,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 18.08175000769552,
+          "p95_ms": 25.521370002388718,
+          "p99_ms": 27.15187399924616
+        },
+        "quality_score": 0.44907407407407407
+      }
+    },
+    {
+      "parameters": {
+        "name": "context_top_k-6",
+        "varied_parameter": "context_top_k",
+        "varied_value": 6,
+        "context_top_k": 6,
+        "neighbor_window": 2,
+        "source_cap": 3,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.14537037037037037,
+        "final_context_recall": 0.3101851851851852,
+        "supporting_span_coverage": 0.2777777777777778,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 5.444444444444445,
+        "average_token_usage": 2651.277777777778,
+        "token_usage_p50": 2747.5,
+        "token_usage_p95": 2962.65,
+        "token_usage_p99": 2970.13,
+        "maximum_token_usage": 2972,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 17.40205000533024,
+          "p95_ms": 21.399900001415517,
+          "p99_ms": 21.86502000055043
+        },
+        "quality_score": 0.4481018518518518
+      }
+    },
+    {
+      "parameters": {
+        "name": "control-fixed",
+        "varied_parameter": "context_top_k",
+        "varied_value": 8,
+        "context_top_k": 8,
+        "neighbor_window": 2,
+        "source_cap": 3,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.13148148148148148,
+        "final_context_recall": 0.3101851851851852,
+        "supporting_span_coverage": 0.2777777777777778,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 6.055555555555555,
+        "average_token_usage": 2733.8888888888887,
+        "token_usage_p50": 2787.0,
+        "token_usage_p95": 2962.65,
+        "token_usage_p99": 2970.13,
+        "maximum_token_usage": 2972,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 15.746649994980544,
+          "p95_ms": 21.283785000559867,
+          "p99_ms": 24.142436998081386
+        },
+        "quality_score": 0.4432407407407407
+      }
+    },
+    {
+      "parameters": {
+        "name": "neighbor_window-0",
+        "varied_parameter": "neighbor_window",
+        "varied_value": 0,
+        "context_top_k": 6,
+        "neighbor_window": 0,
+        "source_cap": 3,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.15925925925925927,
+        "final_context_recall": 0.3564814814814815,
+        "supporting_span_coverage": 0.2916666666666667,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 5.888888888888889,
+        "average_token_usage": 2381.277777777778,
+        "token_usage_p50": 2455.0,
+        "token_usage_p95": 2814.6499999999996,
+        "token_usage_p99": 2903.7299999999996,
+        "maximum_token_usage": 2926,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 15.61135000520153,
+          "p95_ms": 19.672165001247777,
+          "p99_ms": 20.180193000560394
+        },
+        "quality_score": 0.4578240740740741
+      }
+    },
+    {
+      "parameters": {
+        "name": "neighbor_window-1",
+        "varied_parameter": "neighbor_window",
+        "varied_value": 1,
+        "context_top_k": 6,
+        "neighbor_window": 1,
+        "source_cap": 3,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.14814814814814814,
+        "final_context_recall": 0.32407407407407407,
+        "supporting_span_coverage": 0.2916666666666667,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 5.666666666666667,
+        "average_token_usage": 2582.277777777778,
+        "token_usage_p50": 2729.0,
+        "token_usage_p95": 2967.0,
+        "token_usage_p99": 2980.6,
+        "maximum_token_usage": 2984,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 15.822900000785012,
+          "p95_ms": 21.315590007725397,
+          "p99_ms": 24.695598007092478
+        },
+        "quality_score": 0.45393518518518516
+      }
+    },
+    {
+      "parameters": {
+        "name": "neighbor_window-2",
+        "varied_parameter": "neighbor_window",
+        "varied_value": 2,
+        "context_top_k": 6,
+        "neighbor_window": 2,
+        "source_cap": 3,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.14537037037037037,
+        "final_context_recall": 0.3101851851851852,
+        "supporting_span_coverage": 0.2777777777777778,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 5.444444444444445,
+        "average_token_usage": 2651.277777777778,
+        "token_usage_p50": 2747.5,
+        "token_usage_p95": 2962.65,
+        "token_usage_p99": 2970.13,
+        "maximum_token_usage": 2972,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 15.145850004046224,
+          "p95_ms": 21.57997500980855,
+          "p99_ms": 21.615674994682195
+        },
+        "quality_score": 0.4481018518518518
+      }
+    },
+    {
+      "parameters": {
+        "name": "source_cap-1",
+        "varied_parameter": "source_cap",
+        "varied_value": 1,
+        "context_top_k": 6,
+        "neighbor_window": 0,
+        "source_cap": 1,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.14259259259259258,
+        "final_context_recall": 0.3148148148148148,
+        "supporting_span_coverage": 0.2638888888888889,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 5.222222222222222,
+        "average_token_usage": 2357.8333333333335,
+        "token_usage_p50": 2548.0,
+        "token_usage_p95": 2957.25,
+        "token_usage_p99": 2967.45,
+        "maximum_token_usage": 2970,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 14.503950005746447,
+          "p95_ms": 19.576045008579968,
+          "p99_ms": 19.9883289913123
+        },
+        "quality_score": 0.44226851851851856
+      }
+    },
+    {
+      "parameters": {
+        "name": "source_cap-2",
+        "varied_parameter": "source_cap",
+        "varied_value": 2,
+        "context_top_k": 6,
+        "neighbor_window": 0,
+        "source_cap": 2,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.15740740740740738,
+        "final_context_recall": 0.3564814814814815,
+        "supporting_span_coverage": 0.2916666666666667,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 5.944444444444445,
+        "average_token_usage": 2395.4444444444443,
+        "token_usage_p50": 2519.0,
+        "token_usage_p95": 2914.1,
+        "token_usage_p99": 2923.62,
+        "maximum_token_usage": 2926,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 15.44050000666175,
+          "p95_ms": 19.463704993540887,
+          "p99_ms": 20.261140989896372
+        },
+        "quality_score": 0.45717592592592593
+      }
+    },
+    {
+      "parameters": {
+        "name": "source_cap-3",
+        "varied_parameter": "source_cap",
+        "varied_value": 3,
+        "context_top_k": 6,
+        "neighbor_window": 0,
+        "source_cap": 3,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.15925925925925927,
+        "final_context_recall": 0.3564814814814815,
+        "supporting_span_coverage": 0.2916666666666667,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 5.888888888888889,
+        "average_token_usage": 2381.277777777778,
+        "token_usage_p50": 2455.0,
+        "token_usage_p95": 2814.6499999999996,
+        "token_usage_p99": 2903.7299999999996,
+        "maximum_token_usage": 2926,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 14.153099997201934,
+          "p95_ms": 20.730410007672614,
+          "p99_ms": 21.994802007247923
+        },
+        "quality_score": 0.4578240740740741
+      }
+    },
+    {
+      "parameters": {
+        "name": "token_budget-3000",
+        "varied_parameter": "token_budget",
+        "varied_value": 3000,
+        "context_top_k": 6,
+        "neighbor_window": 0,
+        "source_cap": 3,
+        "token_budget": 3000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.15925925925925927,
+        "final_context_recall": 0.3564814814814815,
+        "supporting_span_coverage": 0.2916666666666667,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 5.888888888888889,
+        "average_token_usage": 2381.277777777778,
+        "token_usage_p50": 2455.0,
+        "token_usage_p95": 2814.6499999999996,
+        "token_usage_p99": 2903.7299999999996,
+        "maximum_token_usage": 2926,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 14.910049991158303,
+          "p95_ms": 19.436834994121455,
+          "p99_ms": 19.748886995366774
+        },
+        "quality_score": 0.4578240740740741
+      }
+    },
+    {
+      "parameters": {
+        "name": "token_budget-4500",
+        "varied_parameter": "token_budget",
+        "varied_value": 4500,
+        "context_top_k": 6,
+        "neighbor_window": 0,
+        "source_cap": 3,
+        "token_budget": 4500,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.15740740740740738,
+        "final_context_recall": 0.3564814814814815,
+        "supporting_span_coverage": 0.2916666666666667,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 6.0,
+        "average_token_usage": 2565.5,
+        "token_usage_p50": 2536.5,
+        "token_usage_p95": 3599.0499999999993,
+        "token_usage_p99": 4039.009999999999,
+        "maximum_token_usage": 4149,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 15.848950002691709,
+          "p95_ms": 24.013630002446007,
+          "p99_ms": 24.640726007928606
+        },
+        "quality_score": 0.45717592592592593
+      }
+    },
+    {
+      "parameters": {
+        "name": "token_budget-6000",
+        "varied_parameter": "token_budget",
+        "varied_value": 6000,
+        "context_top_k": 6,
+        "neighbor_window": 0,
+        "source_cap": 3,
+        "token_budget": 6000,
+        "max_item_tokens": 900,
+        "near_duplicate_threshold": 0.9
+      },
+      "metrics": {
+        "case_count": 18,
+        "sufficient_case_rate": 1.0,
+        "final_context_precision": 0.15740740740740738,
+        "final_context_recall": 0.3564814814814815,
+        "supporting_span_coverage": 0.2916666666666667,
+        "subquery_coverage": 1.0,
+        "required_subquery_count": 1,
+        "entity_coverage": 1.0,
+        "required_entity_count": 2,
+        "duplicate_rate": 0.046296296296296294,
+        "duplicate_removed_count": 10,
+        "candidate_count_before_dedup": 216,
+        "average_context_items": 6.0,
+        "average_token_usage": 2565.5,
+        "token_usage_p50": 2536.5,
+        "token_usage_p95": 3599.0499999999993,
+        "token_usage_p99": 4039.009999999999,
+        "maximum_token_usage": 4149,
+        "adapter_latency": {
+          "sample_count": 18,
+          "p50_ms": 16.1894999910146,
+          "p95_ms": 19.01460999215487,
+          "p99_ms": 20.351081996341232
+        },
+        "quality_score": 0.45717592592592593
+      }
+    }
+  ],
+  "baseline_vs_best": {
+    "final_context_precision": -0.00740740740740739,
+    "final_context_recall": 0.07870370370370372,
+    "supporting_span_coverage": 0.032407407407407385,
+    "subquery_coverage": 0.0,
+    "entity_coverage": 0.0,
+    "duplicate_rate": 0.0,
+    "average_token_usage": 262.05555555555566,
+    "adapter_latency_p95_ms": -2.6131149956199735,
+    "adapter_latency_p99_ms": -5.019022999185829
+  },
+  "pipeline_latency": {
+    "retrieval": {
+      "sample_count": 27,
+      "p50_ms": 385.12980000814423,
+      "p95_ms": 696.3215000039781,
+      "p99_ms": 4478.423415997523
+    },
+    "rerank": {
+      "sample_count": 27,
+      "p50_ms": 1845.8213999983855,
+      "p95_ms": 5182.001060000038,
+      "p99_ms": 11514.062757997586
+    },
+    "context_adapter": {
+      "sample_count": 27,
+      "p50_ms": 16.5804999996908,
+      "p95_ms": 22.791500002495013,
+      "p99_ms": 23.81019799620844
+    },
+    "generation": {
+      "sample_count": 0,
+      "p50_ms": null,
+      "p95_ms": null,
+      "p99_ms": null
+    }
+  },
+  "evidence_span_extractor_analysis_required": true,
+  "evidence_span_analysis": {
+    "total_span_count": 51,
+    "covered_span_count": 13,
+    "missing_span_count": 38,
+    "extractor_window_miss_count": 4,
+    "parent_not_selected_count": 34,
+    "span_not_in_index_parent_count": 0,
+    "recommendation": "主要缺口来自 Parent 选择，暂不应优先升级 Evidence Span Extractor。"
+  },
+  "evidence_span_analysis_threshold": 0.85
+}
