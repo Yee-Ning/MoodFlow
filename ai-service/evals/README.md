@@ -72,6 +72,8 @@ supporting span、required facts 和 reference answer 选择 `APPROVE/CORRECT/RE
 
 2026-09-16 的同名歧义结果策略只调整 `rag-v0-046/047`：用户确认继续返回 `needs_input`，与 Query Understanding Golden Set 一致。策略版本位于 `datasets/rag_eval_gold_v1.outcome_policy.approved.jsonl`；V0 保留不变，原答案证据仍可在 V0 查到。复现使用 `run_rag_gold_outcome_policy.py`，固定 Trace 回放和影响解释见 `reports/gold_v1_outcome_policy_replay_20260916.md`。这个版本没有批准独立的 Gold V1 source-span 候选；JSONL 合同的 `schema_version=v0` 与稳定 case ID 不因数据集版本而改名。
 
+后续冻结来源复核产物为 `datasets/rag_eval_gold_v2.ai_assisted_source_review.jsonl`。18 条候选的逐条接受/排除理由在 `reports/gold_v2_source_decisions.jsonl`，固定 Trace 对比和局限见 `reports/gold_v2_source_review_replay_20260916.md`。使用 `run_rag_gold_source_adjudication.py` 从 V0、V1、候选、判定和冻结 release 复现。V2 仍为用户委托的 AI 辅助审查结果；逐字来源校验不等于独立人工盲标或模型改进。
+
 - `datasets/rag_eval_v0.pending.jsonl`：从项目现有 Query Understanding Golden Set 中按
   `jay_chou_corpus_v1` 范围筛选的 50 条待审样本；45 条预期可回答、5 条预期追问。
   独立的蔡依林、林俊杰、王菲、张学友、G.E.M.、S.H.E 等查询不进入主 Baseline；只有
