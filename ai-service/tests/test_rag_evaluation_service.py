@@ -292,10 +292,41 @@ class RAGEvaluationServiceTests(unittest.TestCase):
 
         self.assertEqual(report.retrieval.recall_at_40, 1)
         self.assertEqual(report.rerank.rerank_mrr_at_10, 1)
+        self.assertEqual(report.final_context_precision, 1)
         self.assertEqual(report.final_context_recall, 1)
+        self.assertEqual(report.supporting_span_coverage, 1)
         self.assertEqual(report.citation_presence_rate, 1)
         self.assertEqual(report.citation_id_validity, 1)
         self.assertEqual(report.token_budget_compliance, 0)
+
+    def test_context_metrics_distinguish_parent_recall_precision_and_span_loss(self) -> None:
+        case = approved_answerable_case()
+        relevant_without_span = final_context("parent-2").model_copy(
+            update={"content": "证据在压缩时被截断"}
+        )
+        trace = RAGEvaluationTrace(
+            run_id="run-001",
+            case_id=case.case_id,
+            query=case.query,
+            statuses=TraceStageStatuses(
+                query_understanding="ready",
+                retrieval="success",
+                rerank="success",
+                context="success",
+                generation="success",
+            ),
+            candidate_pool=[final_context("parent-2"), final_context("parent-3", 2)],
+            reranked_context=[final_context("parent-2"), final_context("parent-3", 2)],
+            final_context=[relevant_without_span, final_context("parent-3", 2)],
+            actual_answer="答案 [parent-2]",
+            citation_parent_ids=["parent-2"],
+        )
+
+        report = evaluate_traces([case], [trace])
+
+        self.assertEqual(report.final_context_recall, 1)
+        self.assertEqual(report.final_context_precision, 0.5)
+        self.assertEqual(report.supporting_span_coverage, 0)
 
     def test_pending_seed_is_stratified_without_fabricated_answer_labels(self) -> None:
         source = Path(__file__).parent / "fixtures/query_understanding/golden_v1.jsonl"

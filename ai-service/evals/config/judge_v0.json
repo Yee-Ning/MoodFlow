@@ -7,8 +7,8 @@
     "api_key_env": "LLM_API_KEY",
     "api_key_env_file": ".env",
     "temperature": 0.0,
-    "timeout_seconds": 60
+    "timeout_seconds": 120
   },
   "threshold": 0.5,
-  "max_concurrent": 4
+  "max_concurrent": 2
 }

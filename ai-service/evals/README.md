@@ -142,8 +142,28 @@ dotenv 读取仍由 `DEEPEVAL_DISABLE_DOTENV=1` 关闭。
 ```powershell
 .\.venv-eval\Scripts\python.exe evals\run_deepeval.py `
   --config evals\config\judge_v0.json `
+  --budget-config evals\config\semantic_smoke_v0.json `
   --dataset evals\artifacts\baseline-v0\deepeval-cases.silver.jsonl `
   --output evals\artifacts\baseline-v0\deepeval-report.json
+```
+
+以上命令默认只打印预算计划，**不会读取 API Key，也不会调用 Judge**。确认
+`planned_judge_metric_runs` 和 `estimated_source_tokens` 后，只有显式增加 `--execute`
+才允许联网。Smoke V0 固定 8 条代表案例，只运行 Faithfulness 与 Answer Relevancy，
+最多 16 个“案例 × 指标”槽位；配置超过上限会在读取密钥之前失败。
+
+复用历史报告时传入 `--resume-from`。匹配当前 Judge 配置的成功指标会直接命中缓存，
+402、429、Timeout 等错误项才会重试。输出报告自身也可在后续运行中作为缓存；答案、
+引用证据、Judge 模型、阈值或评测配置变化后缓存指纹会自动失效。
+
+```powershell
+.\.venv-eval\Scripts\python.exe evals\run_deepeval.py `
+  --config evals\config\judge_v0.json `
+  --budget-config evals\config\semantic_smoke_v0.json `
+  --dataset evals\artifacts\baseline-v0\deepeval-cases.silver.jsonl `
+  --resume-from evals\artifacts\baseline-v0\deepeval-report.previous.json `
+  --output evals\artifacts\baseline-v0\deepeval-smoke-report.json `
+  --execute
 ```
 
 Provider、模型、Base URL、API Key 环境变量名、temperature 和 timeout 均可在 JSON
@@ -157,11 +177,13 @@ Provider、模型、Base URL、API Key 环境变量名、temperature 和 timeout
 Judge 报告会保存实际 Provider、模型、Base URL、密钥变量名、temperature、阈值和并发
 数，但绝不保存密钥值；不要混用不同 Judge 配置的绝对分数。
 
-V0 只有 Faithfulness、Answer Relevancy、Contextual Precision 和 Contextual Recall
-调用 Judge。Recall@K、MRR、nDCG、最终 Context Coverage、Citation Presence / Validity、
-Token Budget Compliance 和状态门禁全部由主环境 `run_rag_eval.py evaluate` 确定性计算，
-不会导入 DeepEval、读取 Judge Key 或发起网络请求。阈值 0.5 只是首轮观测值；在第一份
-人工审批 Baseline 产生前，不用它阻断发布。
+经济模式 V0 只有 Faithfulness 和 Answer Relevancy 调用 Judge。Faithfulness 只发送答案
+实际引用的 Parent Context；Answer Relevancy 只使用 Query 与 Answer；两项均默认关闭理由
+生成以减少额外调用。Contextual Precision / Recall 使用人工标签中的 Parent ID 和
+Supporting Span 做确定性评估，不再调用 LLM。Recall@K、MRR、nDCG、最终 Context
+Coverage、Citation Presence / Validity、Token Budget Compliance 和状态门禁同样由主环境
+`run_rag_eval.py evaluate` 确定性计算，不会导入 DeepEval、读取 Judge Key 或发起网络请求。
+阈值 0.5 只是首轮观测值，在人工审批 Baseline 稳定前不用它阻断发布。
 
 ## 分层执行策略
 
@@ -169,8 +191,9 @@ Token Budget Compliance 和状态门禁全部由主环境 `run_rag_eval.py evalu
    token 预算等确定性错误；不联网、不调用 Judge。
 2. 发布候选：针对同一索引 Release 生成 Trace，比较 Retrieval/Rerank/Context 的
    Recall、MRR、nDCG、fallback、延迟和引用指标。
-3. Nightly/人工触发：固定数据集版本、Trace、Judge 模型与阈值运行 DeepEval，并保存
-   报告供回归比较。
+3. 重要改动：运行固定 8 条 Semantic Smoke；先看预算计划，再显式执行。
+4. Nightly/发布前：只有在 Smoke 和确定性门禁通过后才扩充样本；仍必须设置案例数、
+   指标槽位和估算输入上限，并复用缓存，禁止无预算全量重跑。
 
 RAGAS 暂不加入 V0。等至少 30 条样本完成双人复核并得到稳定 Baseline 后，再将相同交换
 文件接入 RAGAS 做二次交叉验证；它不替换项目自己的确定性门禁，也不与 DeepEval 同时成为

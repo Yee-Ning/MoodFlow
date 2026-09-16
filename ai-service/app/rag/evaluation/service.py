@@ -31,7 +31,9 @@ class DeterministicEvaluationReport(BaseModel):
     expected_outcome_accuracy: float = Field(ge=0, le=1)
     retrieval: RetrievalEvaluationReport
     rerank: RerankEvaluationReport
+    final_context_precision: float = Field(ge=0, le=1)
     final_context_recall: float = Field(ge=0, le=1)
+    supporting_span_coverage: float = Field(ge=0, le=1)
     citation_presence_rate: float = Field(ge=0, le=1)
     citation_id_validity: float = Field(ge=0, le=1)
     token_budget_compliance: float | None = Field(default=None, ge=0, le=1)
@@ -93,11 +95,29 @@ def evaluate_traces(
         item.case_id: trace_by_case[item.case_id].timings_ms.get("rerank_total", 0)
         for item in answerable
     }
+    final_context_precision = _mean(
+        [
+            _precision(
+                trace_by_case[item.case_id].final_context,
+                set(item.relevant_parent_ids),
+            )
+            for item in answerable
+        ]
+    )
     final_context_recall = _mean(
         [
             _recall(
                 trace_by_case[item.case_id].final_context,
                 set(item.relevant_parent_ids),
+            )
+            for item in answerable
+        ]
+    )
+    supporting_span_coverage = _mean(
+        [
+            _supporting_span_coverage(
+                trace_by_case[item.case_id].final_context,
+                item.supporting_spans,
             )
             for item in answerable
         ]
@@ -140,7 +160,9 @@ def evaluate_traces(
             fallback_by_case=fallbacks,
             latency_ms_by_case=latencies,
         ),
+        final_context_precision=final_context_precision,
         final_context_recall=final_context_recall,
+        supporting_span_coverage=supporting_span_coverage,
         citation_presence_rate=citation_presence,
         citation_id_validity=citation_validity,
         token_budget_compliance=(
@@ -162,6 +184,22 @@ def evaluate_traces(
 def _recall(contexts, relevant: set[str]) -> float:
     parent_ids = {item.parent_id for item in contexts}
     return len(parent_ids.intersection(relevant)) / len(relevant)
+
+
+def _precision(contexts, relevant: set[str]) -> float:
+    parent_ids = {item.parent_id for item in contexts}
+    if not parent_ids:
+        return 0.0
+    return len(parent_ids.intersection(relevant)) / len(parent_ids)
+
+
+def _supporting_span_coverage(contexts, supporting_spans) -> float:
+    content_by_parent = {item.parent_id: item.content for item in contexts}
+    covered = sum(
+        span.exact_text in content_by_parent.get(span.parent_id, "")
+        for span in supporting_spans
+    )
+    return covered / len(supporting_spans)
 
 
 def _outcome_matches(case: RAGEvaluationCase, trace: RAGEvaluationTrace) -> bool:
