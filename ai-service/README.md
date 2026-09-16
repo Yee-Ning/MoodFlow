@@ -708,7 +708,7 @@ python run_query_understanding.py "周杰伦 2000 到 2005 年的音乐风格如
 
 # 同时校验并绑定一个 ready_for_retrieval 的正式索引 Manifest
 python run_query_understanding.py "晴天的创作背景" --no-llm `
-  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+  --index-manifest data/indexing/v1/<release_id>/<projection_version>/index_build_manifest.json
 
 # 为“这首歌”等指代提供只读播放器上下文
 python run_query_understanding.py "这首歌受谁影响" --current-song-id 185809 --no-llm
@@ -774,20 +774,24 @@ Reranker 使用固定 revision 的 `Qwen/Qwen3-Reranker-0.6B`，通过 `yes/no` 
 
 ```powershell
 python run_retrieval.py "周杰伦《晴天》的创作背景" --no-llm `
-  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+  --index-manifest data/indexing/v1/<release_id>/<projection_version>/index_build_manifest.json
 
 # 在同一边界真实执行 Qwen3 Reranker，输出 Top 12（不生成答案）
 python run_retrieval.py "周杰伦《晴天》的创作背景" --no-llm --rerank `
-  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+  --index-manifest data/indexing/v1/<release_id>/<projection_version>/index_build_manifest.json
 ```
 
 WorldLine 在线开关：
+
+新建索引按 projection version 隔离目录，当前默认 V3；旧 V2 release 的 Manifest 仍保留在
+`data/indexing/v1/<release_id>/index_build_manifest.json`。构建 V3 不会自动切换线上：
+只有明确将 `AI_RAG_INDEX_MANIFEST` 指向 V3 的 ready Manifest，在线链路才会绑定新 collection。
 
 ```dotenv
 AI_AGENT_GRAPH_MODE=foundation
 AI_RAG_RETRIEVAL_MODE=shadow
 AI_RAG_RERANK_MODE=off
-AI_RAG_INDEX_MANIFEST=data/indexing/v1/<release_id>/index_build_manifest.json
+AI_RAG_INDEX_MANIFEST=data/indexing/v1/<release_id>/<projection_version>/index_build_manifest.json
 ```
 
 `empty`（默认）不访问索引；`shadow` 执行完整检索并记录安全的状态、耗时和候选数，但不
@@ -803,12 +807,12 @@ JSONL，必填字段为 `case_id`、`query`、`relevant_parent_ids`，可选
 ```powershell
 python run_retrieval_eval.py --no-llm `
   --dataset data/evaluation/retrieval_golden_v1.jsonl `
-  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+  --index-manifest data/indexing/v1/<release_id>/<projection_version>/index_build_manifest.json
 
 # 同时比较 Top 40 与 Rerank Top 12 的 Recall、MRR、nDCG，统计 fallback 和 P50/P95 延迟
 python run_retrieval_eval.py --no-llm --rerank `
   --dataset data/evaluation/retrieval_golden_v1.jsonl `
-  --index-manifest data/indexing/v1/<release_id>/index_build_manifest.json
+  --index-manifest data/indexing/v1/<release_id>/<projection_version>/index_build_manifest.json
 
 # 启动真实 Qdrant 后执行 Dense + BM25 条件集成测试
 $env:QDRANT_INTEGRATION_URL="http://127.0.0.1:6333"
