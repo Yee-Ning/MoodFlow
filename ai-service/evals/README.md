@@ -25,7 +25,8 @@ python -m venv .venv-eval
 目前 50 条批量通过的数据是由旧最终上下文 Top3 自动生成证据的 **Silver**，不是独立 Gold。固定 30 条分层盲审候选见
 `datasets/rag_eval_gold_v0.pending.jsonl`，无旧证据/答案标签；盲审清单见
 `reports/gold_review_v0_blind_pack.md`，质量审计和原在线回归状态见
-`reports/gold_review_v0_preparation_20260916.md`。这 30 条目前全部 `pending`。
+`reports/gold_review_v0_preparation_20260916.md`。原始候选仍全部为 `pending`；
+审批后的独立文件见下文。
 
 审核包现已增加每题 5 条**独立来源证据候选**：只读取冻结的
 `data/knowledge/v2/knowledge_release_manifest.json` 和通过其 SHA256 校验的 Parent 原文，
@@ -46,7 +47,28 @@ supporting span、required facts 和 reference answer 选择 `APPROVE/CORRECT/RE
 并写明最终值。`required facts` 和 `reference answer` 未由机器自动拼接，需依据已核实的证据填写。
 此步骤仅生成审核材料，不修改 pending Gold，也不 finalize。
 
-`run_rag_gold_review_prep.py` 可复现抽样和原文/血缘审计，但不会生成或批准 Gold 标签，也不会调用 Judge。独立审核人须从冻结语料核对每个结果类别、相关 Parent、精确支持片段、必要事实与参考答案，再在单独的审核后数据集中标记 `approved`。`validate-dataset` 当前的 `baseline_ready` 是面向原 50 条 V0 基线的检查；对 30 条 Gold 子集会显示 `false`，不能把它误解成 JSONL 格式错误。
+项目负责人现已确认审批原稿；其原样副本位于
+`reports/gold_review_v0_owner_approved.md`（SHA256：`de4e389259dd2b572e6072603ae22e18ee09252b540b11ee1d6bb7ed9ad5bfc1`）。30 条审批标签保存在
+`datasets/rag_eval_gold_v0.approved.jsonl`，标签注明 `owner_approved_ai_assisted_review`：
+负责人认可了 AI 辅助复核稿，但它不是逐条独立人工盲标数据。冻结 Parent 校验、候选决策、
+精确片段和输出合同由 `run_rag_gold_finalize.py` 检查；待审骨架仍保留原样。运行时传入审批稿：
+
+```powershell
+.\.venv\Scripts\python.exe run_rag_gold_finalize.py `
+  --review evals\reports\gold_review_v0_owner_approved.md `
+  --pending-gold evals\datasets\rag_eval_gold_v0.pending.jsonl `
+  --candidates-jsonl evals\reports\gold_review_v0_source_candidates.jsonl `
+  --release-manifest data\knowledge\v2\knowledge_release_manifest.json `
+  --output evals\datasets\rag_eval_gold_v0.approved.jsonl
+```
+
+审批稿中 `rag-v0-024` 的修正引文尾部与原文不完全一致，finalize 只取其已审批且
+逐字存在于 Parent 中的首句；`rag-v0-037` 无本题候选精确片段，复用同一 Parent
+在 `rag-v0-001` 已审批的精确片段。摘要会报告这两项以及未逐 Parent 附片段的数量，
+不得将它们误写为逐条独立人工标注。`needs_input` 的追问准则和示例答复存于备注，
+不填入合同禁止的答案证据字段。
+
+`run_rag_gold_review_prep.py` 可复现抽样和原文/血缘审计，但不会生成或批准 Gold 标签，也不会调用 Judge。若后续需要“独立人工盲标 Gold”，审核人仍须从冻结语料逐项独立核对结果类别、相关 Parent、精确支持片段、必要事实与参考答案；本次项目负责人认可 AI 辅助复核稿不等同于该流程。`validate-dataset` 当前的 `baseline_ready` 是面向原 50 条 V0 基线的检查；对 30 条 Gold 子集会显示 `false`，不能把它误解成 JSONL 格式错误。
 
 - `datasets/rag_eval_v0.pending.jsonl`：从项目现有 Query Understanding Golden Set 中按
   `jay_chou_corpus_v1` 范围筛选的 50 条待审样本；45 条预期可回答、5 条预期追问。
