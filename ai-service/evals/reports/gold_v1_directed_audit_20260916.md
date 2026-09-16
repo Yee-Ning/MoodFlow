@@ -25,7 +25,9 @@
 
 对 18 个 `answerable` case，按旧 Gold 的精确 Parent ID：Top40 至少命中 1 个的 14 个 case，Top12 留存的 7 个，Final Context 留存的 6 个。Top40→Top12 全丢的是 001、002、004、026、037、040、043；Top12→Final Context 丢失的是 044。003、006、039、042 在 Top40 无**已标注** Parent，其中 003/042 可能有漏标替代证据；不能把这四个 case 统一称为检索失败。
 
-Reranker 实际打分输入为各候选 Parent 的 `primary_child_content` 加标题/面包屑，不是完整 Parent。旧 Trace 中匹配 Gold Parent 的 27 行候选里，17 行所属 Parent 有已批准的 supporting span；其中仅 6 行的 best-matched Child 完整包含该 span。这个“完整包含”是严格字符串检查：其余 11 行可能包含部分关键事实，不能直接定性为错误，但表明 Parent 级标签与 Child 级精排输入有明显粒度差。002 的一个 Gold Parent 在 Top40 第 5 位且 Child 包含原文，037 的一个在第 7 位且 Child 包含原文，两者均被 Top12 丢弃，可作为真正优先检查的精排样本。先做小样本 Child 证据审查，再考虑参数或模型调整；暂不改 Retrieval/Rerank 架构。
+Reranker 实际打分输入为各候选 Parent 的 `primary_child_content` 加标题/面包屑，不是完整 Parent。旧 Trace 中匹配 Gold Parent 的 27 行候选里，17 行所属 Parent 有已批准的 supporting span；其中仅 6 行的 best-matched Child 完整包含该 span。这个“完整包含”是严格字符串检查：其余 11 行可能包含部分关键事实，不能直接定性为错误，但表明 Parent 级标签与 Child 级精排输入有明显粒度差。
+
+002 的 Gold Parent 在 Top40 第 5、12 位却均被 Top12 丢弃；但第 5 位 Parent 的已标注文字只是概括性音乐影响，不足以独立说明风格特征，而 Top12 包含其他讨论“Chou Style”的英文论文片段。037 的 Gold《叶惠美》Parent 在 Top40 第 7 位且 Child 包含发行日期，精排后丢失；但 Top12 第 1 位仍提到 2003 年 7 月第四张专辑，第 3 位仍提到 2003 年 TIME 封面。因此两题的**精确 Parent 丢失是真实观察，证据完全丢失尚未证实**；需要先审查替代 Parent 的事实覆盖，才能把差距归因于精排。暂不改 Retrieval/Rerank 架构或调参。
 
 ## 025 归因错误与评测隔离
 
