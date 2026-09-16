@@ -1,0 +1,21 @@
+{
+  "selected_cases": 30,
+  "annotation_status": "pending",
+  "seed_outcomes_from_silver": {
+    "answerable": 26,
+    "insufficient_evidence": 1,
+    "needs_input": 3
+  },
+  "gold_approved_cases": 0,
+  "silver_audit": {
+    "silver_cases": 50,
+    "answerable_cases": 44,
+    "supporting_spans": 132,
+    "labels_equal_old_final_top3": 44,
+    "facts_equal_copied_spans": 36,
+    "answers_equal_joined_spans": 36,
+    "source_sets_match_spans": 44,
+    "spans_present_in_index_with_source": 132,
+    "semantic_relevance_verified": false
+  }
+}

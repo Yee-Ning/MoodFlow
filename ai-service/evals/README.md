@@ -20,6 +20,15 @@ python -m venv .venv-eval
 
 ## 数据与 Trace 合同
 
+### 独立 Gold V0 复核（与 Silver 分开）
+
+目前 50 条批量通过的数据是由旧最终上下文 Top3 自动生成证据的 **Silver**，不是独立 Gold。固定 30 条分层盲审候选见
+`datasets/rag_eval_gold_v0.pending.jsonl`，无旧证据/答案标签；盲审清单见
+`reports/gold_review_v0_blind_pack.md`，质量审计和在线回归阻塞见
+`reports/gold_review_v0_preparation_20260916.md`。这 30 条目前全部 `pending`。
+
+`run_rag_gold_review_prep.py` 可复现抽样和原文/血缘审计，但不会生成或批准 Gold 标签，也不会调用 Judge。独立审核人须从冻结语料核对每个结果类别、相关 Parent、精确支持片段、必要事实与参考答案，再在单独的审核后数据集中标记 `approved`。`validate-dataset` 当前的 `baseline_ready` 是面向原 50 条 V0 基线的检查；对 30 条 Gold 子集会显示 `false`，不能把它误解成 JSONL 格式错误。
+
 - `datasets/rag_eval_v0.pending.jsonl`：从项目现有 Query Understanding Golden Set 中按
   `jay_chou_corpus_v1` 范围筛选的 50 条待审样本；45 条预期可回答、5 条预期追问。
   独立的蔡依林、林俊杰、王菲、张学友、G.E.M.、S.H.E 等查询不进入主 Baseline；只有
