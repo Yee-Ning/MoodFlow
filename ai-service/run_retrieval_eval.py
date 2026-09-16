@@ -144,6 +144,10 @@ async def _run(
         if args.rerank
         else None
     )
+    if reranker is not None:
+        prepare = getattr(reranker, "prepare", None)
+        if callable(prepare):
+            await prepare()
     rankings: dict[str, list[str]] = {}
     reranked_rankings: dict[str, list[str]] = {}
     fallback_by_case: dict[str, bool] = {}

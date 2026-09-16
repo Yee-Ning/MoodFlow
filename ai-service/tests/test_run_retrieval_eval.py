@@ -44,7 +44,15 @@ class CandidateRetriever:
 
 
 class ReversingReranker:
+    def __init__(self):
+        self.prepared = False
+
+    async def prepare(self):
+        self.prepared = True
+
     async def rerank(self, plan, candidate_pool):
+        if not self.prepared:
+            raise AssertionError("reranker must be prepared before scoring")
         return RerankResult(
             status=RerankStatus.SUCCESS,
             plan_id=plan.plan_id,
@@ -185,6 +193,7 @@ class RunRetrievalEvaluationTests(unittest.TestCase):
                 encoding="utf-8",
             )
             output = StringIO()
+            reranker = ReversingReranker()
             with (
                 patch.object(
                     run_retrieval_eval,
@@ -204,11 +213,12 @@ class RunRetrievalEvaluationTests(unittest.TestCase):
                     ],
                     project_root=root,
                     retrieval_factory=lambda binding, config: CandidateRetriever(),
-                    rerank_factory=lambda config: ReversingReranker(),
+                    rerank_factory=lambda config: reranker,
                 )
 
         payload = json.loads(output.getvalue())
         self.assertEqual(status, 0)
+        self.assertTrue(reranker.prepared)
         self.assertEqual(payload["pipeline_stage"], "rerank_evaluation")
         self.assertTrue(payload["rerank_applied"])
         self.assertEqual(payload["rerank_top_k"], 12)
