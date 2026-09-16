@@ -155,6 +155,8 @@ class RAGAnswerGenerationTests(unittest.TestCase):
             ["success", "needs_input", "insufficient_evidence"],
         )
         self.assertEqual(generated[0].citation_parent_ids, ["parent-1"])
+        self.assertIn("generation_total", generated[0].timings_ms)
+        self.assertGreaterEqual(generated[0].timings_ms["generation_total"], 0)
         self.assertIsNone(generated[1].actual_answer)
         self.assertEqual(len(runtime.calls), 1)
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import Sequence
+from time import perf_counter
 from typing import Any, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
@@ -185,20 +186,33 @@ async def generate_evaluation_answers(
                 generation_status="failed",
                 warning="generation_context_missing",
             )
+        generation_started_at: float | None = None
         try:
             async with semaphore:
+                # Measure provider work, not time spent waiting behind the
+                # offline runner's concurrency semaphore.
+                generation_started_at = perf_counter()
                 answer = await generator.generate(case.query, trace.final_context)
         except Exception as exc:  # isolate one provider failure from the batch
+            generation_latency_ms = (
+                (perf_counter() - generation_started_at) * 1_000
+                if generation_started_at is not None
+                else None
+            )
             return _updated_trace(
                 trace,
                 generation_status="failed",
                 warning=f"generation_failed:{type(exc).__name__}",
+                generation_latency_ms=generation_latency_ms,
             )
+        assert generation_started_at is not None
+        generation_latency_ms = (perf_counter() - generation_started_at) * 1_000
         return _updated_trace(
             trace,
             generation_status="success",
             answer=answer,
             model_name=generator.model_name,
+            generation_latency_ms=generation_latency_ms,
         )
 
     return list(await asyncio.gather(*(run_one(item) for item in traces)))
@@ -211,6 +225,7 @@ def _updated_trace(
     answer: CitationAwareAnswer | None = None,
     model_name: str | None = None,
     warning: str | None = None,
+    generation_latency_ms: float | None = None,
 ) -> RAGEvaluationTrace:
     payload = trace.model_dump(mode="python")
     payload["statuses"] = trace.statuses.model_copy(
@@ -226,6 +241,11 @@ def _updated_trace(
             "generation_model": model_name,
         }
     )
+    if generation_latency_ms is not None:
+        payload["timings_ms"] = {
+            **trace.timings_ms,
+            "generation_total": generation_latency_ms,
+        }
     if warning is not None:
         payload["warnings"] = list(dict.fromkeys([*trace.warnings, warning]))
     return RAGEvaluationTrace.model_validate(payload)

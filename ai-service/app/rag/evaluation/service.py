@@ -12,6 +12,10 @@ from app.rag.evaluation.models import (
     RAGEvaluationCase,
     RAGEvaluationTrace,
 )
+from app.rag.evaluation.latency import (
+    PipelineLatencyReport,
+    build_pipeline_latency_report,
+)
 from app.rag.reranking.evaluation import RerankEvaluationReport, evaluate_reranking
 from app.rag.retrieval.evaluation import (
     RetrievalEvaluationCase,
@@ -38,6 +42,7 @@ class DeterministicEvaluationReport(BaseModel):
     citation_id_validity: float = Field(ge=0, le=1)
     token_budget_compliance: float | None = Field(default=None, ge=0, le=1)
     token_budget_case_count: int = Field(ge=0)
+    latency: PipelineLatencyReport
 
 
 def evaluate_traces(
@@ -178,6 +183,7 @@ def evaluate_traces(
             else None
         ),
         token_budget_case_count=len(budgeted),
+        latency=build_pipeline_latency_report(answerable_traces),
     )
 
 

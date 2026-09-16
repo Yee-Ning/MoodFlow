@@ -106,6 +106,36 @@ Silver 数据集：
 `insufficient_evidence`；追问样本不生成伪证据。Silver 标签由当前链路结果反向生成，
 因此只能用于合同、血缘和回归冒烟，不能当作独立人工 Gold 证明检索质量。
 
+## Context Adapter V1 单变量调优
+
+调优固定使用同一份已批准数据集和同一份真实 Top40/Top12 上游结果，只扫描 Context
+Adapter 参数。`context_adapter_v1_baseline.yaml` 冻结调优前默认值，避免 V1 配置落地后
+重跑时污染 baseline。扫描顺序为 `context_top_k → neighbor_window → source_cap →
+token_budget`；每一阶段只改变当前参数，并把该阶段最佳配置传给下一阶段，不做全组合。
+
+当 Qdrant 可用时可省略 `--upstream-traces` 和 `--index-projection`，重新执行一次固定上游；
+日常复现实验优先使用回放模式，避免 Retrieval/Rerank 漂移和重复模型开销：
+
+```powershell
+.\.venv\Scripts\python.exe run_context_adapter_tuning.py `
+  --dataset evals\datasets\rag_eval_v0.approved.silver.jsonl `
+  --index-manifest data\indexing\v1\knowledge-v2-8608ffc2fa72e441\index_build_manifest.json `
+  --baseline-config evals\config\context_adapter_v1_baseline.yaml `
+  --upstream-traces evals\artifacts\baseline-v0\traces.context-v1.jsonl `
+  --index-projection data\indexing\v1\knowledge-v2-8608ffc2fa72e441\index_projection.jsonl `
+  --report evals\artifacts\context-adapter-v1\context-tuning-report.json `
+  --markdown-report evals\artifacts\context-adapter-v1\context-tuning-report.md `
+  --best-traces evals\artifacts\context-adapter-v1\best-traces.jsonl `
+  --run-id context-adapter-v1-tuning `
+  --no-llm
+```
+
+扫描只计算 Precision、Supporting Span、Subquery/Entity Coverage、Duplicate Rate、Token 和
+Context 延迟等确定性指标，不读取 Judge Key。选出最佳配置后只生成一次答案；将产物通过
+`--generated-traces` 传回调优命令即可在同一报告补齐 Generation P50/P95/P99。最终再用
+`run_rag_eval.py evaluate` 生成包含 Retrieval、Rerank、Context Adapter、Generation 四阶段
+延迟与引用合法性的 V1 验收报告。
+
 ## DeepEval Judge
 
 先用主工程已经配置的回答模型消费最终 Top8，并生成带 Parent 引用的 Trace。生成器不会读取

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from time import perf_counter
 from typing import Any, Protocol
 
 from langchain_core.messages import HumanMessage
@@ -183,8 +184,10 @@ async def _collect_case(
         ) from exc
     ranked: RetrievalResult | RerankResult = rerank or retrieval
     try:
+        context_started_at = perf_counter()
         documents = context_adapter(ranked, plan)
         final_context = _build_final_context(documents, retrieval)
+        context_latency_ms = (perf_counter() - context_started_at) * 1_000
     except Exception as exc:  # noqa: BLE001 - annotate the failing pipeline stage
         raise _TraceStageFailure(
             stage="context",
@@ -196,7 +199,7 @@ async def _collect_case(
             ),
             cause=exc,
         ) from exc
-    return build_evaluation_trace(
+    trace = build_evaluation_trace(
         run_id=run_id,
         case_id=case.case_id,
         plan=plan,
@@ -208,6 +211,14 @@ async def _collect_case(
         retrieval_version=retrieval_version,
         context_version=context_version,
         context_status="success" if final_context else "empty",
+    )
+    return trace.model_copy(
+        update={
+            "timings_ms": {
+                **trace.timings_ms,
+                "context_adapter_total": context_latency_ms,
+            }
+        }
     )
 
 

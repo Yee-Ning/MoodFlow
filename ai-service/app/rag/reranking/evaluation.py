@@ -41,6 +41,7 @@ class RerankEvaluationReport(BaseModel):
     fallback_rate: float = Field(ge=0, le=1)
     latency_p50_ms: float = Field(ge=0)
     latency_p95_ms: float = Field(ge=0)
+    latency_p99_ms: float = Field(ge=0)
     cases: list[RerankCaseMetrics] = Field(min_length=1)
 
 
@@ -90,6 +91,7 @@ def evaluate_reranking(
         fallback_rate=sum(item.fallback_used for item in scores) / count,
         latency_p50_ms=_percentile(ordered_latencies, 0.50),
         latency_p95_ms=_percentile(ordered_latencies, 0.95),
+        latency_p99_ms=_percentile(ordered_latencies, 0.99),
         cases=scores,
     )
 

@@ -44,6 +44,7 @@ class RerankingEvaluationTests(unittest.TestCase):
         self.assertEqual(report.fallback_rate, 0.5)
         self.assertEqual(report.latency_p50_ms, 20)
         self.assertEqual(report.latency_p95_ms, 29)
+        self.assertEqual(report.latency_p99_ms, 29.8)
 
     def test_missing_post_rerank_ranking_is_scored_as_zero(self) -> None:
         case = RetrievalEvaluationCase(

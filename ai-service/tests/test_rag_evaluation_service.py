@@ -298,6 +298,11 @@ class RAGEvaluationServiceTests(unittest.TestCase):
         self.assertEqual(report.citation_presence_rate, 1)
         self.assertEqual(report.citation_id_validity, 1)
         self.assertEqual(report.token_budget_compliance, 0)
+        self.assertEqual(report.latency.retrieval.sample_count, 0)
+        self.assertEqual(report.latency.rerank.sample_count, 1)
+        self.assertEqual(report.latency.rerank.p99_ms, 20)
+        self.assertEqual(report.latency.context_adapter.sample_count, 0)
+        self.assertEqual(report.latency.generation.sample_count, 0)
 
     def test_context_metrics_distinguish_parent_recall_precision_and_span_loss(self) -> None:
         case = approved_answerable_case()

@@ -23,17 +23,17 @@ class EvidenceCompressionConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     max_evidence_tokens: int = Field(default=400, ge=50, le=2_000)
-    max_item_tokens: int = Field(default=1_200, ge=100, le=8_000)
-    neighbor_window: int = Field(default=1, ge=0, le=3)
+    max_item_tokens: int = Field(default=900, ge=100, le=8_000)
+    neighbor_window: int = Field(default=2, ge=0, le=3)
 
 
 class ContextSelectionConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    max_items: int = Field(default=8, ge=1, le=10)
-    token_budget: int = Field(default=6_000, ge=500, le=30_000)
+    max_items: int = Field(default=4, ge=1, le=10)
+    token_budget: int = Field(default=3_000, ge=500, le=30_000)
     source_cap: int = Field(default=3, ge=1, le=10)
-    near_duplicate_threshold: float = Field(default=0.92, ge=0.8, le=1)
+    near_duplicate_threshold: float = Field(default=0.90, ge=0.8, le=1)
 
 
 class ContextPackingConfig(BaseModel):

@@ -8,11 +8,11 @@ gate:
 
 compression:
   max_evidence_tokens: 400
-  max_item_tokens: 1200
-  neighbor_window: 1
+  max_item_tokens: 900
+  neighbor_window: 2
 
 selection:
-  max_items: 8
-  token_budget: 6000
+  max_items: 4
+  token_budget: 3000
   source_cap: 3
-  near_duplicate_threshold: 0.92
+  near_duplicate_threshold: 0.90

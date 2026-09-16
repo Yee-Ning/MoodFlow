@@ -25,6 +25,12 @@ from app.rag.evaluation.models import (
     SupportingSpanAnnotation,
     TraceStageStatuses,
 )
+from app.rag.evaluation.latency import (
+    LatencyPercentiles,
+    PipelineLatencyReport,
+    build_pipeline_latency_report,
+    summarize_latencies,
+)
 from app.rag.evaluation.service import (
     DeterministicEvaluationReport,
     evaluate_traces,
@@ -45,11 +51,14 @@ __all__ = [
     "EvaluationConfig",
     "EvaluationVersions",
     "ExpectedOutcome",
+    "LatencyPercentiles",
+    "PipelineLatencyReport",
     "RAGEvaluationCase",
     "RAGEvaluationTrace",
     "SupportingSpanAnnotation",
     "TraceStageStatuses",
     "build_evaluation_trace",
+    "build_pipeline_latency_report",
     "build_deepeval_payloads",
     "build_annotation_review_markdown",
     "build_pending_dataset",
@@ -60,5 +69,6 @@ __all__ = [
     "load_evaluation_cases",
     "load_evaluation_traces",
     "load_evaluation_config",
+    "summarize_latencies",
     "write_jsonl",
 ]
