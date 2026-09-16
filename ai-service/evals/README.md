@@ -24,8 +24,27 @@ python -m venv .venv-eval
 
 目前 50 条批量通过的数据是由旧最终上下文 Top3 自动生成证据的 **Silver**，不是独立 Gold。固定 30 条分层盲审候选见
 `datasets/rag_eval_gold_v0.pending.jsonl`，无旧证据/答案标签；盲审清单见
-`reports/gold_review_v0_blind_pack.md`，质量审计和在线回归阻塞见
+`reports/gold_review_v0_blind_pack.md`，质量审计和原在线回归状态见
 `reports/gold_review_v0_preparation_20260916.md`。这 30 条目前全部 `pending`。
+
+审核包现已增加每题 5 条**独立来源证据候选**：只读取冻结的
+`data/knowledge/v2/knowledge_release_manifest.json` 和通过其 SHA256 校验的 Parent 原文，
+展示 Parent/Source ID、Source Document 链接、足够上下文的原文节选以及可精确核对的候选 span。
+候选结构化副本在 `reports/gold_review_v0_source_candidates.jsonl`。生成器不接收旧 Silver、
+在线 Trace、排名、分数或答案；Source 候选并不自动成为 relevant Parent。复现命令：
+
+```powershell
+.\.venv\Scripts\python.exe run_rag_gold_evidence_pack.py `
+  --pending-gold evals/datasets/rag_eval_gold_v0.pending.jsonl `
+  --release-manifest data/knowledge/v2/knowledge_release_manifest.json `
+  --review-pack evals/reports/gold_review_v0_blind_pack.md `
+  --candidates-jsonl evals/reports/gold_review_v0_source_candidates.jsonl
+```
+
+审核人应先独立判断预期结果，再展开待审骨架中的候选值；逐条对 relevant Parent、
+supporting span、required facts 和 reference answer 选择 `APPROVE/CORRECT/REJECT`
+并写明最终值。`required facts` 和 `reference answer` 未由机器自动拼接，需依据已核实的证据填写。
+此步骤仅生成审核材料，不修改 pending Gold，也不 finalize。
 
 `run_rag_gold_review_prep.py` 可复现抽样和原文/血缘审计，但不会生成或批准 Gold 标签，也不会调用 Judge。独立审核人须从冻结语料核对每个结果类别、相关 Parent、精确支持片段、必要事实与参考答案，再在单独的审核后数据集中标记 `approved`。`validate-dataset` 当前的 `baseline_ready` 是面向原 50 条 V0 基线的检查；对 30 条 Gold 子集会显示 `false`，不能把它误解成 JSONL 格式错误。
 
