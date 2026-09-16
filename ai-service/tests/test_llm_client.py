@@ -7,6 +7,7 @@ from pydantic import SecretStr
 
 from app.llm.client import (
     create_base_response,
+    create_generation_response,
     create_response,
     create_structured_response,
     get_base_chat_model,
@@ -43,6 +44,7 @@ def fake_settings() -> SimpleNamespace:
         api_key=SecretStr("test-key"),
         base_url="https://api.deepseek.com",
         model="deepseek-v4-flash",
+        generation_model="deepseek-flash",
         timeout_seconds=60,
         max_output_tokens=1024,
     )
@@ -147,6 +149,30 @@ class CreateResponseTests(unittest.TestCase):
         self.assertEqual(schema["properties"]["subject"]["anyOf"][0], {
             "$ref": "#/$defs/Subject"
         })
+
+    def test_generation_response_uses_independent_generation_model(self) -> None:
+        with (
+            patch("app.llm.client.AsyncOpenAI", FakeAsyncOpenAI),
+            patch("app.llm.client.get_settings", fake_settings),
+        ):
+            asyncio.run(
+                create_generation_response(
+                    [{"role": "user", "content": "payload"}],
+                    "answer from evidence",
+                    {
+                        "type": "object",
+                        "properties": {"answer": {"type": "string"}},
+                        "required": ["answer"],
+                        "additionalProperties": False,
+                    },
+                    schema_name="answer",
+                )
+            )
+
+        request = FakeAsyncOpenAI.last_request
+        self.assertIsNotNone(request)
+        assert request is not None
+        self.assertEqual(request["model"], "deepseek-flash")
 
     def test_langchain_chat_model_reuses_existing_settings_without_tools(self) -> None:
         with (

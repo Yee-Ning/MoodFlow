@@ -23,7 +23,7 @@ from app.agent.foundation.subgraphs.worldline.prompts import (
     BRANCH_SYSTEM_PROMPT,
     NARRATIVE_SYSTEM_PROMPT,
 )
-from app.llm.client import create_structured_response
+from app.llm.client import create_generation_response
 
 
 class WorldLineGenerationError(RuntimeError):
@@ -57,7 +57,7 @@ class ProviderWorldLineRuntime:
                 "\n上次输出未通过 JSON Schema 或事实落地校验。"
                 "请只修正结构和依据，不要增加新事实。"
             )
-        response = await create_structured_response(
+        response = await create_generation_response(
             [
                 {
                     "role": "user",

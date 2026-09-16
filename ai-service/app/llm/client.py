@@ -73,6 +73,7 @@ async def _create_response(
     instructions: str,
     enable_tools: bool,
     output_format: dict[str, Any] | None = None,
+    model: str | None = None,
 ) -> Response:
     settings = get_settings()
 
@@ -84,7 +85,7 @@ async def _create_response(
             max_retries=0 if output_format is not None else 2,
         ) as client:
             request: dict[str, Any] = {
-                "model": settings.model,
+                "model": model or settings.model,
                 "instructions": instructions,
                 "input": input_items,
                 "reasoning": {"effort": "none"},
@@ -144,6 +145,7 @@ async def create_structured_response(
     schema: dict[str, Any],
     *,
     schema_name: str,
+    model: str | None = None,
 ) -> Response:
     """Run a strict, tool-free JSON Schema request with shared provider settings."""
     return await _create_response(
@@ -154,6 +156,24 @@ async def create_structured_response(
             "type": "json_schema", "name": schema_name,
             "schema": _provider_compatible_schema(schema), "strict": True,
         },
+        model=model,
+    )
+
+
+async def create_generation_response(
+    input_items: list[dict[str, Any]],
+    instructions: str,
+    schema: dict[str, Any],
+    *,
+    schema_name: str,
+) -> Response:
+    """Run answer generation with its independently configurable model."""
+    return await create_structured_response(
+        input_items,
+        instructions,
+        schema,
+        schema_name=schema_name,
+        model=get_settings().generation_model,
     )
 
 

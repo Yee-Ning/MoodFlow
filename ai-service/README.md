@@ -11,7 +11,10 @@ py -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-复制 `.env.example` 为 `.env` 并设置 `LLM_API_KEY`。默认示例使用 OpenAI-compatible Chat Completions 接口。
+复制 `.env.example` 为 `.env` 并设置 `LLM_API_KEY`。默认示例使用 OpenAI-compatible
+接口。`LLM_MODEL` 服务于通用 Agent、路由与知识处理，`LLM_GENERATION_MODEL` 独立控制
+WorldLine 在线回答和离线评测答案生成；V0 使用 DeepSeek V4.1 Flash 的正式模型名
+`deepseek-flash`。DeepEval Judge 继续由 `evals/config/judge_v0.json` 独立配置。
 
 ## Run
 

@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     api_key: SecretStr
     base_url: AnyHttpUrl
     model: str = Field(min_length=1)
+    generation_model: str = Field(default="deepseek-flash", min_length=1)
     timeout_seconds: float = Field(gt=0, le=300)
     max_output_tokens: int = Field(default=1024, ge=128, le=8192)
     spring_boot_base_url: AnyHttpUrl = Field(

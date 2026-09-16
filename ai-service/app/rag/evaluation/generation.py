@@ -9,7 +9,7 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from app.llm.client import create_structured_response
+from app.llm.client import create_generation_response
 from app.rag.evaluation.models import (
     AnnotationStatus,
     EvaluationContext,
@@ -58,7 +58,7 @@ class ProviderCitationAwareRuntime:
     def model_name(self) -> str:
         from app.config.settings import get_settings
 
-        return get_settings().model
+        return get_settings().generation_model
 
     async def generate(
         self,
@@ -72,7 +72,7 @@ class ProviderCitationAwareRuntime:
             instructions += (
                 "\n上次输出未通过结构或引用校验。请只修正答案和引用，不得增加新事实。"
             )
-        response = await create_structured_response(
+        response = await create_generation_response(
             [
                 {
                     "role": "user",
