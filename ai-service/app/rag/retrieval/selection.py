@@ -31,9 +31,13 @@ def select_candidates(
     candidates_by_parent: dict[str, RetrievalCandidate] = {}
     invalid_count = 0
     excluded_count = 0
+    navigation_count = 0
     for hit in hits:
         if _matches_exclusion(hit.payload, plan.post_exclusions):
             excluded_count += 1
+            continue
+        if _is_timeline_navigation_hit(hit.payload, plan):
+            navigation_count += 1
             continue
         try:
             candidate = _candidate_from_hit(hit)
@@ -52,6 +56,8 @@ def select_candidates(
         warnings.append(f"invalid_retrieval_payloads:{invalid_count}")
     if excluded_count:
         warnings.append(f"post_exclusions_applied:{excluded_count}")
+    if navigation_count:
+        warnings.append(f"timeline_navigation_sections_removed:{navigation_count}")
 
     ranked = sorted(
         candidates_by_parent.values(),
@@ -100,6 +106,16 @@ def _matches_exclusion(payload: dict[str, Any], terms: list[str]) -> bool:
             values.extend(item for item in value if isinstance(item, str))
     haystack = "\n".join(values).casefold()
     return any(term.strip().casefold() in haystack for term in terms if term.strip())
+
+
+def _is_timeline_navigation_hit(payload: dict[str, Any], plan: SearchPlan) -> bool:
+    if QueryType.TIMELINE not in plan.query_types:
+        return False
+    breadcrumb = payload.get("breadcrumb")
+    if not isinstance(breadcrumb, str):
+        return False
+    section = breadcrumb.rsplit(">", maxsplit=1)[-1].strip().casefold()
+    return section in {"外部連結", "外部链接", "external links"}
 
 
 def _candidate_from_hit(hit: FusedSearchHit) -> RetrievalCandidate:

@@ -336,6 +336,38 @@ class HybridRetrievalServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.status, RetrievalStatus.EMPTY)
         self.assertIn("post_exclusions_applied:1", result.warnings)
 
+    async def test_timeline_ignores_external_link_footer_but_fact_keeps_it(self) -> None:
+        footer = payload("child-nav", "parent-nav", source_id="source-nav")
+        footer["breadcrumb"] = "周杰倫 > 外部連結"
+        evidence = payload("child-event", "parent-event", source_id="source-event")
+        backend = FakeBackend(
+            hits=[
+                [
+                    RawSearchHit("p-nav", 0.9, footer),
+                    RawSearchHit("p-event", 0.8, evidence),
+                ],
+                [],
+            ]
+        )
+        service = HybridRetrievalService(
+            binding(), encoder=FakeEncoder(), backend=backend
+        )
+        timeline = plan().model_copy(update={"query_types": [QueryType.TIMELINE]})
+
+        timeline_result = await service.retrieve(timeline)
+        self.assertEqual(backend.limit, 80)
+        fact_result = await service.retrieve(plan())
+
+        self.assertEqual(
+            [item.parent_id for item in timeline_result.candidates],
+            ["parent-event"],
+        )
+        self.assertIn("timeline_navigation_sections_removed:1", timeline_result.warnings)
+        self.assertEqual(
+            [item.parent_id for item in fact_result.candidates],
+            ["parent-nav", "parent-event"],
+        )
+
     async def test_index_profile_mismatch_fails_closed_before_io(self) -> None:
         backend = FakeBackend()
         other = profile().model_copy(update={"collection_name": "other"})
