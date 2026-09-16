@@ -106,8 +106,13 @@ async def _run(
         stage: Counter(getattr(item.statuses, stage) for item in traces)
         for stage in ("query_understanding", "retrieval", "rerank", "context")
     }
+    # A provider may return UNAVAILABLE as a valid result object rather than
+    # raising. That is still a broken online collection, not a successful run.
     failed_count = sum(
-        any(getattr(item.statuses, stage) == "failed" for stage in stage_statuses)
+        any(
+            getattr(item.statuses, stage) in {"failed", "unavailable"}
+            for stage in stage_statuses
+        )
         for item in traces
     )
     return {

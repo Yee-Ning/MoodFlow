@@ -31,6 +31,16 @@ class CandidateRetriever:
         )
 
 
+class UnavailableRetriever:
+    async def retrieve(self, plan):
+        return RetrievalResult(
+            status=RetrievalStatus.UNAVAILABLE,
+            plan_id=plan.plan_id,
+            index_profile=profile(),
+            warnings=["retrieval_index_validation_failed"],
+        )
+
+
 class ReversingReranker:
     async def rerank(self, plan, candidate_pool):
         return RerankResult(
@@ -209,6 +219,56 @@ class RAGTraceCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("MoodFlow RAG Eval V0 人工审核包", review)
             self.assertIn("`parent-2`", review)
             self.assertIn("该样本预期触发追问", review)
+
+    def test_cli_does_not_report_success_when_retrieval_is_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            dataset = root / "pending.jsonl"
+            traces_path = root / "traces.jsonl"
+            write_jsonl(
+                dataset,
+                [
+                    RAGEvaluationCase(
+                        case_id="rag-v0-001",
+                        query="歌曲《晴天》的创作背景是什么？",
+                        expected_outcome=ExpectedOutcome.ANSWERABLE,
+                    )
+                ],
+            )
+            output = StringIO()
+            with (
+                patch.object(
+                    run_rag_trace_collection,
+                    "load_retrieval_index_binding",
+                    return_value=SimpleNamespace(profile=profile()),
+                ),
+                redirect_stdout(output),
+            ):
+                status = run_rag_trace_collection.main(
+                    [
+                        "--dataset",
+                        str(dataset),
+                        "--index-manifest",
+                        "manifest.json",
+                        "--output",
+                        str(traces_path),
+                        "--run-id",
+                        "unavailable-test",
+                        "--no-llm",
+                    ],
+                    project_root=root,
+                    retrieval_factory=lambda binding, config: UnavailableRetriever(),
+                )
+
+            payload = json.loads(output.getvalue())
+            self.assertEqual(status, 2)
+            self.assertEqual(payload["status"], "partial")
+            self.assertEqual(payload["failed_count"], 1)
+            self.assertEqual(payload["retrieval_statuses"], {"unavailable": 1})
+            self.assertEqual(
+                load_evaluation_traces(traces_path)[0].statuses.retrieval,
+                "unavailable",
+            )
 
 
 if __name__ == "__main__":
