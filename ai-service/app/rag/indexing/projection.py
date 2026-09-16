@@ -11,6 +11,7 @@ from app.rag.knowledge.models import (
     KnowledgeEnrichedParentChunk,
 )
 from app.rag.knowledge.verification.models import VerifiedClaim, VerificationStatus
+from app.rag.enrichment.temporal import mentioned_year_bounds
 
 from .config import IndexingConfig
 from .models import PreparedIndexDocument
@@ -101,6 +102,7 @@ class IndexDocumentProjector:
             {item.verification.status.value for item in claims}
         )
         temporal = chunk.enrichment.temporal
+        year_bounds = mentioned_year_bounds(temporal.raw_mentions)
         source = chunk.enrichment.source
         payload: dict[str, object] = {
             "point_id": point_id,
@@ -131,6 +133,8 @@ class IndexDocumentProjector:
             "date": temporal.date.isoformat() if temporal.date else None,
             "start_year": temporal.start_year,
             "end_year": temporal.end_year,
+            "min_mentioned_year": year_bounds[0] if year_bounds else None,
+            "max_mentioned_year": year_bounds[1] if year_bounds else None,
             "source_id": source.source_id,
             "source_type": source.source_type,
             "source_name": source.source_name,

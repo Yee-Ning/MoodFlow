@@ -9,6 +9,7 @@ import uuid
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 from qdrant_client import QdrantClient, models
 
 from app.rag.chunk.models import ChildChunk, ChunkType, ParentChunk
@@ -351,6 +352,40 @@ class ProjectionTests(unittest.TestCase):
 
         self.assertNotEqual(original.input_hash, changed.input_hash)
 
+    def test_multi_year_mentions_are_projected_as_coarse_overlap_bounds(self) -> None:
+        chunk = _child()
+        enrichment = chunk.enrichment.model_copy(
+            update={
+                "temporal": TemporalMetadata(
+                    raw_mentions=["2011年", "2012年", "2007年", "2020年7月3日"]
+                )
+            }
+        )
+        chunk = chunk.model_copy(update={"enrichment": enrichment})
+
+        document = IndexDocumentProjector(_config()).project(
+            chunk, _parent(), source_release_id=RELEASE_ID
+        )
+
+        self.assertNotIn("year", document.payload)
+        self.assertEqual(document.payload["min_mentioned_year"], 2007)
+        self.assertEqual(document.payload["max_mentioned_year"], 2020)
+        self.assertEqual(document.payload["projection_version"], "v3")
+
+    def test_no_year_mentions_do_not_invent_event_time(self) -> None:
+        chunk = _child()
+        enrichment = chunk.enrichment.model_copy(
+            update={"temporal": TemporalMetadata()}
+        )
+        chunk = chunk.model_copy(update={"enrichment": enrichment})
+
+        document = IndexDocumentProjector(_config()).project(
+            chunk, _parent(), source_release_id=RELEASE_ID
+        )
+
+        self.assertNotIn("min_mentioned_year", document.payload)
+        self.assertNotIn("max_mentioned_year", document.payload)
+
     def test_parent_and_release_changes_invalidate_index_input_hash(self) -> None:
         projector = IndexDocumentProjector(_config())
         child = _child()
@@ -494,12 +529,30 @@ class KnowledgeReleaseTests(unittest.TestCase):
 
         self.assertEqual(
             resolved.qdrant.collection_name,
-            "music_knowledge_v2_aaaaaaaaaaaaaaaa_v1_v2_v2",
+            "music_knowledge_v2_aaaaaaaaaaaaaaaa_v1_v2_v3",
         )
         self.assertFalse(resolved.qdrant.append_release_hash)
 
 
 class OfflineIndexingServiceTests(unittest.TestCase):
+    def test_default_output_is_isolated_by_projection_version(self) -> None:
+        with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary:
+            root = Path(temporary)
+            knowledge_path = _write_corpus(root, [_child()])
+
+            outcome = OfflineIndexingService(
+                root,
+                _config(),
+                knowledge_path=knowledge_path,
+                encoder=StaticEncoder(),
+                store=MemoryStore(),
+            ).run()
+
+            self.assertEqual(
+                outcome.manifest_path,
+                root / "data" / "indexing" / "v1" / RELEASE_ID / "v3" / "index_build_manifest.json",
+            )
+
     def test_rerun_skips_unchanged_points_before_embedding(self) -> None:
         with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary:
             root = Path(temporary)
@@ -647,6 +700,16 @@ class OfflineIndexingServiceTests(unittest.TestCase):
 
 
 class QdrantStoreTests(unittest.TestCase):
+    def test_qdrant_client_respects_proxy_environment_policy(self) -> None:
+        config = _config(
+            qdrant=_config().qdrant.model_copy(update={"trust_env": False})
+        )
+
+        with patch("app.rag.indexing.store.QdrantClient") as client_factory:
+            QdrantIndexStore(config)
+
+        self.assertFalse(client_factory.call_args.kwargs["trust_env"])
+
     def test_collection_has_only_dense_and_bm25_named_vectors(self) -> None:
         client = QdrantClient(":memory:")
         config = _config(

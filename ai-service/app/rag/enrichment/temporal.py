@@ -110,3 +110,18 @@ class TemporalExtractor:
         return bool(
             _NON_EVENT_YEAR_PREFIX_RE.search(content[max(0, start - 30) : start])
         )
+
+
+def mentioned_year_bounds(raw_mentions: list[str]) -> tuple[int, int] | None:
+    """Return coarse bounds for years the extractor actually retained.
+
+    These bounds are for candidate recall, not proof that every intervening year
+    occurs in the passage. Exact-year evidence must still be checked downstream.
+    """
+
+    years = [
+        int(match.group("year"))
+        for mention in raw_mentions
+        for match in _YEAR_RE.finditer(mention)
+    ]
+    return (min(years), max(years)) if years else None

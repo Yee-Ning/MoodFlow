@@ -46,6 +46,21 @@ def _temporal_filter(start_year: int, end_year: int) -> FilterGroup:
                     ),
                 ],
             ),
+            FilterGroup(
+                operator="all",
+                children=[
+                    FilterCondition(
+                        field=MetadataField.MIN_MENTIONED_YEAR,
+                        operator=FilterOperator.RANGE,
+                        lte=end_year,
+                    ),
+                    FilterCondition(
+                        field=MetadataField.MAX_MENTIONED_YEAR,
+                        operator=FilterOperator.RANGE,
+                        gte=start_year,
+                    ),
+                ],
+            ),
         ],
     )
 

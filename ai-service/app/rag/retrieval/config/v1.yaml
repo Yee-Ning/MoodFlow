@@ -28,6 +28,7 @@ qdrant:
   api_key_env: QDRANT_API_KEY
   timeout_seconds: 5
   prefer_grpc: false
+  trust_env: false
   minimum_server_version: 1.19.0
   hnsw_ef: 128
 

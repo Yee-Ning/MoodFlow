@@ -96,6 +96,7 @@ class QdrantIndexConfig(BaseModel):
     minimum_server_version: str = Field(default="1.19.0", pattern=r"^\d+\.\d+\.\d+$")
     timeout_seconds: int = Field(default=60, ge=1, le=600)
     prefer_grpc: bool = False
+    trust_env: bool = True
     hnsw_m: int = Field(default=16, ge=4, le=128)
     hnsw_ef_construct: int = Field(default=200, ge=4, le=2_048)
     upsert_batch_size: int = Field(default=64, ge=1, le=1_000)
@@ -134,7 +135,7 @@ class IndexingConfig(BaseModel):
 
     indexing_version: str = Field(default="v1", pattern=r"^v\d+$")
     schema_version: str = Field(default="v2", pattern=r"^v\d+$")
-    projection_version: str = Field(default="v2", pattern=r"^v\d+$")
+    projection_version: str = Field(default="v3", pattern=r"^v\d+$")
     embedding_batch_size: int = Field(default=8, ge=1, le=256)
     retry_count: int = Field(default=2, ge=0, le=5)
     index_partial_knowledge: bool = True

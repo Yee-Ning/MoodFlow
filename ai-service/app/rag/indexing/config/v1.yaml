@@ -1,6 +1,6 @@
 indexing_version: v1
 schema_version: v2
-projection_version: v2
+projection_version: v3
 embedding_batch_size: 8
 retry_count: 2
 index_partial_knowledge: true
@@ -36,6 +36,7 @@ qdrant:
   minimum_server_version: 1.19.0
   timeout_seconds: 60
   prefer_grpc: false
+  trust_env: false
   hnsw_m: 16
   hnsw_ef_construct: 200
   upsert_batch_size: 64
@@ -50,6 +51,8 @@ qdrant:
     - {field: year, schema: integer}
     - {field: start_year, schema: integer}
     - {field: end_year, schema: integer}
+    - {field: min_mentioned_year, schema: integer}
+    - {field: max_mentioned_year, schema: integer}
     - {field: entity_ids, schema: keyword}
     - {field: entity_types, schema: keyword}
     - {field: verification_statuses, schema: keyword}

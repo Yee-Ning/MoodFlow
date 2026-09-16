@@ -67,6 +67,7 @@ class QdrantHybridSearchBackend:
             api_key=api_key,
             timeout=config.qdrant.timeout_seconds,
             prefer_grpc=config.qdrant.prefer_grpc,
+            trust_env=config.qdrant.trust_env,
         )
 
     async def validate_binding(self, binding: RetrievalIndexBinding) -> None:

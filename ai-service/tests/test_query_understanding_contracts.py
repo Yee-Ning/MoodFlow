@@ -113,6 +113,20 @@ class QueryUnderstandingContractTests(unittest.TestCase):
 
         self.assertEqual(encoded.count('"match_value"'), 2)
 
+    def test_year_filter_also_accepts_multi_year_passages_by_overlap(self) -> None:
+        plan = build_search_plan(analysis(), load_query_understanding_config())
+
+        assert plan.metadata_filter.root is not None
+        temporal = plan.metadata_filter.root.children[1]
+        self.assertEqual(temporal.operator, "any")
+        self.assertEqual(len(temporal.children), 3)
+        mention_bounds = temporal.children[-1]
+        self.assertEqual(mention_bounds.operator, "all")
+        self.assertEqual(mention_bounds.children[0].field, MetadataField.MIN_MENTIONED_YEAR)
+        self.assertEqual(mention_bounds.children[0].lte, 2005)
+        self.assertEqual(mention_bounds.children[1].field, MetadataField.MAX_MENTIONED_YEAR)
+        self.assertEqual(mention_bounds.children[1].gte, 2000)
+
     def test_single_query_hybrid_plan_still_requests_reranking(self) -> None:
         config = load_query_understanding_config().model_copy(
             update={"max_query_variants": 1}

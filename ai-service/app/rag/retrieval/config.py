@@ -62,6 +62,7 @@ class QdrantRetrievalConfig(BaseModel):
     api_key_env: str = Field(min_length=1, max_length=100)
     timeout_seconds: float = Field(gt=0, le=60)
     prefer_grpc: bool = False
+    trust_env: bool = True
     minimum_server_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
     hnsw_ef: int = Field(default=128, ge=16, le=2_048)
 

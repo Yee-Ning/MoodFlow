@@ -190,6 +190,8 @@ class MetadataField(StrEnum):
     YEAR = "year"
     START_YEAR = "start_year"
     END_YEAR = "end_year"
+    MIN_MENTIONED_YEAR = "min_mentioned_year"
+    MAX_MENTIONED_YEAR = "max_mentioned_year"
     LANGUAGE = "language"
     CONTENT_TYPE = "content_type"
     KNOWLEDGE_STATUS = "knowledge_status"

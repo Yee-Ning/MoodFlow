@@ -167,6 +167,7 @@ class OfflineIndexingService:
             / "indexing"
             / config.indexing_version
             / release.release_id
+            / config.projection_version
         )
         writer = IndexBuildWriter(self.project_root, output_root)
         projection_path, projection_fingerprint = writer.write_projection(documents)

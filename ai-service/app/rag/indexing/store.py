@@ -43,6 +43,7 @@ class QdrantIndexStore:
             api_key=api_key,
             timeout=qdrant.timeout_seconds,
             prefer_grpc=qdrant.prefer_grpc,
+            trust_env=qdrant.trust_env,
         )
 
     def ensure_collection(self) -> None:

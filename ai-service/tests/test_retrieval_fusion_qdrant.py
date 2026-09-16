@@ -2,7 +2,7 @@ import os
 import unittest
 import uuid
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 from qdrant_client import AsyncQdrantClient, models
 
@@ -87,6 +87,15 @@ def binding():
 
 
 class RetrievalLegAndFusionTests(unittest.TestCase):
+    def test_qdrant_client_respects_proxy_environment_policy(self) -> None:
+        config = load_retrieval_config()
+
+        with patch("app.rag.retrieval.qdrant.AsyncQdrantClient") as client_factory:
+            QdrantHybridSearchBackend(config)
+
+        self.assertFalse(config.qdrant.trust_env)
+        self.assertFalse(client_factory.call_args.kwargs["trust_env"])
+
     def test_plan_expands_to_bounded_weighted_channel_legs(self) -> None:
         config = load_retrieval_config()
         legs = build_retrieval_legs(plan(), {0: [0.1] * 1024}, config)
