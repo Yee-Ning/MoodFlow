@@ -160,6 +160,112 @@ class RAGAnswerGenerationTests(unittest.TestCase):
         self.assertIsNone(generated[1].actual_answer)
         self.assertEqual(len(runtime.calls), 1)
 
+    def test_generation_uses_trace_state_not_gold_outcome(self) -> None:
+        gold_insufficient = case("rag-v0-004", ExpectedOutcome.INSUFFICIENT_EVIDENCE)
+        runtime = ScriptedRuntime([
+            json.dumps({
+                "answer": "有据可查。[parent-1]",
+                "citation_parent_ids": ["parent-1"],
+            }, ensure_ascii=False),
+        ])
+        generated = asyncio.run(generate_evaluation_answers(
+            [gold_insufficient], [trace(gold_insufficient)],
+            generator=CitationAwareAnswerGenerator(runtime),
+        ))
+        self.assertEqual(generated[0].statuses.generation, "success")
+        self.assertEqual(len(runtime.calls), 1)
+
+        gold_answerable = case("rag-v0-005")
+        observed = trace(gold_answerable, with_context=False)
+        observed = observed.model_copy(update={
+            "statuses": observed.statuses.model_copy(update={
+                "query_understanding": "needs_input", "context": "not_run",
+            }),
+        })
+        generated = asyncio.run(generate_evaluation_answers(
+            [gold_answerable], [observed],
+            generator=CitationAwareAnswerGenerator(ScriptedRuntime([])),
+        ))
+        self.assertEqual(generated[0].statuses.generation, "needs_input")
+
+    def test_collaboration_requires_explicit_joint_evidence(self) -> None:
+        evaluation_case = RAGEvaluationCase(
+            case_id="rag-v0-025", query="周杰伦与蔡依林合作过什么",
+            expected_outcome=ExpectedOutcome.INSUFFICIENT_EVIDENCE,
+            annotation_status=AnnotationStatus.APPROVED,
+        )
+        unrelated = EvaluationContext(
+            parent_id="parent-1", rank=1, title="年度榜单",
+            content="2006 周杰伦、蔡依林同获奖项。蔡依林演唱《示例》；周杰伦演唱《另一首》。",
+            source_id="source-1", source_name="测试来源",
+        )
+        observed = trace(evaluation_case).model_copy(update={
+            "candidate_pool": [unrelated], "reranked_context": [unrelated],
+            "final_context": [unrelated],
+        })
+        runtime = ScriptedRuntime([])
+        generated = asyncio.run(generate_evaluation_answers(
+            [evaluation_case], [observed],
+            generator=CitationAwareAnswerGenerator(runtime),
+        ))
+        self.assertEqual(generated[0].statuses.generation, "insufficient_evidence")
+        self.assertIn("collaboration_relation_not_supported", generated[0].warnings)
+        self.assertEqual(runtime.calls, [])
+
+        co_mentioned = unrelated.model_copy(update={
+            "content": "周杰伦与蔡依林同时出现，周杰伦随后与方文山合作。",
+        })
+        co_mentioned_trace = observed.model_copy(update={
+            "candidate_pool": [co_mentioned], "reranked_context": [co_mentioned],
+            "final_context": [co_mentioned],
+        })
+        generated = asyncio.run(generate_evaluation_answers(
+            [evaluation_case], [co_mentioned_trace],
+            generator=CitationAwareAnswerGenerator(runtime),
+        ))
+        self.assertEqual(generated[0].statuses.generation, "insufficient_evidence")
+        self.assertEqual(runtime.calls, [])
+
+        supported = unrelated.model_copy(update={
+            "content": "周杰伦与蔡依林合作演唱《示例》。",
+        })
+        observed = observed.model_copy(update={
+            "candidate_pool": [supported], "reranked_context": [supported],
+            "final_context": [supported],
+        })
+        runtime = ScriptedRuntime([
+            json.dumps({
+                "answer": "两人合作演唱《示例》。 [parent-1]",
+                "citation_parent_ids": ["parent-1"],
+            }, ensure_ascii=False),
+        ])
+        generated = asyncio.run(generate_evaluation_answers(
+            [evaluation_case], [observed],
+            generator=CitationAwareAnswerGenerator(runtime),
+        ))
+        self.assertEqual(generated[0].statuses.generation, "success")
+        self.assertEqual(len(runtime.calls), 1)
+        self.assertIn("同一页提到两人", runtime.calls[0]["instructions"])
+
+        prefixed_case = evaluation_case.model_copy(update={
+            "query": "请介绍周杰伦与蔡依林合作过什么",
+        })
+        prefixed_trace = observed.model_copy(update={
+            "query": prefixed_case.query,
+        })
+        runtime = ScriptedRuntime([
+            json.dumps({
+                "answer": "两人合作演唱《示例》。 [parent-1]",
+                "citation_parent_ids": ["parent-1"],
+            }, ensure_ascii=False),
+        ])
+        generated = asyncio.run(generate_evaluation_answers(
+            [prefixed_case], [prefixed_trace],
+            generator=CitationAwareAnswerGenerator(runtime),
+        ))
+        self.assertEqual(generated[0].statuses.generation, "success")
+        self.assertEqual(len(runtime.calls), 1)
+
     def test_cli_persists_partial_trace_when_one_generation_fails(self) -> None:
         evaluation_case = case()
         runtime = ScriptedRuntime([])
