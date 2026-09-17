@@ -82,3 +82,5 @@
 - `python -m ruff check app/rag/evaluation/models.py run_rag_gold_v4_audit.py tests/test_rag_gold_v4_audit.py`：通过。相关 Python 文件 compileall 通过。
 - 两份历史 Trace 的 V3/V4 deterministic evaluate 均成功。未运行任何在线检索、精排或生成。
 - 全仓 `git diff --check` 命中原有未提交文件 `gold_review_v0_blind_pack.md` 的尾随空格；本次未修改该文件，提交前按本次文件范围检查。
+- `.\.venv\Scripts\python.exe -m pytest -q` 在收集可选 `evals/tests/test_judges.py` 时因主环境缺少 `deepeval` 中止；并非断言失败。
+- 改用现成评测环境运行 `.\.venv-eval\Scripts\python.exe -m pytest evals/tests/test_judges.py -q`：4 passed。
