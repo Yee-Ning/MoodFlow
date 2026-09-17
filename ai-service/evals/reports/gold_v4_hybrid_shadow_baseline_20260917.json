@@ -34,6 +34,7 @@
     "dense_weight": 1.0,
     "bm25_weight": 1.0,
     "per_leg_top_k_actual": 80,
+    "per_leg_child_limit_diagnostic": 600,
     "candidate_top_k_actual": 40,
     "candidate_top_k_diagnostic": 100,
     "rerank_top_k": 12,
@@ -44,9 +45,28 @@
   "rerank_config_sha256": "aa09b6e80ed52defb97ad6dadeed2c48ef3c014d4126713b25b1afed012ef9fb",
   "query_config_sha256": "afcb85b4649fb0cdc8d117f480b85bc4ddfebbbcecb8437f6c655698e1c7db77",
   "trace_path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\evals\\artifacts\\gold_v4_hybrid_shadow_trace_50_20260917.jsonl",
-  "trace_sha256": "9f4bc4f795c758e6bef70de26262630cf63a72325adbdbdeb47ce088e417181d",
+  "trace_sha256": "d8540b47e605d93a97568ff21348181440aeaa9de5ef92f52290cd06c97ae036",
+  "rerank_diagnostics_path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\evals\\artifacts\\gold_v4_hybrid_shadow_trace_50_20260917.rerank_diagnostics.jsonl",
+  "rerank_diagnostics_sha256": "aab31064e7f2be01c6ed9c084cf81d2325c256205a19bda519233e0ed1a806c2",
+  "portable_archives": {
+    "retrieval": {
+      "path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\evals\\reports\\gold_v4_hybrid_shadow_retrieval_50_20260917.jsonl.gz",
+      "sha256": "dc83c9f6fa13b42dfb0205866d672c473bf21baed00e46d931f1a9dfb7e10736",
+      "uncompressed_sha256": "4818bd4baf790255c9052e076f9d96a99baae4b4ee600316154887bc409e8b9d"
+    },
+    "trace": {
+      "path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\evals\\reports\\gold_v4_hybrid_shadow_trace_50_20260917.jsonl.gz",
+      "sha256": "1d83d03e00153765abce4d28c3df66896795b6bfe71eecebcac2fffd6a4d8f3d",
+      "uncompressed_sha256": "d8540b47e605d93a97568ff21348181440aeaa9de5ef92f52290cd06c97ae036"
+    },
+    "rerank_diagnostics": {
+      "path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\evals\\reports\\gold_v4_hybrid_shadow_trace_50_20260917.rerank_diagnostics.jsonl.gz",
+      "sha256": "4f0cc452cad0e2b3ab1d48ad1c9e736c7b739eb0afb42e741d3ecae4a071a2c0",
+      "uncompressed_sha256": "aab31064e7f2be01c6ed9c084cf81d2325c256205a19bda519233e0ed1a806c2"
+    }
+  },
   "retrieval_artifact_path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\evals\\artifacts\\gold_v4_hybrid_shadow_retrieval_50_20260917.jsonl",
-  "retrieval_artifact_sha256": "10e8d5c1a49eb5cf40054ca7229608e952794b2416eb36f0c44ae8d139356a0e",
+  "retrieval_artifact_sha256": "4818bd4baf790255c9052e076f9d96a99baae4b4ee600316154887bc409e8b9d",
   "case_count": 50,
   "trace_count": 50,
   "stage_statuses": {
@@ -80,43 +100,43 @@
       "recall_at_10": 0.6037240537240538,
       "recall_at_20": 0.6976190476190476,
       "recall_at_40": 0.7416971916971917,
-      "recall_at_100": 0.7416971916971917
+      "recall_at_100": 0.7983516483516484
     },
     "bm25": {
-      "recall_at_10": 0.4962759462759463,
-      "recall_at_20": 0.5689255189255189,
-      "recall_at_40": 0.6247252747252747,
-      "recall_at_100": 0.8066544566544567
+      "recall_at_10": 0.5173382173382174,
+      "recall_at_20": 0.5625152625152625,
+      "recall_at_40": 0.6134310134310135,
+      "recall_at_100": 0.7714285714285715
     },
     "hybrid": {
-      "recall_at_10": 0.5872405372405373,
-      "recall_at_20": 0.6835775335775336,
-      "recall_at_40": 0.704945054945055,
-      "recall_at_100": 0.8274114774114774
+      "recall_at_10": 0.5915140415140415,
+      "recall_at_20": 0.7177655677655678,
+      "recall_at_40": 0.7342490842490843,
+      "recall_at_100": 0.8330280830280831
     }
   },
   "hybrid_evidence_recall_at_40": 0.7812576312576313,
   "hybrid_rerank_recall_at_12": 0.6742368742368742,
   "final_context_precision": 0.16623931623931623,
   "funnel_unit_hits": {
-    "dense_top100": 68,
-    "bm25_top100": 73,
-    "hybrid_top100": 76,
+    "dense_top100": 74,
+    "bm25_top100": 72,
+    "hybrid_top100": 80,
     "hybrid_top40": 69,
     "rerank_top12": 53,
     "final_context": 50
   },
   "failure_counts": {
-    "FUSION_RANKING_MISS": 10,
-    "BOTH": 64,
+    "FUSION_RANKING_MISS": 13,
+    "BOTH": 66,
     "HYBRID_PROMOTED_PAST_40": 2,
     "HYBRID_DEMOTED_PAST_40": 6,
-    "DENSE_AND_BM25_MISS": 16,
-    "NEITHER": 18,
+    "BM25_ONLY_RECOVERY": 6,
     "SUCCESS": 50,
-    "BM25_ONLY_RECOVERY": 9,
     "RERANK_MISS": 16,
-    "DENSE_ONLY_RECOVERY": 4,
+    "DENSE_ONLY_RECOVERY": 8,
+    "NEITHER": 15,
+    "DENSE_AND_BM25_MISS": 13,
     "CONTEXT_DROP": 3
   },
   "per_claim": [
@@ -154,9 +174,9 @@
         "rerank_top12": [],
         "final_context": []
       },
-      "dense_rank": 28,
-      "bm25_rank": 77,
-      "hybrid_rank": 69
+      "dense_rank": 26,
+      "bm25_rank": 82,
+      "hybrid_rank": 42
     },
     {
       "case_id": "rag-v0-001",
@@ -167,28 +187,32 @@
         "parent-e46f773645df47165d634134"
       ],
       "dense_top100_hit": false,
-      "bm25_top100_hit": false,
-      "hybrid_top100_hit": false,
+      "bm25_top100_hit": true,
+      "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": false,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "NEITHER",
-      "failure_category": "DENSE_AND_BM25_MISS",
+      "channel_pattern": "BM25_ONLY_RECOVERY",
+      "failure_category": "FUSION_RANKING_MISS",
       "dense_top40_hit": false,
       "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
         "dense_top100": [],
-        "bm25_top100": [],
-        "hybrid_top100": [],
+        "bm25_top100": [
+          "parent-e46f773645df47165d634134"
+        ],
+        "hybrid_top100": [
+          "parent-e46f773645df47165d634134"
+        ],
         "actual_top40": [],
         "rerank_top12": [],
         "final_context": []
       },
       "dense_rank": null,
-      "bm25_rank": null,
-      "hybrid_rank": null
+      "bm25_rank": 76,
+      "hybrid_rank": 81
     },
     {
       "case_id": "rag-v0-001",
@@ -231,8 +255,8 @@
         ]
       },
       "dense_rank": 11,
-      "bm25_rank": 82,
-      "hybrid_rank": 14
+      "bm25_rank": 70,
+      "hybrid_rank": 11
     },
     {
       "case_id": "rag-v0-001",
@@ -268,9 +292,9 @@
         "rerank_top12": [],
         "final_context": []
       },
-      "dense_rank": 28,
-      "bm25_rank": 77,
-      "hybrid_rank": 69
+      "dense_rank": 26,
+      "bm25_rank": 82,
+      "hybrid_rank": 42
     },
     {
       "case_id": "rag-v0-001",
@@ -306,9 +330,9 @@
         "rerank_top12": [],
         "final_context": []
       },
-      "dense_rank": 28,
-      "bm25_rank": 77,
-      "hybrid_rank": 69
+      "dense_rank": 26,
+      "bm25_rank": 82,
+      "hybrid_rank": 42
     },
     {
       "case_id": "rag-v0-002",
@@ -318,20 +342,22 @@
       "acceptable_parent_ids": [
         "parent-cca31e09c6d05f09267862a1"
       ],
-      "dense_top100_hit": false,
+      "dense_top100_hit": true,
       "bm25_top100_hit": true,
       "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": false,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "BM25_ONLY_RECOVERY",
+      "channel_pattern": "BOTH",
       "failure_category": "FUSION_RANKING_MISS",
       "dense_top40_hit": false,
-      "bm25_top40_hit": false,
+      "bm25_top40_hit": true,
       "hybrid_promoted_past_40": false,
-      "hybrid_demoted_past_40": false,
+      "hybrid_demoted_past_40": true,
       "matched_parent_ids": {
-        "dense_top100": [],
+        "dense_top100": [
+          "parent-cca31e09c6d05f09267862a1"
+        ],
         "bm25_top100": [
           "parent-cca31e09c6d05f09267862a1"
         ],
@@ -342,9 +368,9 @@
         "rerank_top12": [],
         "final_context": []
       },
-      "dense_rank": null,
-      "bm25_rank": 65,
-      "hybrid_rank": 78
+      "dense_rank": 57,
+      "bm25_rank": 39,
+      "hybrid_rank": 51
     },
     {
       "case_id": "rag-v0-002",
@@ -356,7 +382,7 @@
       ],
       "dense_top100_hit": false,
       "bm25_top100_hit": true,
-      "hybrid_top100_hit": false,
+      "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": true,
       "rerank_top12_hit": false,
       "final_context_hit": false,
@@ -371,7 +397,9 @@
         "bm25_top100": [
           "parent-0ceb530c507ea8436959d489"
         ],
-        "hybrid_top100": [],
+        "hybrid_top100": [
+          "parent-0ceb530c507ea8436959d489"
+        ],
         "actual_top40": [
           "parent-0ceb530c507ea8436959d489"
         ],
@@ -379,8 +407,8 @@
         "final_context": []
       },
       "dense_rank": null,
-      "bm25_rank": 5,
-      "hybrid_rank": null
+      "bm25_rank": 11,
+      "hybrid_rank": 29
     },
     {
       "case_id": "rag-v0-002",
@@ -419,8 +447,8 @@
         "final_context": []
       },
       "dense_rank": 25,
-      "bm25_rank": 8,
-      "hybrid_rank": 13
+      "bm25_rank": 15,
+      "hybrid_rank": 20
     },
     {
       "case_id": "rag-v0-002",
@@ -459,8 +487,8 @@
         "final_context": []
       },
       "dense_rank": 17,
-      "bm25_rank": 44,
-      "hybrid_rank": 5
+      "bm25_rank": 56,
+      "hybrid_rank": 6
     },
     {
       "case_id": "rag-v0-002",
@@ -502,7 +530,7 @@
       },
       "dense_rank": 5,
       "bm25_rank": null,
-      "hybrid_rank": 12
+      "hybrid_rank": 15
     },
     {
       "case_id": "rag-v0-002",
@@ -544,7 +572,7 @@
       },
       "dense_rank": 3,
       "bm25_rank": null,
-      "hybrid_rank": 11
+      "hybrid_rank": 14
     },
     {
       "case_id": "rag-v0-002",
@@ -583,8 +611,8 @@
         "final_context": []
       },
       "dense_rank": 25,
-      "bm25_rank": 8,
-      "hybrid_rank": 13
+      "bm25_rank": 15,
+      "hybrid_rank": 20
     },
     {
       "case_id": "rag-v0-003",
@@ -594,29 +622,35 @@
       "acceptable_parent_ids": [
         "parent-abd13550e82163b9f04dd8c1"
       ],
-      "dense_top100_hit": false,
-      "bm25_top100_hit": false,
-      "hybrid_top100_hit": false,
+      "dense_top100_hit": true,
+      "bm25_top100_hit": true,
+      "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": false,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "NEITHER",
-      "failure_category": "DENSE_AND_BM25_MISS",
+      "channel_pattern": "BOTH",
+      "failure_category": "FUSION_RANKING_MISS",
       "dense_top40_hit": false,
       "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
-        "dense_top100": [],
-        "bm25_top100": [],
-        "hybrid_top100": [],
+        "dense_top100": [
+          "parent-abd13550e82163b9f04dd8c1"
+        ],
+        "bm25_top100": [
+          "parent-abd13550e82163b9f04dd8c1"
+        ],
+        "hybrid_top100": [
+          "parent-abd13550e82163b9f04dd8c1"
+        ],
         "actual_top40": [],
         "rerank_top12": [],
         "final_context": []
       },
-      "dense_rank": null,
-      "bm25_rank": null,
-      "hybrid_rank": null
+      "dense_rank": 46,
+      "bm25_rank": 85,
+      "hybrid_rank": 78
     },
     {
       "case_id": "rag-v0-003",
@@ -626,20 +660,22 @@
       "acceptable_parent_ids": [
         "parent-bb9810b50e07fbcbb9d00c66"
       ],
-      "dense_top100_hit": false,
+      "dense_top100_hit": true,
       "bm25_top100_hit": true,
       "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": false,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "BM25_ONLY_RECOVERY",
+      "channel_pattern": "BOTH",
       "failure_category": "FUSION_RANKING_MISS",
       "dense_top40_hit": false,
-      "bm25_top40_hit": true,
+      "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
-      "hybrid_demoted_past_40": true,
+      "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
-        "dense_top100": [],
+        "dense_top100": [
+          "parent-bb9810b50e07fbcbb9d00c66"
+        ],
         "bm25_top100": [
           "parent-bb9810b50e07fbcbb9d00c66"
         ],
@@ -650,9 +686,9 @@
         "rerank_top12": [],
         "final_context": []
       },
-      "dense_rank": null,
-      "bm25_rank": 36,
-      "hybrid_rank": 55
+      "dense_rank": 44,
+      "bm25_rank": 50,
+      "hybrid_rank": 41
     },
     {
       "case_id": "rag-v0-003",
@@ -729,8 +765,8 @@
         "final_context": []
       },
       "dense_rank": null,
-      "bm25_rank": 67,
-      "hybrid_rank": 90
+      "bm25_rank": 41,
+      "hybrid_rank": 89
     },
     {
       "case_id": "rag-v0-004",
@@ -768,9 +804,9 @@
         "rerank_top12": [],
         "final_context": []
       },
-      "dense_rank": 29,
-      "bm25_rank": 3,
-      "hybrid_rank": 7
+      "dense_rank": 30,
+      "bm25_rank": 8,
+      "hybrid_rank": 11
     },
     {
       "case_id": "rag-v0-004",
@@ -808,7 +844,7 @@
       },
       "dense_rank": 16,
       "bm25_rank": null,
-      "hybrid_rank": 22
+      "hybrid_rank": 19
     },
     {
       "case_id": "rag-v0-005",
@@ -1227,8 +1263,8 @@
         "final_context": []
       },
       "dense_rank": 15,
-      "bm25_rank": 13,
-      "hybrid_rank": 10
+      "bm25_rank": 7,
+      "hybrid_rank": 12
     },
     {
       "case_id": "rag-v0-023",
@@ -1271,8 +1307,8 @@
         ]
       },
       "dense_rank": 4,
-      "bm25_rank": 62,
-      "hybrid_rank": 2
+      "bm25_rank": 81,
+      "hybrid_rank": 5
     },
     {
       "case_id": "rag-v0-024",
@@ -1283,24 +1319,22 @@
         "parent-35487c91c9077427f4346634"
       ],
       "dense_top100_hit": true,
-      "bm25_top100_hit": true,
+      "bm25_top100_hit": false,
       "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": true,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "BOTH",
+      "channel_pattern": "DENSE_ONLY_RECOVERY",
       "failure_category": "RERANK_MISS",
       "dense_top40_hit": true,
-      "bm25_top40_hit": true,
+      "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
         "dense_top100": [
           "parent-35487c91c9077427f4346634"
         ],
-        "bm25_top100": [
-          "parent-35487c91c9077427f4346634"
-        ],
+        "bm25_top100": [],
         "hybrid_top100": [
           "parent-35487c91c9077427f4346634"
         ],
@@ -1311,7 +1345,7 @@
         "final_context": []
       },
       "dense_rank": 2,
-      "bm25_rank": 9,
+      "bm25_rank": null,
       "hybrid_rank": 1
     },
     {
@@ -1659,20 +1693,22 @@
       "acceptable_parent_ids": [
         "parent-bb9810b50e07fbcbb9d00c66"
       ],
-      "dense_top100_hit": false,
+      "dense_top100_hit": true,
       "bm25_top100_hit": true,
       "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": true,
       "rerank_top12_hit": true,
       "final_context_hit": true,
-      "channel_pattern": "BM25_ONLY_RECOVERY",
+      "channel_pattern": "BOTH",
       "failure_category": "SUCCESS",
       "dense_top40_hit": false,
       "bm25_top40_hit": true,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
-        "dense_top100": [],
+        "dense_top100": [
+          "parent-bb9810b50e07fbcbb9d00c66"
+        ],
         "bm25_top100": [
           "parent-bb9810b50e07fbcbb9d00c66"
         ],
@@ -1689,9 +1725,9 @@
           "parent-bb9810b50e07fbcbb9d00c66"
         ]
       },
-      "dense_rank": null,
+      "dense_rank": 54,
       "bm25_rank": 5,
-      "hybrid_rank": 20
+      "hybrid_rank": 18
     },
     {
       "case_id": "rag-v0-034",
@@ -1913,29 +1949,35 @@
       "acceptable_parent_ids": [
         "parent-17747bf81bf90411ed3b8a4f"
       ],
-      "dense_top100_hit": false,
-      "bm25_top100_hit": false,
-      "hybrid_top100_hit": false,
+      "dense_top100_hit": true,
+      "bm25_top100_hit": true,
+      "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": false,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "NEITHER",
-      "failure_category": "DENSE_AND_BM25_MISS",
+      "channel_pattern": "BOTH",
+      "failure_category": "FUSION_RANKING_MISS",
       "dense_top40_hit": false,
       "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
-        "dense_top100": [],
-        "bm25_top100": [],
-        "hybrid_top100": [],
+        "dense_top100": [
+          "parent-17747bf81bf90411ed3b8a4f"
+        ],
+        "bm25_top100": [
+          "parent-17747bf81bf90411ed3b8a4f"
+        ],
+        "hybrid_top100": [
+          "parent-17747bf81bf90411ed3b8a4f"
+        ],
         "actual_top40": [],
         "rerank_top12": [],
         "final_context": []
       },
-      "dense_rank": null,
-      "bm25_rank": null,
-      "hybrid_rank": null
+      "dense_rank": 84,
+      "bm25_rank": 75,
+      "hybrid_rank": 84
     },
     {
       "case_id": "rag-v0-036",
@@ -1945,29 +1987,35 @@
       "acceptable_parent_ids": [
         "parent-17747bf81bf90411ed3b8a4f"
       ],
-      "dense_top100_hit": false,
-      "bm25_top100_hit": false,
-      "hybrid_top100_hit": false,
+      "dense_top100_hit": true,
+      "bm25_top100_hit": true,
+      "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": false,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "NEITHER",
-      "failure_category": "DENSE_AND_BM25_MISS",
+      "channel_pattern": "BOTH",
+      "failure_category": "FUSION_RANKING_MISS",
       "dense_top40_hit": false,
       "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
-        "dense_top100": [],
-        "bm25_top100": [],
-        "hybrid_top100": [],
+        "dense_top100": [
+          "parent-17747bf81bf90411ed3b8a4f"
+        ],
+        "bm25_top100": [
+          "parent-17747bf81bf90411ed3b8a4f"
+        ],
+        "hybrid_top100": [
+          "parent-17747bf81bf90411ed3b8a4f"
+        ],
         "actual_top40": [],
         "rerank_top12": [],
         "final_context": []
       },
-      "dense_rank": null,
-      "bm25_rank": null,
-      "hybrid_rank": null
+      "dense_rank": 84,
+      "bm25_rank": 75,
+      "hybrid_rank": 84
     },
     {
       "case_id": "rag-v0-036",
@@ -2014,12 +2062,12 @@
         "parent-738563d68235b4f923c1ac79"
       ],
       "dense_top100_hit": true,
-      "bm25_top100_hit": true,
+      "bm25_top100_hit": false,
       "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": true,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "BOTH",
+      "channel_pattern": "DENSE_ONLY_RECOVERY",
       "failure_category": "RERANK_MISS",
       "dense_top40_hit": true,
       "bm25_top40_hit": false,
@@ -2029,9 +2077,7 @@
         "dense_top100": [
           "parent-738563d68235b4f923c1ac79"
         ],
-        "bm25_top100": [
-          "parent-738563d68235b4f923c1ac79"
-        ],
+        "bm25_top100": [],
         "hybrid_top100": [
           "parent-738563d68235b4f923c1ac79"
         ],
@@ -2042,7 +2088,7 @@
         "final_context": []
       },
       "dense_rank": 8,
-      "bm25_rank": 77,
+      "bm25_rank": null,
       "hybrid_rank": 11
     },
     {
@@ -2122,8 +2168,8 @@
         ]
       },
       "dense_rank": 10,
-      "bm25_rank": 57,
-      "hybrid_rank": 53
+      "bm25_rank": 69,
+      "hybrid_rank": 60
     },
     {
       "case_id": "rag-v0-037",
@@ -2178,32 +2224,28 @@
         "parent-17f46282a4d28c6c000e6aff"
       ],
       "dense_top100_hit": false,
-      "bm25_top100_hit": true,
-      "hybrid_top100_hit": true,
+      "bm25_top100_hit": false,
+      "hybrid_top100_hit": false,
       "hybrid_actual_top40_hit": false,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "BM25_ONLY_RECOVERY",
-      "failure_category": "FUSION_RANKING_MISS",
+      "channel_pattern": "NEITHER",
+      "failure_category": "DENSE_AND_BM25_MISS",
       "dense_top40_hit": false,
       "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
         "dense_top100": [],
-        "bm25_top100": [
-          "parent-17f46282a4d28c6c000e6aff"
-        ],
-        "hybrid_top100": [
-          "parent-17f46282a4d28c6c000e6aff"
-        ],
+        "bm25_top100": [],
+        "hybrid_top100": [],
         "actual_top40": [],
         "rerank_top12": [],
         "final_context": []
       },
       "dense_rank": null,
-      "bm25_rank": 63,
-      "hybrid_rank": 66
+      "bm25_rank": null,
+      "hybrid_rank": null
     },
     {
       "case_id": "rag-v0-039",
@@ -2214,32 +2256,28 @@
         "parent-17f46282a4d28c6c000e6aff"
       ],
       "dense_top100_hit": false,
-      "bm25_top100_hit": true,
-      "hybrid_top100_hit": true,
+      "bm25_top100_hit": false,
+      "hybrid_top100_hit": false,
       "hybrid_actual_top40_hit": false,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "BM25_ONLY_RECOVERY",
-      "failure_category": "FUSION_RANKING_MISS",
+      "channel_pattern": "NEITHER",
+      "failure_category": "DENSE_AND_BM25_MISS",
       "dense_top40_hit": false,
       "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
         "dense_top100": [],
-        "bm25_top100": [
-          "parent-17f46282a4d28c6c000e6aff"
-        ],
-        "hybrid_top100": [
-          "parent-17f46282a4d28c6c000e6aff"
-        ],
+        "bm25_top100": [],
+        "hybrid_top100": [],
         "actual_top40": [],
         "rerank_top12": [],
         "final_context": []
       },
       "dense_rank": null,
-      "bm25_rank": 63,
-      "hybrid_rank": 66
+      "bm25_rank": null,
+      "hybrid_rank": null
     },
     {
       "case_id": "rag-v0-040",
@@ -2280,8 +2318,8 @@
         "final_context": []
       },
       "dense_rank": 7,
-      "bm25_rank": 5,
-      "hybrid_rank": 1
+      "bm25_rank": 7,
+      "hybrid_rank": 2
     },
     {
       "case_id": "rag-v0-040",
@@ -2324,28 +2362,32 @@
         "parent-e46f773645df47165d634134"
       ],
       "dense_top100_hit": false,
-      "bm25_top100_hit": false,
-      "hybrid_top100_hit": false,
+      "bm25_top100_hit": true,
+      "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": false,
       "rerank_top12_hit": false,
       "final_context_hit": false,
-      "channel_pattern": "NEITHER",
-      "failure_category": "DENSE_AND_BM25_MISS",
+      "channel_pattern": "BM25_ONLY_RECOVERY",
+      "failure_category": "FUSION_RANKING_MISS",
       "dense_top40_hit": false,
       "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
         "dense_top100": [],
-        "bm25_top100": [],
-        "hybrid_top100": [],
+        "bm25_top100": [
+          "parent-e46f773645df47165d634134"
+        ],
+        "hybrid_top100": [
+          "parent-e46f773645df47165d634134"
+        ],
         "actual_top40": [],
         "rerank_top12": [],
         "final_context": []
       },
       "dense_rank": null,
-      "bm25_rank": null,
-      "hybrid_rank": null
+      "bm25_rank": 81,
+      "hybrid_rank": 78
     },
     {
       "case_id": "rag-v0-040",
@@ -2364,7 +2406,7 @@
       "channel_pattern": "BOTH",
       "failure_category": "RERANK_MISS",
       "dense_top40_hit": true,
-      "bm25_top40_hit": false,
+      "bm25_top40_hit": true,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
@@ -2384,8 +2426,8 @@
         "final_context": []
       },
       "dense_rank": 14,
-      "bm25_rank": 60,
-      "hybrid_rank": 13
+      "bm25_rank": 33,
+      "hybrid_rank": 12
     },
     {
       "case_id": "rag-v0-040",
@@ -2436,7 +2478,7 @@
       "channel_pattern": "BOTH",
       "failure_category": "RERANK_MISS",
       "dense_top40_hit": true,
-      "bm25_top40_hit": true,
+      "bm25_top40_hit": false,
       "hybrid_promoted_past_40": false,
       "hybrid_demoted_past_40": false,
       "matched_parent_ids": {
@@ -2456,8 +2498,8 @@
         "final_context": []
       },
       "dense_rank": 17,
-      "bm25_rank": 33,
-      "hybrid_rank": 12
+      "bm25_rank": 41,
+      "hybrid_rank": 16
     },
     {
       "case_id": "rag-v0-040",
@@ -2636,8 +2678,8 @@
         "final_context": []
       },
       "dense_rank": 19,
-      "bm25_rank": 46,
-      "hybrid_rank": 45
+      "bm25_rank": 49,
+      "hybrid_rank": 49
     },
     {
       "case_id": "rag-v0-044",
@@ -2677,9 +2719,9 @@
         ],
         "final_context": []
       },
-      "dense_rank": 6,
-      "bm25_rank": 9,
-      "hybrid_rank": 7
+      "dense_rank": 5,
+      "bm25_rank": 8,
+      "hybrid_rank": 5
     },
     {
       "case_id": "rag-v0-044",
@@ -2751,9 +2793,9 @@
         ],
         "final_context": []
       },
-      "dense_rank": 6,
-      "bm25_rank": 9,
-      "hybrid_rank": 7
+      "dense_rank": 5,
+      "bm25_rank": 8,
+      "hybrid_rank": 5
     },
     {
       "case_id": "rag-v0-045",
@@ -3022,7 +3064,7 @@
         ]
       },
       "dense_rank": 1,
-      "bm25_rank": 4,
+      "bm25_rank": 8,
       "hybrid_rank": 1
     },
     {
@@ -3066,7 +3108,7 @@
         ]
       },
       "dense_rank": 1,
-      "bm25_rank": 4,
+      "bm25_rank": 8,
       "hybrid_rank": 1
     },
     {
@@ -3726,7 +3768,7 @@
         ]
       },
       "dense_rank": 1,
-      "bm25_rank": 14,
+      "bm25_rank": 6,
       "hybrid_rank": 3
     },
     {
@@ -3826,12 +3868,12 @@
         "parent-b7a257305b7fdb3423361194"
       ],
       "dense_top100_hit": true,
-      "bm25_top100_hit": true,
+      "bm25_top100_hit": false,
       "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": true,
       "rerank_top12_hit": true,
       "final_context_hit": true,
-      "channel_pattern": "BOTH",
+      "channel_pattern": "DENSE_ONLY_RECOVERY",
       "failure_category": "SUCCESS",
       "dense_top40_hit": true,
       "bm25_top40_hit": false,
@@ -3841,9 +3883,7 @@
         "dense_top100": [
           "parent-b7a257305b7fdb3423361194"
         ],
-        "bm25_top100": [
-          "parent-b7a257305b7fdb3423361194"
-        ],
+        "bm25_top100": [],
         "hybrid_top100": [
           "parent-b7a257305b7fdb3423361194"
         ],
@@ -3858,8 +3898,8 @@
         ]
       },
       "dense_rank": 3,
-      "bm25_rank": 71,
-      "hybrid_rank": 7
+      "bm25_rank": null,
+      "hybrid_rank": 6
     },
     {
       "case_id": "rag-v0-064",
@@ -3870,12 +3910,12 @@
         "parent-b7a257305b7fdb3423361194"
       ],
       "dense_top100_hit": true,
-      "bm25_top100_hit": true,
+      "bm25_top100_hit": false,
       "hybrid_top100_hit": true,
       "hybrid_actual_top40_hit": true,
       "rerank_top12_hit": true,
       "final_context_hit": true,
-      "channel_pattern": "BOTH",
+      "channel_pattern": "DENSE_ONLY_RECOVERY",
       "failure_category": "SUCCESS",
       "dense_top40_hit": true,
       "bm25_top40_hit": false,
@@ -3885,9 +3925,7 @@
         "dense_top100": [
           "parent-b7a257305b7fdb3423361194"
         ],
-        "bm25_top100": [
-          "parent-b7a257305b7fdb3423361194"
-        ],
+        "bm25_top100": [],
         "hybrid_top100": [
           "parent-b7a257305b7fdb3423361194"
         ],
@@ -3902,8 +3940,8 @@
         ]
       },
       "dense_rank": 3,
-      "bm25_rank": 71,
-      "hybrid_rank": 7
+      "bm25_rank": null,
+      "hybrid_rank": 6
     },
     {
       "case_id": "rag-v0-065",
@@ -3978,19 +4016,11 @@
         ]
       },
       "dense_rank": 3,
-      "bm25_rank": 49,
-      "hybrid_rank": 49
+      "bm25_rank": 56,
+      "hybrid_rank": 1
     }
   ],
   "diagnostic_non_nested_units": [
-    {
-      "case_id": "rag-v0-002",
-      "unit_id": "claim:2",
-      "claim": "周杰伦在采访中把音乐理解为依靠想象力的广阔空间",
-      "actual_top40_parent_ids": [
-        "parent-0ceb530c507ea8436959d489"
-      ]
-    },
     {
       "case_id": "rag-v0-006",
       "unit_id": "claim:1",
@@ -4011,25 +4041,25 @@
   "diagnostic_parent_counts_by_case": [
     {
       "case_id": "rag-v0-001",
-      "dense": 80,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-002",
-      "dense": 77,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-003",
-      "dense": 74,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-004",
-      "dense": 82,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
@@ -4065,13 +4095,13 @@
     },
     {
       "case_id": "rag-v0-023",
-      "dense": 65,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-024",
-      "dense": 81,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
@@ -4089,7 +4119,7 @@
     },
     {
       "case_id": "rag-v0-031",
-      "dense": 73,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
@@ -4101,31 +4131,31 @@
     },
     {
       "case_id": "rag-v0-033",
-      "dense": 79,
-      "bm25": 90,
+      "dense": 92,
+      "bm25": 92,
       "hybrid": 92
     },
     {
       "case_id": "rag-v0-034",
-      "dense": 74,
+      "dense": 80,
       "bm25": 80,
       "hybrid": 80
     },
     {
       "case_id": "rag-v0-035",
-      "dense": 96,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-036",
-      "dense": 44,
-      "bm25": 81,
-      "hybrid": 92
+      "dense": 100,
+      "bm25": 100,
+      "hybrid": 100
     },
     {
       "case_id": "rag-v0-037",
-      "dense": 67,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
@@ -4137,13 +4167,13 @@
     },
     {
       "case_id": "rag-v0-039",
-      "dense": 18,
-      "bm25": 67,
-      "hybrid": 68
+      "dense": 100,
+      "bm25": 100,
+      "hybrid": 100
     },
     {
       "case_id": "rag-v0-040",
-      "dense": 37,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
@@ -4155,9 +4185,9 @@
     },
     {
       "case_id": "rag-v0-043",
-      "dense": 59,
-      "bm25": 74,
-      "hybrid": 77
+      "dense": 82,
+      "bm25": 82,
+      "hybrid": 82
     },
     {
       "case_id": "rag-v0-044",
@@ -4191,31 +4221,31 @@
     },
     {
       "case_id": "rag-v0-049",
-      "dense": 58,
-      "bm25": 64,
-      "hybrid": 79
+      "dense": 100,
+      "bm25": 100,
+      "hybrid": 100
     },
     {
       "case_id": "rag-v0-050",
-      "dense": 73,
-      "bm25": 84,
+      "dense": 100,
+      "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-051",
-      "dense": 66,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-052",
-      "dense": 72,
-      "bm25": 88,
+      "dense": 100,
+      "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-053",
-      "dense": 70,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
@@ -4233,26 +4263,26 @@
     },
     {
       "case_id": "rag-v0-056",
-      "dense": 79,
-      "bm25": 86,
+      "dense": 100,
+      "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-057",
-      "dense": 84,
-      "bm25": 80,
+      "dense": 100,
+      "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-058",
-      "dense": 89,
-      "bm25": 68,
+      "dense": 100,
+      "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-059",
-      "dense": 67,
-      "bm25": 74,
+      "dense": 100,
+      "bm25": 100,
       "hybrid": 100
     },
     {
@@ -4263,14 +4293,14 @@
     },
     {
       "case_id": "rag-v0-061",
-      "dense": 68,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-062",
-      "dense": 69,
-      "bm25": 73,
+      "dense": 100,
+      "bm25": 100,
       "hybrid": 100
     },
     {
@@ -4281,26 +4311,26 @@
     },
     {
       "case_id": "rag-v0-064",
-      "dense": 57,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-065",
-      "dense": 83,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-066",
-      "dense": 63,
+      "dense": 100,
       "bm25": 100,
       "hybrid": 100
     },
     {
       "case_id": "rag-v0-067",
-      "dense": 68,
-      "bm25": 98,
+      "dense": 100,
+      "bm25": 100,
       "hybrid": 100
     },
     {
@@ -4308,6 +4338,170 @@
       "dense": 0,
       "bm25": 0,
       "hybrid": 0
+    }
+  ],
+  "diagnostic_top100_shortfall_exhausted_cases": [
+    {
+      "case_id": "rag-v0-005",
+      "parent_counts": {
+        "dense": 15,
+        "bm25": 15,
+        "hybrid": 15
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-006",
+      "parent_counts": {
+        "dense": 6,
+        "bm25": 6,
+        "hybrid": 6
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-007",
+      "parent_counts": {
+        "dense": 56,
+        "bm25": 56,
+        "hybrid": 56
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-008",
+      "parent_counts": {
+        "dense": 44,
+        "bm25": 44,
+        "hybrid": 44
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-009",
+      "parent_counts": {
+        "dense": 48,
+        "bm25": 48,
+        "hybrid": 48
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-025",
+      "parent_counts": {
+        "dense": 30,
+        "bm25": 30,
+        "hybrid": 30
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-026",
+      "parent_counts": {
+        "dense": 16,
+        "bm25": 16,
+        "hybrid": 16
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-032",
+      "parent_counts": {
+        "dense": 31,
+        "bm25": 31,
+        "hybrid": 31
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-033",
+      "parent_counts": {
+        "dense": 92,
+        "bm25": 92,
+        "hybrid": 92
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-034",
+      "parent_counts": {
+        "dense": 80,
+        "bm25": 80,
+        "hybrid": 80
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-038",
+      "parent_counts": {
+        "dense": 47,
+        "bm25": 47,
+        "hybrid": 47
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-042",
+      "parent_counts": {
+        "dense": 51,
+        "bm25": 51,
+        "hybrid": 51
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-043",
+      "parent_counts": {
+        "dense": 82,
+        "bm25": 82,
+        "hybrid": 82
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-044",
+      "parent_counts": {
+        "dense": 18,
+        "bm25": 18,
+        "hybrid": 18
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-054",
+      "parent_counts": {
+        "dense": 44,
+        "bm25": 44,
+        "hybrid": 44
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-055",
+      "parent_counts": {
+        "dense": 37,
+        "bm25": 37,
+        "hybrid": 37
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-060",
+      "parent_counts": {
+        "dense": 37,
+        "bm25": 37,
+        "hybrid": 37
+      },
+      "legs_exhausted": true
+    },
+    {
+      "case_id": "rag-v0-063",
+      "parent_counts": {
+        "dense": 10,
+        "bm25": 10,
+        "hybrid": 10
+      },
+      "legs_exhausted": true
     }
   ],
   "rerank_input_lengths": [
@@ -12539,6 +12733,15 @@
     },
     {
       "case_id": "rag-v0-044",
+      "parent_id": "parent-9b79cd71fdffdbdac2aac65b",
+      "query_tokens_original": 10,
+      "document_tokens_original": 93,
+      "input_tokens_after_truncation": 178,
+      "query_truncated": false,
+      "document_truncated": false
+    },
+    {
+      "case_id": "rag-v0-044",
       "parent_id": "parent-b3e50dba6b5abfdabc67eae7",
       "query_tokens_original": 10,
       "document_tokens_original": 280,
@@ -12557,37 +12760,10 @@
     },
     {
       "case_id": "rag-v0-044",
-      "parent_id": "parent-9b79cd71fdffdbdac2aac65b",
+      "parent_id": "parent-40e65907b07f5b2ab32b0108",
       "query_tokens_original": 10,
-      "document_tokens_original": 93,
-      "input_tokens_after_truncation": 178,
-      "query_truncated": false,
-      "document_truncated": false
-    },
-    {
-      "case_id": "rag-v0-044",
-      "parent_id": "parent-531672f53462b6956869e0eb",
-      "query_tokens_original": 10,
-      "document_tokens_original": 375,
-      "input_tokens_after_truncation": 460,
-      "query_truncated": false,
-      "document_truncated": false
-    },
-    {
-      "case_id": "rag-v0-044",
-      "parent_id": "parent-dd23bd51578934fd6a087957",
-      "query_tokens_original": 10,
-      "document_tokens_original": 249,
-      "input_tokens_after_truncation": 334,
-      "query_truncated": false,
-      "document_truncated": false
-    },
-    {
-      "case_id": "rag-v0-044",
-      "parent_id": "parent-396d8237183dea741ebce052",
-      "query_tokens_original": 10,
-      "document_tokens_original": 346,
-      "input_tokens_after_truncation": 431,
+      "document_tokens_original": 306,
+      "input_tokens_after_truncation": 391,
       "query_truncated": false,
       "document_truncated": false
     },
@@ -12602,28 +12778,28 @@
     },
     {
       "case_id": "rag-v0-044",
+      "parent_id": "parent-531672f53462b6956869e0eb",
+      "query_tokens_original": 10,
+      "document_tokens_original": 375,
+      "input_tokens_after_truncation": 460,
+      "query_truncated": false,
+      "document_truncated": false
+    },
+    {
+      "case_id": "rag-v0-044",
+      "parent_id": "parent-396d8237183dea741ebce052",
+      "query_tokens_original": 10,
+      "document_tokens_original": 346,
+      "input_tokens_after_truncation": 431,
+      "query_truncated": false,
+      "document_truncated": false
+    },
+    {
+      "case_id": "rag-v0-044",
       "parent_id": "parent-de75bd50c15ff676ba87b5f8",
       "query_tokens_original": 10,
       "document_tokens_original": 216,
       "input_tokens_after_truncation": 301,
-      "query_truncated": false,
-      "document_truncated": false
-    },
-    {
-      "case_id": "rag-v0-044",
-      "parent_id": "parent-40e65907b07f5b2ab32b0108",
-      "query_tokens_original": 10,
-      "document_tokens_original": 306,
-      "input_tokens_after_truncation": 391,
-      "query_truncated": false,
-      "document_truncated": false
-    },
-    {
-      "case_id": "rag-v0-044",
-      "parent_id": "parent-5e614cf3933d7f2fd173b0b7",
-      "query_tokens_original": 10,
-      "document_tokens_original": 597,
-      "input_tokens_after_truncation": 682,
       "query_truncated": false,
       "document_truncated": false
     },
@@ -12638,6 +12814,15 @@
     },
     {
       "case_id": "rag-v0-044",
+      "parent_id": "parent-5e614cf3933d7f2fd173b0b7",
+      "query_tokens_original": 10,
+      "document_tokens_original": 597,
+      "input_tokens_after_truncation": 682,
+      "query_truncated": false,
+      "document_truncated": false
+    },
+    {
+      "case_id": "rag-v0-044",
       "parent_id": "parent-460477fc7a03f1f4f1424549",
       "query_tokens_original": 10,
       "document_tokens_original": 353,
@@ -12647,37 +12832,10 @@
     },
     {
       "case_id": "rag-v0-044",
-      "parent_id": "parent-07eaee9b5ba89e0f8cc7f1ff",
-      "query_tokens_original": 10,
-      "document_tokens_original": 241,
-      "input_tokens_after_truncation": 326,
-      "query_truncated": false,
-      "document_truncated": false
-    },
-    {
-      "case_id": "rag-v0-044",
-      "parent_id": "parent-4b227545d72dc08d224836b1",
-      "query_tokens_original": 10,
-      "document_tokens_original": 396,
-      "input_tokens_after_truncation": 481,
-      "query_truncated": false,
-      "document_truncated": false
-    },
-    {
-      "case_id": "rag-v0-044",
       "parent_id": "parent-9b269c4abf118a20881debb5",
       "query_tokens_original": 10,
       "document_tokens_original": 298,
       "input_tokens_after_truncation": 383,
-      "query_truncated": false,
-      "document_truncated": false
-    },
-    {
-      "case_id": "rag-v0-044",
-      "parent_id": "parent-cca31e09c6d05f09267862a1",
-      "query_tokens_original": 10,
-      "document_tokens_original": 289,
-      "input_tokens_after_truncation": 374,
       "query_truncated": false,
       "document_truncated": false
     },
@@ -12696,6 +12854,42 @@
       "query_tokens_original": 10,
       "document_tokens_original": 121,
       "input_tokens_after_truncation": 206,
+      "query_truncated": false,
+      "document_truncated": false
+    },
+    {
+      "case_id": "rag-v0-044",
+      "parent_id": "parent-cca31e09c6d05f09267862a1",
+      "query_tokens_original": 10,
+      "document_tokens_original": 289,
+      "input_tokens_after_truncation": 374,
+      "query_truncated": false,
+      "document_truncated": false
+    },
+    {
+      "case_id": "rag-v0-044",
+      "parent_id": "parent-dd23bd51578934fd6a087957",
+      "query_tokens_original": 10,
+      "document_tokens_original": 249,
+      "input_tokens_after_truncation": 334,
+      "query_truncated": false,
+      "document_truncated": false
+    },
+    {
+      "case_id": "rag-v0-044",
+      "parent_id": "parent-07eaee9b5ba89e0f8cc7f1ff",
+      "query_tokens_original": 10,
+      "document_tokens_original": 241,
+      "input_tokens_after_truncation": 326,
+      "query_truncated": false,
+      "document_truncated": false
+    },
+    {
+      "case_id": "rag-v0-044",
+      "parent_id": "parent-4b227545d72dc08d224836b1",
+      "query_tokens_original": 10,
+      "document_tokens_original": 335,
+      "input_tokens_after_truncation": 420,
       "query_truncated": false,
       "document_truncated": false
     },
@@ -19216,5 +19410,5 @@
       "document_truncated": false
     }
   ],
-  "diagnostic_top100_note": "Top100 is a separate Qdrant query with the same legs, weights and filters but limit 100; actual retrieval uses configured per-leg limit and Top40. Selection target 100 also changes cap relaxation. Therefore diagnostic Top100 is not guaranteed to contain actual Top40; non-nested units are explicitly reported."
+  "diagnostic_top100_note": "Top100 is a separate Qdrant query for up to 600 Child hits per leg to obtain 100 distinct Parents after collapse; actual retrieval uses configured per-leg limit and Top40. Selection target 100 also changes cap relaxation. Therefore diagnostic Top100 is not guaranteed to contain actual Top40; non-nested units are explicitly reported."
 }

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import gzip
 import hashlib
 import json
 from collections import Counter
@@ -63,6 +64,7 @@ TRACES = ROOT / "evals/artifacts/gold_v4_hybrid_shadow_trace_50_20260917.jsonl"
 REPORT = ROOT / "evals/reports/gold_v4_hybrid_shadow_baseline_20260917.json"
 REPORT_MD = ROOT / "evals/reports/gold_v4_hybrid_shadow_baseline_20260917.md"
 RUN_ID = "gold-v4-hybrid-shadow-50-20260917"
+DIAGNOSTIC_CHILD_LIMIT = 600
 
 
 def sha256(path: Path) -> str:
@@ -86,7 +88,7 @@ class DiagnosticBackend:
         if self.calls == 0:
             self.results = actual
             self.diagnostic = await self.delegate.search(
-                binding, legs, query_filter, limit=max(100, limit)
+                binding, legs, query_filter, limit=max(DIAGNOSTIC_CHILD_LIMIT, limit)
             )
         self.calls += 1
         return actual
@@ -205,13 +207,31 @@ def _write_dict_jsonl(path: Path, rows: list[dict]) -> None:
     temporary.replace(path)
 
 
+class CapturingRerankScorer:
+    """Observe every existing model score before the service selects Top12."""
+
+    def __init__(self, config) -> None:
+        self.delegate = QwenRerankScorer(config)
+        self.scores: list[float] | None = None
+
+    def prepare(self) -> None:
+        self.delegate.prepare()
+
+    def score(self, inputs) -> list[float]:
+        scores = self.delegate.score(inputs)
+        self.scores = list(scores)
+        return scores
+
+
 async def rerank() -> None:
     cases = load_evaluation_cases(GOLD)
     rows = _read_jsonl(RETRIEVAL)
     if [row["case_id"] for row in rows] != [case.case_id for case in cases]:
         raise ValueError("retrieval artifact does not cover frozen Gold in order")
     config = load_retrieval_config()
-    reranker = QwenCandidateReranker(load_rerank_config())
+    rerank_config = load_rerank_config()
+    capture = CapturingRerankScorer(rerank_config.model)
+    reranker = QwenCandidateReranker(rerank_config, scorer=capture)
     await reranker.prepare()
     adapter = WorldLineContextAdapter(config)
     traces = []
@@ -228,7 +248,19 @@ async def rerank() -> None:
             plan = SearchPlan.model_validate(row["plan"])
             retrieval = RetrievalResult.model_validate(row["retrieval"])
             inputs = build_rerank_inputs(plan, retrieval, reranker.config)
+            capture.scores = None
             ranked = await reranker.rerank(plan, retrieval)
+            all_scores = capture.scores if ranked.status.value == "success" else None
+            if all_scores is not None and len(all_scores) != len(inputs):
+                raise ValueError(f"reranker score count mismatch:{case.case_id}")
+            full_rank_by_index = {}
+            if all_scores is not None:
+                ranked_indices = sorted(
+                    range(len(inputs)),
+                    key=lambda i: (-all_scores[i], -retrieval.candidates[i].fusion_score,
+                                   retrieval.candidates[i].point_id),
+                )
+                full_rank_by_index = {i: rank for rank, i in enumerate(ranked_indices, start=1)}
             documents = adapter.adapt(ranked, plan)
             by_parent = {item.parent_id: item for item in retrieval.candidates}
             from app.rag.evaluation.models import EvaluationContext
@@ -254,8 +286,15 @@ async def rerank() -> None:
                 "rerank_status": ranked.status.value,
                 "fallback_used": ranked.fallback_used,
                 "rerank_warnings": ranked.warnings,
-                "inputs": [{"parent_id": item.parent_id, "input_length_chars": len(item.query) + len(item.document),
-                            "document_length_chars": len(item.document)} for item in inputs],
+                "inputs": [{"parent_id": item.parent_id, "retriever_rank": i + 1,
+                            "input_length_chars": len(item.query) + len(item.document),
+                            "document_length_chars": len(item.document),
+                            "reranker_score": all_scores[i] if all_scores is not None else None,
+                            "reranker_rank_full": full_rank_by_index.get(i),
+                            "selected_top12": item.parent_id in {
+                                candidate.candidate.parent_id for candidate in ranked.candidates
+                            }}
+                           for i, item in enumerate(inputs)],
                 "outputs": [{"parent_id": item.candidate.parent_id, "retriever_rank": item.retrieval_rank,
                              "reranker_rank": item.rerank_rank, "reranker_score": item.rerank_score}
                             for item in ranked.candidates],
@@ -336,12 +375,34 @@ def report() -> None:
     cases = load_evaluation_cases(GOLD)
     rows = _read_jsonl(RETRIEVAL)
     traces = [RAGEvaluationTrace.model_validate(row) for row in _read_jsonl(TRACES)]
+    rerank_rows = _read_jsonl(TRACES.with_suffix(".rerank_diagnostics.jsonl"))
     if len(rows) != 50 or len(traces) != 50:
         raise ValueError("full 50-case baseline is required")
     if [row["case_id"] for row in rows] != [case.case_id for case in cases]:
         raise ValueError("retrieval rows mismatch frozen Gold")
     if [trace.case_id for trace in traces] != [case.case_id for case in cases]:
         raise ValueError("trace rows mismatch frozen Gold")
+    if [row["case_id"] for row in rerank_rows] != [case.case_id for case in cases]:
+        raise ValueError("rerank diagnostics mismatch frozen Gold")
+    rerank_top_k = load_rerank_config().top_k
+    for retrieval_row, trace, rerank_row in zip(rows, traces, rerank_rows, strict=True):
+        if rerank_row["rerank_status"] != "success":
+            continue
+        inputs = rerank_row["inputs"]
+        candidates = retrieval_row["retrieval"]["candidates"]
+        if len(inputs) != len(candidates):
+            raise ValueError(f"reranker did not score every input:{trace.case_id}")
+        if sorted(item["reranker_rank_full"] for item in inputs) != list(range(1, len(inputs) + 1)):
+            raise ValueError(f"reranker ranks incomplete:{trace.case_id}")
+        selected = {item["parent_id"] for item in inputs if item["selected_top12"]}
+        if selected != {item.parent_id for item in trace.reranked_context}:
+            raise ValueError(f"reranker diagnostics and Trace differ:{trace.case_id}")
+        expected_selected = {item["parent_id"] for item in inputs
+                             if item["reranker_rank_full"] <= rerank_top_k}
+        if selected != expected_selected:
+            raise ValueError(f"captured reranker order differs from service:{trace.case_id}")
+        if any(item["reranker_score"] is None for item in inputs):
+            raise ValueError(f"reranker score missing:{trace.case_id}")
     aware = evaluate_v4_answerability(cases, traces)
     by_trace = {trace.case_id: trace for trace in traces}
     comparisons = []
@@ -422,6 +483,19 @@ def report() -> None:
     positive_cases = aware.eligible_full_cases + aware.eligible_partial_cases
     percentages = {channel: {f"recall_at_{k}": metric_totals[channel][k] / positive_cases
                              for k in metric_totals[channel]} for channel in metric_totals}
+    diagnostic_shortfall = [
+        {"case_id": row["case_id"],
+         "parent_counts": {channel: len(row["diagnostic_rankings"][channel])
+                           for channel in metric_totals},
+         "legs_exhausted": all(count < DIAGNOSTIC_CHILD_LIMIT
+                               for count in row["diagnostic_leg_limits"])}
+        for row in rows
+        if row.get("retrieval_status") == "success"
+        and any(len(row["diagnostic_rankings"][channel]) < 100
+                for channel in metric_totals)
+    ]
+    if any(not item["legs_exhausted"] for item in diagnostic_shortfall):
+        raise ValueError("diagnostic Child limit insufficient for Parent Top100")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     corpus_file = ROOT / manifest["source_path"]
     projection_file = ROOT / manifest["projection_path"]
@@ -432,6 +506,18 @@ def report() -> None:
         raise ValueError("index manifest projection fingerprint mismatch")
     if "sha256:" + sha256(release_file) != manifest["source_release_manifest_fingerprint"]:
         raise ValueError("index manifest release fingerprint mismatch")
+    archives = {}
+    for label, source in (
+        ("retrieval", RETRIEVAL),
+        ("trace", TRACES),
+        ("rerank_diagnostics", TRACES.with_suffix(".rerank_diagnostics.jsonl")),
+    ):
+        archive = ROOT / "evals/reports" / (source.name + ".gz")
+        archive.write_bytes(gzip.compress(source.read_bytes(), compresslevel=9, mtime=0))
+        if gzip.decompress(archive.read_bytes()) != source.read_bytes():
+            raise ValueError(f"artifact archive verification failed:{label}")
+        archives[label] = {"path": str(archive), "sha256": sha256(archive),
+                           "uncompressed_sha256": sha256(source)}
     retrieval_config = load_retrieval_config()
     query_config = load_query_understanding_config()
     rerank_config = load_rerank_config()
@@ -455,6 +541,7 @@ def report() -> None:
             "dense_weight": retrieval_config.fusion.dense_weight,
             "bm25_weight": retrieval_config.fusion.lexical_weight,
             "per_leg_top_k_actual": retrieval_config.fusion.per_leg_top_k,
+            "per_leg_child_limit_diagnostic": DIAGNOSTIC_CHILD_LIMIT,
             "candidate_top_k_actual": query_config.candidate_top_k,
             "candidate_top_k_diagnostic": 100,
             "rerank_top_k": rerank_config.top_k,
@@ -465,6 +552,9 @@ def report() -> None:
         "rerank_config_sha256": sha256(ROOT / "app/rag/reranking/config/v1.yaml"),
         "query_config_sha256": sha256(ROOT / "app/rag/query_understanding/config/v1.yaml"),
         "trace_path": str(TRACES), "trace_sha256": sha256(TRACES),
+        "rerank_diagnostics_path": str(TRACES.with_suffix(".rerank_diagnostics.jsonl")),
+        "rerank_diagnostics_sha256": sha256(TRACES.with_suffix(".rerank_diagnostics.jsonl")),
+        "portable_archives": archives,
         "retrieval_artifact_path": str(RETRIEVAL), "retrieval_artifact_sha256": sha256(RETRIEVAL),
         "case_count": len(cases), "trace_count": len(traces),
         "stage_statuses": {stage: dict(Counter(getattr(trace.statuses, stage) for trace in traces))
@@ -487,8 +577,9 @@ def report() -> None:
         "diagnostic_parent_counts_by_case": [{"case_id": row["case_id"],
                                               **{channel: len(row.get("diagnostic_rankings", {}).get(channel, []))
                                                  for channel in metric_totals}} for row in rows],
+        "diagnostic_top100_shortfall_exhausted_cases": diagnostic_shortfall,
         "rerank_input_lengths": _rerank_input_lengths(rows),
-        "diagnostic_top100_note": "Top100 is a separate Qdrant query with the same legs, weights and filters but limit 100; actual retrieval uses configured per-leg limit and Top40. Selection target 100 also changes cap relaxation. Therefore diagnostic Top100 is not guaranteed to contain actual Top40; non-nested units are explicitly reported.",
+        "diagnostic_top100_note": "Top100 is a separate Qdrant query for up to 600 Child hits per leg to obtain 100 distinct Parents after collapse; actual retrieval uses configured per-leg limit and Top40. Selection target 100 also changes cap relaxation. Therefore diagnostic Top100 is not guaranteed to contain actual Top40; non-nested units are explicitly reported.",
     }
     REPORT.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     lines = ["# Frozen Gold V4 Hybrid Shadow Baseline", "",
@@ -503,8 +594,16 @@ def report() -> None:
              f"实际配置：RRF k={retrieval_config.fusion.rrf_k}，dense/BM25 权重 "
              f"{retrieval_config.fusion.dense_weight}/{retrieval_config.fusion.lexical_weight}，"
              f"per-leg Top{retrieval_config.fusion.per_leg_top_k}，候选 Top{query_config.candidate_top_k}，"
-             f"rerank Top{rerank_config.top_k}；诊断另查 Top100，未送入 reranker。", "",
+             f"rerank Top{rerank_config.top_k}；诊断另取每 leg 最多 {DIAGNOSTIC_CHILD_LIMIT} 个 Child，"
+             "折叠后记录 Top100 Parent，未送入 reranker。", "",
              "阶段状态：" + json.dumps(output["stage_statuses"], ensure_ascii=False) + "。", "",
+             "全部 50-case 检索诊断、Trace 与 rerank 明细以 `.jsonl.gz` 保存在本报告目录，"
+             "各自压缩及原始 SHA-256 见 JSON `portable_archives`；本地未压缩工作副本位于 `evals/artifacts`。", "",
+             f"Recall@K：每个 full/partial case 的命中 evidence unit 数除以该 case 支持单位数，再对 {positive_cases} 个正样本 case 等权平均。"
+             "同一组 equivalent Parent 只算一个 unit；complementary 必须同时命中。"
+             "Final Context Precision：每 case 的已满足证据 Parent 数除以 final context 唯一 Parent 数，再按 case 宏平均。", "",
+             f"有 {len(diagnostic_shortfall)} 个检索成功 case 的至少一通道不足 100 个不同 Parent；"
+             "这些 case 的各检索 leg 均已返回少于诊断上限的 Child，表中按实际可用数量计算。", "",
              "| Metric | Dense | BM25 | Hybrid diagnostic |", "| --- | ---: | ---: | ---: |"]
     for k in (10, 20, 40, 100):
         lines.append(f"| Evidence Recall@{k} | {percentages['dense'][f'recall_at_{k}']:.4f} | {percentages['bm25'][f'recall_at_{k}']:.4f} | {percentages['hybrid'][f'recall_at_{k}']:.4f} |")
@@ -518,9 +617,13 @@ def report() -> None:
               f"{dict(failures)}", "",
               "A/B/C/D 是诊断 Top100 的通道覆盖；E/F/G 以正式 Top40→Top12→final context 计。"
               "分类互斥计数为 DENSE_AND_BM25_MISS、FUSION_RANKING_MISS、RERANK_MISS、CONTEXT_DROP、SUCCESS；"
-              "Dense-only、BM25-only、BOTH、NEITHER 是另一个可交叉维度。", "",
-              "从当前计数看，下一轮应先核查 Retriever 入口和融合/选择：16 个 evidence unit 在两通道诊断 Top100 均未命中，"
-              "另有 10 个至少一通道命中但正式 Top40 未命中。此处只指出检查顺序，不推断词法或语义根因。", "",
+              "Dense-only、BM25-only、BOTH、NEITHER 是另一个可交叉维度。"
+              "FUSION_RANKING_MISS 表示诊断通道能找到但正式 Top40 未收录，不能仅凭此归因于 RRF；"
+              "过滤、Parent 折叠与选择也可能影响排序。", "",
+              f"从当前计数看，下一轮应先核查 Retriever 入口和融合/选择：{failures['DENSE_AND_BM25_MISS']} 个 evidence unit "
+              "在两通道诊断 Top100 均未命中且正式 Top40 未命中，"
+              f"另有 {failures['FUSION_RANKING_MISS']} 个至少一通道命中但正式 Top40 未命中。"
+              "此处只指出检查顺序，不推断词法或语义根因。", "",
               "## Per-claim differences", "",
               "| Case | Claim / unit | Dense rank | BM25 rank | Hybrid rank | Actual Top40 | Top12 | Final | Pattern / failure |",
               "| --- | --- | ---: | ---: | ---: | :---: | :---: | :---: | --- |"]

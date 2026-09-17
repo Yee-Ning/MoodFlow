@@ -5,6 +5,7 @@ import asyncio
 from app.rag.retrieval.fusion import LegSearchResult, RawSearchHit
 from run_rag_hybrid_shadow_baseline import (
     DiagnosticBackend,
+    CapturingRerankScorer,
     _failure_category,
     _ids,
     _read_jsonl,
@@ -32,10 +33,10 @@ def test_diagnostic_backend_retains_configured_leg_limit():
     delegate = FakeBackend()
     backend = DiagnosticBackend(delegate)
     actual = asyncio.run(backend.search(None, [object()], None, limit=80))
-    assert delegate.limits == [80, 100]
+    assert delegate.limits == [80, 600]
     assert len(actual[0].hits) == 80
     assert len(backend.results[0].hits) == 80
-    assert len(backend.diagnostic[0].hits) == 100
+    assert len(backend.diagnostic[0].hits) == 600
 
 
 def test_diagnostic_backend_only_records_first_call():
@@ -47,7 +48,7 @@ def test_diagnostic_backend_only_records_first_call():
         await backend.search(None, [object()], None, limit=80)
 
     asyncio.run(run())
-    assert delegate.limits == [80, 100, 80]
+    assert delegate.limits == [80, 600, 80]
     assert backend.calls == 2
 
 
@@ -70,3 +71,14 @@ def test_actual_top40_overrides_non_nested_diagnostic_miss():
     assert _failure_category(
         dense100=True, bm25100=False, top40=False, top12=False, final=False
     ) == "FUSION_RANKING_MISS"
+
+
+def test_score_capture_observes_without_changing_values():
+    class FakeScorer:
+        def score(self, inputs):
+            return [0.7, 0.2]
+
+    capture = CapturingRerankScorer(object())
+    capture.delegate = FakeScorer()
+    assert capture.score(["a", "b"]) == [0.7, 0.2]
+    assert capture.scores == [0.7, 0.2]
