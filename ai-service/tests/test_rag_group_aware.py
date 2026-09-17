@@ -104,8 +104,9 @@ class EvidenceGroupScoringTests(unittest.TestCase):
         cases = load_evaluation_cases(DATASETS / "rag_eval_gold_v4.candidate.jsonl")
         grouped = [item for item in cases if item.evidence_groups]
         self.assertEqual([item.case_id for item in grouped], ["rag-v0-026"])
-        self.assertEqual([group.relation for group in grouped[0].evidence_groups], ["duplicate", "duplicate"])
+        self.assertEqual([group.relation for group in grouped[0].evidence_groups], ["duplicate"])
         case_026 = grouped[0]
+        self.assertEqual(case_026.evidence_groups[0].evidence_group_id, "026-award")
         alternatives = [group.acceptable_parent_ids[1] for group in case_026.evidence_groups]
         self.assertEqual(
             score_stage(case_026, alternatives, metric="recall", mode="compatibility").value,
@@ -113,7 +114,7 @@ class EvidenceGroupScoringTests(unittest.TestCase):
         )
         self.assertEqual(
             score_stage(case_026, alternatives, metric="recall", mode="group_aware").value,
-            1,
+            0.5,
         )
 
     def test_v4_historical_traces_have_explained_zero_delta(self) -> None:
@@ -132,12 +133,12 @@ class EvidenceGroupScoringTests(unittest.TestCase):
                     for stage in ("recall_at_40", "rerank_recall_at_12", "final_context_precision"):
                         self.assertEqual(getattr(a, stage).value, getattr(b, stage).value)
                 case_026 = next(x for x in aware.cases if x.case_id == "rag-v0-026")
-                tracklist = next(
+                award = next(
                     group for group in case_026.rerank_recall_at_12.matched_groups
-                    if group["evidence_group_id"] == "026-tracklist"
+                    if group["evidence_group_id"] == "026-award"
                 )
-                self.assertEqual(len(tracklist["retrieved_parent_ids"]), 2)
-                self.assertTrue(tracklist["complete"])
+                self.assertEqual(len(award["retrieved_parent_ids"]), 0)
+                self.assertFalse(award["complete"])
 
 
 if __name__ == "__main__":

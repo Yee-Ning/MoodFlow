@@ -167,7 +167,12 @@ class V4AnswerabilityTests(unittest.TestCase):
         self.assertEqual((result.eligible_full_cases, result.eligible_partial_cases), (13, 8))
         self.assertEqual((result.insufficient_cases, result.needs_input_cases), (6, 3))
         self.assertEqual((result.evidence_unit_count, result.full_evidence_unit_count,
-                          result.partial_evidence_unit_count), (65, 44, 21))
+                          result.partial_evidence_unit_count), (68, 47, 21))
+        case_026 = next(case for case in result.cases if case.case_id == "rag-v0-026")
+        self.assertEqual(case_026.evidence_unit_count, 5)
+        self.assertEqual(case_026.evidence_recall_at_40, 1.0)
+        self.assertEqual(case_026.evidence_rerank_recall_at_12, 0.8)
+        self.assertEqual(sum(unit.unit.kind == "claim" for unit in case_026.units), 4)
         self.assertNotIn("rag-v0-038", {case.case_id for case in result.cases})
 
 

@@ -1,0 +1,221 @@
+{
+  "gold_v3_sha256": "5d2888542042af16bf38d3ae63f45c956c8e37f658397e2f5d3a78c3759236e9",
+  "gold_v4_before_sha256": "8258a00016be2f0b57258c496634ec70c9089bd0d159378f986d82058dcf4c88",
+  "gold_v4_before_worktree_sha256": "5a6e972ee7ffe4a94b2b35974d59b406613c696026264af0e35e1056863f585f",
+  "gold_v4_after_sha256": "b64bcbabc6789589cbf51895de549025f4c975cd06995ecbab4c5411dde1ca41",
+  "frozen_parent_sha256": "sha256:8d4e0b3bb3ea8ea8a456fcfbb97b348d0e4af1252d06b5923cbabc5864289c5a",
+  "scorer": "unchanged app.rag.evaluation.v4_answerability.evaluate_v4_answerability",
+  "counts": {
+    "answerability": {
+      "fully_answerable": 13,
+      "partially_answerable": 8,
+      "insufficient_evidence": 6,
+      "needs_input": 3
+    },
+    "supported_claims_before": 65,
+    "supported_claims_after": 68,
+    "evidence_groups_before": 2,
+    "evidence_groups_after": 1,
+    "unlabeled_positive_spans_after": 0
+  },
+  "needs_input": [
+    {
+      "case_id": "rag-v0-046",
+      "original_query": "七里香的创作背景",
+      "original_v0_outcome": "insufficient_evidence",
+      "original_v0_reference_answer": "冻结语料能说明《七里香》的部分企划背景：第五张专辑最终以首波主打《七里香》命名，这是周杰伦前五张专辑中首次以主打歌作为专辑名；MV还赴日本乡间取景以营造浪漫诗意的视觉氛围。但这些材料没有直接说明歌曲本身为什么创作、词曲灵感来自哪里或创作过程，因此严格回答“《七里香》的创作背景”时证据不足。",
+      "owner_policy_v1_outcome": "needs_input",
+      "frozen_context_parent_ids": [
+        "parent-d3a5bad1fa461976a1129b06",
+        "parent-790e32e522e2ba2f480a77ea"
+      ],
+      "current_song_id": null,
+      "reference_answer": null,
+      "answerability_level": null,
+      "missing_input": "明确《七里香》是歌曲还是同名专辑，并说明创作背景是歌曲缘起还是专辑企划背景",
+      "why_not_inferable": "原始 query 仅有裸标题，current_song_id 为空；冻结语料同时含歌曲曲目和同名专辑命名资料，历史 Trace 无补充上下文",
+      "clarification_needed": "请确认歌曲或专辑，以及想问的具体创作背景范围"
+    },
+    {
+      "case_id": "rag-v0-047",
+      "original_query": "霍元甲的创作背景",
+      "original_v0_outcome": "insufficient_evidence",
+      "original_v0_reference_answer": "现有资料可以分析《霍元甲》的作品内容与风格：它使用古筝、二胡、锣鼓等传统乐器，演唱中模仿京剧唱腔，并加入武术/练拳意象；题名还关联历史人物霍元甲及其爱国文化联想。但这些证据没有直接说明歌曲的创作契机、具体灵感来源或创作过程，因此严格按“创作背景”问题应判为证据不足。",
+      "owner_policy_v1_outcome": "needs_input",
+      "frozen_context_parent_ids": [
+        "parent-6a331e40f29ee8eefba08d2e",
+        "parent-38d4a3cac6f40af923af4881"
+      ],
+      "current_song_id": null,
+      "reference_answer": null,
+      "answerability_level": null,
+      "missing_input": "明确《霍元甲》是歌曲还是同名迷你专辑，并说明创作背景是歌曲缘起还是作品主题及曲风",
+      "why_not_inferable": "原始 query 仅有裸标题，current_song_id 为空；冻结语料含歌曲分析及同名迷你专辑条目，历史 Trace 无补充上下文",
+      "clarification_needed": "请确认作品对象及所需的创作背景范围"
+    },
+    {
+      "case_id": "rag-v0-048",
+      "original_query": "这首歌的创作背景",
+      "original_v0_outcome": "needs_input",
+      "original_v0_reference_answer": null,
+      "owner_policy_v1_outcome": "needs_input",
+      "frozen_context_parent_ids": [],
+      "current_song_id": null,
+      "reference_answer": null,
+      "answerability_level": null,
+      "missing_input": "提供“这首歌”所指的歌名、歌曲 ID 或当前播放歌曲上下文",
+      "why_not_inferable": "原始 query 只有指示代词，current_song_id 为空；历史 Trace 没有可恢复的前文或歌曲实体",
+      "clarification_needed": "请提供歌名或当前播放歌曲信息"
+    }
+  ],
+  "case_026": {
+    "classification": "four independent track claims plus one duplicated award claim",
+    "tracklist_parent_ids": [
+      "parent-cfb9f049a0cfdf86866257fd",
+      "parent-d0c34fdc20c0a8d545deea06"
+    ],
+    "tracklist_parent_contents_identical": true,
+    "award_parent_ids": [
+      "parent-a734651048b7159210d5c4a6",
+      "parent-287a536a7936d114db25a509"
+    ],
+    "award_parent_contents_identical": true,
+    "supported_claims_before": [
+      "《十一月的萧邦》四首曲目的洪敬尧编曲署名",
+      "洪敬尧凭《蓝色风暴》获最佳编曲人提名"
+    ],
+    "supported_claims_after": [
+      "洪敬尧凭《蓝色风暴》获最佳编曲人提名",
+      "《蓝色风暴》的编曲署名为洪敬尧",
+      "《四面楚歌》的编曲署名为洪敬尧",
+      "《浪漫手机》的编曲署名为洪敬尧",
+      "《麦芽糖》的编曲署名为洪敬尧"
+    ],
+    "groups_before": [
+      "026-tracklist",
+      "026-award"
+    ],
+    "groups_after": [
+      "026-award"
+    ],
+    "track_evidence": [
+      {
+        "claim": "《蓝色风暴》的编曲署名为洪敬尧",
+        "parent_id": "parent-cfb9f049a0cfdf86866257fd",
+        "support_level": "full",
+        "evidence_text": "| 2 | 藍色風暴 | 作詞:方文山 作曲:周杰倫 編曲:洪敬堯 |"
+      },
+      {
+        "claim": "《四面楚歌》的编曲署名为洪敬尧",
+        "parent_id": "parent-cfb9f049a0cfdf86866257fd",
+        "support_level": "full",
+        "evidence_text": "| 5 | 四面楚歌 | 作詞:周杰倫 作曲:周杰倫 編曲:洪敬堯 |"
+      },
+      {
+        "claim": "《浪漫手机》的编曲署名为洪敬尧",
+        "parent_id": "parent-cfb9f049a0cfdf86866257fd",
+        "support_level": "full",
+        "evidence_text": "| 7 | 浪漫手機 | 作詞:方文山 作曲:周杰倫 編曲:洪敬堯 |"
+      },
+      {
+        "claim": "《麦芽糖》的编曲署名为洪敬尧",
+        "parent_id": "parent-cfb9f049a0cfdf86866257fd",
+        "support_level": "full",
+        "evidence_text": "| 9 | 麥芽糖 | 作詞:方文山 作曲:周杰倫 編曲:洪敬堯 |"
+      }
+    ],
+    "matching_limit": "The unchanged scorer rejects overlapping groups on the same Parent pair; four track claims now use exact anchor matching. The alternate duplicate Parent remains documented but is not an accepted match for these four claims."
+  },
+  "traces": {
+    "fallback": {
+      "trace_path": "evals/artifacts/gold_v2_trace_v3_fallback_20260916.jsonl",
+      "trace_sha256": "7e85baf64ff79163093e1712ba889cbb221c41023609c5c6b3d5fed657bd0c8e",
+      "eligible_full_cases": 13,
+      "eligible_partial_cases": 8,
+      "insufficient_cases": 6,
+      "needs_input_cases": 3,
+      "evidence_unit_count_before": 65,
+      "evidence_unit_count_after": 68,
+      "metrics_before": {
+        "evidence_recall_at_40": 0.6413832199546485,
+        "evidence_rerank_recall_at_12": 0.4283446712018141,
+        "final_context_precision": 0.11904761904761904
+      },
+      "metrics_after": {
+        "evidence_recall_at_40": 0.6413832199546485,
+        "evidence_rerank_recall_at_12": 0.44263038548752837,
+        "final_context_precision": 0.11904761904761904
+      },
+      "metric_delta": {
+        "evidence_recall_at_40": 0.0,
+        "evidence_rerank_recall_at_12": 0.01428571428571429,
+        "final_context_precision": 0.0
+      },
+      "case_changes": [
+        {
+          "case_id": "rag-v0-026",
+          "units_before": 2,
+          "units_after": 5,
+          "before": {
+            "evidence_recall_at_40": 1.0,
+            "evidence_rerank_recall_at_12": 0.5,
+            "final_context_precision": 0.25
+          },
+          "after": {
+            "evidence_recall_at_40": 1.0,
+            "evidence_rerank_recall_at_12": 0.8,
+            "final_context_precision": 0.25
+          }
+        }
+      ]
+    },
+    "nav_context6": {
+      "trace_path": "evals/artifacts/gold_v2_trace_v3_nav_context6_20260916.jsonl",
+      "trace_sha256": "9beacd474a7257253cec4cfa0655a8348e71943200456abc662d84928c40f967",
+      "eligible_full_cases": 13,
+      "eligible_partial_cases": 8,
+      "insufficient_cases": 6,
+      "needs_input_cases": 3,
+      "evidence_unit_count_before": 65,
+      "evidence_unit_count_after": 68,
+      "metrics_before": {
+        "evidence_recall_at_40": 0.6413832199546485,
+        "evidence_rerank_recall_at_12": 0.4283446712018141,
+        "final_context_precision": 0.13968253968253969
+      },
+      "metrics_after": {
+        "evidence_recall_at_40": 0.6413832199546485,
+        "evidence_rerank_recall_at_12": 0.44263038548752837,
+        "final_context_precision": 0.13968253968253969
+      },
+      "metric_delta": {
+        "evidence_recall_at_40": 0.0,
+        "evidence_rerank_recall_at_12": 0.01428571428571429,
+        "final_context_precision": 0.0
+      },
+      "case_changes": [
+        {
+          "case_id": "rag-v0-026",
+          "units_before": 2,
+          "units_after": 5,
+          "before": {
+            "evidence_recall_at_40": 1.0,
+            "evidence_rerank_recall_at_12": 0.5,
+            "final_context_precision": 0.16666666666666666
+          },
+          "after": {
+            "evidence_recall_at_40": 1.0,
+            "evidence_rerank_recall_at_12": 0.8,
+            "final_context_precision": 0.16666666666666666
+          }
+        }
+      ]
+    }
+  },
+  "validator_warnings": [
+    "046: needs_input requires referent/scope clarification",
+    "047: needs_input requires referent/scope clarification",
+    "048: needs_input requires referent/scope clarification",
+    "Semantic alignment and source reliability remain human-review judgments."
+  ]
+}

@@ -76,7 +76,7 @@ class GoldV4AuditTests(unittest.TestCase):
                 units = supported_evidence_units(case)
                 self.assertEqual(case.supported_claims, [unit.claim for unit in units])
                 self.assertEqual(len(case.supported_claims), len(set(case.supported_claims)))
-        self.assertEqual(sum(len(case.supported_claims) for case in self.cases), 65)
+        self.assertEqual(sum(len(case.supported_claims) for case in self.cases), 68)
 
     def test_missing_positive_claim_is_rejected(self) -> None:
         case = self.by_id["005"]
@@ -108,16 +108,25 @@ class GoldV4AuditTests(unittest.TestCase):
         self.assertEqual(len(supported_evidence_units(revised)), 1)
         self.assertIsInstance(validate([revised], self.parents), list)
 
-    def test_duplicate_group_is_one_scored_claim_with_labeled_components(self) -> None:
+    def test_026_tracks_are_independent_claims_and_award_is_duplicate_group(self) -> None:
         case = self.by_id["026"]
         units = supported_evidence_units(case)
-        self.assertEqual(len(units), 2)
+        self.assertEqual(len(units), 5)
         self.assertEqual(len(case.supporting_spans), 5)
         self.assertTrue(all(span.claim for span in case.supporting_spans))
-        self.assertEqual(len(case.supported_claims), 2)
+        self.assertEqual(len(case.supported_claims), 5)
+        self.assertEqual(len(case.evidence_groups), 1)
+        self.assertEqual(case.evidence_groups[0].evidence_group_id, "026-award")
+        self.assertEqual(sum(unit.kind == "claim" for unit in units), 4)
+        self.assertEqual(sum(unit.kind == "group" for unit in units), 1)
+        self.assertEqual(
+            self.parents["parent-cfb9f049a0cfdf86866257fd"].content,
+            self.parents["parent-d0c34fdc20c0a8d545deea06"].content,
+        )
+        self.assertFalse(any("bundles" in warning for warning in validate([case], self.parents)))
         group = case.evidence_groups[0].model_copy(update={"claim": ""})
         with self.assertRaisesRegex(ValueError, "positive evidence unit lacks claim"):
-            validate([case.model_copy(update={"evidence_groups": [group, case.evidence_groups[1]]})],
+            validate([case.model_copy(update={"evidence_groups": [group]})],
                      self.parents)
 
     def test_unresolved_needs_input_cases_remain_unscored(self) -> None:
@@ -128,6 +137,8 @@ class GoldV4AuditTests(unittest.TestCase):
                 self.assertIsNone(case.answerability_level)
                 self.assertEqual(case.supported_claims, [])
                 self.assertEqual(supported_evidence_units(case), ())
+                for key in ("missing_input:", "why_not_inferable:", "clarification_needed:"):
+                    self.assertIn(key, case.notes)
 
 
 if __name__ == "__main__":
