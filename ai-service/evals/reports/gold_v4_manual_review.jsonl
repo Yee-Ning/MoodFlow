@@ -1,0 +1,6 @@
+{"case_id":"rag-v0-003","reason":"中国风兴起与广泛文化影响的概括仍依赖跨来源语义判断。","status":"needs_manual_review"}
+{"case_id":"rag-v0-034","reason":"和声研究的 may be identical 仅是可能性，比较结论需人工复核。","status":"needs_manual_review"}
+{"case_id":"rag-v0-036","reason":"冻结语料没有足以概括 2005 风格演变的直接材料。","status":"needs_manual_review"}
+{"case_id":"rag-v0-038","reason":"剔除错误年表 Parent 后，缺少可靠的《叶惠美》前后风格转变资料。","status":"needs_manual_review"}
+{"case_id":"rag-v0-039","reason":"商业时间线主要由同一 Wikipedia 来源提供，来源可靠性无法仅凭冻结语料确认。","status":"needs_manual_review"}
+{"case_id":"rag-v0-042","reason":"英文资料的作者/机构归属不能凭冻结 Parent 正文确认。","status":"needs_manual_review"}

@@ -30,6 +30,18 @@ class SupportingSpanAnnotation(BaseModel):
     parent_id: str = Field(min_length=1, max_length=128)
     exact_text: str = Field(min_length=1, max_length=4_000)
     source_id: str | None = Field(default=None, min_length=1, max_length=300)
+    claim: str | None = Field(default=None, min_length=1, max_length=500)
+    support_level: Literal["full", "partial", "insufficient"] | None = None
+
+
+class EvidenceGroup(BaseModel):
+    """Alternative or jointly necessary frozen Parents for one claim."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    evidence_group_id: str = Field(min_length=1, max_length=100)
+    claim: str = Field(min_length=1, max_length=500)
+    relation: Literal["duplicate", "equivalent", "complementary"]
+    acceptable_parent_ids: list[str] = Field(min_length=2, max_length=20)
 
 
 class RAGEvaluationCase(BaseModel):
@@ -50,6 +62,10 @@ class RAGEvaluationCase(BaseModel):
         default_factory=list,
         max_length=100,
     )
+    answerability_level: Literal[
+        "fully_answerable", "partially_answerable", "insufficient_evidence"
+    ] | None = None
+    evidence_groups: list[EvidenceGroup] = Field(default_factory=list, max_length=30)
     required_facts: list[str] = Field(default_factory=list, max_length=50)
     forbidden_claims: list[str] = Field(default_factory=list, max_length=50)
     expected_source_ids: list[str] = Field(default_factory=list, max_length=50)
@@ -74,6 +90,12 @@ class RAGEvaluationCase(BaseModel):
         span_keys = [(item.parent_id, item.exact_text) for item in self.supporting_spans]
         if len(span_keys) != len(set(span_keys)):
             raise ValueError("supporting spans must be unique")
+        group_ids = [item.evidence_group_id for item in self.evidence_groups]
+        if len(group_ids) != len(set(group_ids)):
+            raise ValueError("evidence group IDs must be unique")
+        for group in self.evidence_groups:
+            if len(group.acceptable_parent_ids) != len(set(group.acceptable_parent_ids)):
+                raise ValueError("acceptable parent IDs must be unique")
         if self.annotation_status is AnnotationStatus.PENDING:
             return self
         if self.expected_outcome is ExpectedOutcome.ANSWERABLE:
