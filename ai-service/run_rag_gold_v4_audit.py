@@ -305,6 +305,8 @@ def finalize_case(data: dict, cid: str, parents: dict) -> None:
         data["reference_answer"] = "可用的非现场版新闻资料包括杰威尔音乐关于周杰伦 DEMO 项目的官方新闻，其中列有《青花瓷》《晴天》等作品并介绍早期 DEMO；另有人物报道提到他的发片节奏变化。"
 
 def validate(cases: list[RAGEvaluationCase], parents: dict) -> list[str]:
+    from app.rag.evaluation.v4_answerability import supported_evidence_units
+
     warnings = []
     groups = set()
     for case in cases:
@@ -328,6 +330,13 @@ def validate(cases: list[RAGEvaluationCase], parents: dict) -> list[str]:
                 raise ValueError(f"navigation/image in span: {cid} {evidence.parent_id}")
             if evidence.exact_text[0] in "，。；" or evidence.exact_text[-1] in "，：":
                 warnings.append(f"{cid}: inspect sentence boundary for {evidence.parent_id}")
+            if case.answerability_level in ("fully_answerable", "partially_answerable"):
+                if evidence.support_level in ("full", "partial") and not evidence.claim:
+                    raise ValueError(f"positive evidence lacks claim: {cid} {evidence.parent_id}")
+                if evidence.support_level is None:
+                    raise ValueError(f"positive evidence lacks support level: {cid} {evidence.parent_id}")
+                if evidence.support_level == "insufficient":
+                    warnings.append(f"{cid}: insufficient span excluded from positive evidence: {evidence.parent_id}")
         if set(case.expected_source_ids) != {parents[pid].source_id for pid in case.relevant_parent_ids}:
             raise ValueError(f"source IDs mismatch: {cid}")
         for group in case.evidence_groups:
@@ -340,9 +349,34 @@ def validate(cases: list[RAGEvaluationCase], parents: dict) -> list[str]:
                 raise ValueError(f"invalid acceptable Parent: {key}")
             if group.relation == "duplicate" and len({item.content for item in items}) != 1:
                 raise ValueError(f"non-identical duplicate group: {key}")
+            component_claims = {span.claim for span in case.supporting_spans
+                                if span.parent_id in group.acceptable_parent_ids
+                                and span.support_level in ("full", "partial")}
+            if len(component_claims) > 1:
+                warnings.append(f"{cid}: {group.evidence_group_id} bundles {len(component_claims)} component claims")
+        if case.answerability_level in ("fully_answerable", "partially_answerable"):
+            units = supported_evidence_units(case)
+            claims = [unit.claim for unit in units]
+            if not units or any(not claim for claim in claims):
+                raise ValueError(f"positive evidence unit lacks claim: {cid}")
+            if len(claims) != len(set(claims)):
+                raise ValueError(f"duplicate scored claim: {cid}")
+            if set(case.supported_claims) != set(claims) or len(case.supported_claims) != len(claims):
+                raise ValueError(f"supported claims/evidence mismatch: {cid}")
+            if case.answerability_level == "partially_answerable":
+                if not case.unsupported_claims:
+                    raise ValueError(f"partial case lacks unsupported claims: {cid}")
+                if set(case.supported_claims) & set(case.unsupported_claims):
+                    raise ValueError(f"supported/unsupported claim overlap: {cid}")
+            elif case.unsupported_claims:
+                raise ValueError(f"full case has unsupported claims: {cid}")
+        elif case.supported_claims or case.evidence_groups:
+            raise ValueError(f"non-positive case has scored claims/groups: {cid}")
+        if case.expected_outcome.value == "needs_input":
+            warnings.append(f"{cid}: needs_input requires referent/scope clarification")
         if case.reference_answer and not case.required_facts:
             warnings.append(f"{cid}: answer has no fact mapping")
-    warnings.append("Semantic alignment and source reliability require human review for the listed manual cases.")
+    warnings.append("Semantic alignment and source reliability remain human-review judgments.")
     return warnings
 
 def main() -> None:

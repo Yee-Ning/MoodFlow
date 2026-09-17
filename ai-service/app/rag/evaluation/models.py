@@ -66,6 +66,8 @@ class RAGEvaluationCase(BaseModel):
         "fully_answerable", "partially_answerable", "insufficient_evidence"
     ] | None = None
     evidence_groups: list[EvidenceGroup] = Field(default_factory=list, max_length=30)
+    supported_claims: list[str] = Field(default_factory=list, max_length=100)
+    unsupported_claims: list[str] = Field(default_factory=list, max_length=50)
     required_facts: list[str] = Field(default_factory=list, max_length=50)
     forbidden_claims: list[str] = Field(default_factory=list, max_length=50)
     expected_source_ids: list[str] = Field(default_factory=list, max_length=50)
@@ -79,6 +81,8 @@ class RAGEvaluationCase(BaseModel):
             "expected_entity_ids",
             "expected_query_types",
             "relevant_parent_ids",
+            "supported_claims",
+            "unsupported_claims",
             "required_facts",
             "forbidden_claims",
             "expected_source_ids",
@@ -117,6 +121,8 @@ class RAGEvaluationCase(BaseModel):
                 (
                     self.relevant_parent_ids,
                     self.supporting_spans,
+                    self.supported_claims,
+                    self.unsupported_claims,
                     self.required_facts,
                     self.expected_source_ids,
                     self.reference_answer,

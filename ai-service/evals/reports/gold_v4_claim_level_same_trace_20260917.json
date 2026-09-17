@@ -1,0 +1,70 @@
+{
+  "scorer": "app.rag.evaluation.v4_answerability.evaluate_v4_answerability (unchanged)",
+  "gold_v3_sha256": "5d2888542042af16bf38d3ae63f45c956c8e37f658397e2f5d3a78c3759236e9",
+  "gold_v4_before_sha256": "1a3de179c82cd5e6d3c2cb49fc76ef82a947dc02ba4449536349dbce7297850a",
+  "gold_v4_after_sha256": "5a6e972ee7ffe4a94b2b35974d59b406613c696026264af0e35e1056863f585f",
+  "supported_claims": 65,
+  "unsupported_claims": 8,
+  "evidence_groups": 2,
+  "unlabeled_positive_spans": 0,
+  "traces": {
+    "fallback": {
+      "trace_path": "evals/artifacts/gold_v2_trace_v3_fallback_20260916.jsonl",
+      "trace_sha256": "7e85baf64ff79163093e1712ba889cbb221c41023609c5c6b3d5fed657bd0c8e",
+      "full_cases": 13,
+      "partial_cases": 8,
+      "insufficient_cases": 6,
+      "needs_input_cases": 3,
+      "evidence_units": 65,
+      "evidence_unit_kinds": {
+        "claim": 63,
+        "group": 2
+      },
+      "before": {
+        "evidence_recall_at_40": 0.6413832199546485,
+        "evidence_rerank_recall_at_12": 0.4283446712018141,
+        "final_context_precision": 0.11904761904761904
+      },
+      "after": {
+        "evidence_recall_at_40": 0.6413832199546485,
+        "evidence_rerank_recall_at_12": 0.4283446712018141,
+        "final_context_precision": 0.11904761904761904
+      },
+      "delta": {
+        "evidence_recall_at_40": 0.0,
+        "evidence_rerank_recall_at_12": 0.0,
+        "final_context_precision": 0.0
+      },
+      "partial_case_metric_changes": []
+    },
+    "nav_context6": {
+      "trace_path": "evals/artifacts/gold_v2_trace_v3_nav_context6_20260916.jsonl",
+      "trace_sha256": "9beacd474a7257253cec4cfa0655a8348e71943200456abc662d84928c40f967",
+      "full_cases": 13,
+      "partial_cases": 8,
+      "insufficient_cases": 6,
+      "needs_input_cases": 3,
+      "evidence_units": 65,
+      "evidence_unit_kinds": {
+        "claim": 63,
+        "group": 2
+      },
+      "before": {
+        "evidence_recall_at_40": 0.6413832199546485,
+        "evidence_rerank_recall_at_12": 0.4283446712018141,
+        "final_context_precision": 0.13968253968253969
+      },
+      "after": {
+        "evidence_recall_at_40": 0.6413832199546485,
+        "evidence_rerank_recall_at_12": 0.4283446712018141,
+        "final_context_precision": 0.13968253968253969
+      },
+      "delta": {
+        "evidence_recall_at_40": 0.0,
+        "evidence_rerank_recall_at_12": 0.0,
+        "final_context_precision": 0.0
+      },
+      "partial_case_metric_changes": []
+    }
+  }
+}
