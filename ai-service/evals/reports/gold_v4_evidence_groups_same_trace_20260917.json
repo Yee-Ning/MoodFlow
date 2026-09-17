@@ -1,0 +1,238 @@
+{
+  "gold_v3_sha256": "5d2888542042af16bf38d3ae63f45c956c8e37f658397e2f5d3a78c3759236e9",
+  "gold_v4_sha256": "1a3de179c82cd5e6d3c2cb49fc76ef82a947dc02ba4449536349dbce7297850a",
+  "traces": {
+    "fallback": {
+      "trace_path": "evals/artifacts/gold_v2_trace_v3_fallback_20260916.jsonl",
+      "trace_sha256": "7e85baf64ff79163093e1712ba889cbb221c41023609c5c6b3d5fed657bd0c8e",
+      "v3": {
+        "legacy": {
+          "recall_at_40": 0.6673280423280423,
+          "rerank_recall_at_12": 0.4166666666666667,
+          "final_context_precision": 0.18055555555555555
+        },
+        "compatibility": {
+          "recall_at_40": 0.6673280423280423,
+          "rerank_recall_at_12": 0.4166666666666667,
+          "final_context_precision": 0.18055555555555555
+        },
+        "case_count": 18,
+        "case_differences": []
+      },
+      "v4": {
+        "case_count": 13,
+        "legacy_id_only": {
+          "recall_at_40": 0.6868131868131868,
+          "rerank_recall_at_12": 0.3827838827838828,
+          "final_context_precision": 0.11538461538461539
+        },
+        "group_aware": {
+          "recall_at_40": 0.6868131868131868,
+          "rerank_recall_at_12": 0.3827838827838828,
+          "final_context_precision": 0.11538461538461539
+        },
+        "case_differences": [],
+        "group_stage_audit": [
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-tracklist",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [
+              "parent-a734651048b7159210d5c4a6"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-tracklist",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [],
+            "complete": false
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-tracklist",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [],
+            "complete": false
+          }
+        ]
+      }
+    },
+    "nav_context6": {
+      "trace_path": "evals/artifacts/gold_v2_trace_v3_nav_context6_20260916.jsonl",
+      "trace_sha256": "9beacd474a7257253cec4cfa0655a8348e71943200456abc662d84928c40f967",
+      "v3": {
+        "legacy": {
+          "recall_at_40": 0.69510582010582,
+          "rerank_recall_at_12": 0.4166666666666667,
+          "final_context_precision": 0.17777777777777776
+        },
+        "compatibility": {
+          "recall_at_40": 0.69510582010582,
+          "rerank_recall_at_12": 0.4166666666666667,
+          "final_context_precision": 0.17777777777777776
+        },
+        "case_count": 18,
+        "case_differences": []
+      },
+      "v4": {
+        "case_count": 13,
+        "legacy_id_only": {
+          "recall_at_40": 0.6868131868131868,
+          "rerank_recall_at_12": 0.3827838827838828,
+          "final_context_precision": 0.13076923076923078
+        },
+        "group_aware": {
+          "recall_at_40": 0.6868131868131868,
+          "rerank_recall_at_12": 0.3827838827838828,
+          "final_context_precision": 0.13076923076923078
+        },
+        "case_differences": [],
+        "group_stage_audit": [
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-tracklist",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [
+              "parent-a734651048b7159210d5c4a6"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-tracklist",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [],
+            "complete": false
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-tracklist",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [],
+            "complete": false
+          }
+        ]
+      }
+    }
+  }
+}
