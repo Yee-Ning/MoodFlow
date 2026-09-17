@@ -23,9 +23,18 @@ class GoldV4AuditTests(unittest.TestCase):
         self.assertIsInstance(validate(self.cases, self.parents), list)
 
     def test_priority_outcomes_and_scope(self) -> None:
-        for cid in ("036", "038", "039"):
-            self.assertEqual(self.by_id[cid].expected_outcome.value, "insufficient_evidence")
-            self.assertEqual(self.by_id[cid].answerability_level, "partially_answerable")
+        adjudicated = {
+            "003": ("insufficient_evidence", "partially_answerable"),
+            "034": ("insufficient_evidence", "partially_answerable"),
+            "036": ("insufficient_evidence", "partially_answerable"),
+            "038": ("insufficient_evidence", "insufficient_evidence"),
+            "039": ("insufficient_evidence", "partially_answerable"),
+            "042": ("answerable", "fully_answerable"),
+        }
+        for cid, (outcome, level) in adjudicated.items():
+            with self.subTest(case_id=cid):
+                self.assertEqual(self.by_id[cid].expected_outcome.value, outcome)
+                self.assertEqual(self.by_id[cid].answerability_level, level)
         self.assertIn("黄俊郎", self.by_id["024"].reference_answer)
         self.assertIn("现场演出", self.by_id["044"].forbidden_claims[0])
 
