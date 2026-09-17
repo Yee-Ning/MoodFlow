@@ -4,7 +4,7 @@
 - 冻结语料：`knowledge-v2-8608ffc2fa72e441`；Parent SHA-256 `sha256:8d4e0b3bb3ea8ea8a456fcfbb97b348d0e4af1252d06b5923cbabc5864289c5a`。未使用网络或 Trace。
 - 新增 20 条；总计 50 条；full 16、partial 2、insufficient 1、needs_input 1。
 - 新增 supported claims 27；unsupported claims 3；evidence groups 3。
-- 新增 case validator 通过；warning：['068: needs_input requires referent/scope clarification', 'Semantic alignment and source reliability remain human-review judgments.']。负证据 case 保留 manual review，不当作已证明全库不存在。
+- 新增 case validator 通过；warning：['068: needs_input requires referent/scope clarification', 'Semantic alignment and source reliability remain human-review judgments.']。065–067 已完成冻结语料复核，结论只适用于该 release，不声称外部不存在证据。
 
 ## 逐条核对
 
@@ -158,8 +158,8 @@
 - 原子 supported claims：周杰伦自述很多快歌受到动作片启发。
 - unsupported claims：每首快歌分别对应哪部具体动作电影。
 - 最小证据：parent-659d449391ffb5694ba9fdf0 (jc-v1-017，大男孩要做NO.1——与周杰伦对话)：我的很多快歌都是看动作片写出来的。
-- 事实/不确定性：Direct Parent wording only; no unstated inference.；forbidden claims：不得从‘看动作片写快歌’反推出《忍者》《双截棍》等各自对应的电影片名。
-- duplicate/equivalent/complementary：无；人工复核：逐首电影映射缺失属于全库负证据，需人工复核。。
+- 事实/不确定性：frozen_review_completed: 逐首电影映射未获充分证据；详见 gold_v4_065_067_frozen_review.md。；forbidden claims：不得从‘看动作片写快歌’反推出《忍者》《双截棍》等各自对应的电影片名。
+- duplicate/equivalent/complementary：无；人工复核：否。
 
 ### rag-v0-066：方文山与周杰伦合作时通常是先有曲还是先有词？《娘子》的具体分歧发生在哪些词句？
 
@@ -167,8 +167,8 @@
 - 原子 supported claims：凤凰访谈称方周合作多数先曲后词。
 - unsupported claims：《娘子》合作分歧对应的具体歌词句子。
 - 最小证据：parent-fd7a3c5f16d4ad223cd1e529 (jc-v2-009，[台风]第24期：专访《听见下雨的声音》导演方文山_娱乐频道_凤凰网)：合作关系中，八成以上的歌是先有曲再有词，多是方文山配合周杰伦。
-- 事实/不确定性：Direct Parent wording only; no unstated inference.；forbidden claims：不得编造《娘子》具体争议词句。
-- duplicate/equivalent/complementary：无；人工复核：《娘子》具体分歧缺失属于全库负证据，需人工复核。。
+- 事实/不确定性：frozen_review_completed: 《娘子》具体分歧词句未获充分证据；详见 gold_v4_065_067_frozen_review.md。；forbidden claims：不得编造《娘子》具体争议词句。
+- duplicate/equivalent/complementary：无；人工复核：否。
 
 ### rag-v0-067：周杰伦2001年桃园巨蛋首次个人演唱会的完整曲目顺序是什么？
 
@@ -176,8 +176,8 @@
 - 原子 supported claims：无。
 - unsupported claims：2001年桃园巨蛋首场个人演唱会的完整曲目顺序。
 - 最小证据：无正向证据
-- 事实/不确定性：No positive evidence labeled; missing facts require manual review.；forbidden claims：不得把《范特西》专辑曲目顺序当作该场演唱会的演出顺序。
-- duplicate/equivalent/complementary：无；人工复核：完整演出曲目缺失属于全库负证据，需人工复核演唱会资料。。
+- 事实/不确定性：frozen_review_completed: 桃园首演完整曲目顺序未获充分证据；详见 gold_v4_065_067_frozen_review.md。；forbidden claims：不得把《范特西》专辑曲目顺序当作该场演唱会的演出顺序。
+- duplicate/equivalent/complementary：无；人工复核：否。
 
 ### rag-v0-068：上一张专辑里的那首歌是谁编曲的？
 
@@ -193,4 +193,4 @@ clarification_needed: 请给出专辑名和歌曲名，或提供你所说的上�
 ## 自动校验边界
 
 - Parent ID、source ID、原文子串、span 长度和 claim 一一对应由当前 Gold V4 validator 核验。
-- 自动校验不能证明全库负事实或外部来源真实性；含缺失信息判断的 case 保持 pending/manual review。
+- 自动校验不能证明全库负事实或外部来源真实性；065–067 的独立检索与裁决详见 `gold_v4_065_067_frozen_review.md`。

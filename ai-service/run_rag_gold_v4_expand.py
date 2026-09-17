@@ -136,20 +136,20 @@ SPECS = [
              evidence("parent-659d449391ffb5694ba9fdf0", "周杰伦自述很多快歌受到动作片启发", "我的很多快歌都是看动作片写出来的。", "我的很多快歌都是看动作片写出来的。", level="partial"),
          ], level="partially_answerable", unsupported=["每首快歌分别对应哪部具体动作电影"],
          forbidden=["不得从‘看动作片写快歌’反推出《忍者》《双截棍》等各自对应的电影片名"],
-         review="逐首电影映射缺失属于全库负证据，需人工复核。"),
+         note="frozen_review_completed: 逐首电影映射未获充分证据；详见 gold_v4_065_067_frozen_review.md。"),
     item(66, "方文山与周杰伦合作时通常是先有曲还是先有词？《娘子》的具体分歧发生在哪些词句？",
          "凤凰访谈称，八成以上的合作歌曲先有曲后有词，通常由方文山配合周杰伦；冻结资料不足以说明《娘子》争议的具体词句。",
          ["凤凰访谈称方周合作多数先曲后词", "《娘子》分歧的具体词句缺乏证据"], [
              evidence("parent-fd7a3c5f16d4ad223cd1e529", "凤凰访谈称方周合作多数先曲后词", "合作关系中，八成以上的歌是先有曲再有词", "多是方文山配合周杰伦。", level="partial"),
          ], level="partially_answerable", unsupported=["《娘子》合作分歧对应的具体歌词句子"],
          forbidden=["不得编造《娘子》具体争议词句"],
-         review="《娘子》具体分歧缺失属于全库负证据，需人工复核。"),
+         note="frozen_review_completed: 《娘子》具体分歧词句未获充分证据；详见 gold_v4_065_067_frozen_review.md。"),
     item(67, "周杰伦2001年桃园巨蛋首次个人演唱会的完整曲目顺序是什么？",
          "冻结资料不足以核实该场演唱会的完整曲目与顺序，不能列出可靠清单。",
          ["2001年桃园巨蛋首场演唱会完整曲目顺序缺乏可定位证据"], level="insufficient_evidence",
          unsupported=["2001年桃园巨蛋首场个人演唱会的完整曲目顺序"],
          forbidden=["不得把《范特西》专辑曲目顺序当作该场演唱会的演出顺序"],
-         review="完整演出曲目缺失属于全库负证据，需人工复核演唱会资料。"),
+         note="frozen_review_completed: 桃园首演完整曲目顺序未获充分证据；详见 gold_v4_065_067_frozen_review.md。"),
     item(68, "上一张专辑里的那首歌是谁编曲的？", None, [], level="needs_input",
          note="missing_input: 缺少上一张专辑的参照对象及具体歌曲\nwhy_not_inferable: 当前 query 没有会话上下文；冻结语料含多张专辑和多首歌曲，不能唯一确定指代\nclarification_needed: 请给出专辑名和歌曲名，或提供你所说的上一张专辑的上下文"),
 ]
@@ -274,7 +274,7 @@ def main() -> None:
         f"- 冻结语料：`{release}`；Parent SHA-256 `{parent_hash}`。未使用网络或 Trace。",
         f"- 新增 {len(cases)} 条；总计 {len(old_cases) + len(cases)} 条；full {counts['fully_answerable']}、partial {counts['partially_answerable']}、insufficient {counts['insufficient_evidence']}、needs_input {counts['needs_input']}。",
         f"- 新增 supported claims {sum(len(case.supported_claims) for case in cases)}；unsupported claims {sum(len(case.unsupported_claims) for case in cases)}；evidence groups {sum(len(case.evidence_groups) for case in cases)}。",
-        f"- 新增 case validator 通过；warning：{warnings}。负证据 case 保留 manual review，不当作已证明全库不存在。",
+        f"- 新增 case validator 通过；warning：{warnings}。065–067 已完成冻结语料复核，结论只适用于该 release，不声称外部不存在证据。",
         "", "## 逐条核对", "",
     ]
     for case, row in zip(cases, audit, strict=True):
@@ -291,7 +291,7 @@ def main() -> None:
                   f"- duplicate/equivalent/complementary：{[(g.evidence_group_id, g.relation, g.acceptable_parent_ids) for g in case.evidence_groups] or '无'}；人工复核：{row['manual_review_reason'] or '否'}。", ""]
     lines += ["## 自动校验边界", "",
               "- Parent ID、source ID、原文子串、span 长度和 claim 一一对应由当前 Gold V4 validator 核验。",
-              "- 自动校验不能证明全库负事实或外部来源真实性；含缺失信息判断的 case 保持 pending/manual review。", ""]
+              "- 自动校验不能证明全库负事实或外部来源真实性；065–067 的独立检索与裁决详见 `gold_v4_065_067_frozen_review.md`。", ""]
     REPORT.write_text("\n".join(lines), encoding="utf-8")
     print(json.dumps({"seed": len(old_cases), "new": len(cases), "total": len(old_cases) + len(cases),
                       "answerability": counts, "manual_review": [case.case_id for case in cases

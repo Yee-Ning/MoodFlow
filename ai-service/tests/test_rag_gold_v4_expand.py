@@ -88,9 +88,18 @@ class GoldV4ExpansionTests(unittest.TestCase):
                 self.assertEqual([unit.top40_hit for unit in result.units], [True] * 3)
                 self.assertEqual(result.evidence_recall_at_40, 1)
 
-    def test_uncertain_cases_remain_pending_and_needs_input_has_no_evidence(self) -> None:
+    def test_frozen_review_is_complete_and_needs_input_has_no_evidence(self) -> None:
         pending = [case.case_id for case in self.new if case.annotation_status.value == "pending"]
-        self.assertEqual(pending, ["rag-v0-065", "rag-v0-066", "rag-v0-067"])
+        self.assertEqual(pending, [])
+        reviewed = {case.case_id: case for case in self.new[16:19]}
+        self.assertEqual(set(reviewed), {"rag-v0-065", "rag-v0-066", "rag-v0-067"})
+        self.assertEqual([case.answerability_level for case in reviewed.values()],
+                         ["partially_answerable", "partially_answerable", "insufficient_evidence"])
+        for case in reviewed.values():
+            self.assertEqual(case.annotation_status.value, "approved")
+            self.assertNotIn("manual_review", case.tags)
+            self.assertIn("frozen_review_completed:", case.notes)
+            self.assertTrue(case.unsupported_claims)
         needs = self.new[-1]
         self.assertEqual(needs.case_id, "rag-v0-068")
         self.assertIsNone(needs.answerability_level)
@@ -101,6 +110,8 @@ class GoldV4ExpansionTests(unittest.TestCase):
         audit = [json.loads(line) for line in AUDIT.read_text(encoding="utf-8").splitlines()]
         self.assertFalse(audit[-1]["question_clear"])
         self.assertEqual([row["case_id"] for row in audit if row["manual_review"]], pending)
+        self.assertTrue(all(not row["manual_review_reason"] for row in audit))
+        self.assertTrue((REPORT.parent / "gold_v4_065_067_frozen_review.md").is_file())
 
     def test_span_extraction_rejects_missing_or_noisy_evidence(self) -> None:
         with self.assertRaisesRegex(ValueError, "missing span end"):
