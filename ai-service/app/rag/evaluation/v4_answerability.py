@@ -85,15 +85,22 @@ def supported_evidence_units(case: RAGEvaluationCase) -> tuple[EvidenceUnit, ...
         raise ValueError(f"V4 supported span lacks support_level:{case.case_id}")
     if case.answerability_level == "fully_answerable" and len(supported) != len(case.supporting_spans):
         raise ValueError(f"fully answerable case has insufficient span:{case.case_id}")
-    groups_by_parent: dict[str, EvidenceGroup] = {}
+    grouped_parents: set[str] = set()
+    claims_by_parent: dict[str, set[str]] = {}
     units: list[EvidenceUnit] = []
     for group in case.evidence_groups:
         for parent_id in group.acceptable_parent_ids:
-            if parent_id in groups_by_parent:
-                raise ValueError(f"overlapping evidence groups:{case.case_id}:{parent_id}")
-            groups_by_parent[parent_id] = group
+            claims = claims_by_parent.setdefault(parent_id, set())
+            if group.claim in claims:
+                raise ValueError(f"overlapping evidence groups for claim:{case.case_id}:{parent_id}:{group.claim}")
+            claims.add(group.claim)
+            grouped_parents.add(parent_id)
+    for group in case.evidence_groups:
         anchors = [pid for pid in case.relevant_parent_ids if pid in group.acceptable_parent_ids]
-        spans = tuple(span for span in supported if span.parent_id in group.acceptable_parent_ids)
+        overlapping = any(len(claims_by_parent[pid]) > 1 for pid in group.acceptable_parent_ids)
+        spans = tuple(span for span in supported
+                      if span.parent_id in group.acceptable_parent_ids
+                      and (not overlapping or span.claim == group.claim))
         if not anchors or not spans:
             raise ValueError(f"evidence group lacks supported anchor/span:{case.case_id}:{group.evidence_group_id}")
         units.append(EvidenceUnit(
@@ -104,9 +111,12 @@ def supported_evidence_units(case: RAGEvaluationCase) -> tuple[EvidenceUnit, ...
     explicit: dict[tuple[str, str], list[SupportingSpanAnnotation]] = {}
     claim_parents: dict[str, str] = {}
     unlabeled_index = 0
+    grouped_spans = {span for unit in units for span in unit.spans}
     for span in supported:
-        if span.parent_id in groups_by_parent:
+        if span in grouped_spans:
             continue
+        if span.parent_id in grouped_parents:
+            raise ValueError(f"grouped Parent has unassigned supported claim:{case.case_id}:{span.claim}")
         if span.parent_id not in case.relevant_parent_ids:
             raise ValueError(f"supported span Parent is not relevant:{case.case_id}:{span.parent_id}")
         if span.claim is None:

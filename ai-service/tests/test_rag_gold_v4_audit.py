@@ -115,10 +115,17 @@ class GoldV4AuditTests(unittest.TestCase):
         self.assertEqual(len(case.supporting_spans), 5)
         self.assertTrue(all(span.claim for span in case.supporting_spans))
         self.assertEqual(len(case.supported_claims), 5)
-        self.assertEqual(len(case.evidence_groups), 1)
+        self.assertEqual(len(case.evidence_groups), 5)
+        self.assertEqual(sum(unit.kind == "group" for unit in units), 5)
+        song_groups = [group for group in case.evidence_groups if group.evidence_group_id.startswith("026-track-")]
+        self.assertEqual(len(song_groups), 4)
+        self.assertEqual({group.claim for group in song_groups},
+                         {span.claim for span in case.supporting_spans if "曲署名" in (span.claim or "")})
+        self.assertEqual({tuple(group.acceptable_parent_ids) for group in song_groups}, {
+            ("parent-cfb9f049a0cfdf86866257fd", "parent-d0c34fdc20c0a8d545deea06")
+        })
         self.assertEqual(case.evidence_groups[0].evidence_group_id, "026-award")
-        self.assertEqual(sum(unit.kind == "claim" for unit in units), 4)
-        self.assertEqual(sum(unit.kind == "group" for unit in units), 1)
+        self.assertFalse(any(group.evidence_group_id == "026-tracklist" for group in case.evidence_groups))
         self.assertEqual(
             self.parents["parent-cfb9f049a0cfdf86866257fd"].content,
             self.parents["parent-d0c34fdc20c0a8d545deea06"].content,
@@ -126,7 +133,7 @@ class GoldV4AuditTests(unittest.TestCase):
         self.assertFalse(any("bundles" in warning for warning in validate([case], self.parents)))
         group = case.evidence_groups[0].model_copy(update={"claim": ""})
         with self.assertRaisesRegex(ValueError, "positive evidence unit lacks claim"):
-            validate([case.model_copy(update={"evidence_groups": [group]})],
+            validate([case.model_copy(update={"evidence_groups": [group, *case.evidence_groups[1:]]})],
                      self.parents)
 
     def test_unresolved_needs_input_cases_remain_unscored(self) -> None:

@@ -63,7 +63,7 @@ PARTIAL = {"005", "008", "031", "036", "038", "039", "045"}
 INSUFFICIENT = {"009", "025", "032", "033", "035"}
 REASONS = {
     "024": "问题按作词人举例回答；冻结曲目表证明除方文山外还有周杰伦、黄俊郎，不能声称完整名单。",
-    "026": "两组曲目/奖项 Parent 分别存在逐字相同的另一 ID；登记 duplicate group，避免将替代 ID 当检索错误。",
+    "026": "四个独立歌曲 claim 分别复用同一对逐字相同的曲目 Parent；奖项另设 duplicate group。",
     "034": "和声研究使用 may be identical，保留可能性，缩短截断段落。",
     "036": "2005 Parent 只证明发行日期；无足够证据描述 2000—2005 的完整风格演变，改为部分可证。",
     "038": "阶段论 Parent 把《七里香》及《听妈妈的话》的年表混写，不能作为可靠风格变化证据；仅保留发行事实。",
@@ -125,12 +125,17 @@ def replace_case(data: dict, cid: str, parents: dict) -> None:
         data["forbidden_claims"] = ["不得声称周杰伦的所有歌曲都由方文山作词，或声称例子是完整名单"]
     elif cid == "026":
         data["evidence_groups"] = [
-            {"evidence_group_id": "026-tracklist", "claim": "《十一月的萧邦》四首曲目的洪敬尧编曲署名",
-             "relation": "duplicate", "acceptable_parent_ids": [
-                 "parent-cfb9f049a0cfdf86866257fd", "parent-d0c34fdc20c0a8d545deea06"]},
             {"evidence_group_id": "026-award", "claim": "洪敬尧凭《蓝色风暴》获最佳编曲人提名",
              "relation": "duplicate", "acceptable_parent_ids": [
                  "parent-a734651048b7159210d5c4a6", "parent-287a536a7936d114db25a509"]},
+        ] + [
+            {"evidence_group_id": f"026-track-{index}", "claim": claim,
+             "relation": "duplicate", "acceptable_parent_ids": [
+                 "parent-cfb9f049a0cfdf86866257fd", "parent-d0c34fdc20c0a8d545deea06"]}
+            for index, claim in enumerate((
+                "《蓝色风暴》的编曲署名为洪敬尧", "《四面楚歌》的编曲署名为洪敬尧",
+                "《浪漫手机》的编曲署名为洪敬尧", "《麦芽糖》的编曲署名为洪敬尧",
+            ), start=1)
         ]
     elif cid == "034":
         data["forbidden_claims"] = ["不得把和声进行 may be identical 写成已证实完全相同"]
@@ -352,7 +357,7 @@ def validate(cases: list[RAGEvaluationCase], parents: dict) -> list[str]:
             component_claims = {span.claim for span in case.supporting_spans
                                 if span.parent_id in group.acceptable_parent_ids
                                 and span.support_level in ("full", "partial")}
-            if len(component_claims) > 1:
+            if len(component_claims) > 1 and group.claim not in component_claims:
                 warnings.append(f"{cid}: {group.evidence_group_id} bundles {len(component_claims)} component claims")
         if case.answerability_level in ("fully_answerable", "partially_answerable"):
             units = supported_evidence_units(case)
@@ -464,7 +469,7 @@ def main() -> None:
         f"- 已替换/移除接近 350 字的 span：{shortened}；V4 span 总数：{sum(len(x.supporting_spans) for x in output)}。",
         f"- forbidden_claims 新增条数：{sum(len(y.forbidden_claims)-len(x.forbidden_claims) for x,y in zip(before,output,strict=True))}。",
         "- `partially_answerable` 是局部事实可证但原问题不能完整回答；为保持既有评测 outcome 合同，expected_outcome 仍为 insufficient_evidence。",
-        "- 026 有两组逐字重复的 Parent ID；evidence_groups 仅记录可接受的替代 ID，不按 Trace 倒推标签。旧确定性评测器仍按 relevant_parent_ids 逐 ID 计分，需连同 group-aware 诊断解释结果。",
+        "- 026 四个歌曲 claim 分别引用同一对逐字重复的 Parent；奖项独立成组。旧确定性评测器仍按 relevant_parent_ids 逐 ID 计分，需连同 group-aware 诊断解释结果。",
         "", "## 优先案例", "",
     ]
     for cid in ["024","038","036","040","034","042","044","026"]:

@@ -104,7 +104,7 @@ class EvidenceGroupScoringTests(unittest.TestCase):
         cases = load_evaluation_cases(DATASETS / "rag_eval_gold_v4.candidate.jsonl")
         grouped = [item for item in cases if item.evidence_groups]
         self.assertEqual([item.case_id for item in grouped], ["rag-v0-026"])
-        self.assertEqual([group.relation for group in grouped[0].evidence_groups], ["duplicate"])
+        self.assertEqual([group.relation for group in grouped[0].evidence_groups], ["duplicate"] * 5)
         case_026 = grouped[0]
         self.assertEqual(case_026.evidence_groups[0].evidence_group_id, "026-award")
         alternatives = [group.acceptable_parent_ids[1] for group in case_026.evidence_groups]
@@ -114,8 +114,17 @@ class EvidenceGroupScoringTests(unittest.TestCase):
         )
         self.assertEqual(
             score_stage(case_026, alternatives, metric="recall", mode="group_aware").value,
-            0.5,
+            1.0,
         )
+
+    def test_shared_parents_do_not_inflate_parent_metric_denominator(self) -> None:
+        case_026 = next(item for item in load_evaluation_cases(
+            DATASETS / "rag_eval_gold_v4.candidate.jsonl") if item.case_id == "rag-v0-026")
+        for pid in ("parent-cfb9f049a0cfdf86866257fd", "parent-d0c34fdc20c0a8d545deea06"):
+            with self.subTest(parent_id=pid):
+                score = score_stage(case_026, [pid], metric="recall", mode="group_aware")
+                self.assertEqual(score.hits, ("parent-cfb9f049a0cfdf86866257fd",))
+                self.assertEqual(score.value, 0.5)
 
     def test_v4_historical_traces_have_explained_zero_delta(self) -> None:
         cases = load_evaluation_cases(DATASETS / "rag_eval_gold_v4.candidate.jsonl")

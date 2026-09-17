@@ -7,7 +7,7 @@ from pathlib import Path
 
 from app.rag.evaluation.group_aware import evaluate_evidence_metrics
 from app.rag.evaluation.io import load_evaluation_cases, load_evaluation_traces
-from app.rag.evaluation.models import RAGEvaluationCase
+from app.rag.evaluation.models import EvidenceGroup, RAGEvaluationCase
 from app.rag.evaluation.service import evaluate_traces
 from app.rag.evaluation.v4_answerability import (
     evaluate_v4_answerability,
@@ -107,6 +107,44 @@ class V4AnswerabilityTests(unittest.TestCase):
         self.assertEqual(complete.evidence_rerank_recall_at_12, 1)
         self.assertEqual(complete.final_context_precision, 1)
 
+    def test_distinct_claims_reuse_identical_parent_alternatives(self) -> None:
+        case = make_case("shared-claim-parents", "fully_answerable")
+        spans = [span.model_copy(update={"parent_id": "A"}) for span in case.supporting_spans]
+        groups = [{"evidence_group_id": f"song-{index}", "claim": span.claim,
+                   "relation": "duplicate", "acceptable_parent_ids": ["A", "B"]}
+                  for index, span in enumerate(spans, 1)]
+        case = case.model_copy(update={
+            "relevant_parent_ids": ["A"], "supporting_spans": spans,
+            "evidence_groups": [EvidenceGroup.model_validate(item) for item in groups],
+        })
+        units = supported_evidence_units(case)
+        self.assertEqual(len(units), 2)
+        self.assertEqual([unit.claim for unit in units], ["supported A", "supported B"])
+        self.assertEqual([len(unit.spans) for unit in units], [1, 1])
+        for pid in ("A", "B"):
+            with self.subTest(parent_id=pid):
+                result = score_v4_case(case, [pid], [pid], [pid])
+                self.assertEqual(result.evidence_unit_count, 2)
+                self.assertEqual([item.top40_hit for item in result.units], [True, True])
+                self.assertEqual([item.top12_hit for item in result.units], [True, True])
+                self.assertEqual(result.evidence_recall_at_40, 1)
+                self.assertEqual(result.evidence_rerank_recall_at_12, 1)
+        missing = score_v4_case(case, [], [], [])
+        self.assertEqual(missing.evidence_unit_count, 2)
+        self.assertEqual(missing.evidence_recall_at_40, 0)
+        duplicate_claim = groups[1] | {"claim": "supported A"}
+        bad = case.model_copy(update={"evidence_groups": [
+            case.evidence_groups[0], EvidenceGroup.model_validate(duplicate_claim),
+        ]})
+        with self.assertRaisesRegex(ValueError, "overlapping evidence groups for claim"):
+            supported_evidence_units(bad)
+        missing_claim = groups[1] | {"claim": "unsupported song"}
+        bad = case.model_copy(update={"evidence_groups": [
+            case.evidence_groups[0], EvidenceGroup.model_validate(missing_claim),
+        ]})
+        with self.assertRaisesRegex(ValueError, "lacks supported anchor/span"):
+            supported_evidence_units(bad)
+
     def test_insufficient_case_does_not_enter_positive_metrics(self) -> None:
         trace = load_evaluation_traces(
             ROOT / "evals/artifacts/gold_v2_trace_v3_fallback_20260916.jsonl"
@@ -172,7 +210,7 @@ class V4AnswerabilityTests(unittest.TestCase):
         self.assertEqual(case_026.evidence_unit_count, 5)
         self.assertEqual(case_026.evidence_recall_at_40, 1.0)
         self.assertEqual(case_026.evidence_rerank_recall_at_12, 0.8)
-        self.assertEqual(sum(unit.unit.kind == "claim" for unit in case_026.units), 4)
+        self.assertEqual(sum(unit.unit.kind == "group" for unit in case_026.units), 5)
         self.assertNotIn("rag-v0-038", {case.case_id for case in result.cases})
 
 

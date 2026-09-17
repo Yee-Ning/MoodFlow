@@ -200,8 +200,8 @@ def main() -> None:
         lines.append("")
     lines += [
         "## 解释与边界", "",
-        "- V4 当前仅 026 有两组 `duplicate`；没有 `equivalent` 或 `complementary` 的真实 case，后两种关系由单元测试验证。",
-        "- 026 在候选集和 Top12 中出现替代 Parent `parent-d0c34fdc20c0a8d545deea06`，但同组锚点 `parent-cfb9f049a0cfdf86866257fd` 也在，因此这两份 Trace 上没有 Parent-ID false negative 被修复。Final context 未出现该替代 Parent。",
+        "- V4 当前仅 026 有五组 `duplicate`：四个独立歌曲 claim 各自复用同一对曲目 Parent，另有一个奖项组；没有 `equivalent` 或 `complementary` 的真实 case，后两种关系由单元测试验证。",
+        "- 026 在候选集和 Top12 中出现替代 Parent `parent-d0c34fdc20c0a8d545deea06`；是否产生 MISS→HIT 以本报告逐 case/stage 差异为准。Final context 未出现该替代 Parent。",
         "- 当前 legacy 的 expected_outcome 决定 eligible case 和 outcome accuracy；answerability_level 不参与评分。V4 的 partially_answerable 投影到 insufficient_evidence，所以这些 case 暂不进入本次三项指标；本轮未改变该规则。",
         "- 本报告不代表 Gold V4 冻结或 Retrieval 质量变化。",
         "",

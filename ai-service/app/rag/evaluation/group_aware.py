@@ -48,23 +48,22 @@ def _unique(items: Sequence[str]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(items))
 
 
-def _group_for_anchors(case: RAGEvaluationCase) -> dict[str, EvidenceGroup]:
+def _group_for_anchors(case: RAGEvaluationCase) -> dict[str, tuple[EvidenceGroup, ...]]:
     relevant = set(case.relevant_parent_ids)
-    groups: dict[str, EvidenceGroup] = {}
-    claimed_parents: set[str] = set()
+    groups: dict[str, list[EvidenceGroup]] = {}
+    claims_by_parent: dict[str, set[str]] = {}
     for group in case.evidence_groups:
-        overlapping = claimed_parents.intersection(group.acceptable_parent_ids)
-        if overlapping:
-            raise ValueError(f"overlapping evidence groups:{case.case_id}:{sorted(overlapping)[0]}")
-        claimed_parents.update(group.acceptable_parent_ids)
+        for parent_id in group.acceptable_parent_ids:
+            claims = claims_by_parent.setdefault(parent_id, set())
+            if group.claim in claims:
+                raise ValueError(f"overlapping evidence groups for claim:{case.case_id}:{parent_id}:{group.claim}")
+            claims.add(group.claim)
         anchors = relevant.intersection(group.acceptable_parent_ids)
         if not anchors:
             raise ValueError(f"evidence group without relevant anchor:{case.case_id}:{group.evidence_group_id}")
         for anchor in anchors:
-            if anchor in groups:
-                raise ValueError(f"overlapping evidence groups:{case.case_id}:{anchor}")
-            groups[anchor] = group
-    return groups
+            groups.setdefault(anchor, []).append(group)
+    return {anchor: tuple(items) for anchor, items in groups.items()}
 
 
 def score_stage(
@@ -109,7 +108,8 @@ def score_stage(
             raise ValueError(f"recall requires relevant Parents:{case.case_id}")
         hits = tuple(
             anchor for anchor in case.relevant_parent_ids
-            if (satisfied[groups[anchor].evidence_group_id] if anchor in groups else anchor in found)
+            if (all(satisfied[group.evidence_group_id] for group in groups[anchor])
+                if anchor in groups else anchor in found)
         )
         denominator = len(relevant)
     elif metric == "precision":

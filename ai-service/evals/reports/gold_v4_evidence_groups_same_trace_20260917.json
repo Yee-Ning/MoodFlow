@@ -1,6 +1,6 @@
 {
   "gold_v3_sha256": "5d2888542042af16bf38d3ae63f45c956c8e37f658397e2f5d3a78c3759236e9",
-  "gold_v4_sha256": "1a3de179c82cd5e6d3c2cb49fc76ef82a947dc02ba4449536349dbce7297850a",
+  "gold_v4_sha256": "75dc8910eab396ac7815ec303a126c14dc44b85bf97924f416f1278eee4ee038",
   "traces": {
     "fallback": {
       "trace_path": "evals/artifacts/gold_v2_trace_v3_fallback_20260916.jsonl",
@@ -36,7 +36,21 @@
           {
             "case_id": "rag-v0-026",
             "metric_stage": "recall_at_40",
-            "evidence_group_id": "026-tracklist",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [
+              "parent-a734651048b7159210d5c4a6"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-track-1",
             "relation": "duplicate",
             "acceptable_parent_ids": [
               "parent-cfb9f049a0cfdf86866257fd",
@@ -51,21 +65,37 @@
           {
             "case_id": "rag-v0-026",
             "metric_stage": "recall_at_40",
-            "evidence_group_id": "026-award",
+            "evidence_group_id": "026-track-2",
             "relation": "duplicate",
             "acceptable_parent_ids": [
-              "parent-a734651048b7159210d5c4a6",
-              "parent-287a536a7936d114db25a509"
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
             ],
             "retrieved_parent_ids": [
-              "parent-a734651048b7159210d5c4a6"
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
             ],
             "complete": true
           },
           {
             "case_id": "rag-v0-026",
-            "metric_stage": "rerank_recall_at_12",
-            "evidence_group_id": "026-tracklist",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-track-3",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-track-4",
             "relation": "duplicate",
             "acceptable_parent_ids": [
               "parent-cfb9f049a0cfdf86866257fd",
@@ -91,8 +121,80 @@
           },
           {
             "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-track-1",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-track-2",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-track-3",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-track-4",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
             "metric_stage": "final_context_precision",
-            "evidence_group_id": "026-tracklist",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [],
+            "complete": false
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-track-1",
             "relation": "duplicate",
             "acceptable_parent_ids": [
               "parent-cfb9f049a0cfdf86866257fd",
@@ -106,14 +208,44 @@
           {
             "case_id": "rag-v0-026",
             "metric_stage": "final_context_precision",
-            "evidence_group_id": "026-award",
+            "evidence_group_id": "026-track-2",
             "relation": "duplicate",
             "acceptable_parent_ids": [
-              "parent-a734651048b7159210d5c4a6",
-              "parent-287a536a7936d114db25a509"
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
             ],
-            "retrieved_parent_ids": [],
-            "complete": false
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-track-3",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-track-4",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd"
+            ],
+            "complete": true
           }
         ]
       }
@@ -152,7 +284,21 @@
           {
             "case_id": "rag-v0-026",
             "metric_stage": "recall_at_40",
-            "evidence_group_id": "026-tracklist",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [
+              "parent-a734651048b7159210d5c4a6"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-track-1",
             "relation": "duplicate",
             "acceptable_parent_ids": [
               "parent-cfb9f049a0cfdf86866257fd",
@@ -167,21 +313,37 @@
           {
             "case_id": "rag-v0-026",
             "metric_stage": "recall_at_40",
-            "evidence_group_id": "026-award",
+            "evidence_group_id": "026-track-2",
             "relation": "duplicate",
             "acceptable_parent_ids": [
-              "parent-a734651048b7159210d5c4a6",
-              "parent-287a536a7936d114db25a509"
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
             ],
             "retrieved_parent_ids": [
-              "parent-a734651048b7159210d5c4a6"
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
             ],
             "complete": true
           },
           {
             "case_id": "rag-v0-026",
-            "metric_stage": "rerank_recall_at_12",
-            "evidence_group_id": "026-tracklist",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-track-3",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "recall_at_40",
+            "evidence_group_id": "026-track-4",
             "relation": "duplicate",
             "acceptable_parent_ids": [
               "parent-cfb9f049a0cfdf86866257fd",
@@ -207,8 +369,80 @@
           },
           {
             "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-track-1",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-track-2",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-track-3",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "rerank_recall_at_12",
+            "evidence_group_id": "026-track-4",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
             "metric_stage": "final_context_precision",
-            "evidence_group_id": "026-tracklist",
+            "evidence_group_id": "026-award",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-a734651048b7159210d5c4a6",
+              "parent-287a536a7936d114db25a509"
+            ],
+            "retrieved_parent_ids": [],
+            "complete": false
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-track-1",
             "relation": "duplicate",
             "acceptable_parent_ids": [
               "parent-cfb9f049a0cfdf86866257fd",
@@ -222,14 +456,44 @@
           {
             "case_id": "rag-v0-026",
             "metric_stage": "final_context_precision",
-            "evidence_group_id": "026-award",
+            "evidence_group_id": "026-track-2",
             "relation": "duplicate",
             "acceptable_parent_ids": [
-              "parent-a734651048b7159210d5c4a6",
-              "parent-287a536a7936d114db25a509"
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
             ],
-            "retrieved_parent_ids": [],
-            "complete": false
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-track-3",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd"
+            ],
+            "complete": true
+          },
+          {
+            "case_id": "rag-v0-026",
+            "metric_stage": "final_context_precision",
+            "evidence_group_id": "026-track-4",
+            "relation": "duplicate",
+            "acceptable_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd",
+              "parent-d0c34fdc20c0a8d545deea06"
+            ],
+            "retrieved_parent_ids": [
+              "parent-cfb9f049a0cfdf86866257fd"
+            ],
+            "complete": true
           }
         ]
       }
