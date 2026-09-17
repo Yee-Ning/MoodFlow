@@ -1,0 +1,1523 @@
+{
+  "gold_v3_sha256": "5d2888542042af16bf38d3ae63f45c956c8e37f658397e2f5d3a78c3759236e9",
+  "gold_v4_sha256": "1a3de179c82cd5e6d3c2cb49fc76ef82a947dc02ba4449536349dbce7297850a",
+  "schema_limit": "31 supporting spans lack claim labels; each is one evidence unit, not an inferred claim.",
+  "traces": {
+    "fallback": {
+      "trace_path": "evals/artifacts/gold_v2_trace_v3_fallback_20260916.jsonl",
+      "trace_sha256": "7e85baf64ff79163093e1712ba889cbb221c41023609c5c6b3d5fed657bd0c8e",
+      "eligible_full_cases": 13,
+      "eligible_partial_cases": 8,
+      "insufficient_cases": 6,
+      "needs_input_cases": 3,
+      "evidence_unit_count": 65,
+      "full_evidence_unit_count": 44,
+      "partial_evidence_unit_count": 21,
+      "evidence_unit_kinds": {
+        "unlabeled_span": 31,
+        "claim": 32,
+        "group": 2
+      },
+      "metrics": {
+        "legacy_v4": {
+          "evidence_recall_at_40": 0.6868131868131868,
+          "evidence_rerank_recall_at_12": 0.3827838827838828,
+          "final_context_precision": 0.11538461538461539
+        },
+        "group_aware_v4": {
+          "evidence_recall_at_40": 0.6868131868131868,
+          "evidence_rerank_recall_at_12": 0.3827838827838828,
+          "final_context_precision": 0.11538461538461539
+        },
+        "answerability_aware_group_aware_v4": {
+          "evidence_recall_at_40": 0.6413832199546485,
+          "evidence_rerank_recall_at_12": 0.4283446712018141,
+          "final_context_precision": 0.11904761904761904
+        }
+      },
+      "partial_cases": [
+        {
+          "case_id": "rag-v0-003",
+          "question": "Jay Chou 对华语音乐有什么影响",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "杰威尔简介称形成所谓“周杰伦现象”",
+            "研究将中国风术语活跃与《东风破》发布相联系",
+            "英文研究认为其风格被其他艺人模仿"
+          ],
+          "unsupported_claims_from_gold": [
+            "不得将来源评价写成已独立证实的行业共识、影响规模或因果贡献",
+            "不得用歌曲主题举例直接证明对华语音乐的影响"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 3,
+          "top40_hit_count": 1,
+          "top12_hit_count": 1,
+          "final_context_hit_count": 0,
+          "evidence_recall_at_40": 0.3333333333333333,
+          "evidence_rerank_recall_at_12": 0.3333333333333333,
+          "final_context_precision": 0.0,
+          "scored_units": [
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "杰威尔简介称形成所谓“周杰伦现象”",
+              "anchor_parent_id": "parent-abd13550e82163b9f04dd8c1",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-abd13550e82163b9f04dd8c1"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-abd13550e82163b9f04dd8c1",
+                  "claim": "杰威尔简介称形成所谓“周杰伦现象”",
+                  "support_level": "full",
+                  "evidence_text": "2000年出道，隨即引起華語音樂界重大注目，並形成所謂的「周杰倫現象」"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:2",
+              "kind": "claim",
+              "supported_claim": "研究将中国风术语活跃与《东风破》发布相联系",
+              "anchor_parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+                  "claim": "研究将中国风术语活跃与《东风破》发布相联系",
+                  "support_level": "full",
+                  "evidence_text": "21世纪初，真正的“中国风”音乐风格逐渐明晰，直至周杰伦的《东风破》（2003年）歌曲一经发布，“中国风”一词便在华语乐坛中活跃起来。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:3",
+              "kind": "claim",
+              "supported_claim": "英文研究认为其风格被其他艺人模仿",
+              "anchor_parent_id": "parent-99cbdb202deb91c31a873be5",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-99cbdb202deb91c31a873be5"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-99cbdb202deb91c31a873be5",
+                  "claim": "英文研究认为其风格被其他艺人模仿",
+                  "support_level": "full",
+                  "evidence_text": "His unique style of music has been imitated by other artistes as they hope to repeat his success<sup>28</sup> ."
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-005",
+          "question": "歌曲《晴天》的创作背景",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "[claim 未标注] 周杰倫的歌曲席捲無數樂迷的心，音樂創作最初始的模樣不免引人好奇，杰威爾音樂聯手北京「薄盒App」，推出「周杰倫限定珍藏DEMO空間」，由周杰倫挑選的5首DEMO組成，包含「青花瓷」、「晴天」、「擱淺」、「愛在西元前」，以及一首從未發表且完成度極高如新歌的「紐約地鐵」，這些向來不輕易示人的DEMO即將曝光！",
+            "早期 DEMO 完成度较高"
+          ],
+          "unsupported_claims_from_gold": [
+            "缺少《晴天》专属创作缘起证据"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 2,
+          "top40_hit_count": 2,
+          "top12_hit_count": 2,
+          "final_context_hit_count": 0,
+          "evidence_recall_at_40": 1.0,
+          "evidence_rerank_recall_at_12": 1.0,
+          "final_context_precision": 0.0,
+          "scored_units": [
+            {
+              "unit_id": "span:1",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-0276a6cd536dfaa02e3b39eb",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-0276a6cd536dfaa02e3b39eb"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-0276a6cd536dfaa02e3b39eb",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "周杰倫的歌曲席捲無數樂迷的心，音樂創作最初始的模樣不免引人好奇，杰威爾音樂聯手北京「薄盒App」，推出「周杰倫限定珍藏DEMO空間」，由周杰倫挑選的5首DEMO組成，包含「青花瓷」、「晴天」、「擱淺」、「愛在西元前」，以及一首從未發表且完成度極高如新歌的「紐約地鐵」，這些向來不輕易示人的DEMO即將曝光！"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "早期 DEMO 完成度较高",
+              "anchor_parent_id": "parent-0276a6cd536dfaa02e3b39eb",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-0276a6cd536dfaa02e3b39eb"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-0276a6cd536dfaa02e3b39eb",
+                  "claim": "早期 DEMO 完成度较高",
+                  "support_level": "partial",
+                  "evidence_text": "與其他音樂創作人最大的不同是，周杰倫的音樂在創作初期的DEMO就是以高完整度的模樣呈現，許多合作過的編曲老師都為之驚嘆！"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-008",
+          "question": "歌曲《东风破》的创作背景",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "[claim 未标注] 21世纪初，真正的“中国风”音乐风格逐渐明晰，直至周杰伦的《东风破》（2003年）歌曲一经发布，“中国风”一词便在华语乐坛中活跃起来。",
+            "[claim 未标注] 〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。",
+            "《东风破》使用二胡和琵琶"
+          ],
+          "unsupported_claims_from_gold": [
+            "冻结材料未提供其具体创作动机、灵感来源或过程"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 3,
+          "top40_hit_count": 3,
+          "top12_hit_count": 3,
+          "final_context_hit_count": 3,
+          "evidence_recall_at_40": 1.0,
+          "evidence_rerank_recall_at_12": 1.0,
+          "final_context_precision": 0.5,
+          "scored_units": [
+            {
+              "unit_id": "span:1",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "21世纪初，真正的“中国风”音乐风格逐渐明晰，直至周杰伦的《东风破》（2003年）歌曲一经发布，“中国风”一词便在华语乐坛中活跃起来。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "span:2",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "《东风破》使用二胡和琵琶",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》使用二胡和琵琶",
+                  "support_level": "partial",
+                  "evidence_text": "这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-031",
+          "question": "比较周杰伦和林俊杰的音乐风格",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "[claim 未标注] 华语乐坛中越来越多的音乐人纷纷加入到创作“中国风”歌曲的队伍中，如林俊杰、陶喆、胡彦斌、刘珂矣、李玉刚等，创作了无数首经典歌曲，如《曹操》（2006年）、《醉赤壁》（2008 年 ）、《蝴 蝶》（2006 年 ）、《兰 亭 序》（2008 年）、《一尘梦》（2020年）等。"
+          ],
+          "unsupported_claims_from_gold": [
+            "缺少林俊杰独立风格证据，不能可靠比较"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 1,
+          "top40_hit_count": 1,
+          "top12_hit_count": 1,
+          "final_context_hit_count": 1,
+          "evidence_recall_at_40": 1.0,
+          "evidence_rerank_recall_at_12": 1.0,
+          "final_context_precision": 0.25,
+          "scored_units": [
+            {
+              "unit_id": "span:1",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "华语乐坛中越来越多的音乐人纷纷加入到创作“中国风”歌曲的队伍中，如林俊杰、陶喆、胡彦斌、刘珂矣、李玉刚等，创作了无数首经典歌曲，如《曹操》（2006年）、《醉赤壁》（2008 年 ）、《蝴 蝶》（2006 年 ）、《兰 亭 序》（2008 年）、《一尘梦》（2020年）等。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-034",
+          "question": "《东风破》与《青花瓷》相比有什么差异",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "《东风破》的乐器与中国风特征",
+            "《东风破》歌名来源",
+            "方文山对青花瓷传统文化识别度的评价",
+            "方文山将《青花瓷》列入中国风作品"
+          ],
+          "unsupported_claims_from_gold": [
+            "现有证据只分别说明特征，不能确认两曲的直接差异或程度"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 4,
+          "top40_hit_count": 4,
+          "top12_hit_count": 2,
+          "final_context_hit_count": 0,
+          "evidence_recall_at_40": 1.0,
+          "evidence_rerank_recall_at_12": 0.5,
+          "final_context_precision": 0.0,
+          "scored_units": [
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "《东风破》的乐器与中国风特征",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》的乐器与中国风特征",
+                  "support_level": "full",
+                  "evidence_text": "这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:2",
+              "kind": "claim",
+              "supported_claim": "《东风破》歌名来源",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》歌名来源",
+                  "support_level": "full",
+                  "evidence_text": "歌曲的名字，来自古代民间一种曲的形式，叫做曲破[1]。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:3",
+              "kind": "claim",
+              "supported_claim": "方文山对青花瓷传统文化识别度的评价",
+              "anchor_parent_id": "parent-afca7c2d173dc002cca86aef",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-afca7c2d173dc002cca86aef"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-afca7c2d173dc002cca86aef",
+                  "claim": "方文山对青花瓷传统文化识别度的评价",
+                  "support_level": "full",
+                  "evidence_text": "方文山认为，中国的传统文化具有特殊的文化识别度，比如水墨画、京剧、青花瓷，不用解释，大家一看就知道来自哪个民族。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:4",
+              "kind": "claim",
+              "supported_claim": "方文山将《青花瓷》列入中国风作品",
+              "anchor_parent_id": "parent-afca7c2d173dc002cca86aef",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-afca7c2d173dc002cca86aef"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-afca7c2d173dc002cca86aef",
+                  "claim": "方文山将《青花瓷》列入中国风作品",
+                  "support_level": "full",
+                  "evidence_text": "像《本草纲目》《青花瓷》等作品，就是他有意无意地去经营、创作“中国风”。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-036",
+          "question": "周杰伦 2000 到 2005 年的音乐风格如何演变",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "来源称2000年《Jay》融合多种曲风",
+            "《东风破》收于《叶惠美》",
+            "《东风破》的单曲乐器特征",
+            "《叶惠美》于2003年发行的时间锚点",
+            "《11月的萧邦》于2005年发行的时间锚点"
+          ],
+          "unsupported_claims_from_gold": [
+            "不得以2005年专辑发行日期推断2005年的音乐风格变化",
+            "不得把《东风破》单曲特征推广为整张专辑或2000至2005年整体风格"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 5,
+          "top40_hit_count": 2,
+          "top12_hit_count": 1,
+          "final_context_hit_count": 1,
+          "evidence_recall_at_40": 0.4,
+          "evidence_rerank_recall_at_12": 0.2,
+          "final_context_precision": 0.25,
+          "scored_units": [
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "来源称2000年《Jay》融合多种曲风",
+              "anchor_parent_id": "parent-cca31e09c6d05f09267862a1",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-cca31e09c6d05f09267862a1"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-cca31e09c6d05f09267862a1",
+                  "claim": "来源称2000年《Jay》融合多种曲风",
+                  "support_level": "full",
+                  "evidence_text": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-cca31e09c6d05f09267862a1"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:2",
+              "kind": "claim",
+              "supported_claim": "《东风破》收于《叶惠美》",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》收于《叶惠美》",
+                  "support_level": "full",
+                  "evidence_text": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:3",
+              "kind": "claim",
+              "supported_claim": "《东风破》的单曲乐器特征",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》的单曲乐器特征",
+                  "support_level": "full",
+                  "evidence_text": "这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:4",
+              "kind": "claim",
+              "supported_claim": "《叶惠美》于2003年发行的时间锚点",
+              "anchor_parent_id": "parent-81d3ee5f0e44759bf67d8c7f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-81d3ee5f0e44759bf67d8c7f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-81d3ee5f0e44759bf67d8c7f",
+                  "claim": "《叶惠美》于2003年发行的时间锚点",
+                  "support_level": "full",
+                  "evidence_text": "《葉惠美》是台灣歌手周杰倫的第四張录音室專輯，由台灣新力音樂于2003年7月31日發行，專輯名稱周杰倫以自己的母親名字來命名。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:5",
+              "kind": "claim",
+              "supported_claim": "《11月的萧邦》于2005年发行的时间锚点",
+              "anchor_parent_id": "parent-738563d68235b4f923c1ac79",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-738563d68235b4f923c1ac79"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-738563d68235b4f923c1ac79",
+                  "claim": "《11月的萧邦》于2005年发行的时间锚点",
+                  "support_level": "full",
+                  "evidence_text": "2005年11月周杰倫發行個人第6張音樂專輯《11月的蕭邦》"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-039",
+          "question": "从2008至2012年周杰伦有哪些变化",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "来源记载的2011年商业活动",
+            "来源记载的2012年商业活动"
+          ],
+          "unsupported_claims_from_gold": [
+            "局部事件不能证明2008至2012年完整变化或事业转型"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 2,
+          "top40_hit_count": 0,
+          "top12_hit_count": 0,
+          "final_context_hit_count": 0,
+          "evidence_recall_at_40": 0.0,
+          "evidence_rerank_recall_at_12": 0.0,
+          "final_context_precision": 0.0,
+          "scored_units": [
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "来源记载的2011年商业活动",
+              "anchor_parent_id": "parent-17f46282a4d28c6c000e6aff",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17f46282a4d28c6c000e6aff"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17f46282a4d28c6c000e6aff",
+                  "claim": "来源记载的2011年商业活动",
+                  "support_level": "full",
+                  "evidence_text": "2011年，曾投資「DejaVu音樂魔術餐廳」。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:2",
+              "kind": "claim",
+              "supported_claim": "来源记载的2012年商业活动",
+              "anchor_parent_id": "parent-17f46282a4d28c6c000e6aff",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17f46282a4d28c6c000e6aff"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17f46282a4d28c6c000e6aff",
+                  "claim": "来源记载的2012年商业活动",
+                  "support_level": "full",
+                  "evidence_text": "2012年初，與西安真愛投資集團合作在西安開設「真愛范特西」KTV"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-045",
+          "question": "《晴天》的乐评资料，不含翻唱版",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "[claim 未标注] 专辑歌曲《晴天》在2003年HitFM联播网年度百首單曲中名列亚军，《她的睫毛》名列第15名，《東風破》名列第41名。"
+          ],
+          "unsupported_claims_from_gold": [
+            "缺少针对《晴天》音乐风格/审美/编曲的乐评文本"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 1,
+          "top40_hit_count": 0,
+          "top12_hit_count": 0,
+          "final_context_hit_count": 0,
+          "evidence_recall_at_40": 0.0,
+          "evidence_rerank_recall_at_12": 0.0,
+          "final_context_precision": 0.0,
+          "scored_units": [
+            {
+              "unit_id": "span:1",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-e46f773645df47165d634134",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-e46f773645df47165d634134"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-e46f773645df47165d634134",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "专辑歌曲《晴天》在2003年HitFM联播网年度百首單曲中名列亚军，《她的睫毛》名列第15名，《東風破》名列第41名。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        }
+      ],
+      "anomalies": [],
+      "schema_warnings": [
+        "Unlabeled spans are counted separately; Gold V4 cannot prove whether they share a claim.",
+        "A supported span with support_level=partial is a local evidence unit, not a fully supported answer."
+      ]
+    },
+    "nav_context6": {
+      "trace_path": "evals/artifacts/gold_v2_trace_v3_nav_context6_20260916.jsonl",
+      "trace_sha256": "9beacd474a7257253cec4cfa0655a8348e71943200456abc662d84928c40f967",
+      "eligible_full_cases": 13,
+      "eligible_partial_cases": 8,
+      "insufficient_cases": 6,
+      "needs_input_cases": 3,
+      "evidence_unit_count": 65,
+      "full_evidence_unit_count": 44,
+      "partial_evidence_unit_count": 21,
+      "evidence_unit_kinds": {
+        "unlabeled_span": 31,
+        "claim": 32,
+        "group": 2
+      },
+      "metrics": {
+        "legacy_v4": {
+          "evidence_recall_at_40": 0.6868131868131868,
+          "evidence_rerank_recall_at_12": 0.3827838827838828,
+          "final_context_precision": 0.13076923076923078
+        },
+        "group_aware_v4": {
+          "evidence_recall_at_40": 0.6868131868131868,
+          "evidence_rerank_recall_at_12": 0.3827838827838828,
+          "final_context_precision": 0.13076923076923078
+        },
+        "answerability_aware_group_aware_v4": {
+          "evidence_recall_at_40": 0.6413832199546485,
+          "evidence_rerank_recall_at_12": 0.4283446712018141,
+          "final_context_precision": 0.13968253968253969
+        }
+      },
+      "partial_cases": [
+        {
+          "case_id": "rag-v0-003",
+          "question": "Jay Chou 对华语音乐有什么影响",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "杰威尔简介称形成所谓“周杰伦现象”",
+            "研究将中国风术语活跃与《东风破》发布相联系",
+            "英文研究认为其风格被其他艺人模仿"
+          ],
+          "unsupported_claims_from_gold": [
+            "不得将来源评价写成已独立证实的行业共识、影响规模或因果贡献",
+            "不得用歌曲主题举例直接证明对华语音乐的影响"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 3,
+          "top40_hit_count": 1,
+          "top12_hit_count": 1,
+          "final_context_hit_count": 1,
+          "evidence_recall_at_40": 0.3333333333333333,
+          "evidence_rerank_recall_at_12": 0.3333333333333333,
+          "final_context_precision": 0.16666666666666666,
+          "scored_units": [
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "杰威尔简介称形成所谓“周杰伦现象”",
+              "anchor_parent_id": "parent-abd13550e82163b9f04dd8c1",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-abd13550e82163b9f04dd8c1"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-abd13550e82163b9f04dd8c1",
+                  "claim": "杰威尔简介称形成所谓“周杰伦现象”",
+                  "support_level": "full",
+                  "evidence_text": "2000年出道，隨即引起華語音樂界重大注目，並形成所謂的「周杰倫現象」"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:2",
+              "kind": "claim",
+              "supported_claim": "研究将中国风术语活跃与《东风破》发布相联系",
+              "anchor_parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+                  "claim": "研究将中国风术语活跃与《东风破》发布相联系",
+                  "support_level": "full",
+                  "evidence_text": "21世纪初，真正的“中国风”音乐风格逐渐明晰，直至周杰伦的《东风破》（2003年）歌曲一经发布，“中国风”一词便在华语乐坛中活跃起来。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:3",
+              "kind": "claim",
+              "supported_claim": "英文研究认为其风格被其他艺人模仿",
+              "anchor_parent_id": "parent-99cbdb202deb91c31a873be5",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-99cbdb202deb91c31a873be5"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-99cbdb202deb91c31a873be5",
+                  "claim": "英文研究认为其风格被其他艺人模仿",
+                  "support_level": "full",
+                  "evidence_text": "His unique style of music has been imitated by other artistes as they hope to repeat his success<sup>28</sup> ."
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-99cbdb202deb91c31a873be5"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-005",
+          "question": "歌曲《晴天》的创作背景",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "[claim 未标注] 周杰倫的歌曲席捲無數樂迷的心，音樂創作最初始的模樣不免引人好奇，杰威爾音樂聯手北京「薄盒App」，推出「周杰倫限定珍藏DEMO空間」，由周杰倫挑選的5首DEMO組成，包含「青花瓷」、「晴天」、「擱淺」、「愛在西元前」，以及一首從未發表且完成度極高如新歌的「紐約地鐵」，這些向來不輕易示人的DEMO即將曝光！",
+            "早期 DEMO 完成度较高"
+          ],
+          "unsupported_claims_from_gold": [
+            "缺少《晴天》专属创作缘起证据"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 2,
+          "top40_hit_count": 2,
+          "top12_hit_count": 2,
+          "final_context_hit_count": 2,
+          "evidence_recall_at_40": 1.0,
+          "evidence_rerank_recall_at_12": 1.0,
+          "final_context_precision": 0.2,
+          "scored_units": [
+            {
+              "unit_id": "span:1",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-0276a6cd536dfaa02e3b39eb",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-0276a6cd536dfaa02e3b39eb"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-0276a6cd536dfaa02e3b39eb",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "周杰倫的歌曲席捲無數樂迷的心，音樂創作最初始的模樣不免引人好奇，杰威爾音樂聯手北京「薄盒App」，推出「周杰倫限定珍藏DEMO空間」，由周杰倫挑選的5首DEMO組成，包含「青花瓷」、「晴天」、「擱淺」、「愛在西元前」，以及一首從未發表且完成度極高如新歌的「紐約地鐵」，這些向來不輕易示人的DEMO即將曝光！"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-0276a6cd536dfaa02e3b39eb"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "早期 DEMO 完成度较高",
+              "anchor_parent_id": "parent-0276a6cd536dfaa02e3b39eb",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-0276a6cd536dfaa02e3b39eb"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-0276a6cd536dfaa02e3b39eb",
+                  "claim": "早期 DEMO 完成度较高",
+                  "support_level": "partial",
+                  "evidence_text": "與其他音樂創作人最大的不同是，周杰倫的音樂在創作初期的DEMO就是以高完整度的模樣呈現，許多合作過的編曲老師都為之驚嘆！"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-0276a6cd536dfaa02e3b39eb"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-008",
+          "question": "歌曲《东风破》的创作背景",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "[claim 未标注] 21世纪初，真正的“中国风”音乐风格逐渐明晰，直至周杰伦的《东风破》（2003年）歌曲一经发布，“中国风”一词便在华语乐坛中活跃起来。",
+            "[claim 未标注] 〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。",
+            "《东风破》使用二胡和琵琶"
+          ],
+          "unsupported_claims_from_gold": [
+            "冻结材料未提供其具体创作动机、灵感来源或过程"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 3,
+          "top40_hit_count": 3,
+          "top12_hit_count": 3,
+          "final_context_hit_count": 3,
+          "evidence_recall_at_40": 1.0,
+          "evidence_rerank_recall_at_12": 1.0,
+          "final_context_precision": 0.3333333333333333,
+          "scored_units": [
+            {
+              "unit_id": "span:1",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "21世纪初，真正的“中国风”音乐风格逐渐明晰，直至周杰伦的《东风破》（2003年）歌曲一经发布，“中国风”一词便在华语乐坛中活跃起来。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "span:2",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "《东风破》使用二胡和琵琶",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》使用二胡和琵琶",
+                  "support_level": "partial",
+                  "evidence_text": "这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-031",
+          "question": "比较周杰伦和林俊杰的音乐风格",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "[claim 未标注] 华语乐坛中越来越多的音乐人纷纷加入到创作“中国风”歌曲的队伍中，如林俊杰、陶喆、胡彦斌、刘珂矣、李玉刚等，创作了无数首经典歌曲，如《曹操》（2006年）、《醉赤壁》（2008 年 ）、《蝴 蝶》（2006 年 ）、《兰 亭 序》（2008 年）、《一尘梦》（2020年）等。"
+          ],
+          "unsupported_claims_from_gold": [
+            "缺少林俊杰独立风格证据，不能可靠比较"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 1,
+          "top40_hit_count": 1,
+          "top12_hit_count": 1,
+          "final_context_hit_count": 1,
+          "evidence_recall_at_40": 1.0,
+          "evidence_rerank_recall_at_12": 1.0,
+          "final_context_precision": 0.2,
+          "scored_units": [
+            {
+              "unit_id": "span:1",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-bb9810b50e07fbcbb9d00c66",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "华语乐坛中越来越多的音乐人纷纷加入到创作“中国风”歌曲的队伍中，如林俊杰、陶喆、胡彦斌、刘珂矣、李玉刚等，创作了无数首经典歌曲，如《曹操》（2006年）、《醉赤壁》（2008 年 ）、《蝴 蝶》（2006 年 ）、《兰 亭 序》（2008 年）、《一尘梦》（2020年）等。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-bb9810b50e07fbcbb9d00c66"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-034",
+          "question": "《东风破》与《青花瓷》相比有什么差异",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "《东风破》的乐器与中国风特征",
+            "《东风破》歌名来源",
+            "方文山对青花瓷传统文化识别度的评价",
+            "方文山将《青花瓷》列入中国风作品"
+          ],
+          "unsupported_claims_from_gold": [
+            "现有证据只分别说明特征，不能确认两曲的直接差异或程度"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 4,
+          "top40_hit_count": 4,
+          "top12_hit_count": 2,
+          "final_context_hit_count": 2,
+          "evidence_recall_at_40": 1.0,
+          "evidence_rerank_recall_at_12": 0.5,
+          "final_context_precision": 0.16666666666666666,
+          "scored_units": [
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "《东风破》的乐器与中国风特征",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》的乐器与中国风特征",
+                  "support_level": "full",
+                  "evidence_text": "这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:2",
+              "kind": "claim",
+              "supported_claim": "《东风破》歌名来源",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》歌名来源",
+                  "support_level": "full",
+                  "evidence_text": "歌曲的名字，来自古代民间一种曲的形式，叫做曲破[1]。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:3",
+              "kind": "claim",
+              "supported_claim": "方文山对青花瓷传统文化识别度的评价",
+              "anchor_parent_id": "parent-afca7c2d173dc002cca86aef",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-afca7c2d173dc002cca86aef"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-afca7c2d173dc002cca86aef",
+                  "claim": "方文山对青花瓷传统文化识别度的评价",
+                  "support_level": "full",
+                  "evidence_text": "方文山认为，中国的传统文化具有特殊的文化识别度，比如水墨画、京剧、青花瓷，不用解释，大家一看就知道来自哪个民族。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:4",
+              "kind": "claim",
+              "supported_claim": "方文山将《青花瓷》列入中国风作品",
+              "anchor_parent_id": "parent-afca7c2d173dc002cca86aef",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-afca7c2d173dc002cca86aef"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-afca7c2d173dc002cca86aef",
+                  "claim": "方文山将《青花瓷》列入中国风作品",
+                  "support_level": "full",
+                  "evidence_text": "像《本草纲目》《青花瓷》等作品，就是他有意无意地去经营、创作“中国风”。"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-036",
+          "question": "周杰伦 2000 到 2005 年的音乐风格如何演变",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "来源称2000年《Jay》融合多种曲风",
+            "《东风破》收于《叶惠美》",
+            "《东风破》的单曲乐器特征",
+            "《叶惠美》于2003年发行的时间锚点",
+            "《11月的萧邦》于2005年发行的时间锚点"
+          ],
+          "unsupported_claims_from_gold": [
+            "不得以2005年专辑发行日期推断2005年的音乐风格变化",
+            "不得把《东风破》单曲特征推广为整张专辑或2000至2005年整体风格"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 5,
+          "top40_hit_count": 2,
+          "top12_hit_count": 1,
+          "final_context_hit_count": 1,
+          "evidence_recall_at_40": 0.4,
+          "evidence_rerank_recall_at_12": 0.2,
+          "final_context_precision": 0.16666666666666666,
+          "scored_units": [
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "来源称2000年《Jay》融合多种曲风",
+              "anchor_parent_id": "parent-cca31e09c6d05f09267862a1",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-cca31e09c6d05f09267862a1"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-cca31e09c6d05f09267862a1",
+                  "claim": "来源称2000年《Jay》融合多种曲风",
+                  "support_level": "full",
+                  "evidence_text": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": true,
+              "final_context_hit": true,
+              "final_accepted_parent_ids": [
+                "parent-cca31e09c6d05f09267862a1"
+              ],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:2",
+              "kind": "claim",
+              "supported_claim": "《东风破》收于《叶惠美》",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》收于《叶惠美》",
+                  "support_level": "full",
+                  "evidence_text": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:3",
+              "kind": "claim",
+              "supported_claim": "《东风破》的单曲乐器特征",
+              "anchor_parent_id": "parent-17747bf81bf90411ed3b8a4f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17747bf81bf90411ed3b8a4f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+                  "claim": "《东风破》的单曲乐器特征",
+                  "support_level": "full",
+                  "evidence_text": "这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:4",
+              "kind": "claim",
+              "supported_claim": "《叶惠美》于2003年发行的时间锚点",
+              "anchor_parent_id": "parent-81d3ee5f0e44759bf67d8c7f",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-81d3ee5f0e44759bf67d8c7f"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-81d3ee5f0e44759bf67d8c7f",
+                  "claim": "《叶惠美》于2003年发行的时间锚点",
+                  "support_level": "full",
+                  "evidence_text": "《葉惠美》是台灣歌手周杰倫的第四張录音室專輯，由台灣新力音樂于2003年7月31日發行，專輯名稱周杰倫以自己的母親名字來命名。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:5",
+              "kind": "claim",
+              "supported_claim": "《11月的萧邦》于2005年发行的时间锚点",
+              "anchor_parent_id": "parent-738563d68235b4f923c1ac79",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-738563d68235b4f923c1ac79"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-738563d68235b4f923c1ac79",
+                  "claim": "《11月的萧邦》于2005年发行的时间锚点",
+                  "support_level": "full",
+                  "evidence_text": "2005年11月周杰倫發行個人第6張音樂專輯《11月的蕭邦》"
+                }
+              ],
+              "top40_hit": true,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-039",
+          "question": "从2008至2012年周杰伦有哪些变化",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "来源记载的2011年商业活动",
+            "来源记载的2012年商业活动"
+          ],
+          "unsupported_claims_from_gold": [
+            "局部事件不能证明2008至2012年完整变化或事业转型"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 2,
+          "top40_hit_count": 0,
+          "top12_hit_count": 0,
+          "final_context_hit_count": 0,
+          "evidence_recall_at_40": 0.0,
+          "evidence_rerank_recall_at_12": 0.0,
+          "final_context_precision": 0.0,
+          "scored_units": [
+            {
+              "unit_id": "claim:1",
+              "kind": "claim",
+              "supported_claim": "来源记载的2011年商业活动",
+              "anchor_parent_id": "parent-17f46282a4d28c6c000e6aff",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17f46282a4d28c6c000e6aff"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17f46282a4d28c6c000e6aff",
+                  "claim": "来源记载的2011年商业活动",
+                  "support_level": "full",
+                  "evidence_text": "2011年，曾投資「DejaVu音樂魔術餐廳」。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            },
+            {
+              "unit_id": "claim:2",
+              "kind": "claim",
+              "supported_claim": "来源记载的2012年商业活动",
+              "anchor_parent_id": "parent-17f46282a4d28c6c000e6aff",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-17f46282a4d28c6c000e6aff"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-17f46282a4d28c6c000e6aff",
+                  "claim": "来源记载的2012年商业活动",
+                  "support_level": "full",
+                  "evidence_text": "2012年初，與西安真愛投資集團合作在西安開設「真愛范特西」KTV"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        },
+        {
+          "case_id": "rag-v0-045",
+          "question": "《晴天》的乐评资料，不含翻唱版",
+          "answerability_level": "partially_answerable",
+          "expected_outcome_legacy": "insufficient_evidence",
+          "supported_claims": [
+            "[claim 未标注] 专辑歌曲《晴天》在2003年HitFM联播网年度百首單曲中名列亚军，《她的睫毛》名列第15名，《東風破》名列第41名。"
+          ],
+          "unsupported_claims_from_gold": [
+            "缺少针对《晴天》音乐风格/审美/编曲的乐评文本"
+          ],
+          "participating_evidence_groups": [],
+          "evidence_unit_count": 1,
+          "top40_hit_count": 0,
+          "top12_hit_count": 0,
+          "final_context_hit_count": 0,
+          "evidence_recall_at_40": 0.0,
+          "evidence_rerank_recall_at_12": 0.0,
+          "final_context_precision": 0.0,
+          "scored_units": [
+            {
+              "unit_id": "span:1",
+              "kind": "unlabeled_span",
+              "supported_claim": null,
+              "anchor_parent_id": "parent-e46f773645df47165d634134",
+              "evidence_group_id": null,
+              "relation": null,
+              "acceptable_parent_ids": [
+                "parent-e46f773645df47165d634134"
+              ],
+              "supporting_spans": [
+                {
+                  "parent_id": "parent-e46f773645df47165d634134",
+                  "claim": null,
+                  "support_level": "partial",
+                  "evidence_text": "专辑歌曲《晴天》在2003年HitFM联播网年度百首單曲中名列亚军，《她的睫毛》名列第15名，《東風破》名列第41名。"
+                }
+              ],
+              "top40_hit": false,
+              "top12_hit": false,
+              "final_context_hit": false,
+              "final_accepted_parent_ids": [],
+              "included_because": "Gold supporting span has support_level full/partial; only this local evidence unit is scored."
+            }
+          ],
+          "excluded_because": "Gold limitations/forbidden claims have no supported evidence unit; insufficient spans are excluded."
+        }
+      ],
+      "anomalies": [],
+      "schema_warnings": [
+        "Unlabeled spans are counted separately; Gold V4 cannot prove whether they share a claim.",
+        "A supported span with support_level=partial is a local evidence unit, not a fully supported answer."
+      ]
+    }
+  }
+}
