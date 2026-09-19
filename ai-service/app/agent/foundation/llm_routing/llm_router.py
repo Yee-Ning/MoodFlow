@@ -7,7 +7,7 @@ from app.agent.foundation.llm_routing.runtime import (
 from app.agent.foundation.llm_routing.schemas import LLMRouteRequest, LLMRouteResult, LLMStructuredOutput
 from app.agent.foundation.routing import IntentItem, IntentSource, UnresolvedSegment
 from app.agent.foundation.rule_routing.coverage import calculate_coverage
-from app.agent.structured_output import StructuredOutputError, StructuredOutputService
+from app.agent.structured_output import FailureType, StructuredOutputError, StructuredOutputService
 
 
 class LLMRouter:
@@ -37,6 +37,8 @@ class LLMRouter:
         try:
             await service.run(generate)
         except StructuredOutputError as exc:
+            if exc.failure_type is FailureType.MODEL_ERROR:
+                raise LLMRoutingError("LLM routing model unavailable") from exc
             raise LLMRoutingError(
                 "LLM routing output failed schema or evidence validation"
             ) from exc

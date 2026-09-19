@@ -106,11 +106,15 @@ class StructuredOutputServiceTests(unittest.TestCase):
         async def incomplete(attempt, feedback):
             return ModelOutput("", status="incomplete", incomplete_reason="max_output_tokens")
 
-        with self.assertRaises(StructuredOutputError) as caught:
-            asyncio.run(self.service.run(incomplete))
+        with self.assertLogs("app.agent.structured_output.service") as logs:
+            with self.assertRaises(StructuredOutputError) as caught:
+                asyncio.run(self.service.run(incomplete))
         self.assertEqual(caught.exception.failure_type, FailureType.RETRY_EXHAUSTED)
         self.assertEqual(caught.exception.last_failure_type, FailureType.TRUNCATION)
         self.assertEqual(caught.exception.attempts, 2)
+        self.assertEqual(logs.records[-1].failure_type, "retry_exhausted")
+        self.assertEqual(logs.records[-1].last_failure_type, "truncation")
+        self.assertEqual(logs.records[-1].retry_count, 1)
 
     def test_model_error_does_not_expose_exception_text(self) -> None:
         async def failed(attempt, feedback):

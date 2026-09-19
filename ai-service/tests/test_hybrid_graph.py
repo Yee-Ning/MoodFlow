@@ -9,6 +9,7 @@ from langgraph.graph import END, START, StateGraph
 from app.agent.foundation import create_main_graph, create_main_state, RouteKey, RoutingContext
 from app.agent.foundation.hybrid_routing import HybridIntentRouter, EscalationPolicy
 from app.agent.foundation.llm_routing import LLMRouter
+from app.agent.foundation.llm_routing.runtime import LLMRoutingError
 from app.agent.foundation.main_graph import build_main_graph
 from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.routing import (
@@ -322,7 +323,7 @@ class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
             model=Mock(side_effect=lambda text: model_result(text, ())),
             classify=AsyncMock(side_effect=TimeoutError("fixture")),
         )
-        with self.assertRaises(TimeoutError):
+        with self.assertRaisesRegex(LLMRoutingError, "model unavailable"):
             await build_main_graph(intent_router=router).compile().ainvoke(create_main_state("阿巴阿巴"))
 
     async def test_same_thread_repeated_requests_do_not_skip_or_reuse_tasks(self):

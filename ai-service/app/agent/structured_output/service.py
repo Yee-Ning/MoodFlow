@@ -95,8 +95,15 @@ class StructuredOutputService(Generic[T]):
                 repaired = repaired or parsed.repair_applied
             except ValidationFailure as exc:
                 last_failure = exc
-                self._log(attempt, repaired or exc.repair_applied, exc.failure_type,
-                          "retry" if attempt < self.max_attempts else "failed", started)
+                final = attempt == self.max_attempts
+                self._log(
+                    attempt,
+                    repaired or exc.repair_applied,
+                    FailureType.RETRY_EXHAUSTED if final else exc.failure_type,
+                    "failed" if final else "retry",
+                    started,
+                    last_failure_type=exc.failure_type if final else None,
+                )
                 feedback = retry_feedback(exc)
                 continue
             except Exception as exc:
@@ -121,6 +128,7 @@ class StructuredOutputService(Generic[T]):
         failure_type: FailureType | None,
         final_status: str,
         started: float,
+        last_failure_type: FailureType | None = None,
     ) -> None:
         logger.info(
             "structured_output.%s",
@@ -132,6 +140,9 @@ class StructuredOutputService(Generic[T]):
                 "repair_applied": repair_applied,
                 "retry_count": attempt - 1,
                 "failure_type": failure_type.value if failure_type else None,
+                "last_failure_type": (
+                    last_failure_type.value if last_failure_type else None
+                ),
                 "latency_ms": round((perf_counter() - started) * 1_000, 2),
                 "final_status": final_status,
             },
