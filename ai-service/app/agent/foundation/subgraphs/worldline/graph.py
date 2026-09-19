@@ -670,4 +670,4 @@ def create_worldline_subgraph(
         retriever=retriever,
         generator=generator,
         query_understanding=query_understanding,
-    ).compile()
+    ).compile(checkpointer=False)

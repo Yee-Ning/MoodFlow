@@ -68,12 +68,25 @@ export type ClientAction =
 
 export type AiResponseType = 'chat' | 'music_search' | 'music_recommendation'
 
+export interface FoundationTaskResult {
+  task_id: string
+  status: 'success' | 'failed' | 'needs_input'
+  subgraph: 'current_song' | 'tool_calling' | 'general_chat' | 'worldline'
+  answer: string | null
+  citations: Record<string, unknown>[]
+  sources: Record<string, unknown>[]
+  tool_calls: Record<string, unknown>[]
+  metadata: Record<string, unknown>
+}
+
 export interface ChatResponse {
   type: AiResponseType
   message: string
   search_query: string | null
   conversation_id?: string
   recommendations?: AiSongRecommendation[]
+  status?: FoundationTaskResult['status']
+  results?: FoundationTaskResult[]
 }
 
 export type AiChatStreamEvent =
@@ -257,6 +270,31 @@ function parseResponse(payload: unknown): ChatResponse {
   const recommendations = Array.isArray(rawRecommendations)
     ? rawRecommendations.filter(isRecommendation)
     : undefined
+  let results: FoundationTaskResult[] | undefined
+  if ('results' in candidate) {
+    if (!Array.isArray(candidate.results)) {
+      throw new AiChatApiError('AI 返回了无法识别的任务结果')
+    }
+    results = candidate.results.map((value) => {
+      if (
+        !isRecord(value)
+        || typeof value.task_id !== 'string'
+        || !['success', 'failed', 'needs_input'].includes(String(value.status))
+        || !['current_song', 'tool_calling', 'general_chat', 'worldline'].includes(String(value.subgraph))
+        || (value.answer !== null && typeof value.answer !== 'string')
+        || !Array.isArray(value.citations)
+        || !value.citations.every(isRecord)
+        || !Array.isArray(value.sources)
+        || !value.sources.every(isRecord)
+        || !Array.isArray(value.tool_calls)
+        || !value.tool_calls.every(isRecord)
+        || !isRecord(value.metadata)
+      ) {
+        throw new AiChatApiError('AI 返回了无法识别的任务结果')
+      }
+      return value as unknown as FoundationTaskResult
+    })
+  }
 
   return {
     type: candidate.type as AiResponseType,
@@ -266,6 +304,10 @@ function parseResponse(payload: unknown): ChatResponse {
       ? candidate.conversation_id
       : undefined,
     recommendations: recommendations?.length ? recommendations : undefined,
+    status: ['success', 'failed', 'needs_input'].includes(String(candidate.status))
+      ? candidate.status as FoundationTaskResult['status']
+      : undefined,
+    results,
   }
 }
 

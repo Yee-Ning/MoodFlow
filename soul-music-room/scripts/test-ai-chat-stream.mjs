@@ -391,6 +391,38 @@ try {
   assert.equal(cleared.isSending, false)
   assert.equal(cleared.status, 'idle')
 
+  const { streamAiChatMessage } = await server.ssrLoadModule('/src/services/aiChat.ts')
+  globalThis.fetch = async () => streamResponse([
+    sse('final', {
+      type: 'chat', status: 'success', message: '世界线已生成', search_query: null,
+      results: [{
+        task_id: 'worldline-1', status: 'success', subgraph: 'worldline',
+        answer: '世界线已生成', citations: [{ id: 'source-1' }],
+        sources: [{ id: 'source-1' }], tool_calls: [], metadata: { worldline_result: {} },
+      }],
+    }),
+    sse('done', {}),
+  ])
+  const foundationEvents = []
+  for await (const event of streamAiChatMessage({
+    message: '生成世界线', thread_id: 'foundation-test', current_song_id: null,
+    player_context: playerContext({ has_current_song: false, current_song_id: null }),
+  })) foundationEvents.push(event)
+  assert.equal(foundationEvents[0].response.results[0].subgraph, 'worldline')
+  assert.equal(foundationEvents[0].response.results[0].citations[0].id, 'source-1')
+
+  globalThis.fetch = async () => streamResponse([
+    sse('final', {
+      type: 'chat', message: '无效结果', search_query: null, results: 'bad',
+    }),
+  ])
+  await assert.rejects(async () => {
+    for await (const event of streamAiChatMessage({
+      message: '测试无效结果', thread_id: 'invalid-foundation', current_song_id: null,
+      player_context: playerContext({ has_current_song: false, current_song_id: null }),
+    })) { void event }
+  }, /无法识别的任务结果/)
+
   process.stdout.write('AI chat streaming store checks passed.\n')
 } finally {
   globalThis.fetch = originalFetch

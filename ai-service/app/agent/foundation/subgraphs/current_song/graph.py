@@ -232,4 +232,4 @@ def create_current_song_subgraph(
         provider=provider,
         assistant=assistant,
         model=model,
-    ).compile()
+    ).compile(checkpointer=False)

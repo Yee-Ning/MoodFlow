@@ -4,16 +4,20 @@ from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
 from uuid import uuid4
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from app.agent.graph import stream_current_song_assistant
-from app.agent.foundation.streaming import stream_foundation_assistant
+from app.agent.foundation.streaming import (
+    invoke_foundation_assistant,
+    stream_foundation_assistant,
+)
 from app.config.settings import get_settings
 from app.schemas.chat import (
     ChatRequest,
     ClientActionStreamEvent,
     FinalStreamEvent,
+    FoundationResponse,
     MessageStreamEvent,
     UpdateStreamEvent,
 )
@@ -36,6 +40,23 @@ def _spring_session_cookie(request: Request) -> str | None:
 def _encode_sse(event: str, data: dict[str, object]) -> str:
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     return f"event: {event}\ndata: {payload}\n\n"
+
+
+@router.post("/foundation", response_model=FoundationResponse)
+async def foundation_chat(chat_request: ChatRequest, request: Request) -> FoundationResponse:
+    try:
+        return await invoke_foundation_assistant(
+            message=chat_request.message,
+            thread_id=chat_request.thread_id or str(uuid4()),
+            routing_context=chat_request.resolved_routing_context(),
+            session_cookie=_spring_session_cookie(request),
+        )
+    except Exception as exc:
+        logger.exception("Foundation JSON request failed")
+        raise HTTPException(
+            status_code=502,
+            detail="MoodFlow AI 暂时离线，请稍后再试",
+        ) from exc
 
 
 @router.post("/chat", response_class=StreamingResponse)

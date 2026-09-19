@@ -129,6 +129,45 @@ class FoundationStreamingTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(action.name, ClientActionName.PAUSE_PLAYER)
         final = next(event for event in events if isinstance(event, FinalStreamEvent))
         self.assertIn("暂停指令", final.response.message)
+        self.assertEqual(final.response.status, TaskStatus.SUCCESS)
+        self.assertEqual(final.response.results[0].subgraph, RouteKey.TOOL_CALLING)
+
+    async def test_clarification_reaches_final_event(self) -> None:
+        class ClarifyRouter:
+            async def route(self, text, context):
+                return RouteDecision(
+                    needs_clarification=True,
+                    clarification_question="请明确想了解哪首歌。",
+                )
+
+        graph = build_main_graph(intent_router=ClarifyRouter()).compile()
+        events = [
+            event async for event in stream_foundation_assistant(
+                "这首呢", "clarify-thread", RoutingContext(), graph=graph,
+            )
+        ]
+
+        final = next(item for item in events if isinstance(item, FinalStreamEvent))
+        self.assertEqual(final.response.message, "请明确想了解哪首歌。")
+        self.assertEqual(final.response.status, TaskStatus.NEEDS_INPUT)
+        self.assertEqual(final.response.results, [])
+
+    async def test_long_foundation_answer_is_not_rejected_by_legacy_limit(self) -> None:
+        class LongAnswerGraph:
+            async def astream(self, *args, **kwargs):
+                yield {"type": "updates", "data": {
+                    "final_response": {"final_response": "世" * 6_000},
+                }}
+
+        events = [
+            event async for event in stream_foundation_assistant(
+                "生成世界线", "long-answer", RoutingContext(),
+                graph=LongAnswerGraph(),
+            )
+        ]
+
+        final = next(item for item in events if isinstance(item, FinalStreamEvent))
+        self.assertEqual(len(final.response.message), 6_000)
 
     async def test_streams_safe_updates_deduplicated_actions_and_final(self) -> None:
         graph = CountingFoundationGraph()

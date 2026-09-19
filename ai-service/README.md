@@ -38,7 +38,7 @@ START
 
 ## Graph Foundation V1
 
-`app/agent/foundation` 是独立的 MainGraph 基础设施，现已支持 Rule → Model → LLM → Merger 动态路由，以及 CurrentSong、ToolCalling、GeneralChat 三个实际 SubGraph。生产 Chat HTTP/SSE 默认继续使用旧图；设置 `AI_AGENT_GRAPH_MODE=foundation` 后可显式启用 Foundation 图进行联调。
+`app/agent/foundation` 是 MainGraph 基础设施，现已支持 Rule → Model → LLM → Merger 动态路由，以及 CurrentSong、ToolCalling、GeneralChat、WorldLine 四个实际 SubGraph。Chat HTTP/SSE 默认使用 Foundation 图；需要回退旧图时可设置 `AI_AGENT_GRAPH_MODE=legacy`。
 
 ```text
 START
@@ -899,7 +899,7 @@ Narrative 的结构化输出同时包含 `citation_ids`，每个事实段落都�
 无引用的事实段落，并允许生成器自动重试一次。最终 `WorldLineResult.citations` 只返回本次
 答案实际使用的完整来源对象，前端无需从全部 `sources` 中自行猜测引用关系。
 
-SubGraph 的候选、facts、retrieved docs、graph intermediate data 均保留在 `WorldLineState`。通过 MainGraph 执行时只返回统一 `TaskResult`，且成功载荷只有 `data.worldline_result`。显式“构建歌曲《七里香》的音乐世界线”等请求可由 Foundation Router 派发；生产 `/api/ai/chat` 仍需设置 `AI_AGENT_GRAPH_MODE=foundation` 才使用 Foundation MainGraph。
+SubGraph 的候选、facts、retrieved docs、graph intermediate data 均保留在 `WorldLineState`。通过 MainGraph 执行时只返回统一 `TaskResult`，且成功载荷只有 `data.worldline_result`。显式“构建歌曲《七里香》的音乐世界线”等请求可由 Foundation Router 派发。
 
 也可以使用独立 JSON 接口直接联调：
 
@@ -1018,6 +1018,8 @@ curl.exe -N -X POST http://127.0.0.1:8001/api/ai/chat `
 ```
 
 SSE 事件为 `message`、`update`、`action`、`final`、`error` 和 `done`。旧图的工具链请求通常依次出现 `load_song_context`、`agent`、`tools`、`agent`；Foundation 模式会发送 MainGraph 节点更新，并在 ToolCalling 任务完成后先发送一个或多个 `action`，再发送 `final`。
+
+Foundation 的 `final` 载荷与 `POST /api/ai/foundation` 普通 JSON 响应使用同一个结构：保留 `type/message/search_query`，增加总状态 `status` 和按任务顺序排列的 `results`。每个结果包含 `task_id/status/subgraph/answer/citations/sources/tool_calls/metadata`。多意图请求会返回多个结果；澄清时 `status=needs_input` 且 `results=[]`。`POST /api/ai/worldline` 继续提供独立的 `WorldLineResult` 专用接口。
 
 ## Test
 

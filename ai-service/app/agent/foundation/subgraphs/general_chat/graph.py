@@ -78,4 +78,6 @@ def create_general_chat_subgraph(
     assistant: GeneralChatAssistant | None = None,
     model: BaseChatModel | None = None,
 ) -> CompiledStateGraph:
-    return build_general_chat_subgraph(assistant=assistant, model=model).compile()
+    return build_general_chat_subgraph(assistant=assistant, model=model).compile(
+        checkpointer=False
+    )

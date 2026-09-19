@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -6,6 +7,11 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.config.settings import Settings
+from app.agent.foundation.main_graph import build_main_graph
+from app.agent.foundation.routing import (
+    IntentItem, IntentSource, IntentType, RouteDecision, RouteKey, RouteTask,
+)
 from app.schemas.chat import (
     ChatOutput,
     ClientActionStreamEvent,
@@ -45,6 +51,75 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
+
+    def test_foundation_is_default_graph_mode(self) -> None:
+        with patch.dict(os.environ, {
+            "LLM_API_KEY": "test-only",
+            "LLM_BASE_URL": "https://example.test",
+            "LLM_MODEL": "test-model",
+            "LLM_TIMEOUT_SECONDS": "5",
+            "SPRING_BOOT_BASE_URL": "http://127.0.0.1:8080",
+            "SPRING_BOOT_TIMEOUT_SECONDS": "5",
+        }, clear=True):
+            self.assertEqual(Settings(_env_file=None).agent_graph_mode, "foundation")
+
+    def test_foundation_json_and_sse_share_task_contract(self) -> None:
+        class PauseRouter:
+            async def route(self, text, context):
+                intent = IntentItem(
+                    intent=IntentType.TOOL_CALLING, sub_intent="pause_music",
+                    confidence=1.0, source=IntentSource.RULE,
+                    evidence=text, start=0, end=len(text), order=0,
+                )
+                return RouteDecision(
+                    intents=[intent], is_complete=True, coverage=1.0,
+                    tasks=[RouteTask(
+                        task_id="pause-task", route_key=RouteKey.TOOL_CALLING,
+                        input_text=text, intent_orders=[0],
+                    )],
+                )
+
+        graph = build_main_graph(intent_router=PauseRouter()).compile()
+        payload = {
+            "message": "暂停一下", "thread_id": "foundation-api-e2e",
+            "current_song_id": 101,
+            "player_context": {
+                "has_current_song": True, "current_song_id": 101,
+                "queue_size": 1, "current_index": 0,
+            },
+        }
+        with (
+            patch("app.api.chat.get_settings", return_value=SimpleNamespace(agent_graph_mode="foundation")),
+            patch("app.agent.foundation.streaming.get_foundation_graph", return_value=graph),
+        ):
+            json_response = self.client.post("/api/ai/foundation", json=payload)
+            stream_response = self.client.post("/api/ai/chat", json=payload)
+
+        self.assertEqual(json_response.status_code, 200)
+        self.assertEqual(stream_response.status_code, 200)
+        from_stream = next(
+            data for event, data in parse_sse(stream_response.text) if event == "final"
+        )
+        self.assertEqual(json_response.json(), from_stream)
+        self.assertEqual(from_stream["results"][0]["subgraph"], "tool_calling")
+        self.assertEqual(from_stream["results"][0]["status"], "success")
+        self.assertEqual(from_stream["status"], "success")
+
+    def test_foundation_json_validates_request_and_hides_execution_error(self) -> None:
+        self.assertEqual(
+            self.client.post("/api/ai/foundation", json={"message": " "}).status_code,
+            422,
+        )
+
+        async def fail(**kwargs):
+            raise RuntimeError("private upstream error")
+
+        with patch("app.api.chat.invoke_foundation_assistant", fail):
+            response = self.client.post(
+                "/api/ai/foundation", json={"message": "测试失败"},
+            )
+        self.assertEqual(response.status_code, 502)
+        self.assertNotIn("private upstream error", response.text)
 
     def test_chat_streams_messages_updates_final_and_done(self) -> None:
         captured: dict[str, object] = {}

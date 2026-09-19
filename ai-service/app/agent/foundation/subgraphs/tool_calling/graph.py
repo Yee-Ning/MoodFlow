@@ -200,6 +200,41 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
     return errors
 
 
+def _duplicate_call_errors(state: ToolCallingState) -> dict[str, str]:
+    latest = _latest_tool_calls(state)
+    if not latest:
+        return {}
+    prior_calls = state.get("tool_calls", [])[:-len(latest)]
+    attempted_ids = {
+        str(item.get("tool_call_id"))
+        for item in state.get("tool_results", [])
+        if (_read_json(item.get("content")) or {}).get("error")
+        not in {"duplicate_tool_call", "batch_rejected", "untrusted_entity_reference"}
+    }
+
+    def signature(call: dict[str, Any]) -> tuple[str, str] | None:
+        name, args = call.get("name"), call.get("args")
+        if not isinstance(name, str) or not isinstance(args, dict):
+            return None
+        return name, json.dumps(args, ensure_ascii=False, sort_keys=True)
+
+    seen = {
+        item for call in prior_calls
+        if str(call.get("id")) in attempted_ids
+        if (item := signature(call)) is not None
+    }
+    errors: dict[str, str] = {}
+    for call in latest:
+        item = signature(call)
+        if item is None:
+            continue
+        if item in seen:
+            errors[str(call.get("id"))] = "相同参数的工具请求已经在本次任务中执行，不能重复执行。"
+        else:
+            seen.add(item)
+    return errors
+
+
 def _final_task_result(
     state: ToolCallingState,
     message: AIMessage,
@@ -242,6 +277,11 @@ def _final_task_result(
                 ],
                 "entities": entities.model_dump(mode="json"),
                 "tool_calls": state.get("tool_call_count", 0),
+                "tool_call_details": [
+                    {"name": str(item.get("name") or "unknown"),
+                     "status": str(item.get("status") or "unknown")}
+                    for item in state.get("tool_results", [])
+                ],
             },
             error=error,
         ),
@@ -326,19 +366,25 @@ def build_tool_calling_subgraph(
             )
         return {"tool_results": results}
 
-    def reject_untrusted_references(state: ToolCallingState) -> dict[str, Any]:
-        errors = _reference_errors(state)
+    def reject_invalid_tool_calls(state: ToolCallingState) -> dict[str, Any]:
+        reference_errors = _reference_errors(state)
+        duplicate_errors = _duplicate_call_errors(state)
         messages: list[ToolMessage] = []
         for call in _latest_tool_calls(state):
             call_id = str(call.get("id", ""))
-            message = errors.get(
-                call_id,
-                "同一批工具调用含有未经验证的实体引用，本次未执行；请重新获取真实 ID。",
-            )
+            if call_id in reference_errors:
+                error_code = "untrusted_entity_reference"
+                message = reference_errors[call_id]
+            elif call_id in duplicate_errors:
+                error_code = "duplicate_tool_call"
+                message = duplicate_errors[call_id]
+            else:
+                error_code = "batch_rejected"
+                message = "同一批工具调用含有重复或无效请求，本次未执行；请调整后重试。"
             messages.append(
                 ToolMessage(
                     content=ToolFailure(
-                        error="untrusted_entity_reference",
+                        error=error_code,
                         message=message,
                     ).model_dump_json(),
                     tool_call_id=call_id,
@@ -349,7 +395,11 @@ def build_tool_calling_subgraph(
         return {"messages": messages}
 
     def route_validated_calls(state: ToolCallingState) -> str:
-        return "reject_tool_calls" if _reference_errors(state) else "tools"
+        return (
+            "reject_tool_calls"
+            if _reference_errors(state) or _duplicate_call_errors(state)
+            else "tools"
+        )
 
     builder = StateGraph(
         ToolCallingState,
@@ -364,7 +414,7 @@ def build_tool_calling_subgraph(
         ToolNode(graph_tools, handle_tool_errors=handle_music_tool_error),
     )
     builder.add_node("capture_tool_results", capture_tool_results)
-    builder.add_node("reject_tool_calls", reject_untrusted_references)
+    builder.add_node("reject_tool_calls", reject_invalid_tool_calls)
     builder.add_edge(START, "direct_actions")
     builder.add_conditional_edges(
         "direct_actions",
@@ -397,4 +447,4 @@ def create_tool_calling_subgraph(
         assistant=assistant,
         model=model,
         tools=tools,
-    ).compile()
+    ).compile(checkpointer=False)

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, field_validator
 
@@ -116,6 +116,29 @@ class MusicRecommendationOutput(_StructuredOutputBase):
     search_query: None
 
 
+class FoundationTaskOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    task_id: str
+    status: Literal["success", "failed", "needs_input"]
+    subgraph: Literal["current_song", "tool_calling", "general_chat", "worldline"]
+    answer: str | None
+    citations: list[dict[str, Any]] = Field(default_factory=list)
+    sources: list[dict[str, Any]] = Field(default_factory=list)
+    tool_calls: list[dict[str, Any]] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class FoundationResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["chat"] = "chat"
+    status: Literal["success", "failed", "needs_input"]
+    message: str = Field(min_length=1)
+    search_query: None = None
+    results: list[FoundationTaskOutput] = Field(default_factory=list)
+
+
 StructuredOutput = Annotated[
     ChatOutput | MusicSearchOutput | MusicRecommendationOutput,
     Field(discriminator="type"),
@@ -159,7 +182,7 @@ class ClientActionStreamEvent(BaseModel):
 
 class FinalStreamEvent(BaseModel):
     type: Literal["final"] = "final"
-    response: StructuredOutput
+    response: StructuredOutput | FoundationResponse
 
 
 SongAssistantStreamEvent = (

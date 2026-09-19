@@ -115,10 +115,15 @@ async def invoke(
     )
 
 
-def search_tool(*, fail: bool = False) -> BaseTool:
+def search_tool(*, fail: bool = False, timeout: bool = False,
+                calls: list[dict] | None = None) -> BaseTool:
     @tool("search_music", args_schema=SearchMusicArgs)
     async def fake_search_music(keyword: str, limit: int = 10) -> str:
         """Search fixture music."""
+        if calls is not None:
+            calls.append({"keyword": keyword, "limit": limit})
+        if timeout:
+            raise TimeoutError("private upstream timeout")
         if fail:
             raise RuntimeError("private upstream failure")
         return json.dumps(
@@ -292,6 +297,10 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
         task = result["task_result"]
         self.assertEqual(task.status, TaskStatus.SUCCESS)
         self.assertEqual(task.data["tool_calls"], 2)
+        self.assertEqual(
+            [item["name"] for item in task.data["tool_call_details"]],
+            ["search_music", "play_song"],
+        )
         self.assertEqual(task.data["client_actions"][0]["name"], "play_song")
         self.assertEqual(
             task.data["client_actions"][0]["arguments"]["song"]["song_id"],
@@ -479,6 +488,72 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("private upstream failure", str(tool_message.content))
         self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
         self.assertTrue(result["task_result"].error)
+
+    async def test_tool_timeout_is_reported_without_private_details(self) -> None:
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(timeout=True)],
+            assistant=scripted_assistant([
+                tool_call("search_music", "timeout-1", {"keyword": "测试"}),
+                AIMessage(content="搜索暂时失败，请稍后再试。"),
+            ]),
+        )
+
+        result = await invoke(graph, text="搜索测试")
+
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+        self.assertNotIn("private upstream timeout", result["task_result"].model_dump_json())
+
+    async def test_invalid_tool_arguments_never_execute(self) -> None:
+        calls: list[dict] = []
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(calls=calls)],
+            assistant=scripted_assistant([
+                tool_call("search_music", "invalid-1", {"keyword": "测试", "limit": -1}),
+                AIMessage(content="搜索参数无效，请重新描述。"),
+            ]),
+        )
+
+        result = await invoke(graph, text="搜索测试")
+
+        self.assertEqual(calls, [])
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+
+    async def test_duplicate_tool_calls_do_not_execute_twice(self) -> None:
+        calls: list[dict] = []
+        repeated = tool_call("search_music", "same-2", {"keyword": "测试"})
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(calls=calls)],
+            assistant=scripted_assistant([
+                tool_call("search_music", "same-1", {"keyword": "测试"}),
+                repeated,
+                AIMessage(content="已使用首次搜索结果。"),
+            ]),
+        )
+
+        result = await invoke(graph, text="搜索测试")
+
+        self.assertEqual(calls, [{"keyword": "测试", "limit": 10}])
+        self.assertEqual(result["task_result"].data["tool_calls"], 2)
+        self.assertEqual(result["task_result"].data["tool_call_details"][1]["status"], "error")
+
+    async def test_duplicate_batch_can_retry_once_without_double_execution(self) -> None:
+        calls: list[dict] = []
+        first = tool_call("search_music", "batch-1", {"keyword": "测试"})
+        second = tool_call("search_music", "batch-2", {"keyword": "测试"})
+        batch = AIMessage(content="", tool_calls=[*first.tool_calls, *second.tool_calls])
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(calls=calls)],
+            assistant=scripted_assistant([
+                batch,
+                tool_call("search_music", "retry-1", {"keyword": "测试"}),
+                AIMessage(content="已搜索一次。"),
+            ]),
+        )
+
+        result = await invoke(graph, text="搜索测试")
+
+        self.assertEqual(calls, [{"keyword": "测试", "limit": 10}])
+        self.assertEqual(result["task_result"].status, TaskStatus.SUCCESS)
 
     async def test_tool_limit_stops_loop_with_failed_result(self) -> None:
         responses = [
