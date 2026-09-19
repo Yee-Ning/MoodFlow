@@ -13,6 +13,11 @@ from app.agent.foundation.subgraphs.worldline.models import (
 _INLINE_CITATION = re.compile(r"\[([^\[\]\s]{1,128})\]")
 
 
+def inline_citation_ids(narrative: str) -> list[str]:
+    """Return each citation used in the prose, in first-use order."""
+    return list(dict.fromkeys(_INLINE_CITATION.findall(narrative)))
+
+
 class WorldLineGroundingError(ValueError):
     """Raised when generated citations cannot be traced to supplied evidence."""
 
@@ -24,7 +29,7 @@ class WorldLineGroundingValidator:
         sources: Sequence[EvidenceSource],
     ) -> None:
         allowed = {item.id: item for item in sources}
-        inline_ids = list(dict.fromkeys(_INLINE_CITATION.findall(output.narrative)))
+        inline_ids = inline_citation_ids(output.narrative)
         if output.citation_ids != inline_ids:
             raise WorldLineGroundingError(
                 "citation ids must match inline citations in first-use order"

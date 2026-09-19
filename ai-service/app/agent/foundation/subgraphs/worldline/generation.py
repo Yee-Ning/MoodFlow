@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from app.agent.foundation.subgraphs.worldline.grounding import (
     WorldLineGroundingValidator,
+    inline_citation_ids,
 )
 
 from app.agent.foundation.subgraphs.worldline.models import (
@@ -134,24 +135,29 @@ class StructuredWorldLineGenerator:
         }
         last_error: Exception | None = None
         for attempt in range(2):
-            raw = await self._runtime.generate(
-                payload,
-                instructions=NARRATIVE_SYSTEM_PROMPT,
-                schema=NarrativeOutput.model_json_schema(),
-                schema_name="worldline_narrative",
-                retry=bool(attempt),
-            )
             try:
+                raw = await self._runtime.generate(
+                    payload,
+                    instructions=NARRATIVE_SYSTEM_PROMPT,
+                    schema=NarrativeOutput.model_json_schema(),
+                    schema_name="worldline_narrative",
+                    retry=bool(attempt),
+                )
                 output = NarrativeOutput.model_validate_json(raw)
                 narrative = output.narrative.strip()
                 if not documents:
                     prefix = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
                     if not narrative.startswith(prefix):
                         narrative = f"{prefix}{narrative}"
-                    output = output.model_copy(update={"narrative": narrative})
+                output = output.model_copy(
+                    update={
+                        "narrative": narrative,
+                        "citation_ids": inline_citation_ids(narrative),
+                    }
+                )
                 self._grounding_validator.validate(output, sources)
                 return output
-            except (ValidationError, ValueError) as exc:
+            except (ValidationError, ValueError, WorldLineGenerationError) as exc:
                 last_error = exc
         raise WorldLineGenerationError(
             "worldline narrative failed schema or grounding validation twice"

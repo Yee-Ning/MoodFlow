@@ -31,6 +31,14 @@ class ScriptedRuntime:
         return self.responses.pop(0)
 
 
+class IncompleteRuntime(ScriptedRuntime):
+    async def generate(self, payload, **kwargs):
+        if not self.calls:
+            self.calls.append({"payload": payload, **kwargs})
+            raise WorldLineGenerationError("incomplete structured response")
+        return await super().generate(payload, **kwargs)
+
+
 def entity() -> ResolvedEntity:
     return ResolvedEntity(
         entity_id="netease:song:1",
@@ -166,6 +174,54 @@ class WorldLineGenerationTests(unittest.TestCase):
         )
 
         self.assertEqual(output.citation_ids, ["knowledge:parent-1"])
+        self.assertEqual([call["retry"] for call in runtime.calls], [False, True])
+
+    def test_narrative_derives_citation_order_from_valid_inline_sources(self) -> None:
+        first = EvidenceSource(
+            id="knowledge:first",
+            source_type=EvidenceType.KNOWLEDGE,
+            title="第一份资料",
+            source="测试知识库",
+            excerpt="第一份资料。",
+        )
+        second = EvidenceSource(
+            id="knowledge:second",
+            source_type=EvidenceType.KNOWLEDGE,
+            title="第二份资料",
+            source="测试知识库",
+            excerpt="第二份资料。",
+        )
+        runtime = ScriptedRuntime([
+            json.dumps({
+                "narrative": "第一条事实。[knowledge:second] 第二条事实。[knowledge:first]",
+                "citation_ids": ["knowledge:first", "knowledge:second"],
+            }, ensure_ascii=False),
+        ])
+
+        output = asyncio.run(
+            StructuredWorldLineGenerator(runtime).generate_narrative(
+                entity(), MusicEntityFacts(entity=entity()),
+                [MusicKnowledgeDocument(
+                    id="parent-1", title="资料", content="资料内容", source="测试知识库",
+                )], graph(), [first, second],
+            )
+        )
+
+        self.assertEqual(output.citation_ids, ["knowledge:second", "knowledge:first"])
+        self.assertEqual(len(runtime.calls), 1)
+
+    def test_narrative_retries_incomplete_structured_response(self) -> None:
+        runtime = IncompleteRuntime([
+            '{"narrative":"《晴天》连接了歌曲、歌手与专辑。","citation_ids":[]}'
+        ])
+
+        output = asyncio.run(
+            StructuredWorldLineGenerator(runtime).generate_narrative(
+                entity(), MusicEntityFacts(entity=entity()), [], graph(), [],
+            )
+        )
+
+        self.assertIn("当前未检索到补充音乐知识", output.narrative)
         self.assertEqual([call["retry"] for call in runtime.calls], [False, True])
 
     def test_branches_retry_target_not_in_graph(self) -> None:
