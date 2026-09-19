@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from pydantic import ValidationError
-
 from app.agent.foundation.llm_routing.prompt import build_routing_prompt
 from app.agent.foundation.llm_routing.runtime import (
     LLMIntentRuntime, LLMRoutingError, ProviderLLMIntentRuntime,
@@ -9,6 +7,7 @@ from app.agent.foundation.llm_routing.runtime import (
 from app.agent.foundation.llm_routing.schemas import LLMRouteRequest, LLMRouteResult, LLMStructuredOutput
 from app.agent.foundation.routing import IntentItem, IntentSource, UnresolvedSegment
 from app.agent.foundation.rule_routing.coverage import calculate_coverage
+from app.agent.structured_output import StructuredOutputError, StructuredOutputService
 
 
 class LLMRouter:
@@ -17,19 +16,32 @@ class LLMRouter:
         self._instructions = build_routing_prompt(taxonomy_path)
 
     async def route(self, request: LLMRouteRequest) -> LLMRouteResult:
-        for attempt in range(2):
-            # Transport errors propagate immediately; only invalid output is retried.
-            raw = await self._runtime.classify(
-                request, instructions=self._instructions, retry=bool(attempt),
+        converted: LLMRouteResult | None = None
+
+        def validate_evidence(output: LLMStructuredOutput) -> None:
+            nonlocal converted
+            converted = self._convert(request, output)
+
+        async def generate(attempt: int, feedback: str | None):
+            instructions = self._instructions
+            if feedback:
+                instructions += f"\n{feedback}"
+            return await self._runtime.classify(
+                request, instructions=instructions, retry=attempt > 1,
             )
-            try:
-                output = LLMStructuredOutput.model_validate_json(raw)
-                return self._convert(request, output)
-            except (ValidationError, ValueError):
-                if attempt:
-                    # Do not expose provider content or user text in exception logs.
-                    raise LLMRoutingError("LLM routing output failed schema or evidence validation twice") from None
-        raise AssertionError("unreachable")
+
+        service = StructuredOutputService(
+            "intent_routing", LLMStructuredOutput,
+            semantic_validator=validate_evidence,
+        )
+        try:
+            await service.run(generate)
+        except StructuredOutputError as exc:
+            raise LLMRoutingError(
+                "LLM routing output failed schema or evidence validation"
+            ) from exc
+        assert converted is not None
+        return converted
 
     @staticmethod
     def _convert(request: LLMRouteRequest, output: LLMStructuredOutput) -> LLMRouteResult:

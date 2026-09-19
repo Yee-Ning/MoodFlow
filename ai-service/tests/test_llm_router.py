@@ -103,7 +103,7 @@ class LLMRouterTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_transport_error_is_not_retried_or_clarified(self):
         runtime = SimpleNamespace(classify=AsyncMock(side_effect=TimeoutError("fixture")))
-        with self.assertRaises(TimeoutError):
+        with self.assertRaises(LLMRoutingError):
             await LLMRouter(TAXONOMY, runtime=runtime).route(request_for())
         self.assertEqual(runtime.classify.await_count, 1)
 
@@ -164,8 +164,8 @@ class LLMRouterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(messages[0]["role"], "user")
         self.assertIn(request.segment.text, messages[0]["content"])
 
-    async def test_incomplete_provider_response_fails(self):
+    async def test_incomplete_provider_response_is_classified_by_shared_service(self):
         response = SimpleNamespace(status="incomplete", output=[], output_text="")
         with patch("app.agent.foundation.llm_routing.runtime.create_routing_response", AsyncMock(return_value=response)):
-            with self.assertRaises(LLMRoutingError):
-                await ProviderLLMIntentRuntime().classify(request_for(), instructions="trusted", retry=False)
+            output = await ProviderLLMIntentRuntime().classify(request_for(), instructions="trusted", retry=False)
+        self.assertEqual(output.status, "incomplete")
