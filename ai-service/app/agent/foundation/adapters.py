@@ -83,11 +83,21 @@ def create_subgraph_adapter(
                 rag_context=[],
             )
         elif route_key is RouteKey.TOOL_CALLING:
+            prior_entities: list[ReferencedEntities] = []
+            for previous in reversed(_prior_task_results(state, task)):
+                raw_entities = previous.data.get("entities")
+                if raw_entities:
+                    prior_entities.append(
+                        ReferencedEntities.model_validate(raw_entities)
+                    )
+                if len(prior_entities) >= 5:
+                    break
             active_task_ids = {
                 item.task_id for item in state["route_decision"].tasks
             }
-            prior_entities: list[ReferencedEntities] = []
             for previous in reversed(state.get("task_results", [])):
+                if len(prior_entities) >= 5:
+                    break
                 if previous.task_id in active_task_ids:
                     continue
                 raw_entities = previous.data.get("entities")

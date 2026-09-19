@@ -132,12 +132,6 @@ def build_main_graph(
             )
         }
 
-    def select_subgraphs(state: MainState) -> list[str]:
-        decision = state.get("route_decision")
-        if decision is None:
-            raise RuntimeError("development route produced no decision")
-        return [SUBGRAPH_NODES[task.route_key] for task in decision.tasks]
-
     def aggregate_results(state: MainState) -> dict[str, list[GraphError]]:
         decision = state.get("route_decision")
         current_task_ids = (
@@ -199,20 +193,14 @@ def build_main_graph(
 
     builder.add_edge(START, "prepare_context")
     builder.add_edge("prepare_context", routing_node)
-    if routes is not None:
-        builder.add_conditional_edges(
-            routing_node, select_subgraphs,
-            {node_name: node_name for node_name in SUBGRAPH_NODES.values()},
-        )
-    else:
-        destinations = {name: name for name in (*SUBGRAPH_NODES.values(), "clarify", "final_response")}
-        builder.add_conditional_edges(routing_node, select_next, destinations)
+    destinations = {name: name for name in (*SUBGRAPH_NODES.values(), "final_response")}
+    if routes is None:
+        destinations["clarify"] = "clarify"
+    builder.add_conditional_edges(routing_node, select_next, destinations)
     for node_name in SUBGRAPH_NODES.values():
         builder.add_edge(node_name, "aggregate_results")
-    if routes is not None:
-        builder.add_edge("aggregate_results", "final_response")
-    else:
-        builder.add_conditional_edges("aggregate_results", select_next, destinations)
+    builder.add_conditional_edges("aggregate_results", select_next, destinations)
+    if routes is None:
         builder.add_edge("clarify", END)
     builder.add_edge("final_response", END)
     return builder

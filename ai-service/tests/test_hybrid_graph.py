@@ -53,6 +53,55 @@ def successful_subgraph(route: RouteKey, content: str = "fixture"):
 
 
 class HybridGraphTests(unittest.IsolatedAsyncioTestCase):
+    async def test_same_turn_tool_entities_reach_later_tool_task(self):
+        seen: list[tuple[str, list]] = []
+
+        class ThreeTaskRouter:
+            async def route(self, text, context):
+                return RouteDecision(
+                    is_complete=True,
+                    coverage=1.0,
+                    tasks=[
+                        RouteTask(task_id="tool-first", route_key=RouteKey.TOOL_CALLING,
+                                  input_text=text),
+                        RouteTask(task_id="chat-middle", route_key=RouteKey.GENERAL_CHAT,
+                                  input_text=text, depends_on=["tool-first"]),
+                        RouteTask(task_id="tool-last", route_key=RouteKey.TOOL_CALLING,
+                                  input_text=text, depends_on=["chat-middle"]),
+                    ],
+                )
+
+        def complete_tool(state):
+            seen.append((state["task_id"], state["prior_entities"]))
+            data = {}
+            if state["task_id"] == "tool-first":
+                data = {"entities": {"songs": [{
+                    "position": 1, "song_id": 101, "name": "测试歌曲",
+                    "artists": ["测试歌手"], "album": "", "cover_url": "",
+                    "duration": 0,
+                }], "playlists": []}}
+            return {"task_result": TaskResult(
+                task_id=state["task_id"], route_key=RouteKey.TOOL_CALLING,
+                status=TaskStatus.SUCCESS, content=state["task_id"], data=data,
+            )}
+
+        tool_graph = StateGraph(ToolCallingState, output_schema=SubGraphOutput)
+        tool_graph.add_node("complete", complete_tool)
+        tool_graph.add_edge(START, "complete")
+        tool_graph.add_edge("complete", END)
+        graph = build_main_graph(
+            intent_router=ThreeTaskRouter(),
+            tool_calling_subgraph=tool_graph.compile(),
+            general_chat_subgraph=successful_subgraph(RouteKey.GENERAL_CHAT),
+        ).compile()
+
+        result = await graph.ainvoke(create_main_state("查找、聊聊、再加入歌单"))
+
+        self.assertEqual([item[0] for item in seen], ["tool-first", "tool-last"])
+        self.assertEqual(seen[0][1], [])
+        self.assertEqual(seen[1][1][0].songs[0].song_id, 101)
+        self.assertEqual(len(result["task_results"]), 3)
+
     async def test_previous_tool_entities_reach_next_turn(self):
         seen_prior_entities = []
         route_count = 0

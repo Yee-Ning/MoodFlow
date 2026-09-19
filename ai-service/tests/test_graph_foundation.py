@@ -310,6 +310,33 @@ class MainGraphFoundationTests(unittest.TestCase):
         self.assertIn("ToolCalling SubGraph completed.", result["final_response"])
         self.assertIn("WorldLine SubGraph completed.", result["final_response"])
 
+    def test_development_routes_wait_for_prior_task_results(self) -> None:
+        observed: list[list[TaskResult]] = []
+
+        def complete_chat(state):
+            observed.append(state["prior_task_results"])
+            return {"task_result": TaskResult(
+                task_id=state["task_id"],
+                route_key=RouteKey.GENERAL_CHAT,
+                status=TaskStatus.SUCCESS,
+                content="已承接前置分析。",
+            )}
+
+        chat = StateGraph(GeneralChatState, output_schema=SubGraphOutput)
+        chat.add_node("complete", complete_chat)
+        chat.add_edge(START, "complete")
+        chat.add_edge("complete", END)
+        graph = build_main_graph(
+            development_routes=(RouteKey.CURRENT_SONG, RouteKey.GENERAL_CHAT),
+            current_song_subgraph=successful_subgraph(RouteKey.CURRENT_SONG, "分析完成"),
+            general_chat_subgraph=chat.compile(),
+        ).compile()
+
+        result = asyncio.run(graph.ainvoke(create_main_state("先分析再聊")))
+
+        self.assertEqual([item.content for item in observed[0]], ["分析完成"])
+        self.assertEqual(len(result["task_results"]), 2)
+
     def test_subgraph_private_fields_do_not_pollute_main_state(self) -> None:
         graph = build_main_graph(
             development_routes=(
