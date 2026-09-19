@@ -1,21 +1,22 @@
 import json
 from typing import Any, Protocol
 
-from pydantic import ValidationError
-
 from app.agent.foundation.subgraphs.worldline.grounding import (
+    WorldLineGroundingError,
     WorldLineGroundingValidator,
     inline_citation_ids,
 )
 
 from app.agent.foundation.subgraphs.worldline.models import (
-    BranchesOutput,
+    BranchDraftOutput,
     EvidenceSource,
     MusicEntityFacts,
     MusicKnowledgeDocument,
+    NarrativeDraft,
     NarrativeOutput,
     ResolvedEntity,
     WorldLineBranch,
+    WorldLineBranchTarget,
     WorldLineBranchType,
     WorldLineGraph,
     WorldLineNodeType,
@@ -24,6 +25,13 @@ from app.agent.foundation.subgraphs.worldline.prompts import (
     BRANCH_SYSTEM_PROMPT,
     NARRATIVE_SYSTEM_PROMPT,
 )
+from app.agent.structured_output import (
+    ModelOutput,
+    SemanticValidationError,
+    StructuredOutputError,
+    StructuredOutputService,
+)
+from app.agent.structured_output.parser import model_output_from_response
 from app.llm.client import create_generation_response
 
 
@@ -40,7 +48,7 @@ class WorldLineStructuredRuntime(Protocol):
         schema: dict[str, Any],
         schema_name: str,
         retry: bool,
-    ) -> str: ...
+    ) -> str | ModelOutput: ...
 
 
 class ProviderWorldLineRuntime:
@@ -52,7 +60,7 @@ class ProviderWorldLineRuntime:
         schema: dict[str, Any],
         schema_name: str,
         retry: bool,
-    ) -> str:
+    ) -> ModelOutput:
         if retry:
             instructions += (
                 "\n上次输出未通过 JSON Schema 或事实落地校验。"
@@ -73,18 +81,7 @@ class ProviderWorldLineRuntime:
             schema,
             schema_name=schema_name,
         )
-        if response.status != "completed" or not response.output_text:
-            raise WorldLineGenerationError(
-                "WorldLine LLM returned no completed structured response"
-            )
-        if any(
-            item.type not in {"message", "reasoning"}
-            for item in response.output
-        ):
-            raise WorldLineGenerationError(
-                "WorldLine LLM returned an unexpected output type"
-            )
-        return response.output_text
+        return model_output_from_response(response)
 
 
 class WorldLineGenerator(Protocol):
@@ -124,44 +121,76 @@ class StructuredWorldLineGenerator:
         sources: list[EvidenceSource],
     ) -> NarrativeOutput:
         payload = {
-            "root_entity": entity.model_dump(mode="json"),
-            "entity_facts": facts.model_dump(mode="json"),
-            "retrieved_knowledge": [
-                item.model_dump(mode="json") for item in documents
+            "root_entity": entity.model_dump(
+                mode="json", include={"entity_id", "entity_type", "name", "artist", "album"}
+            ),
+            "catalog_facts": [
+                item.model_dump(
+                    mode="json",
+                    include={"subject_id", "predicate", "value", "object_entity_id", "evidence_ids"},
+                )
+                for item in facts.facts
             ],
             "knowledge_available": bool(documents),
-            "worldline_graph": graph.model_dump(mode="json"),
-            "sources": [item.model_dump(mode="json") for item in sources],
+            "worldline_graph": _graph_payload(graph),
+            "sources": [
+                item.model_dump(
+                    mode="json", include={"id", "source_type", "title", "excerpt"},
+                    exclude_none=True,
+                )
+                for item in sources
+            ],
         }
-        last_error: Exception | None = None
-        for attempt in range(2):
+        disclosure = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
+
+        def validate(draft: NarrativeDraft) -> None:
+            narrative = draft.narrative.strip()
+            if not documents and not narrative.startswith(disclosure):
+                raise SemanticValidationError("missing_no_knowledge_disclosure")
+            output = NarrativeOutput(
+                narrative=narrative,
+                citation_ids=inline_citation_ids(narrative),
+            )
             try:
-                raw = await self._runtime.generate(
-                    payload,
-                    instructions=NARRATIVE_SYSTEM_PROMPT,
-                    schema=NarrativeOutput.model_json_schema(),
-                    schema_name="worldline_narrative",
-                    retry=bool(attempt),
-                )
-                output = NarrativeOutput.model_validate_json(raw)
-                narrative = output.narrative.strip()
-                if not documents:
-                    prefix = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
-                    if not narrative.startswith(prefix):
-                        narrative = f"{prefix}{narrative}"
-                output = output.model_copy(
-                    update={
-                        "narrative": narrative,
-                        "citation_ids": inline_citation_ids(narrative),
-                    }
-                )
                 self._grounding_validator.validate(output, sources)
-                return output
-            except (ValidationError, ValueError, WorldLineGenerationError) as exc:
-                last_error = exc
-        raise WorldLineGenerationError(
-            "worldline narrative failed schema or grounding validation twice"
-        ) from last_error
+            except WorldLineGroundingError as exc:
+                raise SemanticValidationError(exc.code) from exc
+
+        def repair(raw: dict[str, Any], _: Any) -> dict[str, Any] | None:
+            repaired = dict(raw)
+            # Previous LLM schema exposed a duplicate citation list. Prose is authoritative.
+            repaired.pop("citation_ids", None)
+            narrative = repaired.get("narrative")
+            if isinstance(narrative, str) and not documents and not narrative.strip().startswith(disclosure):
+                repaired["narrative"] = f"{disclosure}\n{narrative.strip()}"
+            return repaired if repaired != raw else None
+
+        service = StructuredOutputService(
+            "worldline_narrative", NarrativeDraft,
+            semantic_validator=validate, repair=repair,
+        )
+
+        async def generate(attempt: int, feedback: str | None) -> str | ModelOutput:
+            instructions = NARRATIVE_SYSTEM_PROMPT
+            if feedback:
+                instructions += f"\n{feedback}"
+            return await self._runtime.generate(
+                payload,
+                instructions=instructions,
+                schema=NarrativeDraft.model_json_schema(),
+                schema_name="worldline_narrative",
+                retry=attempt > 1,
+            )
+
+        try:
+            draft = await service.run(generate)
+        except StructuredOutputError as exc:
+            raise WorldLineGenerationError("worldline_narrative_invalid") from exc
+        narrative = draft.narrative.strip()
+        return NarrativeOutput(
+            narrative=narrative,
+            citation_ids=inline_citation_ids(narrative),
+        )
 
     async def generate_branches(
         self,
@@ -170,28 +199,60 @@ class StructuredWorldLineGenerator:
         sources: list[EvidenceSource],
     ) -> list[WorldLineBranch]:
         payload = {
-            "root_entity": entity.model_dump(mode="json"),
-            "worldline_graph": graph.model_dump(mode="json"),
-            "sources": [item.model_dump(mode="json") for item in sources],
+            "root_entity": entity.model_dump(mode="json", include={"entity_id", "name"}),
+            "worldline_graph": _graph_payload(graph),
+            "sources": [
+                item.model_dump(mode="json", include={"id", "title"})
+                for item in sources
+            ],
         }
-        last_error: Exception | None = None
-        for attempt in range(2):
-            raw = await self._runtime.generate(
+
+        def validate(draft: BranchDraftOutput) -> None:
+            _materialize_branches(draft, graph)
+
+        def repair(raw: dict[str, Any], _: Any) -> dict[str, Any] | None:
+            # Accept only the known V0 target shape; the graph supplies type/name/id.
+            items = raw.get("branches")
+            if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
+                return None
+            changed = False
+            repaired_items = []
+            for item in items:
+                branch = dict(item)
+                target = branch.pop("target_entity", None)
+                if target is not None:
+                    changed = True
+                if "id" in branch:
+                    branch.pop("id")
+                    changed = True
+                if isinstance(target, dict) and "target_node_id" not in branch:
+                    branch["target_node_id"] = target.get("id")
+                    changed = True
+                repaired_items.append(branch)
+            return {**raw, "branches": repaired_items} if changed else None
+
+        service = StructuredOutputService(
+            "worldline_branches", BranchDraftOutput,
+            semantic_validator=validate, repair=repair,
+        )
+
+        async def generate(attempt: int, feedback: str | None) -> str | ModelOutput:
+            instructions = BRANCH_SYSTEM_PROMPT
+            if feedback:
+                instructions += f"\n{feedback}"
+            return await self._runtime.generate(
                 payload,
-                instructions=BRANCH_SYSTEM_PROMPT,
-                schema=BranchesOutput.model_json_schema(),
+                instructions=instructions,
+                schema=BranchDraftOutput.model_json_schema(),
                 schema_name="worldline_branches",
-                retry=bool(attempt),
+                retry=attempt > 1,
             )
-            try:
-                output = BranchesOutput.model_validate_json(raw)
-                _validate_grounded_branches(output.branches, graph)
-                return output.branches
-            except (ValidationError, ValueError) as exc:
-                last_error = exc
-        raise WorldLineGenerationError(
-            "WorldLine branch output failed validation twice"
-        ) from last_error
+
+        try:
+            draft = await service.run(generate)
+        except StructuredOutputError as exc:
+            raise WorldLineGenerationError("worldline_branches_invalid") from exc
+        return _materialize_branches(draft, graph)
 
 _BRANCH_TARGET_TYPES = {
     WorldLineBranchType.ARTIST: {WorldLineNodeType.ARTIST},
@@ -209,6 +270,54 @@ _BRANCH_TARGET_TYPES = {
         WorldLineNodeType.RELATED_WORK,
     },
 }
+
+
+def _graph_payload(graph: WorldLineGraph) -> dict[str, Any]:
+    """Project once from validated graph data; omit repeated metadata and prose."""
+    return {
+        "root": graph.root,
+        "nodes": [
+            node.model_dump(mode="json", include={"id", "type", "name"})
+            for node in graph.nodes
+        ],
+        "edges": [
+            edge.model_dump(
+                mode="json", include={"source", "target", "relation", "evidence_ids"}
+            )
+            for edge in graph.edges
+        ],
+    }
+
+
+def _materialize_branches(
+    draft: BranchDraftOutput,
+    graph: WorldLineGraph,
+) -> list[WorldLineBranch]:
+    nodes = {node.id: node for node in graph.nodes}
+    selected: set[str] = set()
+    branches: list[WorldLineBranch] = []
+    for index, item in enumerate(draft.branches, start=1):
+        node = nodes.get(item.target_node_id)
+        if node is None:
+            raise SemanticValidationError("unknown_branch_target")
+        if node.id in selected:
+            raise SemanticValidationError("duplicate_branch_target")
+        if node.type not in _BRANCH_TARGET_TYPES[item.branch_type]:
+            raise SemanticValidationError("branch_type_target_mismatch")
+        selected.add(node.id)
+        branches.append(
+            WorldLineBranch(
+                id=f"branch:{index}",
+                title=item.title,
+                description=item.description,
+                branch_type=item.branch_type,
+                target_entity=WorldLineBranchTarget(
+                    id=node.id, type=node.type, name=node.name,
+                ),
+            )
+        )
+    _validate_grounded_branches(branches, graph)
+    return branches
 
 
 def _validate_grounded_branches(

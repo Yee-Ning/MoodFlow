@@ -21,6 +21,10 @@ def inline_citation_ids(narrative: str) -> list[str]:
 class WorldLineGroundingError(ValueError):
     """Raised when generated citations cannot be traced to supplied evidence."""
 
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
 
 class WorldLineGroundingValidator:
     def validate(
@@ -32,17 +36,23 @@ class WorldLineGroundingValidator:
         inline_ids = inline_citation_ids(output.narrative)
         if output.citation_ids != inline_ids:
             raise WorldLineGroundingError(
+                "citation_order_mismatch",
                 "citation ids must match inline citations in first-use order"
             )
         unknown = set(output.citation_ids).difference(allowed)
         if unknown:
-            raise WorldLineGroundingError("narrative cites an unknown evidence source")
+            raise WorldLineGroundingError(
+                "unknown_citation", "narrative cites an unknown evidence source"
+            )
         if allowed and not output.citation_ids:
-            raise WorldLineGroundingError("narrative omitted citations despite available evidence")
+            raise WorldLineGroundingError(
+                "missing_citation", "narrative omitted citations despite available evidence"
+            )
         for citation_id in output.citation_ids:
             source = allowed[citation_id]
             if source.source_type.value == "knowledge" and not source.excerpt:
                 raise WorldLineGroundingError(
+                    "missing_knowledge_excerpt",
                     "knowledge citation requires a nonempty evidence excerpt"
                 )
         if allowed:
@@ -52,8 +62,11 @@ class WorldLineGroundingValidator:
     def _validate_paragraph_anchors(narrative: str) -> None:
         paragraphs = [item.strip() for item in narrative.split("\n") if item.strip()]
         for paragraph in paragraphs:
+            if paragraph == "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。":
+                continue
             plain = _INLINE_CITATION.sub("", paragraph).strip()
             if len(plain) >= 12 and _INLINE_CITATION.search(paragraph) is None:
                 raise WorldLineGroundingError(
+                    "paragraph_missing_citation",
                     "each substantive narrative paragraph requires a citation"
                 )

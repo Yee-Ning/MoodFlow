@@ -17,6 +17,7 @@ from app.agent.foundation.subgraphs.worldline.models import (
     WorldLineNode,
     WorldLineNodeType,
 )
+from app.agent.structured_output import ModelOutput
 
 
 class ScriptedRuntime:
@@ -35,7 +36,9 @@ class IncompleteRuntime(ScriptedRuntime):
     async def generate(self, payload, **kwargs):
         if not self.calls:
             self.calls.append({"payload": payload, **kwargs})
-            raise WorldLineGenerationError("incomplete structured response")
+            return ModelOutput(
+                "", status="incomplete", incomplete_reason="max_output_tokens"
+            )
         return await super().generate(payload, **kwargs)
 
 
@@ -109,6 +112,34 @@ def valid_branches() -> str:
                         "type": "song",
                         "name": "晴天",
                     },
+                },
+            ]
+        },
+        ensure_ascii=False,
+    )
+
+
+def valid_branch_drafts() -> str:
+    return json.dumps(
+        {
+            "branches": [
+                {
+                    "title": "周杰伦作品线",
+                    "description": "从演唱者继续探索。",
+                    "branch_type": "artist",
+                    "target_node_id": "netease:artist:2",
+                },
+                {
+                    "title": "叶惠美专辑线",
+                    "description": "从所属专辑继续探索。",
+                    "branch_type": "album",
+                    "target_node_id": "netease:album:3",
+                },
+                {
+                    "title": "晴天作品线",
+                    "description": "继续查看这首作品的关系。",
+                    "branch_type": "related_work",
+                    "target_node_id": "netease:song:1",
                 },
             ]
         },
@@ -223,6 +254,84 @@ class WorldLineGenerationTests(unittest.TestCase):
 
         self.assertIn("当前未检索到补充音乐知识", output.narrative)
         self.assertEqual([call["retry"] for call in runtime.calls], [False, True])
+
+    def test_narrative_draft_uses_one_generated_field_and_derived_citation(self) -> None:
+        evidence = EvidenceSource(
+            id="knowledge:parent-1", source_type=EvidenceType.KNOWLEDGE,
+            title="晴天资料", source="测试知识库", excerpt="歌曲资料。",
+        )
+        runtime = ScriptedRuntime([
+            '{"narrative":"《晴天》有一份补充资料。[knowledge:parent-1]"}'
+        ])
+
+        output = asyncio.run(
+            StructuredWorldLineGenerator(runtime).generate_narrative(
+                entity(), MusicEntityFacts(entity=entity()),
+                [MusicKnowledgeDocument(
+                    id="parent-1", title="晴天资料", content="歌曲资料。",
+                    source="测试知识库",
+                )], graph(), [evidence],
+            )
+        )
+
+        self.assertEqual(output.citation_ids, ["knowledge:parent-1"])
+        schema = runtime.calls[0]["schema"]
+        self.assertEqual(schema["required"], ["narrative"])
+        self.assertNotIn("retrieved_knowledge", runtime.calls[0]["payload"])
+        self.assertEqual(runtime.calls[0]["payload"]["sources"][0]["excerpt"], "歌曲资料。")
+
+    def test_narrative_missing_inline_citation_fails_closed_after_retry(self) -> None:
+        evidence = EvidenceSource(
+            id="knowledge:parent-1", source_type=EvidenceType.KNOWLEDGE,
+            title="晴天资料", source="测试知识库", excerpt="歌曲资料。",
+        )
+        runtime = ScriptedRuntime([
+            '{"narrative":"这是一段没有引用的具体音乐事实。"}',
+            '{"narrative":"这仍是一段没有引用的具体音乐事实。"}',
+        ])
+
+        with self.assertRaises(WorldLineGenerationError):
+            asyncio.run(
+                StructuredWorldLineGenerator(runtime).generate_narrative(
+                    entity(), MusicEntityFacts(entity=entity()),
+                    [MusicKnowledgeDocument(
+                        id="parent-1", title="晴天资料", content="歌曲资料。",
+                        source="测试知识库",
+                    )], graph(), [evidence],
+                )
+            )
+        self.assertIn("missing_citation", runtime.calls[1]["instructions"])
+
+    def test_branch_draft_maps_existing_nodes_without_model_generated_ids(self) -> None:
+        runtime = ScriptedRuntime([valid_branch_drafts()])
+
+        branches = asyncio.run(
+            StructuredWorldLineGenerator(runtime).generate_branches(
+                entity(), graph(), [],
+            )
+        )
+
+        self.assertEqual([item.id for item in branches], ["branch:1", "branch:2", "branch:3"])
+        self.assertEqual(branches[0].target_entity.name, "周杰伦")
+        properties = runtime.calls[0]["schema"]["$defs"]["BranchDraft"]["properties"]
+        self.assertIn("target_node_id", properties)
+        self.assertNotIn("target_entity", properties)
+
+    def test_branch_draft_duplicate_target_retries_without_guessing(self) -> None:
+        invalid = json.loads(valid_branch_drafts())
+        invalid["branches"][1]["target_node_id"] = "netease:artist:2"
+        runtime = ScriptedRuntime([
+            json.dumps(invalid, ensure_ascii=False), valid_branch_drafts(),
+        ])
+
+        branches = asyncio.run(
+            StructuredWorldLineGenerator(runtime).generate_branches(
+                entity(), graph(), [],
+            )
+        )
+
+        self.assertEqual(len(branches), 3)
+        self.assertIn("duplicate_branch_target", runtime.calls[1]["instructions"])
 
     def test_branches_retry_target_not_in_graph(self) -> None:
         invalid = json.loads(valid_branches())

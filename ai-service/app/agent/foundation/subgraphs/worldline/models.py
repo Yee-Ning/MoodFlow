@@ -261,6 +261,31 @@ class NarrativeOutput(BaseModel):
         return self
 
 
+class NarrativeDraft(BaseModel):
+    """Small LLM contract; citation IDs are derived from the validated prose."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    narrative: str = Field(min_length=1, max_length=6_000)
+
+
+class BranchDraft(BaseModel):
+    """LLM chooses an existing graph node without copying its other fields."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    title: str = Field(min_length=1, max_length=300)
+    description: str = Field(min_length=1, max_length=1_000)
+    branch_type: WorldLineBranchType
+    target_node_id: str = Field(min_length=1, max_length=128)
+
+
+class BranchDraftOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    branches: list[BranchDraft] = Field(min_length=3, max_length=3)
+
+
 class BranchesOutput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
