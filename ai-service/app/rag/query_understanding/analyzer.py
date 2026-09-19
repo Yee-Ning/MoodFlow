@@ -9,6 +9,8 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.agent.structured_output import StructuredOutputService
+from app.agent.structured_output.parser import model_output_from_response
 from app.rag.knowledge.structured import strict_model_schema
 from app.rag.query_understanding.config import QueryUnderstandingConfig
 from app.rag.query_understanding.models import QueryType
@@ -37,24 +39,32 @@ class ExistingLLMQueryAnalysisRuntime:
     async def analyze(self, query: str) -> QueryTypeOutput:
         from app.llm.client import create_structured_response
 
-        response = await create_structured_response(
-            [
-                {
-                    "role": "user",
-                    "content": json.dumps(
-                        {"query": query},
-                        ensure_ascii=False,
-                        separators=(",", ":"),
-                    ),
-                }
-            ],
-            QUERY_ANALYSIS_PROMPT_V1,
-            strict_model_schema(QueryTypeOutput),
-            schema_name="query_type_analysis_v1",
-        )
-        if response.status != "completed" or not response.output_text:
-            raise RuntimeError("query_analysis_llm_incomplete")
-        return QueryTypeOutput.model_validate_json(response.output_text)
+        payload = [
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {"query": query},
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ),
+            }
+        ]
+
+        async def generate(attempt: int, feedback: str | None):
+            instructions = QUERY_ANALYSIS_PROMPT_V1
+            if feedback:
+                instructions += f"\n{feedback}"
+            response = await create_structured_response(
+                payload,
+                instructions,
+                strict_model_schema(QueryTypeOutput),
+                schema_name="query_type_analysis_v1",
+            )
+            return model_output_from_response(response)
+
+        return await StructuredOutputService(
+            "query_type_analysis_v1", QueryTypeOutput,
+        ).run(generate)
 
 
 @dataclass(frozen=True, slots=True)

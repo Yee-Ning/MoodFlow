@@ -2,11 +2,14 @@ import asyncio
 import json
 import unittest
 
+from pydantic import ValidationError
+
 from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.response import foundation_response
 from app.agent.foundation.routing import RouteKey
 from app.agent.foundation.subgraphs.worldline.graph import create_worldline_subgraph
 from app.agent.foundation.subgraphs.worldline.models import EntityType
+from app.schemas.chat import FoundationResponse, FoundationTaskOutput
 from tests.test_worldline_graph import (
     EmptyRetriever,
     FakeGenerator,
@@ -17,6 +20,24 @@ from tests.test_worldline_graph import (
 
 
 class FoundationResponseTests(unittest.TestCase):
+    def test_public_contract_rejects_empty_success_and_unknown_citation(self) -> None:
+        base = {
+            "task_id": "worldline-1", "status": "success", "subgraph": "worldline",
+            "answer": "已有依据。", "sources": [{"id": "knowledge:known"}],
+        }
+        with self.assertRaises(ValidationError):
+            FoundationTaskOutput.model_validate({**base, "answer": " "})
+        with self.assertRaises(ValidationError):
+            FoundationTaskOutput.model_validate({
+                **base, "citations": [{"id": "knowledge:invented"}],
+            })
+        with self.assertRaises(ValidationError):
+            FoundationResponse.model_validate({
+                "status": "success", "message": "完成", "results": [
+                    {**base, "status": "failed"},
+                ],
+            })
+
     def test_each_subgraph_uses_one_json_contract(self) -> None:
         song = entity(1, EntityType.SONG, "晴天")
         worldline_graph = create_worldline_subgraph(

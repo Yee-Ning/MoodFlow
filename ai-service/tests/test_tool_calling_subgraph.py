@@ -518,6 +518,76 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(calls, [])
         self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
 
+    async def test_invalid_batch_rejects_valid_call_before_any_execution(self) -> None:
+        calls: list[dict] = []
+        valid = tool_call("search_music", "valid-search", {"keyword": "测试"})
+        invalid = tool_call("search_music", "invalid-search", {"limit": 0})
+        batch = AIMessage(content="", tool_calls=[*valid.tool_calls, *invalid.tool_calls])
+        observed: list[dict] = []
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(calls=calls)],
+            assistant=scripted_assistant([
+                batch,
+                AIMessage(content="参数不完整，请重新说明。"),
+            ], observed),
+        )
+
+        result = await invoke(graph, text="搜索测试")
+
+        self.assertEqual(calls, [])
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+        errors = [
+            json.loads(str(message.content))["error"]
+            for message in observed[1]["messages"]
+            if isinstance(message, ToolMessage)
+        ]
+        self.assertIn("invalid_tool_arguments", errors)
+        self.assertIn("batch_rejected", errors)
+
+    async def test_unknown_tool_is_rejected_by_allowlist(self) -> None:
+        calls: list[dict] = []
+        observed: list[dict] = []
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(calls=calls)],
+            assistant=scripted_assistant([
+                tool_call("delete_everything", "unknown-1"),
+                AIMessage(content="无法执行该操作。"),
+            ], observed),
+        )
+
+        result = await invoke(graph, text="执行未知工具")
+
+        self.assertEqual(calls, [])
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+        rejected = next(
+            message for message in observed[1]["messages"]
+            if isinstance(message, ToolMessage)
+        )
+        self.assertEqual(json.loads(str(rejected.content))["error"], "unknown_tool")
+
+    async def test_unparseable_tool_call_fails_without_executing_valid_batch_member(self) -> None:
+        calls: list[dict] = []
+        valid = tool_call("search_music", "valid-1", {"keyword": "测试"})
+        malformed = AIMessage(
+            content="",
+            tool_calls=valid.tool_calls,
+            invalid_tool_calls=[{
+                "name": "search_music", "args": "{broken", "id": "broken-1",
+                "error": "invalid JSON",
+            }],
+        )
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(calls=calls)],
+            assistant=scripted_assistant([malformed]),
+        )
+
+        result = await invoke(graph, text="搜索测试")
+
+        self.assertEqual(calls, [])
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+        self.assertEqual(result["task_result"].data["reason"], "malformed_tool_call")
+        self.assertNotIn("{broken", result["task_result"].model_dump_json())
+
     async def test_duplicate_tool_calls_do_not_execute_twice(self) -> None:
         calls: list[dict] = []
         repeated = tool_call("search_music", "same-2", {"keyword": "测试"})

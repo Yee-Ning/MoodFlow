@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -56,3 +56,47 @@ class PendingClientActionPayload(BaseModel):
 
     status: str = Field(default="pending_client_execution", pattern="^pending_client_execution$")
     client_action: dict[str, Any]
+
+
+class ToolSelection(BaseModel):
+    """Untrusted model selection before allowlist and argument validation."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: str = Field(min_length=1, max_length=100)
+    args: dict[str, Any]
+    id: str = Field(min_length=1, max_length=128)
+    type: Literal["tool_call"] = "tool_call"
+
+
+class ToolExecutionRecord(BaseModel):
+    """Validated envelope used when a ToolMessage is copied into graph state."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    tool_call_id: str = Field(min_length=1, max_length=128)
+    name: str = Field(min_length=1, max_length=100)
+    content: str
+    status: Literal["success", "error"]
+
+
+__all__ = [
+    "CLIENT_ACTION_ADAPTER",
+    "ClientAction",
+    "ClientActionArguments",
+    "ClientActionName",
+    "EmptyActionArguments",
+    "PendingClientActionPayload",
+    "PlaySongArguments",
+    "PlaylistReference",
+    "ReferencedEntities",
+    "SeekByArguments",
+    "SeekToArguments",
+    "SetLikedArguments",
+    "SetMutedArguments",
+    "SetPlayModeArguments",
+    "SetVolumeArguments",
+    "SongReference",
+    "ToolExecutionRecord",
+    "ToolSelection",
+]

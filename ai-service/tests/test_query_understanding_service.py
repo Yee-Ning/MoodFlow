@@ -1,5 +1,7 @@
 import asyncio
 import unittest
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 from langchain_core.messages import AIMessage, HumanMessage
 
@@ -11,7 +13,11 @@ from app.rag.query_understanding import (
     QueryUnderstandingStatus,
     load_query_understanding_config,
 )
-from app.rag.query_understanding.analyzer import QueryAnalyzer, QueryTypeOutput
+from app.rag.query_understanding.analyzer import (
+    ExistingLLMQueryAnalysisRuntime,
+    QueryAnalyzer,
+    QueryTypeOutput,
+)
 from app.rag.query_understanding.context import QueryContextResolver
 from app.rag.query_understanding.entity_resolver import QueryEntityResolver
 from app.rag.query_understanding.models import QueryType
@@ -116,6 +122,20 @@ class QueryContextTests(unittest.TestCase):
 
 
 class QueryAnalysisTests(unittest.TestCase):
+    def test_llm_query_type_output_retries_invalid_schema(self) -> None:
+        responses = [
+            SimpleNamespace(status="completed", output=[], output_text='{"query_types":["other"],"confidence":0.9}'),
+            SimpleNamespace(status="completed", output=[], output_text='{"query_types":["exploratory"],"confidence":0.9}'),
+        ]
+        sender = AsyncMock(side_effect=responses)
+
+        with patch("app.llm.client.create_structured_response", sender):
+            output = asyncio.run(ExistingLLMQueryAnalysisRuntime().analyze("音乐资料"))
+
+        self.assertEqual(output.query_types, [QueryType.EXPLORATORY])
+        self.assertEqual(sender.await_count, 2)
+        self.assertIn("schema", sender.call_args.args[1])
+
     def test_timeline_style_query_uses_rules_without_llm(self) -> None:
         runtime = CapturingRuntime()
         result = asyncio.run(

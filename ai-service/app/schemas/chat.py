@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, field_validator, model_validator
 
 from app.schemas.client_actions import ClientAction
 from app.schemas.player import PlayerContext
@@ -119,14 +119,25 @@ class MusicRecommendationOutput(_StructuredOutputBase):
 class FoundationTaskOutput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    task_id: str
+    task_id: str = Field(min_length=1, max_length=128)
     status: Literal["success", "failed", "needs_input"]
     subgraph: Literal["current_song", "tool_calling", "general_chat", "worldline"]
-    answer: str | None
+    answer: str | None = Field(max_length=10_000)
     citations: list[dict[str, Any]] = Field(default_factory=list)
     sources: list[dict[str, Any]] = Field(default_factory=list)
     tool_calls: list[dict[str, Any]] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_answer_and_sources(self) -> "FoundationTaskOutput":
+        if self.status == "success" and not (self.answer and self.answer.strip()):
+            raise ValueError("successful task must contain an answer")
+        source_ids = {
+            item.get("id") for item in self.sources if isinstance(item.get("id"), str)
+        }
+        if any(item.get("id") not in source_ids for item in self.citations):
+            raise ValueError("citations must reference available sources")
+        return self
 
 
 class FoundationResponse(BaseModel):
@@ -137,6 +148,15 @@ class FoundationResponse(BaseModel):
     message: str = Field(min_length=1)
     search_query: None = None
     results: list[FoundationTaskOutput] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_result_statuses(self) -> "FoundationResponse":
+        statuses = {item.status for item in self.results}
+        if self.status == "success" and statuses.difference({"success"}):
+            raise ValueError("successful response cannot contain failed tasks")
+        if self.status == "needs_input" and "failed" in statuses:
+            raise ValueError("input request cannot contain failed tasks")
+        return self
 
 
 StructuredOutput = Annotated[

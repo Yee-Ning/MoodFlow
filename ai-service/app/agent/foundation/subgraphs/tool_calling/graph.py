@@ -8,6 +8,7 @@ from langchain_core.tools import BaseTool
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
+from pydantic import BaseModel, ValidationError
 
 from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.routing import RouteKey
@@ -31,6 +32,13 @@ from app.agent.foundation.subgraphs.tool_calling.models import (
     PlaylistReference,
     ReferencedEntities,
     SongReference,
+    ToolExecutionRecord,
+    ToolSelection,
+)
+from app.agent.structured_output import (
+    SemanticValidationError,
+    StructuredOutputError,
+    StructuredOutputService,
 )
 from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
 from app.schemas.context import MusicAgentContext
@@ -43,6 +51,7 @@ TOOL_LIMIT_MESSAGE = (
     "这次任务需要的工具调用次数超过安全上限，我已停止继续操作。"
     "请缩小请求范围或分成两次完成。"
 )
+INVALID_TOOL_OUTPUT_MESSAGE = "工具选择或参数格式无效，本次没有执行工具。"
 
 
 def _route_after_direct(state: ToolCallingState) -> str:
@@ -289,6 +298,25 @@ def _final_task_result(
     )
 
 
+def _fail_invalid_tool_output(
+    state: ToolCallingState,
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "messages": [AIMessage(content=INVALID_TOOL_OUTPUT_MESSAGE)],
+        "answer": INVALID_TOOL_OUTPUT_MESSAGE,
+        "client_actions": [],
+        "task_result": TaskResult(
+            task_id=state["task_id"],
+            route_key=RouteKey.TOOL_CALLING,
+            status=TaskStatus.FAILED,
+            content=INVALID_TOOL_OUTPUT_MESSAGE,
+            data={"reason": reason, "client_actions": [], "tool_call_details": []},
+            error=INVALID_TOOL_OUTPUT_MESSAGE,
+        ),
+    }
+
+
 def build_tool_calling_subgraph(
     *,
     assistant: ToolCallingAssistant | None = None,
@@ -296,7 +324,47 @@ def build_tool_calling_subgraph(
     tools: Sequence[BaseTool] | None = None,
 ) -> StateGraph:
     graph_tools = list(tools or all_tool_calling_tools())
+    tools_by_name = {item.name: item for item in graph_tools}
     bound_model = bind_tool_calling_tools(model, graph_tools) if model is not None else None
+
+    def _argument_errors(state: ToolCallingState) -> dict[str, tuple[str, str]]:
+        errors: dict[str, tuple[str, str]] = {}
+        for call in _latest_tool_calls(state):
+            call_id = str(call.get("id") or "")
+            if not call_id:
+                continue
+
+            def allowlisted(selection: ToolSelection) -> None:
+                if selection.name not in tools_by_name:
+                    raise SemanticValidationError("unknown_tool")
+
+            try:
+                selected = StructuredOutputService(
+                    "tool_selection", ToolSelection,
+                    semantic_validator=allowlisted, max_attempts=1,
+                ).validate(call)
+            except StructuredOutputError as exc:
+                code = (
+                    "unknown_tool" if exc.failure_type.value == "semantic_validation_error"
+                    else "invalid_tool_selection"
+                )
+                errors[call_id] = (code, INVALID_TOOL_OUTPUT_MESSAGE)
+                continue
+            # LangChain removes injected ToolRuntime fields from this public schema.
+            schema = tools_by_name[selected.name].tool_call_schema
+            if not isinstance(schema, type) or not issubclass(schema, BaseModel):
+                errors[call_id] = ("invalid_tool_schema", INVALID_TOOL_OUTPUT_MESSAGE)
+                continue
+            if set(selected.args).difference(schema.model_fields):
+                errors[call_id] = ("invalid_tool_arguments", INVALID_TOOL_OUTPUT_MESSAGE)
+                continue
+            try:
+                StructuredOutputService(
+                    f"tool_arguments.{selected.name}", schema, max_attempts=1,
+                ).validate(selected.args)
+            except StructuredOutputError:
+                errors[call_id] = ("invalid_tool_arguments", INVALID_TOOL_OUTPUT_MESSAGE)
+        return errors
 
     async def agent(state: ToolCallingState) -> dict[str, Any]:
         if assistant is not None:
@@ -314,6 +382,12 @@ def build_tool_calling_subgraph(
                 state.get("prior_entities", []),
                 model=bound_model,
             )
+
+        if result.invalid_tool_calls or any(
+            not isinstance(call.get("id"), str) or not call["id"].strip()
+            for call in result.tool_calls
+        ):
+            return _fail_invalid_tool_output(state, "malformed_tool_call")
 
         tool_call_count = state.get("tool_call_count", 0)
         requested_calls = len(result.tool_calls)
@@ -356,23 +430,36 @@ def build_tool_calling_subgraph(
             if call_id in captured_ids or call_id not in calls_by_id:
                 continue
             captured_ids.add(call_id)
-            results.append(
-                {
+            try:
+                record = ToolExecutionRecord.model_validate({
                     "tool_call_id": call_id,
                     "name": message.name or calls_by_id[call_id].get("name", ""),
                     "content": message.content,
                     "status": getattr(message, "status", "success"),
-                }
-            )
+                })
+            except ValidationError:
+                record = ToolExecutionRecord(
+                    tool_call_id=call_id,
+                    name=str(calls_by_id[call_id].get("name") or "unknown"),
+                    content=ToolFailure(
+                        error="invalid_tool_result",
+                        message="工具结果格式无效，本次未使用该结果。",
+                    ).model_dump_json(),
+                    status="error",
+                )
+            results.append(record.model_dump(mode="json"))
         return {"tool_results": results}
 
     def reject_invalid_tool_calls(state: ToolCallingState) -> dict[str, Any]:
+        argument_errors = _argument_errors(state)
         reference_errors = _reference_errors(state)
         duplicate_errors = _duplicate_call_errors(state)
         messages: list[ToolMessage] = []
         for call in _latest_tool_calls(state):
             call_id = str(call.get("id", ""))
-            if call_id in reference_errors:
+            if call_id in argument_errors:
+                error_code, message = argument_errors[call_id]
+            elif call_id in reference_errors:
                 error_code = "untrusted_entity_reference"
                 message = reference_errors[call_id]
             elif call_id in duplicate_errors:
@@ -397,7 +484,7 @@ def build_tool_calling_subgraph(
     def route_validated_calls(state: ToolCallingState) -> str:
         return (
             "reject_tool_calls"
-            if _reference_errors(state) or _duplicate_call_errors(state)
+            if _argument_errors(state) or _reference_errors(state) or _duplicate_call_errors(state)
             else "tools"
         )
 
