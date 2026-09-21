@@ -1,15 +1,28 @@
+import json
+import os
 import sqlite3
+import subprocess
+import sys
 import tempfile
+import textwrap
 import unittest
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
+from app.agent.checkpointing import (
+    configure_persistent_checkpointer,
+    create_runtime_checkpointer,
+)
 from app.agent.foundation.long_horizon.models import (
     HandoffDraft,
     HistoryEventType,
     HistoryPointer,
     RolloverReason,
+)
+from app.agent.foundation.long_horizon.runtime import (
+    configure_persistent_continuity_store,
+    get_long_horizon_service,
 )
 from app.agent.foundation.long_horizon.service import LongHorizonContextService, RolloverPolicy
 from app.agent.foundation.long_horizon.store import SQLiteContinuityStore
@@ -215,12 +228,146 @@ class LongHorizonContextTests(unittest.TestCase):
                                (event.event_id,))
         connection.close()
 
+    def test_legacy_phase2_sqlite_schema_is_migrated(self):
+        database = Path(self.temp.name) / "legacy.sqlite"
+        connection = sqlite3.connect(database)
+        connection.execute("""
+            CREATE TABLE sessions (
+                session_id TEXT PRIMARY KEY, task_id TEXT NOT NULL,
+                previous_session_id TEXT, parent_session_id TEXT,
+                inherited_handoff_id TEXT, created_at TEXT NOT NULL, closed_at TEXT
+            )
+        """)
+        connection.execute(
+            "INSERT INTO sessions VALUES(?,?,?,?,?,?,?)",
+            (
+                "session:legacy", "task:legacy", None, None, None,
+                "2026-09-21T00:00:00+00:00", None,
+            ),
+        )
+        connection.commit()
+        connection.close()
+
+        migrated = SQLiteContinuityStore(database)
+        task = migrated.get_task("task:legacy")
+        session = migrated.get_session("session:legacy")
+        self.assertEqual(task.conversation_id, "legacy-conversation:task:legacy")
+        self.assertEqual(session.conversation_id, task.conversation_id)
+        self.assertNotEqual(session.conversation_id, session.task_id)
+
     def test_history_and_lineage_survive_store_reopen(self):
-        event = self.event("持久消息")
-        reopened = SQLiteContinuityStore(self.store.path)
-        self.assertEqual(reopened.get_history_event(event.event_id).payload["text"], "持久消息")
-        self.assertEqual(reopened.active_session(self.session1.task_id).session_id,
-                         self.session1.session_id)
+        database = Path(self.temp.name) / "restart-e2e.sqlite"
+        project = Path(__file__).resolve().parents[1]
+        common = textwrap.dedent(
+            f"""
+            import json
+            from pathlib import Path
+            from app.agent.foundation.long_horizon.models import (
+                HandoffDraft, HistoryEventType, HistoryPointer, RolloverReason
+            )
+            from app.agent.foundation.long_horizon.service import LongHorizonContextService
+            from app.agent.foundation.long_horizon.store import SQLiteContinuityStore
+            path = Path({str(database)!r})
+            store = SQLiteContinuityStore(path)
+            service = LongHorizonContextService(store)
+            """
+        )
+        create = common + textwrap.dedent(
+            """
+            session = service.start_task("conversation:restart", task_id="task:restart")
+            event = service.record_event(
+                task_id=session.task_id, session_id=session.session_id,
+                event_type=HistoryEventType.USER_MESSAGE, node="input", source="user",
+                payload={"text": "持久消息"},
+            )
+            artifact = service.create_artifact(
+                task_id=session.task_id, session_id=session.session_id,
+                artifact_type="candidate_set", payload=[1, 2, 3],
+                projection={"count": 3},
+            )
+            result = service.rollover(
+                session.session_id,
+                HandoffDraft(
+                    goal="重启后继续", constraints=["保留原约束"],
+                    constraint_refs={"保留原约束": [HistoryPointer(
+                        kind="event", target_id=event.event_id
+                    )]},
+                    current_stage="等待恢复", next_actions=["继续"],
+                    artifact_refs=[artifact.ref],
+                    revalidate_fields=["current_song_id"],
+                    last_known_state={"current_song_id": 1},
+                ),
+                RolloverReason.EXPLICIT_CHECKPOINT,
+            )
+            print(json.dumps({
+                "event_id": event.event_id,
+                "handoff_id": result.handoff.handoff_id,
+                "new_session_id": result.new_session.session_id,
+            }))
+            """
+        )
+        created = subprocess.run(
+            [sys.executable, "-c", create], cwd=project,
+            capture_output=True, text=True, check=True,
+        )
+        created_ids = json.loads(created.stdout.strip().splitlines()[-1])
+
+        recover = common + textwrap.dedent(
+            """
+            task = store.active_task("conversation:restart")
+            session = store.active_session(task.task_id)
+            cold = service.cold_start(
+                session.session_id, live_state={"current_song_id": 2}
+            )
+            event = store.get_history_event(cold.handoff.constraint_refs[
+                "保留原约束"
+            ][0].target_id)
+            print(json.dumps({
+                "task_id": task.task_id,
+                "session_id": session.session_id,
+                "handoff_id": cold.handoff.handoff_id,
+                "history_text": event.payload["text"],
+                "artifact_count": cold.artifacts[0].projection["count"],
+                "changed_fields": cold.changed_fields,
+                "session_count": len(store.sessions_for_task(task.task_id)),
+            }, ensure_ascii=False))
+            """
+        )
+        recovered = subprocess.run(
+            [sys.executable, "-c", recover], cwd=project,
+            capture_output=True, text=True, check=True,
+        )
+        state = json.loads(recovered.stdout.strip().splitlines()[-1])
+        self.assertEqual(state["task_id"], "task:restart")
+        self.assertEqual(state["session_id"], created_ids["new_session_id"])
+        self.assertEqual(state["handoff_id"], created_ids["handoff_id"])
+        self.assertEqual(state["history_text"], "持久消息")
+        self.assertEqual(state["artifact_count"], 3)
+        self.assertEqual(state["changed_fields"], ["current_song_id"])
+        self.assertEqual(state["session_count"], 2)
+
+    def test_conversation_can_hold_multiple_tasks_and_task_multiple_sessions(self):
+        first = self.service.start_task("conversation:multi")
+        second = self.service.start_task("conversation:multi")
+        self.assertNotEqual(first.task_id, second.task_id)
+        self.assertNotEqual(first.task_id, first.conversation_id)
+        self.assertEqual(second.conversation_id, first.conversation_id)
+        self.assertEqual(len(self.store.tasks_for_conversation("conversation:multi")), 2)
+        self.assertEqual(
+            self.service.open_conversation("conversation:multi").task_id,
+            second.task_id,
+        )
+        event = self.service.record_event(
+            task_id=first.task_id, session_id=first.session_id,
+            event_type=HistoryEventType.USER_MESSAGE, node="input", source="user",
+            payload={"text": "first task"},
+        )
+        rolled = self.service.rollover(
+            first.session_id, self.draft(event), RolloverReason.EXPLICIT_CHECKPOINT,
+        )
+        self.assertEqual(rolled.new_session.task_id, first.task_id)
+        self.assertEqual(rolled.new_session.conversation_id, first.conversation_id)
+        self.assertEqual(len(self.store.sessions_for_task(first.task_id)), 2)
 
     def test_rollover_trigger_uses_tokens_or_explicit_checkpoint(self):
         self.assertIsNone(self.service.should_rollover(active_context_tokens=99))
@@ -235,7 +382,7 @@ class LongHorizonRuntimeIntegrationTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as root:
             store = SQLiteContinuityStore(Path(root) / "runtime.sqlite")
             service = LongHorizonContextService(store, now=Clock())
-            session1 = service.open_task("thread:runtime")
+            session1 = service.start_task("thread:runtime")
             message = service.record_event(
                 task_id=session1.task_id, session_id=session1.session_id,
                 event_type=HistoryEventType.USER_MESSAGE,
@@ -280,20 +427,58 @@ class LongHorizonRuntimeIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(
                 graph.config["configurable"]["thread_id"],
+                "thread:runtime",
+            )
+            self.assertEqual(
+                graph.config["configurable"]["checkpoint_ns"],
                 rollover.new_session.session_id,
             )
             continuity = graph.input["continuity_context"]
+            self.assertEqual(continuity["conversation_id"], "thread:runtime")
+            self.assertEqual(continuity["task_id"], session1.task_id)
             self.assertEqual(continuity["handoff"]["handoff_id"], rollover.handoff.handoff_id)
             self.assertEqual(continuity["changed_fields"], ["current_song_id"])
             final = next(event for event in events if isinstance(event, FinalStreamEvent))
             self.assertEqual(final.response.message, "继续处理。")
             session2_events = service.query_task_history(
-                "thread:runtime", session_id=rollover.new_session.session_id,
+                session1.task_id, session_id=rollover.new_session.session_id,
             )
             self.assertIn(HistoryEventType.USER_MESSAGE,
                           {event.event_type for event in session2_events})
             self.assertIn(HistoryEventType.ASSISTANT_MESSAGE,
                           {event.event_type for event in session2_events})
+
+
+class CheckpointerBoundaryTests(unittest.TestCase):
+    def tearDown(self):
+        configure_persistent_checkpointer(None)
+        configure_persistent_continuity_store(None)
+
+    def test_persistent_mode_requires_registered_provider(self):
+        configure_persistent_checkpointer(None)
+        with patch.dict(os.environ, {"AI_LANGGRAPH_CHECKPOINTER_MODE": "persistent"}):
+            with self.assertRaisesRegex(RuntimeError, "persistent checkpointer factory"):
+                create_runtime_checkpointer()
+
+    def test_persistent_mode_uses_injected_provider(self):
+        marker = object()
+        configure_persistent_checkpointer(lambda: marker)  # type: ignore[return-value]
+        with patch.dict(os.environ, {"AI_LANGGRAPH_CHECKPOINTER_MODE": "persistent"}):
+            self.assertIs(create_runtime_checkpointer(), marker)
+
+    def test_persistent_continuity_mode_requires_registered_provider(self):
+        configure_persistent_continuity_store(None)
+        with patch.dict(os.environ, {"AI_CONTINUITY_STORE_MODE": "persistent"}):
+            with self.assertRaisesRegex(RuntimeError, "continuity store factory"):
+                get_long_horizon_service()
+
+    def test_persistent_continuity_mode_uses_injected_repository(self):
+        marker = object()
+        configure_persistent_continuity_store(
+            lambda: marker  # type: ignore[return-value]
+        )
+        with patch.dict(os.environ, {"AI_CONTINUITY_STORE_MODE": "persistent"}):
+            self.assertIs(get_long_horizon_service().store, marker)
 
 
 if __name__ == "__main__":

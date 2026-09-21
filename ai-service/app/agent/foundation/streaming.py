@@ -61,7 +61,7 @@ def _continuity_start(thread_id: str, routing_context: RoutingContext, *, enable
     if not enabled:
         return None, thread_id, {}, None
     service = get_long_horizon_service()
-    session = service.open_task(thread_id)
+    session = service.open_conversation(thread_id)
     cold = service.cold_start(
         session.session_id,
         live_state=routing_context.model_dump(mode="json"),
@@ -75,7 +75,19 @@ def _continuity_start(thread_id: str, routing_context: RoutingContext, *, enable
         ],
         "changed_fields": cold.changed_fields,
     }
-    return service, session.session_id, context, session
+    return service, thread_id, context, session
+
+
+def _graph_config(conversation_id: str, session) -> dict[str, Any]:
+    configurable = {"thread_id": conversation_id}
+    if session is not None:
+        # A session isolates one active context window. checkpoint_id remains a
+        # checkpointer-managed execution snapshot and is never a task/session ID.
+        configurable["checkpoint_ns"] = session.session_id
+    return {
+        "configurable": configurable,
+        "recursion_limit": FOUNDATION_RECURSION_LIMIT,
+    }
 
 
 def _record_result(service, session, result: TaskResult, request_id: str) -> None:
@@ -122,6 +134,7 @@ async def stream_foundation_assistant(
     request_id = f"request:{uuid4().hex}"
     if continuity is not None:
         continuity_context.update({
+            "conversation_id": session.conversation_id,
             "task_id": session.task_id,
             "session_id": session.session_id,
             "request_id": request_id,
@@ -140,10 +153,7 @@ async def stream_foundation_assistant(
 
     async for part in (graph or get_foundation_graph()).astream(
         initial_state,
-        {
-            "configurable": {"thread_id": graph_thread_id},
-            "recursion_limit": FOUNDATION_RECURSION_LIMIT,
-        },
+        _graph_config(graph_thread_id, session),
         context=MusicAgentContext(session_cookie=session_cookie),
         stream_mode=["messages", "updates"],
         version="v2",
@@ -240,6 +250,7 @@ async def invoke_foundation_assistant(
     request_id = f"request:{uuid4().hex}"
     if continuity is not None:
         continuity_context.update({
+            "conversation_id": session.conversation_id,
             "task_id": session.task_id,
             "session_id": session.session_id,
             "request_id": request_id,
@@ -256,10 +267,7 @@ async def invoke_foundation_assistant(
             routing_context=routing_context,
             continuity_context=continuity_context,
         ),
-        {
-            "configurable": {"thread_id": graph_thread_id},
-            "recursion_limit": FOUNDATION_RECURSION_LIMIT,
-        },
+        _graph_config(graph_thread_id, session),
         context=MusicAgentContext(session_cookie=session_cookie),
     )
     message_text = output.get("final_response")

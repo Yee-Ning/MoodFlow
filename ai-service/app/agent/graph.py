@@ -4,11 +4,14 @@ from typing import Any
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.tools import BaseTool
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from app.agent.checkpointing import create_memory_checkpointer
+from app.agent.checkpointing import (
+    create_memory_checkpointer as create_memory_checkpointer,
+    create_runtime_checkpointer,
+)
 from app.agent.song_assistant import (
     MAX_VISIBLE_RESPONSE_CHARACTERS,
     answer_current_song,
@@ -72,7 +75,7 @@ def create_current_song_graph(
     assistant: SongAssistant | None = None,
     model: BaseChatModel | None = None,
     tools: Sequence[BaseTool] | None = None,
-    checkpointer: InMemorySaver | None = None,
+    checkpointer: BaseCheckpointSaver | None = None,
 ):
     graph_tools = list(tools or MUSIC_AGENT_TOOLS)
     bound_model = bind_music_tools(model, graph_tools) if model is not None else None
@@ -136,7 +139,7 @@ def create_current_song_graph(
         {"tools": "tools", END: END},
     )
     builder.add_edge("tools", "agent")
-    return builder.compile(checkpointer=checkpointer or create_memory_checkpointer())
+    return builder.compile(checkpointer=checkpointer or create_runtime_checkpointer())
 
 
 CURRENT_SONG_GRAPH = create_current_song_graph()

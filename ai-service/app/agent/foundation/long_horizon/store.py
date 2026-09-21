@@ -3,12 +3,54 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Protocol
 
-from .models import ArtifactRecord, HandoffProjection, HistoryEvent, HistoryPointer, SessionRecord
+from .models import (
+    ArtifactRecord,
+    HandoffProjection,
+    HistoryEvent,
+    HistoryPointer,
+    SessionRecord,
+    TaskRecord,
+)
+
+
+class ContinuityStore(Protocol):
+    """Persistence boundary; business services do not depend on SQLite."""
+
+    def create_task(self, task: TaskRecord) -> None: ...
+    def get_task(self, task_id: str) -> TaskRecord | None: ...
+    def active_task(self, conversation_id: str) -> TaskRecord | None: ...
+    def tasks_for_conversation(self, conversation_id: str) -> list[TaskRecord]: ...
+    def close_task(self, task_id: str, closed_at: str) -> TaskRecord: ...
+    def create_session(self, session: SessionRecord) -> None: ...
+    def close_session(self, session_id: str, closed_at: str) -> SessionRecord: ...
+    def get_session(self, session_id: str) -> SessionRecord | None: ...
+    def require_session(self, session_id: str) -> SessionRecord: ...
+    def active_session(self, task_id: str) -> SessionRecord | None: ...
+    def sessions_for_task(self, task_id: str) -> list[SessionRecord]: ...
+    def append_event(self, event: HistoryEvent) -> None: ...
+    def get_history_event(self, event_id: str) -> HistoryEvent | None: ...
+    def query_task_history(
+        self,
+        task_id: str,
+        *,
+        event_type: str | None = None,
+        session_id: str | None = None,
+        keyword: str | None = None,
+        limit: int = 100,
+    ) -> list[HistoryEvent]: ...
+    def put_artifact(self, artifact: ArtifactRecord) -> None: ...
+    def get_artifact(self, ref: str) -> ArtifactRecord | None: ...
+    def put_handoff(self, handoff: HandoffProjection) -> None: ...
+    def get_handoff(self, handoff_id: str) -> HandoffProjection | None: ...
+    def validate_pointers(
+        self, pointers: Iterable[HistoryPointer], *, task_id: str
+    ) -> None: ...
 
 
 class SQLiteContinuityStore:
-    """Small durable store; history, artifacts and handoffs are append-only."""
+    """Local/test adapter; history, artifacts and handoffs are append-only."""
 
     def __init__(self, path: Path | str):
         self.path = Path(path)
@@ -34,8 +76,15 @@ class SQLiteContinuityStore:
         connection = self._connect()
         try:
             connection.executescript("""
+                CREATE TABLE IF NOT EXISTS tasks (
+                    task_id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL,
+                    created_at TEXT NOT NULL, closed_at TEXT
+                );
+                CREATE INDEX IF NOT EXISTS tasks_conversation
+                    ON tasks(conversation_id, created_at);
                 CREATE TABLE IF NOT EXISTS sessions (
                     session_id TEXT PRIMARY KEY, task_id TEXT NOT NULL,
+                    conversation_id TEXT NOT NULL,
                     previous_session_id TEXT, parent_session_id TEXT,
                     inherited_handoff_id TEXT, created_at TEXT NOT NULL, closed_at TEXT
                 );
@@ -70,6 +119,29 @@ class SQLiteContinuityStore:
                 CREATE TRIGGER IF NOT EXISTS immutable_handoff_delete BEFORE DELETE ON handoffs
                 BEGIN SELECT RAISE(ABORT, 'handoffs are immutable'); END;
             """)
+            session_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(sessions)").fetchall()
+            }
+            if "conversation_id" not in session_columns:
+                connection.execute(
+                    "ALTER TABLE sessions ADD COLUMN conversation_id TEXT"
+                )
+            connection.execute("""
+                INSERT OR IGNORE INTO tasks(task_id, conversation_id, created_at, closed_at)
+                SELECT task_id, 'legacy-conversation:' || task_id, MIN(created_at),
+                       CASE WHEN SUM(closed_at IS NULL) = 0 THEN MAX(closed_at) ELSE NULL END
+                FROM sessions
+                GROUP BY task_id
+            """)
+            connection.execute("""
+                UPDATE sessions
+                SET conversation_id = (
+                    SELECT tasks.conversation_id FROM tasks
+                    WHERE tasks.task_id = sessions.task_id
+                )
+                WHERE conversation_id IS NULL
+            """)
             connection.commit()
         finally:
             if self._connection is None:
@@ -79,20 +151,108 @@ class SQLiteContinuityStore:
     def _json(model) -> str:
         return model.model_dump_json(exclude_none=True)
 
+    def create_task(self, task: TaskRecord) -> None:
+        self._insert(
+            "tasks",
+            (
+                task.task_id,
+                task.conversation_id,
+                task.created_at.isoformat(),
+                task.closed_at.isoformat() if task.closed_at else None,
+            ),
+        )
+
+    def get_task(self, task_id: str) -> TaskRecord | None:
+        row = self._one("SELECT * FROM tasks WHERE task_id=?", (task_id,))
+        return TaskRecord.model_validate(dict(row)) if row else None
+
+    def active_task(self, conversation_id: str) -> TaskRecord | None:
+        row = self._one(
+            "SELECT * FROM tasks WHERE conversation_id=? AND closed_at IS NULL "
+            "ORDER BY created_at DESC LIMIT 1",
+            (conversation_id,),
+        )
+        return TaskRecord.model_validate(dict(row)) if row else None
+
+    def tasks_for_conversation(self, conversation_id: str) -> list[TaskRecord]:
+        return [
+            TaskRecord.model_validate(dict(row))
+            for row in self._all(
+                "SELECT * FROM tasks WHERE conversation_id=? ORDER BY created_at",
+                (conversation_id,),
+            )
+        ]
+
+    def close_task(self, task_id: str, closed_at: str) -> TaskRecord:
+        task = self.get_task(task_id)
+        if task is None:
+            raise KeyError(f"unknown task:{task_id}")
+        if task.closed_at is not None:
+            raise ValueError("task is already closed")
+        if self.active_session(task_id) is not None:
+            raise ValueError("cannot close a task with an active session")
+        connection = self._connect()
+        try:
+            cursor = connection.execute(
+                "UPDATE tasks SET closed_at=? WHERE task_id=? AND closed_at IS NULL",
+                (closed_at, task_id),
+            )
+            if cursor.rowcount != 1:
+                raise ValueError("task close failed")
+            connection.commit()
+        finally:
+            if self._connection is None:
+                connection.close()
+        resolved = self.get_task(task_id)
+        if resolved is None:
+            raise RuntimeError("closed task disappeared")
+        return resolved
+
     def create_session(self, session: SessionRecord) -> None:
-        if session.previous_session_id and not self.get_session(session.previous_session_id):
-            raise ValueError("previous session does not exist")
-        if session.parent_session_id and not self.get_session(session.parent_session_id):
-            raise ValueError("parent session does not exist")
-        if session.inherited_handoff_id and not self.get_handoff(session.inherited_handoff_id):
-            raise ValueError("inherited handoff does not exist")
+        task = self.get_task(session.task_id)
+        if task is None:
+            raise ValueError("task does not exist")
+        if task.closed_at is not None:
+            raise ValueError("cannot create a session for a closed task")
+        if task.conversation_id != session.conversation_id:
+            raise ValueError("task/session conversation mismatch")
+        for field, related_id in (
+            ("previous", session.previous_session_id),
+            ("parent", session.parent_session_id),
+        ):
+            if not related_id:
+                continue
+            related = self.get_session(related_id)
+            if related is None:
+                raise ValueError(f"{field} session does not exist")
+            if (
+                related.task_id != session.task_id
+                or related.conversation_id != session.conversation_id
+            ):
+                raise ValueError(f"{field} session lineage mismatch")
+        if session.inherited_handoff_id:
+            handoff = self.get_handoff(session.inherited_handoff_id)
+            if handoff is None:
+                raise ValueError("inherited handoff does not exist")
+            if handoff.task_id != session.task_id:
+                raise ValueError("inherited handoff task mismatch")
         connection = self._connect()
         try:
             connection.execute(
-                "INSERT INTO sessions VALUES(?,?,?,?,?,?,?)",
-                (session.session_id, session.task_id, session.previous_session_id,
-                 session.parent_session_id, session.inherited_handoff_id,
-                 session.created_at.isoformat(), None),
+                "INSERT INTO sessions("
+                "session_id, task_id, conversation_id, previous_session_id, "
+                "parent_session_id, inherited_handoff_id, created_at, closed_at"
+                ") VALUES(?,?,?,?,?,?,?,?)",
+                (
+                    session.session_id,
+                    session.task_id,
+                    session.conversation_id,
+                    session.previous_session_id,
+                    session.parent_session_id,
+                    session.inherited_handoff_id,
+                    session.created_at.isoformat(),
+                    session.closed_at.isoformat() if session.closed_at else None,
+                ),
             )
             connection.commit()
         finally:

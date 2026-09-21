@@ -24,8 +24,9 @@ from .models import (
     RolloverReason,
     RolloverResult,
     SessionRecord,
+    TaskRecord,
 )
-from .store import SQLiteContinuityStore
+from .store import ContinuityStore
 
 
 class RolloverPolicy(BaseModel):
@@ -51,7 +52,7 @@ def _unique(values: list[Any]) -> list[Any]:
 
 
 class LongHorizonContextService:
-    def __init__(self, store: SQLiteContinuityStore, *, policy: RolloverPolicy | None = None,
+    def __init__(self, store: ContinuityStore, *, policy: RolloverPolicy | None = None,
                  counter: TokenCounter | None = None,
                  now: Callable[[], datetime] | None = None):
         self.store = store
@@ -59,12 +60,60 @@ class LongHorizonContextService:
         self.counter = counter or UnicodeHeuristicTokenCounter()
         self._now = now or (lambda: datetime.now(UTC))
 
-    def open_task(self, task_id: str, *, parent_session_id: str | None = None) -> SessionRecord:
+    def start_task(
+        self,
+        conversation_id: str,
+        *,
+        task_id: str | None = None,
+        parent_session_id: str | None = None,
+    ) -> SessionRecord:
+        resolved_task_id = task_id or f"task:{uuid4().hex}"
+        if self.store.get_task(resolved_task_id) is not None:
+            raise ValueError(f"task already exists:{resolved_task_id}")
+        self.store.create_task(
+            TaskRecord(
+                task_id=resolved_task_id,
+                conversation_id=conversation_id,
+                created_at=self._now(),
+            )
+        )
+        return self.open_task(
+            resolved_task_id,
+            conversation_id=conversation_id,
+            parent_session_id=parent_session_id,
+        )
+
+    def open_conversation(self, conversation_id: str) -> SessionRecord:
+        task = self.store.active_task(conversation_id)
+        if task is None:
+            return self.start_task(conversation_id)
+        return self.open_task(task.task_id, conversation_id=conversation_id)
+
+    def open_task(
+        self,
+        task_id: str,
+        *,
+        conversation_id: str | None = None,
+        parent_session_id: str | None = None,
+    ) -> SessionRecord:
+        task = self.store.get_task(task_id)
+        if task is None:
+            resolved_conversation_id = conversation_id or f"conversation:{uuid4().hex}"
+            task = TaskRecord(
+                task_id=task_id,
+                conversation_id=resolved_conversation_id,
+                created_at=self._now(),
+            )
+            self.store.create_task(task)
+        elif conversation_id is not None and task.conversation_id != conversation_id:
+            raise ValueError("task belongs to a different conversation")
         active = self.store.active_session(task_id)
         if active is not None:
             return active
         session = SessionRecord(
-            task_id=task_id, session_id=f"session:{uuid4().hex}",
+            task_id=task_id,
+            conversation_id=task.conversation_id,
+            session_id=f"session:{uuid4().hex}",
             parent_session_id=parent_session_id, created_at=self._now(),
         )
         self.store.create_session(session)
@@ -206,7 +255,9 @@ class LongHorizonContextService:
         )
         closed = self.store.close_session(session_id, self._now().isoformat())
         new_session = SessionRecord(
-            task_id=session.task_id, session_id=f"session:{uuid4().hex}",
+            task_id=session.task_id,
+            conversation_id=session.conversation_id,
+            session_id=f"session:{uuid4().hex}",
             previous_session_id=session.session_id,
             parent_session_id=session.parent_session_id or session.session_id,
             inherited_handoff_id=handoff.handoff_id, created_at=self._now(),

@@ -72,6 +72,15 @@ class ArtifactRecord(BaseModel):
         return f"artifact:{self.artifact_id}"
 
 
+class TaskRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    task_id: str
+    conversation_id: str
+    created_at: datetime
+    closed_at: datetime | None = None
+
+
 class HandoffDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -110,6 +119,7 @@ class SessionRecord(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     task_id: str
+    conversation_id: str
     session_id: str
     previous_session_id: str | None = None
     parent_session_id: str | None = None

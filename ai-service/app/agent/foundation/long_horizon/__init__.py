@@ -11,13 +11,15 @@ from .models import (
     RolloverReason,
     RolloverResult,
     SessionRecord,
+    TaskRecord,
 )
 from .service import LongHorizonContextService, RolloverPolicy
-from .store import SQLiteContinuityStore
+from .store import ContinuityStore, SQLiteContinuityStore
 
 __all__ = [
     "ArtifactRecord", "ColdStartContext", "HandoffDraft", "HandoffProjection",
     "HistoryEvent", "HistoryEventType", "HistoryPointer",
     "LongHorizonContextService", "RolloverPolicy", "RolloverReason",
-    "RolloverResult", "SQLiteContinuityStore", "SessionRecord",
+    "RolloverResult", "ContinuityStore", "SQLiteContinuityStore", "SessionRecord",
+    "TaskRecord",
 ]
