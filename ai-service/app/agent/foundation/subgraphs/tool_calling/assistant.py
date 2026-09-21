@@ -5,10 +5,12 @@ from collections.abc import Awaitable, Callable, Sequence
 from functools import lru_cache
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.tools import BaseTool
 
 from app.agent.foundation.routing import RoutingContext
+from app.agent.foundation.routing import RouteKey
+from app.agent.foundation.context_engineering import build_context
 from app.agent.foundation.subgraphs.tool_calling.client_tools import CLIENT_ACTION_TOOLS
 from app.agent.foundation.subgraphs.tool_calling.models import ReferencedEntities
 from app.llm.client import get_base_chat_model
@@ -47,10 +49,10 @@ def get_tool_calling_chat_model() -> BaseChatModel:
     return bind_tool_calling_tools(get_base_chat_model(), all_tool_calling_tools())
 
 
-def _runtime_instructions(
+def _trusted_context(
     routing_context: RoutingContext,
     prior_entities: list[ReferencedEntities],
-) -> str:
+) -> tuple[str, str]:
     player_json = json.dumps(
         routing_context.model_dump(mode="json"),
         ensure_ascii=False,
@@ -62,10 +64,8 @@ def _runtime_instructions(
         separators=(",", ":"),
     )
     return (
-        f'{TOOL_CALLING_SYSTEM_PROMPT}\n\n<player_context trusted="true">'
-        f"{player_json}</player_context>\n"
-        '<prior_entities trusted="true" text_fields="untrusted">'
-        f"{entity_json}</prior_entities>"
+        f'<player_context trusted="true">{player_json}</player_context>',
+        f'<prior_entities trusted="true" text_fields="untrusted">{entity_json}</prior_entities>',
     )
 
 
@@ -80,15 +80,13 @@ async def answer_tool_calling_task(
     history = list(messages)
     if history and isinstance(history[-1], HumanMessage):
         history.pop()
-    response = await (model or get_tool_calling_chat_model()).ainvoke(
-        [
-            SystemMessage(
-                content=_runtime_instructions(routing_context, prior_entities)
-            ),
-            *history,
-            HumanMessage(content=current_input),
-        ]
+    player_context, entity_context = _trusted_context(routing_context, prior_entities)
+    pack = build_context(
+        RouteKey.TOOL_CALLING, query=current_input,
+        system=TOOL_CALLING_SYSTEM_PROMPT, messages=history,
+        business_state=player_context, structured_output=entity_context,
     )
+    response = await (model or get_tool_calling_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("Tool-calling assistant returned a non-AI message")
     if not response.tool_calls and not str(response.text).strip():

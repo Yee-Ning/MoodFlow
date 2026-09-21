@@ -505,13 +505,17 @@ def build_worldline_subgraph(
         if entity is None or facts is None or graph is None:
             raise RuntimeError("WorldLine narrative inputs are unavailable")
         try:
-            generated = await worldline_generator.generate_narrative(
-                entity,
-                facts,
-                state.get("retrieved_docs", []),
-                graph,
+            generation_args = (
+                entity, facts, state.get("retrieved_docs", []), graph,
                 state.get("sources", []),
             )
+            if isinstance(worldline_generator, StructuredWorldLineGenerator):
+                generated = await worldline_generator.generate_narrative(
+                    *generation_args, user_query=state["user_query"],
+                    search_plan=state.get("search_plan"),
+                )
+            else:
+                generated = await worldline_generator.generate_narrative(*generation_args)
             if isinstance(generated, str):
                 narrative = generated
                 citation_ids: list[str] = []
@@ -559,11 +563,14 @@ def build_worldline_subgraph(
         if entity is None or graph is None or narrative is None:
             raise RuntimeError("WorldLine branch inputs are unavailable")
         try:
-            branches = await worldline_generator.generate_branches(
-                entity,
-                graph,
-                state.get("sources", []),
-            )
+            generation_args = (entity, graph, state.get("sources", []))
+            if isinstance(worldline_generator, StructuredWorldLineGenerator):
+                branches = await worldline_generator.generate_branches(
+                    *generation_args, user_query=state["user_query"],
+                    search_plan=state.get("search_plan"),
+                )
+            else:
+                branches = await worldline_generator.generate_branches(*generation_args)
             sources = state.get("sources", [])
             source_by_id = {item.id: item for item in sources}
             citations = [source_by_id[item] for item in state.get("citation_ids", [])]

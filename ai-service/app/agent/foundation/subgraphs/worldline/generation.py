@@ -1,6 +1,9 @@
 import json
+from types import SimpleNamespace
 from typing import Any, Protocol
 
+from app.agent.foundation.context_engineering import build_context
+from app.agent.foundation.routing import RouteKey
 from app.agent.foundation.subgraphs.worldline.grounding import (
     WorldLineGroundingError,
     WorldLineGroundingValidator,
@@ -66,6 +69,42 @@ class ProviderWorldLineRuntime:
                 "\n上次输出未通过 JSON Schema 或事实落地校验。"
                 "请只修正结构和依据，不要增加新事实。"
             )
+        # The graph and facts are structured constraints; existing RAG sources
+        # are selected independently before the provider sees this one call.
+        source_rows = payload.get("sources", [])
+        required_source_ids = {
+            evidence_id
+            for edge in payload.get("worldline_graph", {}).get("edges", [])
+            for evidence_id in edge.get("evidence_ids", [])
+        } | {
+            evidence_id
+            for fact in payload.get("catalog_facts", [])
+            for evidence_id in fact.get("evidence_ids", [])
+        }
+        pack = build_context(
+            RouteKey.WORLDLINE,
+            query=str(payload.get("user_query") or payload.get("root_entity", {}).get("name") or "音乐世界线"),
+            system=instructions,
+            structured_output={key: value for key, value in payload.items()
+                               if key not in {"sources", "search_plan", "user_query"}},
+            search_plan=payload.get("search_plan"),
+            rag_pack=SimpleNamespace(items=source_rows),
+            rag_required_ids=required_source_ids,
+        )
+        selected = {
+            item.metadata["evidence_id"]: item
+            for item in pack.items if item.type == "rag_evidence"
+        }
+        payload = {
+            **payload,
+            "sources": [
+                {**{key: value for key, value in source.items() if key != "evidence_span"},
+                 **({"excerpt": selected[source["id"]].content} if source.get("excerpt") else {})}
+                for source in source_rows if source["id"] in selected
+            ],
+        }
+        if not any(item.type == "search_plan" for item in pack.items):
+            payload.pop("search_plan", None)
         response = await create_generation_response(
             [
                 {
@@ -119,6 +158,9 @@ class StructuredWorldLineGenerator:
         documents: list[MusicKnowledgeDocument],
         graph: WorldLineGraph,
         sources: list[EvidenceSource],
+        *,
+        user_query: str | None = None,
+        search_plan: Any = None,
     ) -> NarrativeOutput:
         payload = {
             "root_entity": entity.model_dump(
@@ -135,12 +177,20 @@ class StructuredWorldLineGenerator:
             "worldline_graph": _graph_payload(graph),
             "sources": [
                 item.model_dump(
-                    mode="json", include={"id", "source_type", "title", "excerpt"},
+                    mode="json", include={"id", "source_type", "title", "source", "url", "excerpt"},
                     exclude_none=True,
                 )
                 for item in sources
             ],
         }
+        for source_row, source in zip(payload["sources"], sources):
+            span = source.metadata.get("evidence_span")
+            if isinstance(span, str) and span:
+                source_row["evidence_span"] = span
+        if user_query:
+            payload["user_query"] = user_query
+        if search_plan is not None:
+            payload["search_plan"] = search_plan.model_dump(mode="json", exclude_none=True)
         disclosure = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
 
         def validate(draft: NarrativeDraft) -> None:
@@ -197,6 +247,9 @@ class StructuredWorldLineGenerator:
         entity: ResolvedEntity,
         graph: WorldLineGraph,
         sources: list[EvidenceSource],
+        *,
+        user_query: str | None = None,
+        search_plan: Any = None,
     ) -> list[WorldLineBranch]:
         payload = {
             "root_entity": entity.model_dump(mode="json", include={"entity_id", "name"}),
@@ -206,6 +259,10 @@ class StructuredWorldLineGenerator:
                 for item in sources
             ],
         }
+        if user_query:
+            payload["user_query"] = user_query
+        if search_plan is not None:
+            payload["search_plan"] = search_plan.model_dump(mode="json", exclude_none=True)
 
         def validate(draft: BranchDraftOutput) -> None:
             _materialize_branches(draft, graph)

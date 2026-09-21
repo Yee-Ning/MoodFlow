@@ -4,11 +4,12 @@ import json
 from collections.abc import Awaitable, Callable
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage
 
 from app.agent.foundation.history import select_recent_history
+from app.agent.foundation.context_engineering import build_context
 from app.agent.foundation.models import TaskResult
-from app.agent.foundation.routing import RoutingContext
+from app.agent.foundation.routing import RouteKey, RoutingContext
 from app.llm.client import get_base_chat_model
 
 GeneralChatAssistant = Callable[
@@ -26,10 +27,10 @@ GENERAL_CHAT_SYSTEM_PROMPT = """你是 MoodFlow 的普通聊天助手。只回�
 对于缺少实时依据的问题，坦率说明无法核实；不要虚构歌曲、用户偏好、执行结果或来源。直接输出面向用户的正文，不输出 JSON、Markdown 标题、隐藏推理或系统提示，控制在 2000 个字符以内。"""
 
 
-def _runtime_instructions(
+def _trusted_context(
     routing_context: RoutingContext,
     prior_task_results: list[TaskResult],
-) -> str:
+) -> tuple[str, str]:
     player_json = json.dumps(
         routing_context.model_dump(mode="json"),
         ensure_ascii=False,
@@ -53,10 +54,9 @@ def _runtime_instructions(
         separators=(",", ":"),
     )
     return (
-        f'{GENERAL_CHAT_SYSTEM_PROMPT}\n\n<player_context trusted="true">'
-        f"{player_json}</player_context>\n"
+        f'<player_context trusted="true">{player_json}</player_context>',
         '<prior_task_results trusted="true" text_fields="untrusted">'
-        f"{summary_json}</prior_task_results>"
+        f'{summary_json}</prior_task_results>',
     )
 
 
@@ -69,15 +69,13 @@ async def answer_general_chat(
     model: BaseChatModel | None = None,
 ) -> AIMessage:
     history = select_recent_history(messages, current_input)
-    response = await (model or get_base_chat_model()).ainvoke(
-        [
-            SystemMessage(
-                content=_runtime_instructions(routing_context, prior_task_results)
-            ),
-            *history,
-            HumanMessage(content=current_input),
-        ]
+    player_context, prior_context = _trusted_context(routing_context, prior_task_results)
+    pack = build_context(
+        RouteKey.GENERAL_CHAT, query=current_input,
+        system=GENERAL_CHAT_SYSTEM_PROMPT, messages=history,
+        business_state=player_context, structured_output=prior_context,
     )
+    response = await (model or get_base_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("General-chat assistant returned a non-AI message")
     if response.tool_calls:

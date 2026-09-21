@@ -4,10 +4,11 @@ import json
 from collections.abc import Awaitable, Callable
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage
 
 from app.agent.foundation.history import select_recent_history
-from app.agent.foundation.routing import RoutingContext
+from app.agent.foundation.context_engineering import build_context
+from app.agent.foundation.routing import RouteKey, RoutingContext
 from app.agent.song_assistant import format_song_context
 from app.llm.client import get_base_chat_model
 from app.schemas.context import SongContext
@@ -51,15 +52,16 @@ async def answer_current_song_task(
     model: BaseChatModel | None = None,
 ) -> AIMessage:
     history = select_recent_history(messages, current_input)
-    response = await (model or get_base_chat_model()).ainvoke(
-        [
-            SystemMessage(
-                content=_runtime_instructions(song_context, routing_context)
-            ),
-            *history,
-            HumanMessage(content=current_input),
-        ]
+    pack = build_context(
+        RouteKey.CURRENT_SONG, query=current_input, system=CURRENT_SONG_SYSTEM_PROMPT,
+        messages=history, current_song=format_song_context(song_context),
+        business_state=(
+            '<player_context trusted="true">'
+            + json.dumps(routing_context.model_dump(mode="json"), ensure_ascii=False, separators=(",", ":"))
+            + '</player_context>'
+        ),
     )
+    response = await (model or get_base_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("Current-song assistant returned a non-AI message")
     if response.tool_calls:
