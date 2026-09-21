@@ -2,6 +2,7 @@
 
 import json
 from collections.abc import Awaitable, Callable
+from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage
@@ -50,6 +51,7 @@ async def answer_current_song_task(
     routing_context: RoutingContext,
     *,
     model: BaseChatModel | None = None,
+    continuity_context: dict[str, Any] | None = None,
 ) -> AIMessage:
     history = select_recent_history(messages, current_input)
     pack = build_context(
@@ -60,6 +62,9 @@ async def answer_current_song_task(
             + json.dumps(routing_context.model_dump(mode="json"), ensure_ascii=False, separators=(",", ":"))
             + '</player_context>'
         ),
+        continuity_context=continuity_context,
+        trace_context={key: continuity_context[key] for key in ("task_id", "session_id", "request_id")
+                       if continuity_context and key in continuity_context},
     )
     response = await (model or get_base_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):

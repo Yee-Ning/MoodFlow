@@ -513,6 +513,7 @@ def build_worldline_subgraph(
                 generated = await worldline_generator.generate_narrative(
                     *generation_args, user_query=state["user_query"],
                     search_plan=state.get("search_plan"),
+                    continuity_context=state.get("continuity_context"),
                 )
             else:
                 generated = await worldline_generator.generate_narrative(*generation_args)
@@ -568,6 +569,7 @@ def build_worldline_subgraph(
                 branches = await worldline_generator.generate_branches(
                     *generation_args, user_query=state["user_query"],
                     search_plan=state.get("search_plan"),
+                    continuity_context=state.get("continuity_context"),
                 )
             else:
                 branches = await worldline_generator.generate_branches(*generation_args)

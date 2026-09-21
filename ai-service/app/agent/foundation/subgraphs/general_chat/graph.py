@@ -48,6 +48,7 @@ def build_general_chat_subgraph(
                 state["routing_context"],
                 state.get("prior_task_results", []),
                 model=model,
+                continuity_context=state.get("continuity_context"),
             )
         if not isinstance(response, AIMessage):
             raise RuntimeError("General-chat assistant returned a non-AI message")

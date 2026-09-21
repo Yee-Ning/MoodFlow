@@ -2,6 +2,7 @@
 
 import json
 from collections.abc import Awaitable, Callable
+from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage
@@ -67,6 +68,7 @@ async def answer_general_chat(
     prior_task_results: list[TaskResult],
     *,
     model: BaseChatModel | None = None,
+    continuity_context: dict[str, Any] | None = None,
 ) -> AIMessage:
     history = select_recent_history(messages, current_input)
     player_context, prior_context = _trusted_context(routing_context, prior_task_results)
@@ -74,6 +76,9 @@ async def answer_general_chat(
         RouteKey.GENERAL_CHAT, query=current_input,
         system=GENERAL_CHAT_SYSTEM_PROMPT, messages=history,
         business_state=player_context, structured_output=prior_context,
+        continuity_context=continuity_context,
+        trace_context={key: continuity_context[key] for key in ("task_id", "session_id", "request_id")
+                       if continuity_context and key in continuity_context},
     )
     response = await (model or get_base_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):

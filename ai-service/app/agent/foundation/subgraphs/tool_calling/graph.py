@@ -381,6 +381,7 @@ def build_tool_calling_subgraph(
                 state["routing_context"],
                 state.get("prior_entities", []),
                 model=bound_model,
+                continuity_context=state.get("continuity_context"),
             )
 
         if result.invalid_tool_calls or any(

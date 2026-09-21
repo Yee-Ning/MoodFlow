@@ -65,6 +65,7 @@ def create_subgraph_adapter(
             "task_id": task.task_id,
             "answer": None,
             "task_result": None,
+            "continuity_context": state.get("continuity_context", {}),
         }
         if task.intent_orders:
             decision = state["route_decision"]

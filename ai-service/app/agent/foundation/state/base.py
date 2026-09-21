@@ -1,4 +1,4 @@
-from typing import Annotated, NotRequired, TypedDict
+from typing import Annotated, Any, NotRequired, TypedDict
 
 from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
@@ -11,3 +11,4 @@ class BaseAgentState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
     current_input: str
     routing_intents: NotRequired[list[IntentItem]]
+    continuity_context: NotRequired[dict[str, Any]]

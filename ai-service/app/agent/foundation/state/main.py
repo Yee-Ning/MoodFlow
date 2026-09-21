@@ -1,5 +1,5 @@
 import operator
-from typing import Annotated
+from typing import Annotated, Any
 
 from langchain_core.messages import AnyMessage
 
@@ -23,6 +23,7 @@ def create_main_state(
     *,
     messages: list[AnyMessage] | None = None,
     routing_context: RoutingContext | None = None,
+    continuity_context: dict[str, Any] | None = None,
 ) -> MainState:
     """Build a complete initial state without adding runtime configuration."""
     return MainState(
@@ -33,4 +34,5 @@ def create_main_state(
         task_results=[],
         final_response=None,
         errors=[],
+        continuity_context=continuity_context or {},
     )

@@ -86,10 +86,16 @@ class ProviderWorldLineRuntime:
             query=str(payload.get("user_query") or payload.get("root_entity", {}).get("name") or "音乐世界线"),
             system=instructions,
             structured_output={key: value for key, value in payload.items()
-                               if key not in {"sources", "search_plan", "user_query"}},
+                               if key not in {"sources", "search_plan", "user_query", "continuity_context"}},
             search_plan=payload.get("search_plan"),
             rag_pack=SimpleNamespace(items=source_rows),
             rag_required_ids=required_source_ids,
+            continuity_context=payload.get("continuity_context"),
+            trace_context={
+                key: payload["continuity_context"][key]
+                for key in ("task_id", "session_id", "request_id")
+                if payload.get("continuity_context") and key in payload["continuity_context"]
+            },
         )
         selected = {
             item.metadata["evidence_id"]: item
@@ -105,6 +111,7 @@ class ProviderWorldLineRuntime:
         }
         if not any(item.type == "search_plan" for item in pack.items):
             payload.pop("search_plan", None)
+        payload.pop("continuity_context", None)
         response = await create_generation_response(
             [
                 {
@@ -161,6 +168,7 @@ class StructuredWorldLineGenerator:
         *,
         user_query: str | None = None,
         search_plan: Any = None,
+        continuity_context: dict[str, Any] | None = None,
     ) -> NarrativeOutput:
         payload = {
             "root_entity": entity.model_dump(
@@ -191,6 +199,8 @@ class StructuredWorldLineGenerator:
             payload["user_query"] = user_query
         if search_plan is not None:
             payload["search_plan"] = search_plan.model_dump(mode="json", exclude_none=True)
+        if continuity_context:
+            payload["continuity_context"] = continuity_context
         disclosure = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
 
         def validate(draft: NarrativeDraft) -> None:
@@ -250,6 +260,7 @@ class StructuredWorldLineGenerator:
         *,
         user_query: str | None = None,
         search_plan: Any = None,
+        continuity_context: dict[str, Any] | None = None,
     ) -> list[WorldLineBranch]:
         payload = {
             "root_entity": entity.model_dump(mode="json", include={"entity_id", "name"}),
@@ -263,6 +274,8 @@ class StructuredWorldLineGenerator:
             payload["user_query"] = user_query
         if search_plan is not None:
             payload["search_plan"] = search_plan.model_dump(mode="json", exclude_none=True)
+        if continuity_context:
+            payload["continuity_context"] = continuity_context
 
         def validate(draft: BranchDraftOutput) -> None:
             _materialize_branches(draft, graph)

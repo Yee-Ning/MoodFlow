@@ -3,10 +3,13 @@
 from collections.abc import AsyncIterator
 from functools import lru_cache
 from typing import Any
+from uuid import uuid4
 
 from langchain_core.messages import HumanMessage
 
 from app.agent.foundation.graph_factory import create_main_graph
+from app.agent.foundation.long_horizon.models import HistoryEventType
+from app.agent.foundation.long_horizon.runtime import get_long_horizon_service
 from app.agent.foundation.models import TaskResult
 from app.agent.foundation.response import foundation_response
 from app.agent.foundation.routing import RouteDecision, RoutingContext
@@ -54,6 +57,53 @@ def _task_results(update: Any) -> list[TaskResult]:
     ]
 
 
+def _continuity_start(thread_id: str, routing_context: RoutingContext, *, enabled: bool):
+    if not enabled:
+        return None, thread_id, {}, None
+    service = get_long_horizon_service()
+    session = service.open_task(thread_id)
+    cold = service.cold_start(
+        session.session_id,
+        live_state=routing_context.model_dump(mode="json"),
+    )
+    context = {
+        "handoff": cold.handoff.model_dump(mode="json", exclude_none=True) if cold.handoff else None,
+        "key_events": [item.model_dump(mode="json", exclude_none=True) for item in cold.key_events],
+        "artifacts": [
+            {"ref": item.ref, "artifact_type": item.artifact_type, "projection": item.projection}
+            for item in cold.artifacts
+        ],
+        "changed_fields": cold.changed_fields,
+    }
+    return service, session.session_id, context, session
+
+
+def _record_result(service, session, result: TaskResult, request_id: str) -> None:
+    payload = result.model_dump(mode="json", exclude_none=True)
+    serialized_size = len(result.model_dump_json())
+    if serialized_size > 12_000:
+        artifact = service.create_artifact(
+            task_id=session.task_id, session_id=session.session_id,
+            artifact_type=f"task_result:{result.route_key}", payload=payload,
+            projection={"task_id": result.task_id, "route_key": result.route_key,
+                        "status": result.status.value, "content": result.content},
+            metadata={"request_id": request_id},
+        )
+        service.record_event(
+            task_id=session.task_id, session_id=session.session_id,
+            event_type=HistoryEventType.STRUCTURED_OUTPUT,
+            node=str(result.route_key), source="subgraph",
+            storage_ref=artifact.ref, request_id=request_id,
+        )
+    else:
+        service.record_event(
+            task_id=session.task_id, session_id=session.session_id,
+            event_type=HistoryEventType.STRUCTURED_OUTPUT,
+            node=str(result.route_key), source="subgraph", payload=payload,
+            request_id=request_id,
+        )
+
+
 async def stream_foundation_assistant(
     message: str,
     thread_id: str,
@@ -66,16 +116,32 @@ async def stream_foundation_assistant(
     task_results: list[TaskResult] = []
     route_decision: RouteDecision | None = None
     emitted_action_ids: set[str] = set()
+    continuity, graph_thread_id, continuity_context, session = _continuity_start(
+        thread_id, routing_context, enabled=graph is None,
+    )
+    request_id = f"request:{uuid4().hex}"
+    if continuity is not None:
+        continuity_context.update({
+            "task_id": session.task_id,
+            "session_id": session.session_id,
+            "request_id": request_id,
+        })
+        continuity.record_event(
+            task_id=session.task_id, session_id=session.session_id,
+            event_type=HistoryEventType.USER_MESSAGE,
+            node="input", source="user", payload={"text": message}, request_id=request_id,
+        )
     initial_state = create_main_state(
         message,
         messages=[HumanMessage(content=message)],
         routing_context=routing_context,
+        continuity_context=continuity_context,
     )
 
     async for part in (graph or get_foundation_graph()).astream(
         initial_state,
         {
-            "configurable": {"thread_id": thread_id},
+            "configurable": {"thread_id": graph_thread_id},
             "recursion_limit": FOUNDATION_RECURSION_LIMIT,
         },
         context=MusicAgentContext(session_cookie=session_cookie),
@@ -109,9 +175,21 @@ async def stream_foundation_assistant(
                         raw_decision if isinstance(raw_decision, RouteDecision)
                         else RouteDecision.model_validate(raw_decision)
                     )
+                    if continuity is not None:
+                        continuity.record_event(
+                            task_id=session.task_id, session_id=session.session_id,
+                            event_type=HistoryEventType.ROUTE_DECISION,
+                            node=node, source="router",
+                            payload=route_decision.model_dump(mode="json"),
+                            request_id=request_id,
+                        )
 
             if node.endswith("_subgraph"):
-                task_results.extend(_task_results(update))
+                new_results = _task_results(update)
+                task_results.extend(new_results)
+                if continuity is not None:
+                    for result in new_results:
+                        _record_result(continuity, session, result, request_id)
 
             if node == "tool_calling_subgraph":
                 for result in _task_results(update):
@@ -129,6 +207,13 @@ async def stream_foundation_assistant(
 
     if final_response is None:
         raise RuntimeError("Foundation MainGraph returned no final response")
+    if continuity is not None:
+        continuity.record_event(
+            task_id=session.task_id, session_id=session.session_id,
+            event_type=HistoryEventType.ASSISTANT_MESSAGE,
+            node="final_response", source="assistant",
+            payload={"text": final_response}, request_id=request_id,
+        )
     yield FinalStreamEvent(
         response=foundation_response(
             final_response,
@@ -149,14 +234,30 @@ async def invoke_foundation_assistant(
     session_cookie: str | None = None,
     graph: Any | None = None,
 ) -> FoundationResponse:
+    continuity, graph_thread_id, continuity_context, session = _continuity_start(
+        thread_id, routing_context, enabled=graph is None,
+    )
+    request_id = f"request:{uuid4().hex}"
+    if continuity is not None:
+        continuity_context.update({
+            "task_id": session.task_id,
+            "session_id": session.session_id,
+            "request_id": request_id,
+        })
+        continuity.record_event(
+            task_id=session.task_id, session_id=session.session_id,
+            event_type=HistoryEventType.USER_MESSAGE,
+            node="input", source="user", payload={"text": message}, request_id=request_id,
+        )
     output = await (graph or get_foundation_graph()).ainvoke(
         create_main_state(
             message,
             messages=[HumanMessage(content=message)],
             routing_context=routing_context,
+            continuity_context=continuity_context,
         ),
         {
-            "configurable": {"thread_id": thread_id},
+            "configurable": {"thread_id": graph_thread_id},
             "recursion_limit": FOUNDATION_RECURSION_LIMIT,
         },
         context=MusicAgentContext(session_cookie=session_cookie),
@@ -174,6 +275,22 @@ async def invoke_foundation_assistant(
         if (item.task_id if isinstance(item, TaskResult) else item.get("task_id"))
         in active_ids
     ]
+    if continuity is not None:
+        if decision is not None:
+            continuity.record_event(
+                task_id=session.task_id, session_id=session.session_id,
+                event_type=HistoryEventType.ROUTE_DECISION,
+                node="intent_router", source="router",
+                payload=decision.model_dump(mode="json"), request_id=request_id,
+            )
+        for result in results:
+            _record_result(continuity, session, result, request_id)
+        continuity.record_event(
+            task_id=session.task_id, session_id=session.session_id,
+            event_type=HistoryEventType.ASSISTANT_MESSAGE,
+            node="final_response", source="assistant",
+            payload={"text": message_text.strip()}, request_id=request_id,
+        )
     return foundation_response(
         message_text.strip(),
         results,

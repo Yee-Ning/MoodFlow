@@ -3,6 +3,7 @@
 import json
 from collections.abc import Awaitable, Callable, Sequence
 from functools import lru_cache
+from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
@@ -76,6 +77,7 @@ async def answer_tool_calling_task(
     prior_entities: list[ReferencedEntities],
     *,
     model: BaseChatModel | None = None,
+    continuity_context: dict[str, Any] | None = None,
 ) -> AIMessage:
     history = list(messages)
     if history and isinstance(history[-1], HumanMessage):
@@ -85,6 +87,9 @@ async def answer_tool_calling_task(
         RouteKey.TOOL_CALLING, query=current_input,
         system=TOOL_CALLING_SYSTEM_PROMPT, messages=history,
         business_state=player_context, structured_output=entity_context,
+        continuity_context=continuity_context,
+        trace_context={key: continuity_context[key] for key in ("task_id", "session_id", "request_id")
+                       if continuity_context and key in continuity_context},
     )
     response = await (model or get_tool_calling_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):

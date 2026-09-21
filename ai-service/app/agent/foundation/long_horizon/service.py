@@ -1,0 +1,299 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any
+from uuid import uuid4
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.agent.foundation.context_engineering import ContextPack, build_context
+from app.agent.foundation.routing import RouteKey
+from app.rag.chunk.token_counter import TokenCounter, UnicodeHeuristicTokenCounter
+
+from .models import (
+    ArtifactRecord,
+    ColdStartContext,
+    HandoffDraft,
+    HandoffProjection,
+    HistoryEvent,
+    HistoryEventType,
+    HistoryPointer,
+    RolloverReason,
+    RolloverResult,
+    SessionRecord,
+)
+from .store import SQLiteContinuityStore
+
+
+class RolloverPolicy(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    active_context_threshold: int = Field(default=5200, gt=0)
+    handoff_token_budget: int = Field(default=1200, gt=0)
+    rollover_on_artifact: bool = False
+
+
+def _unique(values: list[Any]) -> list[Any]:
+    seen: set[str] = set()
+    result: list[Any] = []
+    for value in values:
+        key = json.dumps(
+            value.model_dump(mode="json") if isinstance(value, BaseModel) else value,
+            ensure_ascii=False, sort_keys=True, default=str,
+        )
+        if key not in seen:
+            seen.add(key)
+            result.append(value)
+    return result
+
+
+class LongHorizonContextService:
+    def __init__(self, store: SQLiteContinuityStore, *, policy: RolloverPolicy | None = None,
+                 counter: TokenCounter | None = None,
+                 now: Callable[[], datetime] | None = None):
+        self.store = store
+        self.policy = policy or RolloverPolicy()
+        self.counter = counter or UnicodeHeuristicTokenCounter()
+        self._now = now or (lambda: datetime.now(UTC))
+
+    def open_task(self, task_id: str, *, parent_session_id: str | None = None) -> SessionRecord:
+        active = self.store.active_session(task_id)
+        if active is not None:
+            return active
+        session = SessionRecord(
+            task_id=task_id, session_id=f"session:{uuid4().hex}",
+            parent_session_id=parent_session_id, created_at=self._now(),
+        )
+        self.store.create_session(session)
+        return session
+
+    def get_history_event(self, event_id: str) -> HistoryEvent | None:
+        return self.store.get_history_event(event_id)
+
+    def query_task_history(self, task_id: str, *, event_type: HistoryEventType | None = None,
+                           session_id: str | None = None, keyword: str | None = None,
+                           limit: int = 100) -> list[HistoryEvent]:
+        return self.store.query_task_history(
+            task_id, event_type=event_type.value if event_type else None,
+            session_id=session_id, keyword=keyword, limit=limit,
+        )
+
+    def get_artifact(self, ref: str) -> ArtifactRecord | None:
+        return self.store.get_artifact(ref)
+
+    def record_event(self, *, task_id: str, session_id: str, event_type: HistoryEventType,
+                     node: str, source: str, payload: dict[str, Any] | None = None,
+                     storage_ref: str | None = None, references: list[HistoryPointer] | None = None,
+                     metadata: dict[str, Any] | None = None, request_id: str | None = None) -> HistoryEvent:
+        event = HistoryEvent(
+            event_id=f"evt:{uuid4().hex}", task_id=task_id, session_id=session_id,
+            event_type=event_type, timestamp=self._now(), node=node, source=source,
+            payload=payload, storage_ref=storage_ref, references=references or [],
+            metadata=metadata or {}, request_id=request_id,
+        )
+        self.store.append_event(event)
+        return event
+
+    def create_artifact(self, *, task_id: str, session_id: str, artifact_type: str,
+                        payload: Any, projection: dict[str, Any],
+                        metadata: dict[str, Any] | None = None) -> ArtifactRecord:
+        serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str).encode()
+        artifact = ArtifactRecord(
+            artifact_id=f"artifact-{uuid4().hex}", task_id=task_id, session_id=session_id,
+            artifact_type=artifact_type, created_at=self._now(),
+            content_hash="sha256:" + hashlib.sha256(serialized).hexdigest(),
+            payload=payload, projection=projection, metadata=metadata or {},
+        )
+        self.store.put_artifact(artifact)
+        self.record_event(
+            task_id=task_id, session_id=session_id,
+            event_type=HistoryEventType.ARTIFACT_CREATED,
+            node="artifact_store", source=artifact_type,
+            storage_ref=artifact.ref,
+            references=[HistoryPointer(kind="artifact", target_id=artifact.ref)],
+            metadata={"projection": projection, "content_hash": artifact.content_hash},
+        )
+        return artifact
+
+    def should_rollover(self, *, active_context_tokens: int,
+                        explicit_checkpoint: bool = False,
+                        artifact_created: bool = False) -> RolloverReason | None:
+        if explicit_checkpoint:
+            return RolloverReason.EXPLICIT_CHECKPOINT
+        if active_context_tokens >= self.policy.active_context_threshold:
+            return RolloverReason.TOKEN_THRESHOLD
+        if artifact_created and self.policy.rollover_on_artifact:
+            return RolloverReason.ARTIFACT_CREATED
+        return None
+
+    def _inherit(self, session: SessionRecord, draft: HandoffDraft) -> HandoffDraft:
+        if not session.inherited_handoff_id:
+            return draft
+        prior = self.store.get_handoff(session.inherited_handoff_id)
+        if prior is None:
+            raise ValueError("session inherited handoff cannot be resolved")
+        return draft.model_copy(update={
+            "constraints": _unique([*prior.constraints, *draft.constraints]),
+            "constraint_refs": {**prior.constraint_refs, **draft.constraint_refs},
+            "preferences": _unique([*prior.preferences, *draft.preferences]),
+            "decisions": _unique([*prior.decisions, *draft.decisions]),
+            "decision_refs": {**prior.decision_refs, **draft.decision_refs},
+            "important_entities": _unique([*prior.important_entities, *draft.important_entities]),
+            "key_message_refs": _unique([*prior.key_message_refs, *draft.key_message_refs]),
+            "artifact_refs": _unique([*prior.artifact_refs, *draft.artifact_refs]),
+            "evidence_refs": _unique([*prior.evidence_refs, *draft.evidence_refs]),
+            "revalidate_fields": _unique([*prior.revalidate_fields, *draft.revalidate_fields]),
+            "last_known_state": {**prior.last_known_state, **draft.last_known_state},
+        })
+
+    def build_handoff(self, session_id: str, draft: HandoffDraft) -> HandoffProjection:
+        session = self.store.require_session(session_id)
+        if session.closed_at is not None:
+            raise ValueError("cannot hand off a closed session")
+        draft = self._inherit(session, draft)
+        linked = [pointer for values in [*draft.constraint_refs.values(),
+                                         *draft.decision_refs.values()] for pointer in values]
+        self.store.validate_pointers([*draft.key_message_refs, *draft.evidence_refs, *linked],
+                                     task_id=session.task_id)
+        for ref in draft.artifact_refs:
+            artifact = self.store.get_artifact(ref)
+            if artifact is None or artifact.task_id != session.task_id:
+                raise ValueError(f"unresolvable artifact pointer:{ref}")
+        values = draft.model_dump(mode="json")
+        dropped: list[str] = []
+
+        def tokens() -> int:
+            return self.counter.count(json.dumps(values, ensure_ascii=False, separators=(",", ":")))
+
+        # Handoff remains structured. Trim low-value projections before required state.
+        for field in ("summary", "key_message_refs", "completed_steps", "important_entities", "preferences"):
+            while tokens() > self.policy.handoff_token_budget and values[field]:
+                if field == "summary":
+                    values[field] = values[field][: max(0, len(values[field]) // 2)]
+                    if len(values[field]) < 32:
+                        values[field] = ""
+                else:
+                    values[field].pop()
+                if field not in dropped:
+                    dropped.append(field)
+        if tokens() > self.policy.handoff_token_budget:
+            raise ValueError("required handoff fields exceed token budget")
+        return HandoffProjection(
+            **values, handoff_id=f"handoff:{uuid4().hex}", task_id=session.task_id,
+            session_id=session.session_id, created_at=self._now(),
+            token_count=tokens(), token_budget=self.policy.handoff_token_budget,
+            dropped_fields=dropped,
+        )
+
+    def rollover(self, session_id: str, draft: HandoffDraft,
+                 reason: RolloverReason) -> RolloverResult:
+        session = self.store.require_session(session_id)
+        handoff = self.build_handoff(session_id, draft)
+        checkpoint = self.record_event(
+            task_id=session.task_id, session_id=session_id,
+            event_type=HistoryEventType.CHECKPOINT, node="rollover", source=reason.value,
+            payload={"reason": reason.value, "handoff_id": handoff.handoff_id},
+        )
+        self.store.put_handoff(handoff)
+        self.record_event(
+            task_id=session.task_id, session_id=session_id,
+            event_type=HistoryEventType.HANDOFF, node="rollover", source="handoff_projection",
+            payload={"handoff_id": handoff.handoff_id, "token_count": handoff.token_count},
+            references=[HistoryPointer(kind="event", target_id=checkpoint.event_id)],
+        )
+        closed = self.store.close_session(session_id, self._now().isoformat())
+        new_session = SessionRecord(
+            task_id=session.task_id, session_id=f"session:{uuid4().hex}",
+            previous_session_id=session.session_id,
+            parent_session_id=session.parent_session_id or session.session_id,
+            inherited_handoff_id=handoff.handoff_id, created_at=self._now(),
+        )
+        self.store.create_session(new_session)
+        return RolloverResult(
+            closed_session=closed, handoff=handoff,
+            new_session=new_session, reason=reason,
+        )
+
+    def cold_start(self, session_id: str, *, live_state: dict[str, Any]) -> ColdStartContext:
+        session = self.store.require_session(session_id)
+        handoff = (self.store.get_handoff(session.inherited_handoff_id)
+                   if session.inherited_handoff_id else None)
+        if handoff is None:
+            return ColdStartContext(task_id=session.task_id, session_id=session_id,
+                                    revalidated_state=live_state)
+        changed = [field for field in handoff.revalidate_fields
+                   if handoff.last_known_state.get(field) != live_state.get(field)]
+        linked_pointers = _unique([
+            *handoff.key_message_refs, *handoff.evidence_refs,
+            *(pointer for values in handoff.constraint_refs.values() for pointer in values),
+            *(pointer for values in handoff.decision_refs.values() for pointer in values),
+        ])
+        key_events = [event for pointer in linked_pointers
+                      if pointer.kind == "event"
+                      if (event := self.store.get_history_event(pointer.target_id)) is not None]
+        artifacts = [artifact for ref in handoff.artifact_refs
+                     if (artifact := self.store.get_artifact(ref)) is not None]
+        self.record_event(
+            task_id=session.task_id, session_id=session_id,
+            event_type=HistoryEventType.REALITY_REVALIDATION,
+            node="cold_start", source="live_state",
+            payload={"historical": handoff.last_known_state,
+                     "current": live_state, "changed_fields": changed},
+            references=handoff.evidence_refs,
+        )
+        return ColdStartContext(
+            task_id=session.task_id, session_id=session_id, handoff=handoff,
+            key_events=key_events, artifacts=artifacts,
+            revalidated_state=live_state, historical_state=handoff.last_known_state,
+            changed_fields=changed,
+        )
+
+    def drill_down(self, *, task_id: str, pointers: list[HistoryPointer] | None = None,
+                   event_type: HistoryEventType | None = None,
+                   session_id: str | None = None, keyword: str | None = None,
+                   limit: int = 20) -> list[HistoryEvent | ArtifactRecord]:
+        if pointers:
+            self.store.validate_pointers(pointers, task_id=task_id)
+            return [target for pointer in pointers if (target := (
+                self.store.get_history_event(pointer.target_id) if pointer.kind == "event"
+                else self.store.get_artifact(pointer.target_id))) is not None]
+        return self.store.query_task_history(
+            task_id, event_type=event_type.value if event_type else None,
+            session_id=session_id, keyword=keyword, limit=limit,
+        )
+
+    def build_active_context(self, node: RouteKey, *, session_id: str, query: str,
+                             system: str, live_state: dict[str, Any],
+                             drilldown: list[HistoryEvent | ArtifactRecord] | None = None,
+                             recent_messages: list[Any] | None = None, **sources: Any) -> ContextPack:
+        cold = self.cold_start(session_id, live_state=live_state)
+        history_rows = [item.model_dump(mode="json", exclude_none=True)
+                        for item in (drilldown or []) if isinstance(item, HistoryEvent)]
+        artifact_rows = [
+            {"ref": item.ref, "artifact_type": item.artifact_type, "projection": item.projection}
+            for item in [*cold.artifacts, *(drilldown or [])]
+            if isinstance(item, ArtifactRecord)
+        ]
+        pack = build_context(
+            node, query=query, system=system, messages=recent_messages,
+            trace_context={"task_id": cold.task_id, "session_id": session_id},
+            business_state={"live": cold.revalidated_state,
+                            "historical": cold.historical_state,
+                            "changed_fields": cold.changed_fields},
+            handoff_projection=(cold.handoff.model_dump(mode="json", exclude_none=True)
+                                if cold.handoff else None),
+            history_drilldown=history_rows,
+            artifact_projections=artifact_rows,
+            **sources,
+        )
+        self.record_event(
+            task_id=cold.task_id, session_id=session_id,
+            event_type=HistoryEventType.CONTEXT_TRACE,
+            node=node.value, source="phase1_context_engineering",
+            payload={"total_tokens": pack.total_tokens, "budget": pack.budget,
+                     "trace": pack.trace.model_dump(mode="json")},
+        )
+        return pack

@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 ContextType = Literal[
     "system", "user_query", "conversation", "current_song", "business_state",
     "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence",
+    "handoff_projection", "history_drilldown", "artifact_projection", "memory_source",
 ]
 
 
@@ -50,6 +51,9 @@ class ContextTraceEntry(BaseModel):
     reason: str
     token_before: int = Field(ge=0)
     token_after: int = Field(ge=0)
+    task_id: str | None = None
+    session_id: str | None = None
+    request_id: str | None = None
 
 
 class ContextTrace(BaseModel):
@@ -92,7 +96,7 @@ class ContextPack(BaseModel):
 POLICIES: dict[RouteKey, ContextPolicy] = {
     RouteKey.CURRENT_SONG: ContextPolicy(
         node=RouteKey.CURRENT_SONG,
-        allowed_types=frozenset({"system", "user_query", "conversation", "current_song", "business_state"}),
+        allowed_types=frozenset({"system", "user_query", "conversation", "current_song", "business_state", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source"}),
         source_budgets={"conversation": 1600, "current_song": 2800},
         priorities={"current_song": 90, "conversation": 35, "business_state": 60},
     ),
@@ -100,13 +104,13 @@ POLICIES: dict[RouteKey, ContextPolicy] = {
         node=RouteKey.TOOL_CALLING,
         total_input_budget=12288,
         reserved_output_tokens=2048,
-        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "tool_result", "route_decision"}),
+        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "tool_result", "route_decision", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source"}),
         source_budgets={"conversation": 2200, "tool_result": 4500},
         priorities={"structured_output": 90, "tool_result": 75, "conversation": 40},
     ),
     RouteKey.GENERAL_CHAT: ContextPolicy(
         node=RouteKey.GENERAL_CHAT,
-        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output"}),
+        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source"}),
         source_budgets={"conversation": 2400, "structured_output": 1000},
         priorities={"conversation": 80, "structured_output": 65, "business_state": 55},
     ),
@@ -114,7 +118,7 @@ POLICIES: dict[RouteKey, ContextPolicy] = {
         node=RouteKey.WORLDLINE,
         total_input_budget=12288,
         reserved_output_tokens=2500,
-        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence"}),
+        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source"}),
         source_budgets={"conversation": 800, "rag_evidence": 5000, "tool_result": 1800},
         priorities={"search_plan": 90, "rag_evidence": 85, "tool_result": 65, "conversation": 30},
     ),
@@ -158,6 +162,9 @@ class ContextCollector:
         current_song: Any = None, business_state: Any = None, route_decision: Any = None,
         structured_output: Any = None, search_plan: Any = None, tool_results: list[Any] | None = None,
         rag_pack: Any = None, rag_required_ids: set[str] | None = None,
+        handoff_projection: Any = None, history_drilldown: list[Any] | None = None,
+        artifact_projections: list[Any] | None = None, memory_source: Any = None,
+        continuity_context: dict[str, Any] | None = None,
     ) -> list[ContextItem]:
         items: list[ContextItem] = []
 
@@ -208,6 +215,17 @@ class ContextCollector:
         add("route_decision", "route_decision", route_decision)
         add("structured_output", "structured_output", structured_output, required=structured_output is not None, compressible=False)
         add("search_plan", "search_plan", search_plan)
+        if continuity_context:
+            handoff_projection = handoff_projection or continuity_context.get("handoff")
+            history_drilldown = [*(history_drilldown or []), *continuity_context.get("key_events", [])]
+            artifact_projections = [*(artifact_projections or []), *continuity_context.get("artifacts", [])]
+        add("handoff", "handoff_projection", handoff_projection, required=handoff_projection is not None,
+            compressible=False)
+        for index, result in enumerate(history_drilldown or []):
+            add(f"history_drilldown:{index}", "history_drilldown", result)
+        for index, artifact in enumerate(artifact_projections or []):
+            add(f"artifact:{index}", "artifact_projection", artifact)
+        add("memory_source", "memory_source", memory_source)
         for index, result in enumerate(tool_results or []):
             call_id = result.get("tool_call_id", index) if isinstance(result, dict) else index
             add(f"tool_result:{call_id}", "tool_result", _project_tool_result(result),
@@ -292,9 +310,11 @@ def _compress_tool_json(text: str, limit: int, counter: TokenCounter) -> str:
 
 
 class ContextAssembler:
-    ORDER = {"system": 0, "route_decision": 1, "structured_output": 2,
-             "search_plan": 3, "current_song": 4, "business_state": 5,
-             "rag_evidence": 6, "conversation": 8, "tool_result": 8, "user_query": 9}
+    ORDER = {"system": 0, "handoff_projection": 1, "route_decision": 2,
+             "structured_output": 3, "search_plan": 4, "current_song": 5,
+             "business_state": 6, "artifact_projection": 7, "history_drilldown": 8,
+             "memory_source": 9, "rag_evidence": 10, "conversation": 11,
+             "tool_result": 11, "user_query": 12}
 
     def assemble(self, items: list[ContextItem]) -> list[BaseMessage]:
         ordered = sorted(enumerate(items), key=lambda pair: (self.ORDER[pair[1].type], pair[0]))
@@ -330,7 +350,8 @@ class ContextSelector:
         self.counter = counter or UnicodeHeuristicTokenCounter()
         self.assembler = ContextAssembler()
 
-    def build(self, items: list[ContextItem], policy: ContextPolicy) -> ContextPack:
+    def build(self, items: list[ContextItem], policy: ContextPolicy,
+              trace_context: dict[str, str] | None = None) -> ContextPack:
         if policy.input_budget <= 0:
             raise ValueError("context input budget must be positive")
         trace: list[ContextTraceEntry] = []
@@ -342,7 +363,8 @@ class ContextSelector:
         def event(item: ContextItem, stage: str, reason: str, after: int | None = None) -> None:
             trace.append(ContextTraceEntry(item_id=item.id, stage=stage, reason=reason,
                                            token_before=item.token_count,
-                                           token_after=item.token_count if after is None else after))
+                                           token_after=item.token_count if after is None else after,
+                                           **(trace_context or {})))
 
         for original in items:
             item = original.model_copy(update={"priority": policy.priorities.get(original.type, original.priority)})
@@ -351,7 +373,8 @@ class ContextSelector:
             if isinstance(before_projection, int) and before_projection > item.token_count:
                 compressed.append(item.id)
                 trace.append(ContextTraceEntry(item_id=item.id, stage="compressed", reason="schema_projection",
-                                               token_before=before_projection, token_after=item.token_count))
+                                               token_before=before_projection, token_after=item.token_count,
+                                               **(trace_context or {})))
             if item.type not in policy.allowed_types and not item.required:
                 dropped.append(item.id)
                 event(item, "dropped", "policy_excluded", 0)
@@ -398,7 +421,7 @@ class ContextSelector:
 
         if total(candidates) > policy.input_budget:
             for item in sorted(candidates, key=lambda value: value.priority):
-                if not item.compressible or item.type in {"system", "user_query", "structured_output", "route_decision"}:
+                if not item.compressible or item.type in {"system", "user_query", "structured_output", "route_decision", "handoff_projection"}:
                     continue
                 excess = total(candidates) - policy.input_budget
                 target = max(0, item.token_count - excess)
@@ -435,7 +458,8 @@ class ContextSelector:
                            dropped_items=dropped, compressed_items=compressed,
                            messages=self.assembler.assemble(final), trace=ContextTrace(entries=trace))
         logger.info("context_engineering node=%s collected=%d final=%d tokens=%d budget=%d dropped=%s compressed=%s",
-                    policy.node, len(items), len(final), pack.total_tokens, pack.budget, dropped, compressed)
+                    policy.node, len(items), len(final), pack.total_tokens, pack.budget, dropped, compressed,
+                    extra=trace_context or {})
         if policy.node is RouteKey.WORLDLINE:
             logger.info("context_engineering.rag retrieved=%d final=%d dropped=%s",
                         sum(item.type == "rag_evidence" for item in items),
@@ -445,7 +469,10 @@ class ContextSelector:
 
 
 def build_context(node: RouteKey, *, policy: ContextPolicy | None = None, counter: TokenCounter | None = None,
+                  trace_context: dict[str, str] | None = None,
                   **sources: Any) -> ContextPack:
     token_counter = counter or UnicodeHeuristicTokenCounter()
     collected = ContextCollector(token_counter).collect(**sources)
-    return ContextSelector(token_counter).build(collected, policy or POLICIES[node])
+    return ContextSelector(token_counter).build(
+        collected, policy or POLICIES[node], trace_context=trace_context,
+    )
