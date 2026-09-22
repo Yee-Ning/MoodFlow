@@ -2,10 +2,16 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
+from dotenv import load_dotenv
 from pydantic import AnyHttpUrl, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+
+
+def load_runtime_environment() -> None:
+    """Make non-LLM persistence settings in .env available to runtime components."""
+    load_dotenv(ENV_FILE, override=False)
 
 
 class Settings(BaseSettings):

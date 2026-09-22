@@ -14,10 +14,12 @@ from app.agent.foundation.long_horizon.runtime import (
 from app.agent.memory.runtime import close_memory_runtime, get_memory_runtime, memory_backend
 from app.api.chat import router as chat_router
 from app.api.worldline import router as worldline_router
+from app.config.settings import load_runtime_environment
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    load_runtime_environment()
     await initialize_runtime_checkpointer()
     if persistence_backend() == "postgres":
         get_long_horizon_service()
