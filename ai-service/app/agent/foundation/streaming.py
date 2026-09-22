@@ -1,5 +1,6 @@
 """SSE-facing runner for the Foundation MainGraph."""
 
+import logging
 from collections.abc import AsyncIterator
 from functools import lru_cache
 from typing import Any
@@ -10,6 +11,8 @@ from langchain_core.messages import HumanMessage
 from app.agent.foundation.graph_factory import create_main_graph
 from app.agent.foundation.long_horizon.models import HistoryEventType
 from app.agent.foundation.long_horizon.runtime import get_long_horizon_service
+from app.agent.memory.models import MemoryRetrievalRequest
+from app.agent.memory.runtime import get_memory_runtime
 from app.agent.foundation.models import TaskResult
 from app.agent.foundation.response import foundation_response
 from app.agent.foundation.routing import RouteDecision, RoutingContext
@@ -40,6 +43,7 @@ FOUNDATION_UPDATE_NODES = frozenset(
     }
 )
 FOUNDATION_RECURSION_LIMIT = 40
+logger = logging.getLogger(__name__)
 
 
 @lru_cache
@@ -57,7 +61,14 @@ def _task_results(update: Any) -> list[TaskResult]:
     ]
 
 
-def _continuity_start(thread_id: str, routing_context: RoutingContext, *, enabled: bool):
+async def _continuity_start(
+    thread_id: str,
+    routing_context: RoutingContext,
+    *,
+    enabled: bool,
+    user_id: str | None = None,
+    memory_runtime: Any | None = None,
+):
     if not enabled:
         return None, thread_id, {}, None
     service = get_long_horizon_service()
@@ -76,6 +87,52 @@ def _continuity_start(thread_id: str, routing_context: RoutingContext, *, enable
         "changed_fields": cold.changed_fields,
     }
     return service, thread_id, context, session
+
+
+async def _retrieve_query_memories(
+    *,
+    context: dict[str, Any],
+    user_id: str | None,
+    message: str,
+    enabled: bool,
+    memory_runtime: Any | None,
+) -> None:
+    if user_id is None or (not enabled and memory_runtime is None):
+        return
+    try:
+        memory = await (memory_runtime or get_memory_runtime()).retrieve(
+            MemoryRetrievalRequest(user_id=user_id, query=message, top_k=8)
+        )
+        context["long_term_memory"] = memory.context_items()
+        context["user_id"] = user_id
+    except Exception:
+        logger.warning(
+            "Long-term memory retrieval unavailable; continuing without memory",
+            exc_info=True,
+        )
+
+
+async def _extract_memories(
+    *,
+    user_id: str | None,
+    thread_id: str,
+    user_message: str,
+    enabled: bool,
+    memory_runtime: Any | None,
+) -> None:
+    if user_id is None or (not enabled and memory_runtime is None):
+        return
+    try:
+        await (memory_runtime or get_memory_runtime()).extract_and_store(
+            user_id=user_id,
+            source_thread_id=thread_id,
+            user_message=user_message,
+        )
+    except Exception:
+        logger.warning(
+            "Long-term memory extraction unavailable; conversation remains successful",
+            exc_info=True,
+        )
 
 
 def _graph_config(conversation_id: str, session) -> dict[str, Any]:
@@ -123,13 +180,26 @@ async def stream_foundation_assistant(
     *,
     session_cookie: str | None = None,
     graph: Any | None = None,
+    user_id: str | None = None,
+    memory_runtime: Any | None = None,
 ) -> AsyncIterator[SongAssistantStreamEvent]:
     final_response: str | None = None
     task_results: list[TaskResult] = []
     route_decision: RouteDecision | None = None
     emitted_action_ids: set[str] = set()
-    continuity, graph_thread_id, continuity_context, session = _continuity_start(
-        thread_id, routing_context, enabled=graph is None,
+    continuity, graph_thread_id, continuity_context, session = await _continuity_start(
+        thread_id,
+        routing_context,
+        enabled=graph is None,
+        user_id=user_id,
+        memory_runtime=memory_runtime,
+    )
+    await _retrieve_query_memories(
+        context=continuity_context,
+        user_id=user_id,
+        message=message,
+        enabled=graph is None,
+        memory_runtime=memory_runtime,
     )
     request_id = f"request:{uuid4().hex}"
     if continuity is not None:
@@ -154,7 +224,7 @@ async def stream_foundation_assistant(
     async for part in (graph or get_foundation_graph()).astream(
         initial_state,
         _graph_config(graph_thread_id, session),
-        context=MusicAgentContext(session_cookie=session_cookie),
+        context=MusicAgentContext(session_cookie=session_cookie, user_id=user_id),
         stream_mode=["messages", "updates"],
         version="v2",
     ):
@@ -224,6 +294,13 @@ async def stream_foundation_assistant(
             node="final_response", source="assistant",
             payload={"text": final_response}, request_id=request_id,
         )
+    await _extract_memories(
+        user_id=user_id,
+        thread_id=thread_id,
+        user_message=message,
+        enabled=graph is None,
+        memory_runtime=memory_runtime,
+    )
     yield FinalStreamEvent(
         response=foundation_response(
             final_response,
@@ -243,9 +320,22 @@ async def invoke_foundation_assistant(
     *,
     session_cookie: str | None = None,
     graph: Any | None = None,
+    user_id: str | None = None,
+    memory_runtime: Any | None = None,
 ) -> FoundationResponse:
-    continuity, graph_thread_id, continuity_context, session = _continuity_start(
-        thread_id, routing_context, enabled=graph is None,
+    continuity, graph_thread_id, continuity_context, session = await _continuity_start(
+        thread_id,
+        routing_context,
+        enabled=graph is None,
+        user_id=user_id,
+        memory_runtime=memory_runtime,
+    )
+    await _retrieve_query_memories(
+        context=continuity_context,
+        user_id=user_id,
+        message=message,
+        enabled=graph is None,
+        memory_runtime=memory_runtime,
     )
     request_id = f"request:{uuid4().hex}"
     if continuity is not None:
@@ -268,7 +358,7 @@ async def invoke_foundation_assistant(
             continuity_context=continuity_context,
         ),
         _graph_config(graph_thread_id, session),
-        context=MusicAgentContext(session_cookie=session_cookie),
+        context=MusicAgentContext(session_cookie=session_cookie, user_id=user_id),
     )
     message_text = output.get("final_response")
     if not isinstance(message_text, str) or not message_text.strip():
@@ -299,6 +389,13 @@ async def invoke_foundation_assistant(
             node="final_response", source="assistant",
             payload={"text": message_text.strip()}, request_id=request_id,
         )
+    await _extract_memories(
+        user_id=user_id,
+        thread_id=thread_id,
+        user_message=message,
+        enabled=graph is None,
+        memory_runtime=memory_runtime,
+    )
     return foundation_response(
         message_text.strip(),
         results,

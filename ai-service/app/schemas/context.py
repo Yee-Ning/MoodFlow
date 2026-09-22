@@ -11,6 +11,7 @@ class MusicAgentContext:
     """Per-request trusted dependencies that must never enter model tool args."""
 
     session_cookie: str | None = None
+    user_id: str | None = None
 
 
 class SongContext(BaseModel):
@@ -50,3 +51,17 @@ class SpringCurrentSongContextResponse(BaseModel):
     code: int
     message: str
     data: SongContext
+
+
+class UserIdentity(BaseModel):
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    user_id: int = Field(alias="userId", gt=0)
+
+
+class SpringUserIdentityResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    code: int
+    message: str
+    data: UserIdentity

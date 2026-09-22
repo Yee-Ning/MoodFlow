@@ -11,6 +11,7 @@ from app.agent.foundation.long_horizon.runtime import (
     get_long_horizon_service,
     persistence_backend,
 )
+from app.agent.memory.runtime import close_memory_runtime, get_memory_runtime, memory_backend
 from app.api.chat import router as chat_router
 from app.api.worldline import router as worldline_router
 
@@ -20,10 +21,13 @@ async def lifespan(_app: FastAPI):
     await initialize_runtime_checkpointer()
     if persistence_backend() == "postgres":
         get_long_horizon_service()
+    if memory_backend() != "disabled":
+        get_memory_runtime()
     try:
         yield
     finally:
         close_long_horizon_service()
+        close_memory_runtime()
         await close_runtime_checkpointer()
 
 

@@ -22,7 +22,16 @@ from app.agent.foundation.long_horizon.models import (
 )
 from app.agent.foundation.long_horizon.postgres_store import PostgresContinuityStore
 from app.agent.foundation.long_horizon.service import LongHorizonContextService
-from app.agent.postgres_migrations import run_all_migrations
+from app.agent.memory.models import (
+    EvidenceStrength,
+    ExtractedMemory,
+    MemoryRetrievalRequest,
+    MemoryType,
+)
+from app.agent.memory.postgres_store import PostgresMemoryStore
+from app.agent.memory.retriever import MemoryRetriever
+from app.agent.memory.service import MemoryService
+from app.agent.postgres_migrations import postgres_supports_pgvector, run_all_migrations
 
 BASE_DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
@@ -42,7 +51,8 @@ class PostgresPersistenceTests(unittest.TestCase):
         cls.database_url = make_conninfo(
             **{**cls.base_parameters, "dbname": cls.database_name}
         )
-        run_all_migrations(cls.database_url)
+        cls.has_pgvector = postgres_supports_pgvector(cls.database_url)
+        run_all_migrations(cls.database_url, include_memory=cls.has_pgvector)
 
     @classmethod
     def tearDownClass(cls):
@@ -66,7 +76,12 @@ class PostgresPersistenceTests(unittest.TestCase):
             )
 
     def test_business_store_persists_all_continuity_records(self):
-        self.assertEqual(run_all_migrations(self.database_url), [])
+        self.assertEqual(
+            run_all_migrations(
+                self.database_url, include_memory=self.has_pgvector
+            ),
+            [],
+        )
         store = PostgresContinuityStore(self.database_url)
         service = LongHorizonContextService(store)
         suffix = uuid4().hex
@@ -144,6 +159,64 @@ class PostgresPersistenceTests(unittest.TestCase):
                 )
                 raise RuntimeError("force rollback")
         self.assertIsNone(store.get_task(task_id))
+        store.close()
+
+    def test_pgvector_memory_persists_and_isolates_users(self):
+        if not self.has_pgvector:
+            self.skipTest("PostgreSQL server does not provide pgvector")
+
+        class Embedder:
+            dimension = 1024
+
+            def embed_documents(self, texts):
+                return [self._vector(text) for text in texts]
+
+            def embed_query(self, text):
+                return self._vector(text)
+
+            @staticmethod
+            def _vector(text):
+                vector = [0.0] * 1024
+                vector[0] = 1.0 if "健身" in text else 0.1
+                vector[1] = 1.0 if "慢歌" in text else 0.1
+                return vector
+
+        store = PostgresMemoryStore(self.database_url)
+        embedder = Embedder()
+        service = MemoryService(store, embedder=embedder)
+        service.remember(
+            user_id="postgres-user-a",
+            source_thread_id="postgres-thread-a",
+            candidate=ExtractedMemory(
+                memory_type=MemoryType.EPISODIC,
+                category="recommendation_feedback",
+                subject="slow_songs",
+                value="repeated_skip",
+                content="健身推荐里连续跳过了慢歌",
+                evidence_quote="健身推荐里连续跳过了慢歌",
+                evidence_strength=EvidenceStrength.REPEATED_BEHAVIOR,
+                confidence=0.9,
+                importance=0.8,
+                scene="workout",
+            ),
+        )
+        retriever = MemoryRetriever(store, embedder=embedder)
+        found = retriever.retrieve(
+            MemoryRetrievalRequest(
+                user_id="postgres-user-a",
+                query="健身时不要慢歌",
+                memory_type=MemoryType.EPISODIC,
+            )
+        )
+        isolated = retriever.retrieve(
+            MemoryRetrievalRequest(
+                user_id="postgres-user-b",
+                query="健身时不要慢歌",
+                memory_type=MemoryType.EPISODIC,
+            )
+        )
+        self.assertEqual(len(found.items), 1)
+        self.assertEqual(isolated.items, [])
         store.close()
 
     def run_worker(

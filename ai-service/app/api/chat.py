@@ -13,6 +13,7 @@ from app.agent.foundation.streaming import (
     stream_foundation_assistant,
 )
 from app.config.settings import get_settings
+from app.context.identity import UserIdentityProvider
 from app.schemas.chat import (
     ChatRequest,
     ClientActionStreamEvent,
@@ -45,11 +46,14 @@ def _encode_sse(event: str, data: dict[str, object]) -> str:
 @router.post("/foundation", response_model=FoundationResponse)
 async def foundation_chat(chat_request: ChatRequest, request: Request) -> FoundationResponse:
     try:
+        session_cookie = _spring_session_cookie(request)
+        user_id = await UserIdentityProvider().resolve(session_cookie)
         return await invoke_foundation_assistant(
             message=chat_request.message,
             thread_id=chat_request.thread_id or str(uuid4()),
             routing_context=chat_request.resolved_routing_context(),
-            session_cookie=_spring_session_cookie(request),
+            session_cookie=session_cookie,
+            user_id=user_id,
         )
     except Exception as exc:
         logger.exception("Foundation JSON request failed")
@@ -67,11 +71,13 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
         try:
             thread_id = chat_request.thread_id or str(uuid4())
             if get_settings().agent_graph_mode == "foundation":
+                user_id = await UserIdentityProvider().resolve(session_cookie)
                 event_stream = stream_foundation_assistant(
                     message=chat_request.message,
                     thread_id=thread_id,
                     routing_context=chat_request.resolved_routing_context(),
                     session_cookie=session_cookie,
+                    user_id=user_id,
                 )
             else:
                 event_stream = stream_current_song_assistant(

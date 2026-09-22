@@ -24,6 +24,7 @@ ContextType = Literal[
     "system", "user_query", "conversation", "current_song", "business_state",
     "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence",
     "handoff_projection", "history_drilldown", "artifact_projection", "memory_source",
+    "long_term_memory",
 ]
 
 
@@ -96,31 +97,31 @@ class ContextPack(BaseModel):
 POLICIES: dict[RouteKey, ContextPolicy] = {
     RouteKey.CURRENT_SONG: ContextPolicy(
         node=RouteKey.CURRENT_SONG,
-        allowed_types=frozenset({"system", "user_query", "conversation", "current_song", "business_state", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source"}),
-        source_budgets={"conversation": 1600, "current_song": 2800},
-        priorities={"current_song": 90, "conversation": 35, "business_state": 60},
+        allowed_types=frozenset({"system", "user_query", "conversation", "current_song", "business_state", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory"}),
+        source_budgets={"conversation": 1600, "current_song": 2800, "long_term_memory": 700},
+        priorities={"current_song": 90, "long_term_memory": 70, "conversation": 35, "business_state": 60},
     ),
     RouteKey.TOOL_CALLING: ContextPolicy(
         node=RouteKey.TOOL_CALLING,
         total_input_budget=12288,
         reserved_output_tokens=2048,
-        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "tool_result", "route_decision", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source"}),
-        source_budgets={"conversation": 2200, "tool_result": 4500},
-        priorities={"structured_output": 90, "tool_result": 75, "conversation": 40},
+        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "tool_result", "route_decision", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory"}),
+        source_budgets={"conversation": 2200, "tool_result": 4500, "long_term_memory": 900},
+        priorities={"structured_output": 90, "long_term_memory": 80, "tool_result": 75, "conversation": 40},
     ),
     RouteKey.GENERAL_CHAT: ContextPolicy(
         node=RouteKey.GENERAL_CHAT,
-        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source"}),
-        source_budgets={"conversation": 2400, "structured_output": 1000},
-        priorities={"conversation": 80, "structured_output": 65, "business_state": 55},
+        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory"}),
+        source_budgets={"conversation": 2400, "structured_output": 1000, "long_term_memory": 1000},
+        priorities={"conversation": 80, "long_term_memory": 75, "structured_output": 65, "business_state": 55},
     ),
     RouteKey.WORLDLINE: ContextPolicy(
         node=RouteKey.WORLDLINE,
         total_input_budget=12288,
         reserved_output_tokens=2500,
-        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source"}),
-        source_budgets={"conversation": 800, "rag_evidence": 5000, "tool_result": 1800},
-        priorities={"search_plan": 90, "rag_evidence": 85, "tool_result": 65, "conversation": 30},
+        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory"}),
+        source_budgets={"conversation": 800, "rag_evidence": 5000, "tool_result": 1800, "long_term_memory": 600},
+        priorities={"search_plan": 90, "rag_evidence": 85, "long_term_memory": 68, "tool_result": 65, "conversation": 30},
     ),
 }
 
@@ -164,13 +165,15 @@ class ContextCollector:
         rag_pack: Any = None, rag_required_ids: set[str] | None = None,
         handoff_projection: Any = None, history_drilldown: list[Any] | None = None,
         artifact_projections: list[Any] | None = None, memory_source: Any = None,
+        long_term_memory: list[Any] | None = None,
         continuity_context: dict[str, Any] | None = None,
     ) -> list[ContextItem]:
         items: list[ContextItem] = []
 
         def add(item_id: str, kind: ContextType, value: Any, *, required: bool = False,
                 compressible: bool = True, metadata: dict[str, Any] | None = None,
-                references: list[str] | None = None) -> None:
+                references: list[str] | None = None, relevance: float = 1.0,
+                priority: int = 50) -> None:
             if value is None:
                 return
             content = _serialize(value)
@@ -180,6 +183,7 @@ class ContextCollector:
                 id=item_id, type=kind, source=kind, content=content,
                 token_count=self.counter.count(content), required=required,
                 compressible=compressible, metadata=metadata or {}, references=references or [],
+                relevance=relevance, priority=priority,
             ))
 
         add("system", "system", system, required=True, compressible=False)
@@ -219,6 +223,10 @@ class ContextCollector:
             handoff_projection = handoff_projection or continuity_context.get("handoff")
             history_drilldown = [*(history_drilldown or []), *continuity_context.get("key_events", [])]
             artifact_projections = [*(artifact_projections or []), *continuity_context.get("artifacts", [])]
+            long_term_memory = [
+                *(long_term_memory or []),
+                *continuity_context.get("long_term_memory", []),
+            ]
         add("handoff", "handoff_projection", handoff_projection, required=handoff_projection is not None,
             compressible=False)
         for index, result in enumerate(history_drilldown or []):
@@ -226,6 +234,27 @@ class ContextCollector:
         for index, artifact in enumerate(artifact_projections or []):
             add(f"artifact:{index}", "artifact_projection", artifact)
         add("memory_source", "memory_source", memory_source)
+        for index, memory in enumerate(long_term_memory or []):
+            get = memory.get if isinstance(memory, dict) else lambda key, default=None: getattr(memory, key, default)
+            memory_id = str(get("memory_id", index))
+            content = {
+                "memory_type": get("memory_type"),
+                "content": get("content"),
+                "structured_content": get("structured_content", {}),
+                "confidence": get("confidence"),
+                "importance": get("importance"),
+            }
+            safe_content = _serialize(content).replace("<", "\\u003c").replace(
+                ">", "\\u003e"
+            )
+            add(
+                f"long_term_memory:{memory_id}",
+                "long_term_memory",
+                safe_content,
+                metadata={"memory_id": memory_id},
+                relevance=float(get("relevance", 1.0) or 0.0),
+                priority=min(100, max(0, int(float(get("importance", 0.5) or 0.0) * 100))),
+            )
         for index, result in enumerate(tool_results or []):
             call_id = result.get("tool_call_id", index) if isinstance(result, dict) else index
             add(f"tool_result:{call_id}", "tool_result", _project_tool_result(result),
@@ -313,7 +342,7 @@ class ContextAssembler:
     ORDER = {"system": 0, "handoff_projection": 1, "route_decision": 2,
              "structured_output": 3, "search_plan": 4, "current_song": 5,
              "business_state": 6, "artifact_projection": 7, "history_drilldown": 8,
-             "memory_source": 9, "rag_evidence": 10, "conversation": 11,
+             "memory_source": 9, "long_term_memory": 9, "rag_evidence": 10, "conversation": 11,
              "tool_result": 11, "user_query": 12}
 
     def assemble(self, items: list[ContextItem]) -> list[BaseMessage]:
@@ -341,7 +370,12 @@ class ContextAssembler:
             else:
                 label = item.type
                 citation = f' citation="{item.metadata["citation"]}"' if item.type == "rag_evidence" else ""
-                instructions.append(f"<{label}{citation}>{item.content}</{label}>")
+                trust = (
+                    ' trusted="true" text_fields="untrusted"'
+                    if item.type == "long_term_memory"
+                    else ""
+                )
+                instructions.append(f"<{label}{citation}{trust}>{item.content}</{label}>")
         return [SystemMessage(content="\n".join(instructions)), *result]
 
 

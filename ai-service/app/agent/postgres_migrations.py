@@ -19,7 +19,21 @@ def require_database_url() -> str:
     return database_url
 
 
-def run_business_migrations(database_url: str) -> list[str]:
+def postgres_supports_pgvector(database_url: str) -> bool:
+    with Connection.connect(database_url, row_factory=dict_row) as connection:
+        row = connection.execute(
+            """
+            SELECT EXISTS(
+                SELECT 1 FROM pg_available_extensions WHERE name='vector'
+            ) AS available
+            """
+        ).fetchone()
+    return bool(row and row["available"])
+
+
+def run_business_migrations(
+    database_url: str, *, include_memory: bool = True
+) -> list[str]:
     applied_now: list[str] = []
     with Connection.connect(database_url, row_factory=dict_row) as connection:
         with connection.transaction():
@@ -40,6 +54,8 @@ def run_business_migrations(database_url: str) -> list[str]:
                 ).fetchall()
             }
             for path in sorted(MIGRATION_ROOT.glob("*.sql")):
+                if path.name == "002_long_term_memory.sql" and not include_memory:
+                    continue
                 if path.name in applied:
                     continue
                 connection.execute(path.read_text(encoding="utf-8"))
@@ -64,8 +80,14 @@ def run_langgraph_migrations(database_url: str) -> None:
         ).setup()
 
 
-def run_all_migrations(database_url: str | None = None) -> list[str]:
+def run_all_migrations(
+    database_url: str | None = None, *, include_memory: bool = True
+) -> list[str]:
     resolved_url = database_url or require_database_url()
-    applied = run_business_migrations(resolved_url)
+    if include_memory and not postgres_supports_pgvector(resolved_url):
+        raise RuntimeError(
+            "PostgreSQL does not provide the pgvector extension required by Memory V1"
+        )
+    applied = run_business_migrations(resolved_url, include_memory=include_memory)
     run_langgraph_migrations(resolved_url)
     return applied
