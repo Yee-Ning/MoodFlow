@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
+from functools import lru_cache
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -142,7 +143,9 @@ def create_current_song_graph(
     return builder.compile(checkpointer=checkpointer or create_runtime_checkpointer())
 
 
-CURRENT_SONG_GRAPH = create_current_song_graph()
+@lru_cache
+def get_current_song_graph():
+    return create_current_song_graph()
 
 
 async def stream_current_song_assistant(
@@ -154,7 +157,7 @@ async def stream_current_song_assistant(
     graph: Any | None = None,
 ) -> AsyncIterator[SongAssistantStreamEvent]:
     final_response: StructuredOutput | None = None
-    async for part in (graph or CURRENT_SONG_GRAPH).astream(
+    async for part in (graph or get_current_song_graph()).astream(
         {
             "messages": [HumanMessage(content=message)],
             "current_song_id": current_song_id,

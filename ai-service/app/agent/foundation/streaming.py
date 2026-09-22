@@ -81,9 +81,9 @@ def _continuity_start(thread_id: str, routing_context: RoutingContext, *, enable
 def _graph_config(conversation_id: str, session) -> dict[str, Any]:
     configurable = {"thread_id": conversation_id}
     if session is not None:
-        # A session isolates one active context window. checkpoint_id remains a
-        # checkpointer-managed execution snapshot and is never a task/session ID.
-        configurable["checkpoint_ns"] = session.session_id
+        # The checkpointer maps session_id to its storage namespace. checkpoint_id
+        # remains a saver-managed execution snapshot and is never a task/session ID.
+        configurable["session_id"] = session.session_id
     return {
         "configurable": configurable,
         "recursion_limit": FOUNDATION_RECURSION_LIMIT,

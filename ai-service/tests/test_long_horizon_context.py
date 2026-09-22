@@ -1,4 +1,5 @@
 import json
+import operator
 import os
 import sqlite3
 import subprocess
@@ -8,10 +9,12 @@ import textwrap
 import unittest
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Annotated, TypedDict
 from unittest.mock import patch
 
 from app.agent.checkpointing import (
     configure_persistent_checkpointer,
+    create_memory_checkpointer,
     create_runtime_checkpointer,
 )
 from app.agent.foundation.long_horizon.models import (
@@ -30,6 +33,7 @@ from app.agent.foundation.routing import RouteKey
 from app.agent.foundation.routing import RoutingContext
 from app.agent.foundation.streaming import stream_foundation_assistant
 from app.schemas.chat import FinalStreamEvent
+from langgraph.graph import END, START, StateGraph
 
 
 class Clock:
@@ -430,7 +434,7 @@ class LongHorizonRuntimeIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 "thread:runtime",
             )
             self.assertEqual(
-                graph.config["configurable"]["checkpoint_ns"],
+                graph.config["configurable"]["session_id"],
                 rollover.new_session.session_id,
             )
             continuity = graph.input["continuity_context"]
@@ -456,20 +460,23 @@ class CheckpointerBoundaryTests(unittest.TestCase):
 
     def test_persistent_mode_requires_registered_provider(self):
         configure_persistent_checkpointer(None)
-        with patch.dict(os.environ, {"AI_LANGGRAPH_CHECKPOINTER_MODE": "persistent"}):
-            with self.assertRaisesRegex(RuntimeError, "persistent checkpointer factory"):
+        with patch.dict(os.environ, {"CHECKPOINT_BACKEND": "postgres"}):
+            with self.assertRaisesRegex(RuntimeError, "not initialized"):
                 create_runtime_checkpointer()
 
     def test_persistent_mode_uses_injected_provider(self):
         marker = object()
         configure_persistent_checkpointer(lambda: marker)  # type: ignore[return-value]
-        with patch.dict(os.environ, {"AI_LANGGRAPH_CHECKPOINTER_MODE": "persistent"}):
+        with patch.dict(os.environ, {"CHECKPOINT_BACKEND": "postgres"}):
             self.assertIs(create_runtime_checkpointer(), marker)
 
     def test_persistent_continuity_mode_requires_registered_provider(self):
         configure_persistent_continuity_store(None)
-        with patch.dict(os.environ, {"AI_CONTINUITY_STORE_MODE": "persistent"}):
-            with self.assertRaisesRegex(RuntimeError, "continuity store factory"):
+        with patch.dict(
+            os.environ,
+            {"PERSISTENCE_BACKEND": "postgres", "DATABASE_URL": ""},
+        ):
+            with self.assertRaisesRegex(RuntimeError, "DATABASE_URL"):
                 get_long_horizon_service()
 
     def test_persistent_continuity_mode_uses_injected_repository(self):
@@ -477,8 +484,46 @@ class CheckpointerBoundaryTests(unittest.TestCase):
         configure_persistent_continuity_store(
             lambda: marker  # type: ignore[return-value]
         )
-        with patch.dict(os.environ, {"AI_CONTINUITY_STORE_MODE": "persistent"}):
+        with patch.dict(os.environ, {"PERSISTENCE_BACKEND": "postgres"}):
             self.assertIs(get_long_horizon_service().store, marker)
+
+
+class CheckpointState(TypedDict):
+    values: Annotated[list[str], operator.add]
+
+
+class SessionScopedCheckpointerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_same_thread_keeps_session_checkpoints_isolated(self):
+        builder = StateGraph(CheckpointState)
+        builder.add_node("finish", lambda _state: {})
+        builder.add_edge(START, "finish")
+        builder.add_edge("finish", END)
+        graph = builder.compile(checkpointer=create_memory_checkpointer())
+        session_one = {
+            "configurable": {
+                "thread_id": "conversation:shared",
+                "session_id": "session:one",
+            }
+        }
+        session_two = {
+            "configurable": {
+                "thread_id": "conversation:shared",
+                "session_id": "session:two",
+            }
+        }
+
+        self.assertEqual(
+            (await graph.ainvoke({"values": ["one"]}, session_one))["values"],
+            ["one"],
+        )
+        self.assertEqual(
+            (await graph.ainvoke({"values": ["two"]}, session_two))["values"],
+            ["two"],
+        )
+        self.assertEqual(
+            (await graph.ainvoke({"values": ["again"]}, session_one))["values"],
+            ["one", "again"],
+        )
 
 
 if __name__ == "__main__":

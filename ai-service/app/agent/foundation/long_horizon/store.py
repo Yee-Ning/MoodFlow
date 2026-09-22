@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Iterable
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Protocol
+from typing import ContextManager, Protocol
 
 from .models import (
     ArtifactRecord,
@@ -47,6 +48,7 @@ class ContinuityStore(Protocol):
     def validate_pointers(
         self, pointers: Iterable[HistoryPointer], *, task_id: str
     ) -> None: ...
+    def transaction(self) -> ContextManager[None]: ...
 
 
 class SQLiteContinuityStore:
@@ -150,6 +152,11 @@ class SQLiteContinuityStore:
     @staticmethod
     def _json(model) -> str:
         return model.model_dump_json(exclude_none=True)
+
+    @contextmanager
+    def transaction(self):
+        """Compatibility boundary; PostgreSQL provides atomic rollover."""
+        yield
 
     def create_task(self, task: TaskRecord) -> None:
         self._insert(

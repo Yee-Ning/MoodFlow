@@ -239,30 +239,31 @@ class LongHorizonContextService:
 
     def rollover(self, session_id: str, draft: HandoffDraft,
                  reason: RolloverReason) -> RolloverResult:
-        session = self.store.require_session(session_id)
-        handoff = self.build_handoff(session_id, draft)
-        checkpoint = self.record_event(
-            task_id=session.task_id, session_id=session_id,
-            event_type=HistoryEventType.CHECKPOINT, node="rollover", source=reason.value,
-            payload={"reason": reason.value, "handoff_id": handoff.handoff_id},
-        )
-        self.store.put_handoff(handoff)
-        self.record_event(
-            task_id=session.task_id, session_id=session_id,
-            event_type=HistoryEventType.HANDOFF, node="rollover", source="handoff_projection",
-            payload={"handoff_id": handoff.handoff_id, "token_count": handoff.token_count},
-            references=[HistoryPointer(kind="event", target_id=checkpoint.event_id)],
-        )
-        closed = self.store.close_session(session_id, self._now().isoformat())
-        new_session = SessionRecord(
-            task_id=session.task_id,
-            conversation_id=session.conversation_id,
-            session_id=f"session:{uuid4().hex}",
-            previous_session_id=session.session_id,
-            parent_session_id=session.parent_session_id or session.session_id,
-            inherited_handoff_id=handoff.handoff_id, created_at=self._now(),
-        )
-        self.store.create_session(new_session)
+        with self.store.transaction():
+            session = self.store.require_session(session_id)
+            handoff = self.build_handoff(session_id, draft)
+            checkpoint = self.record_event(
+                task_id=session.task_id, session_id=session_id,
+                event_type=HistoryEventType.CHECKPOINT, node="rollover", source=reason.value,
+                payload={"reason": reason.value, "handoff_id": handoff.handoff_id},
+            )
+            self.store.put_handoff(handoff)
+            self.record_event(
+                task_id=session.task_id, session_id=session_id,
+                event_type=HistoryEventType.HANDOFF, node="rollover", source="handoff_projection",
+                payload={"handoff_id": handoff.handoff_id, "token_count": handoff.token_count},
+                references=[HistoryPointer(kind="event", target_id=checkpoint.event_id)],
+            )
+            closed = self.store.close_session(session_id, self._now().isoformat())
+            new_session = SessionRecord(
+                task_id=session.task_id,
+                conversation_id=session.conversation_id,
+                session_id=f"session:{uuid4().hex}",
+                previous_session_id=session.session_id,
+                parent_session_id=session.parent_session_id or session.session_id,
+                inherited_handoff_id=handoff.handoff_id, created_at=self._now(),
+            )
+            self.store.create_session(new_session)
         return RolloverResult(
             closed_session=closed, handoff=handoff,
             new_session=new_session, reason=reason,

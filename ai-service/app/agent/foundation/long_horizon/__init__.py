@@ -15,11 +15,12 @@ from .models import (
 )
 from .service import LongHorizonContextService, RolloverPolicy
 from .store import ContinuityStore, SQLiteContinuityStore
+from .postgres_store import PostgresContinuityStore
 
 __all__ = [
     "ArtifactRecord", "ColdStartContext", "HandoffDraft", "HandoffProjection",
     "HistoryEvent", "HistoryEventType", "HistoryPointer",
     "LongHorizonContextService", "RolloverPolicy", "RolloverReason",
-    "RolloverResult", "ContinuityStore", "SQLiteContinuityStore", "SessionRecord",
-    "TaskRecord",
+    "RolloverResult", "ContinuityStore", "PostgresContinuityStore",
+    "SQLiteContinuityStore", "SessionRecord", "TaskRecord",
 ]
