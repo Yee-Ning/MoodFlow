@@ -11,7 +11,7 @@ from langchain_core.tools import BaseTool
 
 from app.agent.foundation.routing import RoutingContext
 from app.agent.foundation.routing import RouteKey
-from app.agent.foundation.context_engineering import build_context
+from app.agent.foundation.context_engineering import build_context_async
 from app.agent.foundation.subgraphs.tool_calling.client_tools import CLIENT_ACTION_TOOLS
 from app.agent.foundation.subgraphs.tool_calling.models import ReferencedEntities
 from app.llm.client import get_base_chat_model
@@ -83,7 +83,7 @@ async def answer_tool_calling_task(
     if history and isinstance(history[-1], HumanMessage):
         history.pop()
     player_context, entity_context = _trusted_context(routing_context, prior_entities)
-    pack = build_context(
+    pack = await build_context_async(
         RouteKey.TOOL_CALLING, query=current_input,
         system=TOOL_CALLING_SYSTEM_PROMPT, messages=history,
         business_state=player_context, structured_output=entity_context,

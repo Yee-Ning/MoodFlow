@@ -11,11 +11,13 @@ from app.agent.foundation.main_graph import build_main_graph
 from app.agent.foundation.routing import RouteKey
 if TYPE_CHECKING:
     from app.agent.foundation.hybrid_routing import AsyncIntentRouter
+    from app.agent.decision.jev.client import DecisionClient
 
 def create_main_graph(
     *,
     development_routes: Sequence[RouteKey] | None = None,
     intent_router: AsyncIntentRouter | None = None,
+    jev_client: DecisionClient | None = None,
     checkpointer: BaseCheckpointSaver | None = None,
     checkpointer_factory: CheckpointerFactory = create_runtime_checkpointer,
 ) -> CompiledStateGraph:
@@ -23,6 +25,6 @@ def create_main_graph(
     resolved_checkpointer = (
         checkpointer if checkpointer is not None else checkpointer_factory()
     )
-    return build_main_graph(development_routes=development_routes, intent_router=intent_router).compile(
+    return build_main_graph(development_routes=development_routes, intent_router=intent_router, jev_client=jev_client).compile(
         checkpointer=resolved_checkpointer
     )

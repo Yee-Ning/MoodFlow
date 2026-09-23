@@ -2,7 +2,7 @@ import json
 from types import SimpleNamespace
 from typing import Any, Protocol
 
-from app.agent.foundation.context_engineering import build_context
+from app.agent.foundation.context_engineering import build_context_async
 from app.agent.foundation.routing import RouteKey
 from app.agent.foundation.subgraphs.worldline.grounding import (
     WorldLineGroundingError,
@@ -81,7 +81,7 @@ class ProviderWorldLineRuntime:
             for fact in payload.get("catalog_facts", [])
             for evidence_id in fact.get("evidence_ids", [])
         }
-        pack = build_context(
+        pack = await build_context_async(
             RouteKey.WORLDLINE,
             query=str(payload.get("user_query") or payload.get("root_entity", {}).get("name") or "音乐世界线"),
             system=instructions,

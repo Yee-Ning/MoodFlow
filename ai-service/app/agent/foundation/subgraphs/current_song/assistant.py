@@ -8,7 +8,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage
 
 from app.agent.foundation.history import select_recent_history
-from app.agent.foundation.context_engineering import build_context
+from app.agent.foundation.context_engineering import build_context_async
 from app.agent.foundation.routing import RouteKey, RoutingContext
 from app.agent.song_assistant import format_song_context
 from app.llm.client import get_base_chat_model
@@ -54,7 +54,7 @@ async def answer_current_song_task(
     continuity_context: dict[str, Any] | None = None,
 ) -> AIMessage:
     history = select_recent_history(messages, current_input)
-    pack = build_context(
+    pack = await build_context_async(
         RouteKey.CURRENT_SONG, query=current_input, system=CURRENT_SONG_SYSTEM_PROMPT,
         messages=history, current_song=format_song_context(song_context),
         business_state=(

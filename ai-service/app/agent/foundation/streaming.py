@@ -96,6 +96,7 @@ async def _retrieve_query_memories(
     message: str,
     enabled: bool,
     memory_runtime: Any | None,
+    request_id: str | None = None,
 ) -> None:
     if user_id is None or (not enabled and memory_runtime is None):
         return
@@ -103,13 +104,32 @@ async def _retrieve_query_memories(
         memory = await (memory_runtime or get_memory_runtime()).retrieve(
             MemoryRetrievalRequest(user_id=user_id, query=message, top_k=8)
         )
-        context["long_term_memory"] = memory.context_items()
-        context["user_id"] = user_id
+        if memory.user_id != user_id:
+            raise ValueError("memory retrieval user mismatch")
     except Exception:
         logger.warning(
             "Long-term memory retrieval unavailable; continuing without memory",
             exc_info=True,
         )
+        return
+    if memory_runtime is None:
+        try:
+            from app.config.settings import get_settings, jev_requested
+            if jev_requested():
+                settings = get_settings()
+            else:
+                settings = None
+            if settings is not None and settings.jev_enabled and settings.jev_memory_filter_enabled:
+                from app.agent.decision.jev.client import JevClient
+                from app.agent.decision.jev.memory_filter import filter_memories
+                memory = await filter_memories(
+                    MemoryRetrievalRequest(user_id=user_id, query=message, top_k=8),
+                    memory, settings=settings, client=JevClient(settings), trace_id=request_id,
+                )
+        except Exception as exc:
+            logger.warning("jev.memory_filter_fallback error_type=%s", type(exc).__name__)
+    context["long_term_memory"] = memory.context_items()
+    context["user_id"] = user_id
 
 
 async def _extract_memories(
@@ -194,14 +214,15 @@ async def stream_foundation_assistant(
         user_id=user_id,
         memory_runtime=memory_runtime,
     )
+    request_id = f"request:{uuid4().hex}"
     await _retrieve_query_memories(
         context=continuity_context,
         user_id=user_id,
         message=message,
         enabled=graph is None,
         memory_runtime=memory_runtime,
+        request_id=request_id,
     )
-    request_id = f"request:{uuid4().hex}"
     if continuity is not None:
         continuity_context.update({
             "conversation_id": session.conversation_id,
@@ -330,14 +351,15 @@ async def invoke_foundation_assistant(
         user_id=user_id,
         memory_runtime=memory_runtime,
     )
+    request_id = f"request:{uuid4().hex}"
     await _retrieve_query_memories(
         context=continuity_context,
         user_id=user_id,
         message=message,
         enabled=graph is None,
         memory_runtime=memory_runtime,
+        request_id=request_id,
     )
-    request_id = f"request:{uuid4().hex}"
     if continuity is not None:
         continuity_context.update({
             "conversation_id": session.conversation_id,

@@ -510,3 +510,28 @@ def build_context(node: RouteKey, *, policy: ContextPolicy | None = None, counte
     return ContextSelector(token_counter).build(
         collected, policy or POLICIES[node], trace_context=trace_context,
     )
+
+
+async def build_context_async(node: RouteKey, *, policy: ContextPolicy | None = None,
+                              counter: TokenCounter | None = None,
+                              trace_context: dict[str, str] | None = None,
+                              jev_client: Any = None, **sources: Any) -> ContextPack:
+    """Apply Jev before the unchanged dedup, budget, compression and assembly stages."""
+    token_counter = counter or UnicodeHeuristicTokenCounter()
+    collected = ContextCollector(token_counter).collect(**sources)
+    from app.config.settings import get_settings, jev_requested
+    if jev_client is not None or jev_requested():
+        settings = get_settings()
+    else:
+        settings = None
+    if settings is not None and settings.jev_enabled and settings.jev_context_select_enabled:
+        from app.agent.decision.jev.client import JevClient
+        from app.agent.decision.jev.context_selector import select_context
+        collected = await select_context(
+            collected, str(sources.get("query", "")), settings=settings,
+            client=jev_client or JevClient(settings),
+            trace_id=(trace_context or {}).get("request_id"),
+        )
+    return ContextSelector(token_counter).build(
+        collected, policy or POLICIES[node], trace_context=trace_context,
+    )

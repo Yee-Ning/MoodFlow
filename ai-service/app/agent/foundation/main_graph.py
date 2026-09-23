@@ -22,6 +22,7 @@ from app.schemas.context import MusicAgentContext
 
 if TYPE_CHECKING:
     from app.agent.foundation.hybrid_routing import AsyncIntentRouter
+    from app.agent.decision.jev.client import DecisionClient
 
 
 def create_hybrid_router():
@@ -50,6 +51,7 @@ def build_main_graph(
     *,
     development_routes: Sequence[RouteKey] | None = None,
     intent_router: AsyncIntentRouter | None = None,
+    jev_client: DecisionClient | None = None,
     current_song_subgraph: CompiledStateGraph | None = None,
     tool_calling_subgraph: CompiledStateGraph | None = None,
     worldline_subgraph: CompiledStateGraph | None = None,
@@ -80,6 +82,17 @@ def build_main_graph(
         decision = await router.route(state["current_input"], state.get("routing_context", RoutingContext()))
         # Check even injected router results before dispatching anything.
         decision = RouteDecision.model_validate(decision.model_dump())
+        if jev_client is not None or intent_router is None:
+            from app.config.settings import get_settings
+            settings = get_settings()
+            if settings.jev_enabled and settings.jev_router_enabled:
+                from app.agent.decision.jev.client import JevClient
+                from app.agent.decision.jev.router import compare_route
+                decision = await compare_route(
+                    state["current_input"], decision, settings=settings,
+                    client=jev_client or JevClient(settings),
+                    trace_id=state.get("continuity_context", {}).get("request_id"),
+                )
         return {"route_decision": decision}
 
     def select_next(state: MainState) -> str:

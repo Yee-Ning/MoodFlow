@@ -8,7 +8,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage
 
 from app.agent.foundation.history import select_recent_history
-from app.agent.foundation.context_engineering import build_context
+from app.agent.foundation.context_engineering import build_context_async
 from app.agent.foundation.models import TaskResult
 from app.agent.foundation.routing import RouteKey, RoutingContext
 from app.llm.client import get_base_chat_model
@@ -72,7 +72,7 @@ async def answer_general_chat(
 ) -> AIMessage:
     history = select_recent_history(messages, current_input)
     player_context, prior_context = _trusted_context(routing_context, prior_task_results)
-    pack = build_context(
+    pack = await build_context_async(
         RouteKey.GENERAL_CHAT, query=current_input,
         system=GENERAL_CHAT_SYSTEM_PROMPT, messages=history,
         business_state=player_context, structured_output=prior_context,
