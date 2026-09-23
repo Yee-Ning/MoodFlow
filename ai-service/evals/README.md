@@ -300,3 +300,24 @@ fallback，用 `--rerank` 才加载本地精排模型。示例（V3）：
 同命令将 manifest 换成 release 根目录下的 V2 版本即可得到同 Gold 对照；本次结果及
 限制见 `reports/gold_v2_retrieval_projection_v3_20260916.md`。这些命令不调用 DeepEval
 或付费 Judge。V3 完整构建应使用本地模型缓存并单独的版本目录，不覆盖旧 V2 产物。
+
+## Jev Shadow Evaluation v1
+
+在 `ai-service` 目录使用现有 `run_jev_eval.py`：
+
+```powershell
+.\.venv\Scripts\python.exe run_jev_eval.py prepare
+.\.venv\Scripts\python.exe run_jev_eval.py router
+.\.venv\Scripts\python.exe run_jev_eval.py prepare-memory
+.\.venv\Scripts\python.exe run_jev_eval.py memory
+.\.venv\Scripts\python.exe run_jev_eval.py context
+.\.venv\Scripts\python.exe run_jev_eval.py report
+```
+
+Router/Context 数据来自现有人工 intent 保留集、Foundation E2E 和 Gold V4 冻结轨迹；
+Memory 从现有 PostgreSQL/pgvector 经 `MemoryRetriever` 读取，原文诊断集及逐项结果保存在
+Git 忽略的 `evals/local/`。Router/Memory/Context 命令会真实调用 TypeSafe SDK，要求
+`JEV_SHADOW_MODE=true`、`JEV_MODEL=jev-latest` 和可用 API Key。输出按
+`requested_model`、`response_model`、`evaluation_timestamp` 记录；只比较同批输入和候选。
+报告见 `reports/jev_shadow_evaluation_v1.md`，完整 failure audit 见
+`reports/jev_shadow_failure_audit_v1.jsonl`。旧的 `run_jev_eval.py <jsonl>` 汇总入口保留。

@@ -26,3 +26,4 @@ data/cleaned/**
 data/indexing/**
 tmp/
 evals/artifacts/
+evals/local/
