@@ -97,6 +97,35 @@ class WorldLineModelTests(unittest.TestCase):
         self.assertEqual(graph.root, "song:1")
         self.assertEqual(graph.edges[0].relation, WorldLineRelation.PERFORMED_BY)
 
+    def test_graph_accepts_artist_genre_association(self) -> None:
+        graph = WorldLineGraph(
+            root="netease:artist:2",
+            nodes=[
+                WorldLineNode(
+                    id="netease:artist:2",
+                    type=WorldLineNodeType.ARTIST,
+                    name="周杰伦",
+                ),
+                WorldLineNode(
+                    id="genre:hip_hop",
+                    type=WorldLineNodeType.GENRE,
+                    name="Hip-Hop",
+                ),
+            ],
+            edges=[
+                WorldLineEdge(
+                    source="netease:artist:2",
+                    target="genre:hip_hop",
+                    relation=WorldLineRelation.ASSOCIATED_WITH,
+                )
+            ],
+        )
+
+        self.assertEqual(
+            graph.edges[0].relation,
+            WorldLineRelation.ASSOCIATED_WITH,
+        )
+
     def test_structured_branches_require_exactly_three(self) -> None:
         branch = WorldLineBranch(
             id="branch-1",

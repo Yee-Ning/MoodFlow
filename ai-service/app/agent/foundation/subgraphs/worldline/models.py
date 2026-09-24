@@ -140,6 +140,7 @@ class WorldLineRelation(StrEnum):
     LYRICS_BY = "lyrics_by"
     COMPOSED_BY = "composed_by"
     PRODUCED_BY = "produced_by"
+    ASSOCIATED_WITH = "associated_with"
     BELONGS_TO_GENRE = "belongs_to_genre"
     BELONGS_TO_ERA = "belongs_to_era"
     RELATED_TO = "related_to"
