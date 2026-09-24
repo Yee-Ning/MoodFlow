@@ -158,6 +158,7 @@ Trace 保存在内部 `SemanticExpansionResult` 并以 `worldline.semantic_expan
 - `d4b7e91 feat: bridge WorldLine knowledge and catalog identities`
 - `21173d2 feat: add semantic identity projection and trace`
 - `3b79608 fix: normalize WorldLine identity aliases`
+- `65b6f09 fix: preserve normalized catalog artist aliases`
 
 未暂存或提交工作区中与本任务无关的既有修改和数据目录。
 
