@@ -11,6 +11,7 @@ import AppLayout from './layouts/AppLayout'
 import IntroCover from './components/IntroCover'
 import HomePage from './pages/HomePage'
 import StaticDestinationPage from './pages/StaticDestinationPage'
+import WorldLinePage from './pages/WorldLinePage'
 import JazzHipHopPage from './pages/jazz-hiphop/JazzHipHopPage'
 import LoginPage from './pages/LoginPage'
 import LibraryPage from './pages/LibraryPage'
@@ -67,7 +68,7 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/discover" element={<StaticDestinationPage page="discover" />} />
           <Route path="/session/create" element={<StaticDestinationPage page="session" />} />
-          <Route path="/worldline" element={<StaticDestinationPage page="worldline" />} />
+          <Route path="/worldline" element={<WorldLinePage />} />
           <Route path="/search" element={<StaticDestinationPage page="search" />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/playlist/:id" element={<PlaylistDetailPage />} />

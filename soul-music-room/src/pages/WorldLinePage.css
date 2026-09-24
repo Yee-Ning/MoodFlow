@@ -1,0 +1,21 @@
+.worldline-page { min-height: 100svh; padding: clamp(32px, 6vw, 80px); color: #eaf5fa; background: linear-gradient(145deg, #07121c, #102b38); }
+.worldline-page__header { max-width: 850px; margin: 0 auto 52px; }
+.worldline-page__header > p:first-child { color: #86bdd2; font-size: .7rem; letter-spacing: .18em; }
+.worldline-page h1 { font-size: clamp(2.2rem, 5vw, 4.8rem); font-weight: 400; margin: 12px 0 32px; }
+.worldline-page h2 { font-size: 1.25rem; font-weight: 500; }
+.worldline-page form label { display: block; margin-bottom: 9px; color: #b7d0da; }
+.worldline-page form > div { display: flex; gap: 12px; }
+.worldline-page input { flex: 1; min-width: 0; padding: 13px 15px; border-radius: 12px; border: 1px solid #527180; color: white; background: #122b37; }
+.worldline-page button { cursor: pointer; border-radius: 12px; border: 1px solid #577b8d; color: #eaf5fa; background: #193846; padding: 12px 16px; }
+.worldline-page button:hover:enabled { background: #27546a; }
+.worldline-page button:disabled { cursor: default; opacity: .5; }
+.worldline-page__error { color: #ffb7a9; }
+.worldline-page__content { max-width: 1100px; margin: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+.worldline-page__nodes, .worldline-page__branches { padding: 0; list-style: none; display: grid; gap: 10px; }
+.worldline-page__nodes button, .worldline-page__branches button { width: 100%; text-align: left; display: flex; align-items: center; gap: 14px; }
+.worldline-page__nodes span { color: #a2cbdc; font-size: .7rem; text-transform: uppercase; }
+.worldline-page__nodes em { margin-left: auto; font-size: .7rem; color: #9dcee0; }
+.worldline-page__narrative { line-height: 1.9; white-space: pre-wrap; }
+.worldline-page__branches button { flex-direction: column; align-items: flex-start; }
+.worldline-page__branches span { color: #b4ced8; font-size: .85rem; }
+@media (max-width: 720px) { .worldline-page { padding: 30px 18px 150px; } .worldline-page__content { grid-template-columns: 1fr; gap: 20px; } .worldline-page form > div { flex-direction: column; } }
