@@ -153,10 +153,9 @@ def exploration_metrics(results: list[WorldLineEvalResult]) -> dict[str, Any]:
             successes += success
             if success:
                 yields.append(len(predicted))
-        if "action_enabled" in row.actual:
+        if "action_gate_correct" in row.actual:
             gate_cases += 1
-            expected_enabled = row.expected.get("outcome") == "accepted"
-            gate_correct += row.actual["action_enabled"] is expected_enabled
+            gate_correct += bool(row.actual["action_gate_correct"])
         trace = row.trace
         candidate_count += int(trace.get("candidate_count", 0))
         evidence_accepted += int(trace.get("evidence_accepted_count", 0))
@@ -291,9 +290,21 @@ def reliability_metrics(results: list[WorldLineEvalResult]) -> dict[str, Any]:
 
 def grounding_metrics(results: list[WorldLineEvalResult]) -> dict[str, Any]:
     rows = _completed(results, WorldLineEvalTask.GROUNDING)
+    generated = [
+        result
+        for result in results
+        if result.status == "completed" and "citation_valid" in result.actual
+    ]
     return {
         "cases": len(rows),
-        "citation_validity": _metric(sum(row.passed for row in rows), len(rows)),
+        "grounding_validator_accuracy": _metric(
+            sum(row.passed for row in rows),
+            len(rows),
+        ),
+        "citation_validity": _metric(
+            sum(bool(row.actual["citation_valid"]) for row in generated),
+            len(generated),
+        ),
     }
 
 
