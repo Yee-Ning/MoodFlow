@@ -210,11 +210,37 @@ class WorldLineSemanticExpansionTests(unittest.TestCase):
         )
         self.assertEqual(semantic_source.metadata["claim_id"], "claim:000000000000000000000001")
         self.assertEqual(result.graph.root, artist().entity_id)
+        artist_node = next(
+            node
+            for node in result.graph.nodes
+            if node.id == artist().entity_id
+        )
+        self.assertEqual(
+            artist_node.metadata["entity_reference"]["knowledge_entity_id"],
+            "artist:test_artist",
+        )
+        self.assertEqual(
+            genre.metadata["entity_reference"]["knowledge_entity_id"],
+            "genre:hip_hop",
+        )
+        self.assertFalse(genre.metadata["executable"])
+        self.assertFalse(genre.metadata["expandable"])
 
-    def test_no_supported_evidence_leaves_graph_unchanged(self) -> None:
+    def test_no_supported_evidence_only_enriches_artist_identity(self) -> None:
         result = self.expand([])
 
-        self.assertEqual(result.graph, self.graph)
+        self.assertEqual(result.graph.root, self.graph.root)
+        self.assertEqual(result.graph.edges, self.graph.edges)
+        self.assertEqual(
+            [node.id for node in result.graph.nodes],
+            [node.id for node in self.graph.nodes],
+        )
+        self.assertEqual(
+            result.graph.nodes[0].metadata["entity_reference"][
+                "knowledge_entity_id"
+            ],
+            "artist:test_artist",
+        )
         self.assertEqual(result.sources, self.sources)
         self.assertEqual(result.accepted, [])
 
@@ -254,7 +280,9 @@ class WorldLineSemanticExpansionTests(unittest.TestCase):
             [document],
         )[0].model_copy(update={"confidence": 1.0})
 
-        accepted, decisions = RelationValidator(registry()).validate(
+        accepted, decisions = RelationValidator(
+            self.service.entity_bridge
+        ).validate(
             artist(),
             search_plan(),
             [document],
@@ -280,9 +308,27 @@ class WorldLineSemanticExpansionTests(unittest.TestCase):
         )
 
         self.assertEqual(unsupported.accepted, [])
-        self.assertEqual(unsupported.graph, self.graph)
+        self.assertEqual(unsupported.graph.edges, self.graph.edges)
         self.assertEqual(unknown.accepted, [])
-        self.assertEqual(unknown.graph, self.graph)
+        self.assertEqual(unknown.graph.edges, self.graph.edges)
+
+    def test_accepts_registered_genre_not_present_in_knowledge_registry(self) -> None:
+        result = self.expand(
+            [
+                knowledge_document(
+                    target_id="genre:jazz_hip_hop",
+                    evidence_span="测试歌手的音乐风格属于 Jazz Hip-Hop。",
+                )
+            ]
+        )
+
+        genre = next(
+            node
+            for node in result.graph.nodes
+            if node.type is WorldLineNodeType.GENRE
+        )
+        self.assertEqual(genre.id, "genre:jazz_hip_hop")
+        self.assertEqual(genre.name, "Jazz Hip-Hop")
 
     def test_deduplicates_relation_and_unions_independent_evidence(self) -> None:
         first = knowledge_document(1)
@@ -331,6 +377,33 @@ class WorldLineSemanticExpansionTests(unittest.TestCase):
         )
 
         self.assertEqual(worldline.citations[0], relation_source)
+
+    def test_trace_records_accepted_and_rejected_candidates(self) -> None:
+        accepted_document = knowledge_document(1)
+        rejected_document = knowledge_document(
+            2,
+            confidence=0.8,
+            evidence_span="测试歌手也常被归入 Hip-Hop。",
+        )
+
+        with self.assertLogs(
+            "app.agent.foundation.subgraphs.worldline.semantic_expansion",
+            level="INFO",
+        ):
+            result = self.expand([accepted_document, rejected_document])
+
+        self.assertEqual(result.trace.candidate_count, 2)
+        self.assertEqual(result.trace.accepted_count, 1)
+        self.assertEqual(result.trace.rejected_count, 1)
+        self.assertEqual(
+            result.trace.rejection_reason,
+            {"confidence_below_threshold": 1},
+        )
+        self.assertEqual(result.trace.source_artist, artist().entity_id)
+        self.assertEqual(result.trace.target_genre, ["genre:hip_hop"])
+        self.assertEqual(len(result.trace.evidence_ids), 1)
+        self.assertEqual(result.trace.registry_version, "v1")
+        self.assertEqual(result.trace.validator_version, "v1")
 
 
 if __name__ == "__main__":

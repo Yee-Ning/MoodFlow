@@ -6,10 +6,19 @@ from collections import Counter
 from enum import StrEnum
 from hashlib import sha256
 import json
+import logging
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, ValidationError
 
+from app.agent.foundation.subgraphs.worldline.entity_bridge import (
+    CatalogResolutionStatus,
+    EntityBridge,
+    WorldLineEntityReference,
+)
+from app.agent.foundation.subgraphs.worldline.genre_registry import (
+    GenreVocabularyRegistry,
+)
 from app.agent.foundation.subgraphs.worldline.merge import (
     WorldLineMergeError,
     merge_worldline_graph,
@@ -26,9 +35,6 @@ from app.agent.foundation.subgraphs.worldline.models import (
     WorldLineNodeType,
     WorldLineRelation,
 )
-from app.rag.knowledge.entity_linking.models import (
-    EntityType as KnowledgeEntityType,
-)
 from app.rag.knowledge.entity_linking.registry import EntityRegistry
 from app.rag.query_understanding.models import SearchPlan
 
@@ -37,6 +43,7 @@ SEMANTIC_EXPANSION_VERSION = "v1"
 SEMANTIC_VALIDATOR_VERSION = "v1"
 SEMANTIC_ACCEPTANCE_THRESHOLD = 0.85
 MAX_RELATION_EVIDENCE = 8
+LOGGER = logging.getLogger(__name__)
 
 
 class SemanticRelationStatus(StrEnum):
@@ -99,6 +106,22 @@ class ValidatedSemanticRelation(BaseModel):
     confidence: float = Field(ge=0, le=1)
 
 
+class SemanticExpansionTrace(BaseModel):
+    """Aggregate observability record; it is not part of the public graph contract."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    candidate_count: int = Field(ge=0)
+    accepted_count: int = Field(ge=0)
+    rejected_count: int = Field(ge=0)
+    rejection_reason: dict[str, int] = Field(default_factory=dict)
+    source_artist: str = Field(min_length=1, max_length=128)
+    target_genre: list[str] = Field(default_factory=list, max_length=50)
+    evidence_ids: list[str] = Field(default_factory=list, max_length=160)
+    registry_version: str = Field(pattern=r"^v\d+$")
+    validator_version: str = Field(pattern=r"^v\d+$")
+
+
 class SemanticExpansionResult(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -106,6 +129,7 @@ class SemanticExpansionResult(BaseModel):
     sources: list[EvidenceSource] = Field(max_length=30)
     accepted: list[ValidatedSemanticRelation] = Field(default_factory=list)
     rejected: list[SemanticRelationDecision] = Field(default_factory=list)
+    trace: SemanticExpansionTrace
 
 
 class _SupportedClaim(BaseModel):
@@ -126,40 +150,9 @@ def _metadata_string(document: MusicKnowledgeDocument, key: str) -> str | None:
     return value if isinstance(value, str) and value else None
 
 
-def _artist_knowledge_id(
-    focus_artist: ResolvedEntity,
-    search_plan: SearchPlan,
-) -> str | None:
-    if focus_artist.entity_type is not EntityType.ARTIST:
-        return None
-    parts = focus_artist.entity_id.split(":")
-    if (
-        len(parts) != 3
-        or parts[0] != focus_artist.source
-        or parts[1] != EntityType.ARTIST.value
-        or not parts[2]
-    ):
-        return None
-    catalog_id = parts[2]
-    matches = []
-    for entity in search_plan.entities:
-        reference = entity.catalog_reference
-        if (
-            entity.entity_type is KnowledgeEntityType.ARTIST
-            and entity.knowledge_entity_id is not None
-            and reference is not None
-            and reference.provider == focus_artist.source
-            and reference.entity_id == catalog_id
-            and reference.entity_type is KnowledgeEntityType.ARTIST
-        ):
-            matches.append(entity.knowledge_entity_id)
-    unique = list(dict.fromkeys(matches))
-    return unique[0] if len(unique) == 1 else None
-
-
 class RelationCandidateExtractor:
-    def __init__(self, registry: EntityRegistry) -> None:
-        self.registry = registry
+    def __init__(self, entity_bridge: EntityBridge) -> None:
+        self.entity_bridge = entity_bridge
 
     def extract(
         self,
@@ -167,9 +160,17 @@ class RelationCandidateExtractor:
         search_plan: SearchPlan,
         documents: list[MusicKnowledgeDocument],
     ) -> list[SemanticRelationCandidate]:
-        artist_knowledge_id = _artist_knowledge_id(focus_artist, search_plan)
-        if artist_knowledge_id is None:
+        artist_resolution = self.entity_bridge.reference_for_catalog_artist(
+            focus_artist,
+            search_plan,
+        )
+        if (
+            artist_resolution.status is not CatalogResolutionStatus.RESOLVED
+            or artist_resolution.reference is None
+        ):
             return []
+        artist_reference = artist_resolution.reference
+        artist_knowledge_id = artist_reference.knowledge_entity_id
         candidates: list[SemanticRelationCandidate] = []
         for document in documents:
             raw_claims = document.metadata.get("supported_claims")
@@ -194,12 +195,16 @@ class RelationCandidateExtractor:
                     or not claim.object_entity_id.startswith("genre:")
                 ):
                     continue
-                genre = self.registry.get(claim.object_entity_id)
+                genre_resolution = self.entity_bridge.resolve_genre(
+                    claim.object_entity_id
+                )
                 if (
-                    genre is None
-                    or genre.entity_type is not KnowledgeEntityType.GENRE
+                    genre_resolution.status
+                    is not CatalogResolutionStatus.RESOLVED
+                    or genre_resolution.reference is None
                 ):
                     continue
+                genre_reference = genre_resolution.reference
                 try:
                     evidence = SemanticRelationEvidence(
                         document_id=document.id,
@@ -222,10 +227,12 @@ class RelationCandidateExtractor:
                     continue
                 candidates.append(
                     SemanticRelationCandidate(
-                        source_catalog_id=focus_artist.entity_id,
+                        source_catalog_id=artist_reference.node_id,
                         source_knowledge_id=artist_knowledge_id,
-                        target_knowledge_id=genre.entity_id,
-                        target_name=genre.canonical_name,
+                        target_knowledge_id=(
+                            genre_reference.knowledge_entity_id
+                        ),
+                        target_name=genre_reference.canonical_name,
                         evidence=evidence,
                         confidence=min(
                             claim.extraction_confidence,
@@ -239,11 +246,11 @@ class RelationCandidateExtractor:
 class RelationValidator:
     def __init__(
         self,
-        registry: EntityRegistry,
+        entity_bridge: EntityBridge,
         *,
         threshold: float = SEMANTIC_ACCEPTANCE_THRESHOLD,
     ) -> None:
-        self.registry = registry
+        self.entity_bridge = entity_bridge
         self.threshold = threshold
 
     def validate(
@@ -253,7 +260,15 @@ class RelationValidator:
         documents: list[MusicKnowledgeDocument],
         candidates: list[SemanticRelationCandidate],
     ) -> tuple[list[ValidatedSemanticRelation], list[SemanticRelationDecision]]:
-        artist_knowledge_id = _artist_knowledge_id(focus_artist, search_plan)
+        artist_resolution = self.entity_bridge.reference_for_catalog_artist(
+            focus_artist,
+            search_plan,
+        )
+        artist_reference = (
+            artist_resolution.reference
+            if artist_resolution.status is CatalogResolutionStatus.RESOLVED
+            else None
+        )
         document_counts = Counter(item.id for item in documents)
         document_by_id = {item.id: item for item in documents}
         decisions: list[SemanticRelationDecision] = []
@@ -261,7 +276,7 @@ class RelationValidator:
         for candidate in candidates:
             reasons = self._rejection_reasons(
                 focus_artist,
-                artist_knowledge_id,
+                artist_reference,
                 document_counts,
                 document_by_id,
                 candidate,
@@ -285,7 +300,7 @@ class RelationValidator:
     def _rejection_reasons(
         self,
         focus_artist: ResolvedEntity,
-        artist_knowledge_id: str | None,
+        artist_reference: WorldLineEntityReference | None,
         document_counts: Counter[str],
         document_by_id: dict[str, MusicKnowledgeDocument],
         candidate: SemanticRelationCandidate,
@@ -294,18 +309,22 @@ class RelationValidator:
         if focus_artist.entity_type is not EntityType.ARTIST:
             reasons.append("unsupported_focus_type")
         if (
-            artist_knowledge_id is None
-            or candidate.source_catalog_id != focus_artist.entity_id
-            or candidate.source_knowledge_id != artist_knowledge_id
+            artist_reference is None
+            or candidate.source_catalog_id != artist_reference.node_id
+            or candidate.source_knowledge_id
+            != artist_reference.knowledge_entity_id
         ):
             reasons.append("identity_mapping_missing")
         if candidate.relation is not WorldLineRelation.ASSOCIATED_WITH:
             reasons.append("predicate_not_allowed")
-        genre = self.registry.get(candidate.target_knowledge_id)
+        genre_resolution = self.entity_bridge.resolve_genre(
+            candidate.target_knowledge_id
+        )
+        genre_reference = genre_resolution.reference
         if (
-            genre is None
-            or genre.entity_type is not KnowledgeEntityType.GENRE
-            or genre.canonical_name != candidate.target_name
+            genre_resolution.status is not CatalogResolutionStatus.RESOLVED
+            or genre_reference is None
+            or genre_reference.canonical_name != candidate.target_name
         ):
             reasons.append("unknown_genre_entity")
         evidence = candidate.evidence
@@ -418,8 +437,8 @@ class RelationValidator:
 
 
 class GraphProjector:
-    def __init__(self, registry_version: str) -> None:
-        self.registry_version = registry_version
+    def __init__(self, genre_registry: GenreVocabularyRegistry) -> None:
+        self.genre_registry = genre_registry
 
     def project(
         self,
@@ -427,9 +446,8 @@ class GraphProjector:
         directory_graph: WorldLineGraph,
         directory_sources: list[EvidenceSource],
         relations: list[ValidatedSemanticRelation],
+        source_reference: WorldLineEntityReference | None,
     ) -> tuple[WorldLineGraph, list[EvidenceSource]]:
-        if not relations:
-            return directory_graph, directory_sources
         artist_node = next(
             (
                 node
@@ -440,7 +458,31 @@ class GraphProjector:
         )
         if artist_node is None or artist_node.type is not WorldLineNodeType.ARTIST:
             raise WorldLineMergeError("invalid_expansion_root")
-        delta_nodes = [artist_node]
+        if source_reference is None:
+            if relations:
+                raise WorldLineMergeError("identity_mapping_missing")
+            return directory_graph, directory_sources
+        if source_reference.node_id != artist_node.id:
+            raise WorldLineMergeError("node_identity_conflict")
+        enriched_artist_node = artist_node.model_copy(
+            update={
+                "metadata": {
+                    **artist_node.metadata,
+                    "entity_reference": source_reference.model_dump(mode="json"),
+                }
+            }
+        )
+        enriched_graph = directory_graph.model_copy(
+            update={
+                "nodes": [
+                    enriched_artist_node if node.id == artist_node.id else node
+                    for node in directory_graph.nodes
+                ]
+            }
+        )
+        if not relations:
+            return enriched_graph, directory_sources
+        delta_nodes = [enriched_artist_node]
         delta_edges: list[WorldLineEdge] = []
         delta_sources: list[EvidenceSource] = []
         seen_nodes = {artist_node.id}
@@ -451,7 +493,7 @@ class GraphProjector:
                 existing = next(
                     (
                         node
-                        for node in directory_graph.nodes
+                        for node in enriched_graph.nodes
                         if node.id == relation.target_id
                     ),
                     None,
@@ -461,23 +503,59 @@ class GraphProjector:
                     or existing.name != relation.target_name
                 ):
                     raise WorldLineMergeError("node_identity_conflict")
-                delta_nodes.append(
-                    existing
-                    or WorldLineNode(
+                genre = self.genre_registry.get(relation.target_id)
+                if (
+                    genre is None
+                    or genre.canonical_name != relation.target_name
+                ):
+                    raise WorldLineMergeError("node_identity_conflict")
+                genre_reference = WorldLineEntityReference(
+                    node_id=genre.canonical_id,
+                    node_type=WorldLineNodeType.GENRE,
+                    canonical_name=genre.canonical_name,
+                    knowledge_entity_id=genre.canonical_id,
+                    catalog_reference=None,
+                    aliases=genre.aliases,
+                )
+                semantic_metadata = {
+                    "registry_version": self.genre_registry.version,
+                    "semantic_expansion_version": SEMANTIC_EXPANSION_VERSION,
+                    "entity_reference": genre_reference.model_dump(
+                        mode="json"
+                    ),
+                    "executable": genre.executable,
+                    "expandable": genre.expandable,
+                }
+                if existing is not None:
+                    projected_genre = existing.model_copy(
+                        update={
+                            "metadata": {
+                                **existing.metadata,
+                                **semantic_metadata,
+                            }
+                        }
+                    )
+                    enriched_graph = enriched_graph.model_copy(
+                        update={
+                            "nodes": [
+                                projected_genre
+                                if node.id == projected_genre.id
+                                else node
+                                for node in enriched_graph.nodes
+                            ]
+                        }
+                    )
+                else:
+                    projected_genre = WorldLineNode(
                         id=relation.target_id,
                         type=WorldLineNodeType.GENRE,
                         name=relation.target_name,
                         description=(
                             f"由证据验证的 {focus_artist.name} 关联音乐类型"
                         ),
-                        metadata={
-                            "registry_version": self.registry_version,
-                            "semantic_expansion_version": (
-                                SEMANTIC_EXPANSION_VERSION
-                            ),
-                        },
+                        metadata=semantic_metadata,
                     )
-                )
+                delta_nodes.append(projected_genre)
                 seen_nodes.add(relation.target_id)
             evidence_ids = []
             for evidence in relation.evidence:
@@ -505,7 +583,7 @@ class GraphProjector:
             edges=delta_edges,
         )
         return merge_worldline_graph(
-            directory_graph,
+            enriched_graph,
             delta,
             directory_sources,
             delta_sources,
@@ -561,11 +639,17 @@ class GraphProjector:
 
 
 class SemanticExpansionService:
-    def __init__(self, registry: EntityRegistry | None = None) -> None:
+    def __init__(
+        self,
+        registry: EntityRegistry | None = None,
+        genre_registry: GenreVocabularyRegistry | None = None,
+    ) -> None:
         self.registry = registry or EntityRegistry.load()
-        self.extractor = RelationCandidateExtractor(self.registry)
-        self.validator = RelationValidator(self.registry)
-        self.projector = GraphProjector(self.registry.version)
+        self.genre_registry = genre_registry or GenreVocabularyRegistry.load()
+        self.entity_bridge = EntityBridge(self.registry, self.genre_registry)
+        self.extractor = RelationCandidateExtractor(self.entity_bridge)
+        self.validator = RelationValidator(self.entity_bridge)
+        self.projector = GraphProjector(self.genre_registry)
 
     def expand_artist_genres(
         self,
@@ -586,11 +670,33 @@ class SemanticExpansionService:
             documents,
             candidates,
         )
+        source_resolution = self.entity_bridge.reference_for_catalog_artist(
+            focus_artist,
+            search_plan,
+        )
+        source_reference = (
+            source_resolution.reference
+            if source_resolution.status is CatalogResolutionStatus.RESOLVED
+            else None
+        )
         graph, sources = self.projector.project(
             focus_artist,
             directory_graph,
             directory_sources,
             accepted,
+            source_reference,
+        )
+        trace = self._build_trace(
+            focus_artist,
+            candidates,
+            decisions,
+            graph,
+        )
+        LOGGER.info(
+            "worldline_semantic_expansion",
+            extra={
+                "semantic_expansion_trace": trace.model_dump(mode="json")
+            },
         )
         return SemanticExpansionResult(
             graph=graph,
@@ -601,4 +707,54 @@ class SemanticExpansionService:
                 for item in decisions
                 if item.status is SemanticRelationStatus.REJECTED
             ],
+            trace=trace,
+        )
+
+    def _build_trace(
+        self,
+        focus_artist: ResolvedEntity,
+        candidates: list[SemanticRelationCandidate],
+        decisions: list[SemanticRelationDecision],
+        graph: WorldLineGraph,
+    ) -> SemanticExpansionTrace:
+        rejected = [
+            item
+            for item in decisions
+            if item.status is SemanticRelationStatus.REJECTED
+        ]
+        accepted = [
+            item
+            for item in decisions
+            if item.status is SemanticRelationStatus.ACCEPTED
+        ]
+        reason_counts = Counter(
+            reason for item in rejected for reason in item.rejection_reasons
+        )
+        accepted_targets = {
+            item.candidate.target_knowledge_id for item in accepted
+        }
+        evidence_ids = list(
+            dict.fromkeys(
+                evidence_id
+                for edge in graph.edges
+                if edge.source == focus_artist.entity_id
+                and edge.target in accepted_targets
+                and edge.relation is WorldLineRelation.ASSOCIATED_WITH
+                for evidence_id in edge.evidence_ids
+            )
+        )
+        return SemanticExpansionTrace(
+            candidate_count=len(candidates),
+            accepted_count=len(accepted),
+            rejected_count=len(rejected),
+            rejection_reason=dict(reason_counts),
+            source_artist=focus_artist.entity_id,
+            target_genre=list(
+                dict.fromkeys(
+                    item.target_knowledge_id for item in candidates
+                )
+            ),
+            evidence_ids=evidence_ids,
+            registry_version=self.genre_registry.version,
+            validator_version=SEMANTIC_VALIDATOR_VERSION,
         )
