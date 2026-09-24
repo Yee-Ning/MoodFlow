@@ -1,5 +1,27 @@
 # MoodFlow RAG Eval Harness V0
 
+## WorldLine Evaluation V0
+
+WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用
+LLM Judge 代替 relation、evidence、identity、graph 或 checkpoint 校验。
+
+快速运行 Component Replay 与 Session Replay：
+
+```powershell
+.\.venv\Scripts\python.exe run_worldline_eval.py
+```
+
+同时运行真实 PostgreSQL 跨进程恢复：
+
+```powershell
+$env:RUN_WORLDLINE_EVAL_POSTGRES='1'
+.\.venv\Scripts\python.exe run_worldline_eval.py --include-postgres
+```
+
+数据集位于 `evals/datasets/worldline_eval_v0.jsonl`。当前 V0 使用明确标注的合成契约
+fixtures，验证执行边界和失败原子性，不表示已经完成真实音乐事实 Gold 的独立人工审核。
+运行会生成逐案例结果、指标、失败审计和 Markdown 报告到 `evals/reports/`。
+
 本目录承载离线评测资产，不参与在线请求。V0 的目标是先冻结
 `Query Understanding -> Top40 -> Rerank Top12 -> Context Top8 -> Generation`
 的可回放合同，再用同一份人工标签分别评估检索、上下文和最终回答。
