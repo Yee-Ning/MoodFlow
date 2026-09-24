@@ -73,3 +73,51 @@ class WorldLinePostgresRestartTests(unittest.TestCase):
         self.assertEqual(sum(code == 0 for code, _ in results), 1)
         failed = next(payload for code, payload in results if code != 0)
         self.assertEqual(failed["error_chain"][0]["code"], "duplicate_exploration")
+
+    def test_genre_executor_survives_process_restart(self):
+        load_runtime_environment()
+        self.assertTrue(os.getenv("DATABASE_URL"))
+        environment = {
+            **os.environ,
+            "CHECKPOINT_BACKEND": "postgres",
+            "PYTHONPATH": str(Path(__file__).resolve().parents[1]),
+        }
+
+        def process(mode, *args):
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "tests/fixtures/worldline_postgres_restart_worker.py",
+                    mode,
+                    *args,
+                ],
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(
+                completed.returncode,
+                0,
+                f"WorldLine genre restart worker failed in {mode} mode",
+            )
+            return json.loads(completed.stdout.strip().splitlines()[-1])
+
+        created = process("genre_create")
+        self.assertIn("genre:hip_hop", created["nodes"])
+        expanded = process(
+            "genre_explore",
+            created["session_id"],
+            created["branch_id"],
+        )
+        self.assertEqual(expanded["revision"], 2)
+        self.assertEqual(expanded["current_node"], "genre:hip_hop")
+        self.assertIn("netease:artist:9", expanded["nodes"])
+        self.assertTrue(set(created["nodes"]).issubset(expanded["nodes"]))
+        self.assertTrue(set(created["sources"]).issubset(expanded["sources"]))
+
+        recovered = process("genre_verify", created["session_id"])
+        self.assertEqual(recovered["revision"], 2)
+        self.assertEqual(recovered["nodes"], expanded["nodes"])
+        self.assertEqual(recovered["sources"], expanded["sources"])
+        self.assertIn("genre:hip_hop", recovered["visited"])
