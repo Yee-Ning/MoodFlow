@@ -1,0 +1,184 @@
+{
+  "dataset_sha256": "f89d84f41ec270151bf0e52cd152bf4d51ae00f9961c8284aa1e18542efb3772",
+  "dataset_version": "v0",
+  "evaluation_timestamp": "2026-09-24T13:11:09.393293+00:00",
+  "git_commit": "307978105663e1e9f9eed5f8fa02fdb2946f18e7",
+  "metrics": {
+    "evidence_grounding": {
+      "cases": 1,
+      "citation_validity": {
+        "denominator": 2,
+        "numerator": 2,
+        "value": 1.0
+      },
+      "grounding_validator_accuracy": {
+        "denominator": 1,
+        "numerator": 1,
+        "value": 1.0
+      },
+      "semantic_evidence_provenance_validity": {
+        "denominator": 8,
+        "numerator": 8,
+        "value": 1.0
+      }
+    },
+    "exploration_quality": {
+      "action_gate_accuracy": {
+        "denominator": 10,
+        "numerator": 10,
+        "value": 1.0
+      },
+      "cases": 10,
+      "catalog_resolution_yield": {
+        "denominator": 9,
+        "numerator": 6,
+        "value": 0.6666666666666666
+      },
+      "evidence_acceptance_rate": {
+        "denominator": 9,
+        "numerator": 9,
+        "value": 1.0
+      },
+      "genre_artist_precision": {
+        "denominator": 6,
+        "numerator": 6,
+        "value": 1.0
+      },
+      "genre_artist_recall": {
+        "denominator": 6,
+        "numerator": 6,
+        "value": 1.0
+      },
+      "genre_expansion_success_rate": {
+        "denominator": 6,
+        "numerator": 6,
+        "value": 1.0
+      },
+      "positive_cases": 6,
+      "projection_yield": {
+        "denominator": 9,
+        "numerator": 6,
+        "value": 0.6666666666666666
+      },
+      "valid_artist_yield": {
+        "mean": 1,
+        "p50": 1.0,
+        "p95": 1.0,
+        "sample_count": 6
+      }
+    },
+    "identity_resolution": {
+      "ambiguity_detection_rate": {
+        "denominator": 1,
+        "numerator": 1,
+        "value": 1.0
+      },
+      "ambiguity_rate": {
+        "denominator": 6,
+        "numerator": 1,
+        "value": 0.16666666666666666
+      },
+      "cases": 6,
+      "catalog_identity_accuracy": {
+        "denominator": 2,
+        "numerator": 2,
+        "value": 1.0
+      },
+      "false_executable_identity_count": 0,
+      "knowledge_catalog_resolution_success_rate": {
+        "denominator": 2,
+        "numerator": 2,
+        "value": 1.0
+      },
+      "unresolved_reason_accuracy": {
+        "denominator": 3,
+        "numerator": 3,
+        "value": 1.0
+      }
+    },
+    "semantic_quality": {
+      "accepted_relation_rate": {
+        "denominator": 11,
+        "numerator": 9,
+        "value": 0.8181818181818182
+      },
+      "cases": 14,
+      "evidence_provenance_validity": {
+        "denominator": 8,
+        "numerator": 8,
+        "value": 1.0
+      },
+      "expected_rejection_accuracy": {
+        "denominator": 6,
+        "numerator": 6,
+        "value": 1.0
+      },
+      "grounded_relation_precision": {
+        "denominator": 8,
+        "numerator": 8,
+        "value": 1.0
+      },
+      "rejection_rate": {
+        "denominator": 11,
+        "numerator": 2,
+        "value": 0.18181818181818182
+      },
+      "semantic_relation_precision": {
+        "denominator": 8,
+        "numerator": 8,
+        "value": 1.0
+      },
+      "semantic_relation_recall": {
+        "denominator": 8,
+        "numerator": 8,
+        "value": 1.0
+      },
+      "unsupported_relation_count": 0
+    },
+    "summary": {
+      "cases": 38,
+      "errors": 0,
+      "execution_success_rate": {
+        "denominator": 38,
+        "numerator": 38,
+        "value": 1.0
+      },
+      "failed": 0,
+      "passed": 38,
+      "skipped": 0
+    },
+    "system_reliability": {
+      "checkpoint_recovery_success_rate": {
+        "denominator": 2,
+        "numerator": 2,
+        "value": 1.0
+      },
+      "failure_atomicity_rate": {
+        "denominator": 5,
+        "numerator": 5,
+        "value": 1.0
+      },
+      "graph_merge_success_rate": {
+        "denominator": 2,
+        "numerator": 2,
+        "value": 1.0
+      },
+      "invalid_merge_rejection_rate": {
+        "denominator": 1,
+        "numerator": 1,
+        "value": 1.0
+      },
+      "post_recovery_exploration_success": {
+        "denominator": 2,
+        "numerator": 2,
+        "value": 1.0
+      },
+      "session_continuity_rate": {
+        "denominator": 3,
+        "numerator": 3,
+        "value": 1.0
+      }
+    }
+  },
+  "schema_version": "worldline-eval-v0"
+}
