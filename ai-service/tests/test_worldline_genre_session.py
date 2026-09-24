@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import AsyncMock, patch
 
 from app.agent.checkpointing import create_memory_checkpointer
 from app.agent.foundation.subgraphs.worldline.entity_bridge import EntityBridge
@@ -28,13 +29,18 @@ from tests.test_worldline_graph import (
 )
 
 
-def genre_executor(*, documents=None, candidates=None) -> GenreExecutor:
+def genre_executor(
+    *,
+    documents=None,
+    candidates=None,
+    retrieval_fail: bool = False,
+) -> GenreExecutor:
     registry = GenreVocabularyRegistry.load()
     return GenreExecutor(
         registry=registry,
         entity_bridge=EntityBridge(EntityRegistry.load(), registry),
         planner=Planner(),
-        retriever=Retriever(documents),
+        retriever=Retriever(documents, fail=retrieval_fail),
         music_service=MusicService(candidates),
     )
 
@@ -140,6 +146,66 @@ class WorldLineGenreSessionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(restored.revision, 1)
         self.assertEqual(restored.current_graph, created.graph)
         self.assertEqual(restored.evidence_history, created.sources)
+
+    async def test_retrieval_and_checkpoint_failures_preserve_old_snapshot(self) -> None:
+        failing_service = self.service(genre_executor(retrieval_fail=True))
+        created = await failing_service.create("探索歌手周杰伦的世界线")
+        action = next(
+            item
+            for item in created.available_actions
+            if item.target_node_id == "genre:hip_hop"
+        )
+
+        with self.assertRaises(WorldLineExecutionError) as retrieval_error:
+            await failing_service.explore(created.session_id, action.id)
+
+        self.assertEqual(
+            retrieval_error.exception.code,
+            "genre_retrieval_failed",
+        )
+        restored = await failing_service.load(created.session_id)
+        self.assertEqual(restored.revision, 1)
+        self.assertEqual(restored.current_graph, created.graph)
+
+        eason = ResolvedEntity(
+            entity_id="netease:artist:9",
+            entity_type=EntityType.ARTIST,
+            name="陈奕迅",
+            artist="陈奕迅",
+            source="netease",
+        )
+        commit_service = self.service(
+            genre_executor(
+                documents=[
+                    document_for_artist(
+                        "artist:eason_chan",
+                        "陈奕迅的音乐风格属于 Hip-Hop。",
+                    )
+                ],
+                candidates=[eason],
+            )
+        )
+        commit_created = await commit_service.create("探索歌手周杰伦的世界线")
+        commit_action = next(
+            item
+            for item in commit_created.available_actions
+            if item.target_node_id == "genre:hip_hop"
+        )
+        with patch.object(
+            commit_service._snapshots,
+            "ainvoke",
+            new=AsyncMock(side_effect=RuntimeError("write failed")),
+        ):
+            with self.assertRaises(WorldLineExecutionError) as write_error:
+                await commit_service.explore(
+                    commit_created.session_id,
+                    commit_action.id,
+                )
+
+        self.assertEqual(write_error.exception.code, "checkpoint_write_failed")
+        commit_restored = await commit_service.load(commit_created.session_id)
+        self.assertEqual(commit_restored.revision, 1)
+        self.assertEqual(commit_restored.current_graph, commit_created.graph)
 
 
 def document_for_artist(
