@@ -321,3 +321,27 @@ Git 忽略的 `evals/local/`。Router/Memory/Context 命令会真实调用 TypeS
 `requested_model`、`response_model`、`evaluation_timestamp` 记录；只比较同批输入和候选。
 报告见 `reports/jev_shadow_evaluation_v1.md`，完整 failure audit 见
 `reports/jev_shadow_failure_audit_v1.jsonl`。旧的 `run_jev_eval.py <jsonl>` 汇总入口保留。
+
+## Jev Shadow Evaluation v2
+
+v2 继续复用 `run_jev_eval.py`，把 Router 单意图准确率与多意图 Noul 诊断分开，
+以 100 条合成 Memory 和真实 pgvector Top-8 采样构造固定候选集，并按任务效用重标 30 个
+ContextPool 场景。全量复评顺序：
+
+```powershell
+.\.venv\Scripts\python.exe run_jev_eval.py prepare-router-v2
+.\.venv\Scripts\python.exe run_jev_eval.py router-v2
+.\.venv\Scripts\python.exe run_jev_eval.py prepare-memory-v2
+.\.venv\Scripts\python.exe run_jev_eval.py memory-v2
+.\.venv\Scripts\python.exe run_jev_eval.py prepare-context-v2
+.\.venv\Scripts\python.exe run_jev_eval.py context-v2
+.\.venv\Scripts\python.exe run_jev_eval.py report-v2
+```
+
+`prepare-memory-v2` 需要本地 `moodflow-postgres` 容器与项目 embedding 模型；它仅临时
+写入专用 synthetic user/ID 记录，采样后清理。默认 100 条查询与 30 条指定
+`memory_type=episodic` 的探针在报告中分别统计。Router/Memory/Context 的真实 Jev
+回放需要官方 TypeSafe SDK、`JEV_MODEL=jev-latest`、`JEV_SHADOW_MODE=true` 及可用 API Key。
+数据集在 `datasets/*_eval_v2.jsonl`，逐 case 结果与完整 failure audit 在 `reports/`，
+报告见 `reports/jev_shadow_evaluation_v2.md`。`jev-latest` 为可变别名，结果逐项记录
+requested/response model 和 UTC timestamp；不要跨版本合并结果。
