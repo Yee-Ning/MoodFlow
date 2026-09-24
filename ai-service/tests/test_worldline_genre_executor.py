@@ -8,6 +8,7 @@ from app.agent.foundation.subgraphs.worldline.genre_executor import (
     GenreExecutor,
     GenreExecutorError,
     GenreExecutorInput,
+    GenreSearchPlanFactory,
 )
 from app.agent.foundation.subgraphs.worldline.genre_registry import (
     GenreVocabularyRegistry,
@@ -32,7 +33,11 @@ from app.rag.knowledge.entity_linking.models import (
 from app.rag.knowledge.entity_linking.registry import EntityRegistry
 from app.rag.query_understanding.models import (
     CatalogReference,
+    ContextResolution,
+    ContextResolutionStatus,
     MetadataFilter,
+    QueryAnalysis,
+    QueryConstraints,
     QueryEntityStatus,
     QueryType,
     QueryVariant,
@@ -81,6 +86,39 @@ def search_plan() -> SearchPlan:
 class Planner:
     async def build(self, genre):
         return search_plan()
+
+
+class QueryService:
+    def __init__(self):
+        self.entity = None
+
+    async def resolve_context(self, query):
+        return ContextResolution(
+            status=ContextResolutionStatus.RESOLVED,
+            dependency="standalone",
+            original_query=query,
+            standalone_query=query,
+        )
+
+    async def analyze(self, context, entities):
+        self.entity = entities[0]
+        return QueryAnalysis(
+            original_query=context.original_query,
+            standalone_query=context.standalone_query,
+            query_types=[QueryType.RELATIONSHIP],
+            entities=entities,
+            constraints=QueryConstraints(
+                entity_ids=["genre:hip_hop"],
+                entity_types=[KnowledgeEntityType.GENRE],
+            ),
+            context=context,
+            confidence=1,
+        )
+
+    def plan(self, analysis):
+        return search_plan().model_copy(
+            update={"entities": analysis.entities}
+        )
 
 
 class Retriever:
@@ -333,6 +371,23 @@ class GenreExecutorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(retriever.anchor.entity_id, "netease:artist:1")
         self.assertEqual(
             retriever.plan.entities[0].knowledge_entity_id,
+            "genre:hip_hop",
+        )
+
+    async def test_search_plan_factory_uses_controlled_genre_identity(self) -> None:
+        query_service = QueryService()
+        factory = GenreSearchPlanFactory(query_service)
+        _, _, _, genre_reference = current_worldline()
+
+        plan = await factory.build(genre_reference)
+
+        self.assertEqual(
+            plan.entities[0].knowledge_entity_id,
+            "genre:hip_hop",
+        )
+        self.assertIsNone(plan.entities[0].catalog_reference)
+        self.assertEqual(
+            query_service.entity.knowledge_entity_id,
             "genre:hip_hop",
         )
 

@@ -482,6 +482,7 @@ class GenreExecutor:
         for candidate in candidates:
             grouped.setdefault(candidate.artist_knowledge_id, []).append(candidate)
         accepted: list[AcceptedGenreArtist] = []
+        accepted_node_ids: set[str] = set()
         decisions: list[GenreArtistDecision] = []
         ordered = sorted(
             grouped.items(),
@@ -527,6 +528,16 @@ class GenreExecutor:
                         )
                     )
                 continue
+            if resolution.reference.node_id in accepted_node_ids:
+                decisions.extend(
+                    GenreArtistDecision(
+                        candidate=candidate,
+                        status=SemanticRelationStatus.REJECTED,
+                        rejection_reasons=["catalog_artist_identity_conflict"],
+                    )
+                    for candidate in group
+                )
+                continue
             evidence_by_key: dict[
                 tuple[str, str, str],
                 SemanticRelationEvidence,
@@ -556,6 +567,7 @@ class GenreExecutor:
                     confidence=min(item.confidence for item in group),
                 )
             )
+            accepted_node_ids.add(resolution.reference.node_id)
         return accepted, decisions
 
     def _project(
