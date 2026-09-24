@@ -108,7 +108,11 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue({s.id for s in second.sources}.issubset({s.id for s in third.sources}))
         with self.assertRaises(WorldLineExecutionError) as error:
             await self.service.explore(first.session_id, artist_action.id)
-        self.assertEqual(error.exception.code, "invalid_branch_id")
+        self.assertEqual(error.exception.code, "duplicate_exploration")
+        stale_action = next(a for a in first.available_actions if a.target_node_id == self.catalog.album.entity_id)
+        with self.assertRaises(WorldLineExecutionError) as stale_error:
+            await self.service.explore(first.session_id, stale_action.id)
+        self.assertEqual(stale_error.exception.code, "invalid_branch_id")
         other = await self.service.create("歌手《Jay-Z》的世界线")
         self.assertNotEqual(first.session_id, other.session_id)
         self.assertEqual((await self.service.load(first.session_id)).revision, 3)

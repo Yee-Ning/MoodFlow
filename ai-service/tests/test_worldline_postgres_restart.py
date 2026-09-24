@@ -72,4 +72,4 @@ class WorldLinePostgresRestartTests(unittest.TestCase):
             results.append((worker_process.returncode, json.loads(stdout.strip().splitlines()[-1])))
         self.assertEqual(sum(code == 0 for code, _ in results), 1)
         failed = next(payload for code, payload in results if code != 0)
-        self.assertEqual(failed["error_chain"][0]["code"], "invalid_branch_id")
+        self.assertEqual(failed["error_chain"][0]["code"], "duplicate_exploration")

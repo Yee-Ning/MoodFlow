@@ -44,6 +44,7 @@ class WorldLineSessionState(BaseModel):
     current_node: str
     visited_nodes: list[str]
     available_branches: list[WorldLineBranch]
+    consumed_branch_ids: list[str] = Field(default_factory=list)
     exploration_depth: int = Field(ge=0, le=MAX_EXPLORATION_DEPTH)
     evidence_history: list[EvidenceSource]
     revision: int = Field(ge=1)
@@ -60,6 +61,8 @@ class WorldLineSessionState(BaseModel):
             raise ValueError("session node must exist in graph")
         if len(self.visited_nodes) != len(set(self.visited_nodes)):
             raise ValueError("visited nodes must be unique")
+        if len(self.consumed_branch_ids) != len(set(self.consumed_branch_ids)):
+            raise ValueError("consumed branches must be unique")
         if self.current_node not in self.visited_nodes:
             raise ValueError("current node must be visited")
         if self.last_result.graph != self.current_graph or self.last_result.sources != self.evidence_history:
@@ -257,6 +260,8 @@ class WorldLineSessionService:
             old = await self._read(session_id)
             branch = next((item for item in old.available_branches if item.id == branch_id), None)
             if branch is None:
+                if branch_id in old.consumed_branch_ids:
+                    raise WorldLineExecutionError("duplicate_exploration", "该分支已经探索过。", 409)
                 raise WorldLineExecutionError("invalid_branch_id", "分支不存在或已过期。", 404)
             target_ref = branch.target_entity
             target = _canonical_target(target_ref.id, target_ref.type, target_ref.name)
@@ -281,6 +286,7 @@ class WorldLineSessionService:
                 current_graph=result.graph, current_node=target.entity_id,
                 visited_nodes=[*old.visited_nodes, target.entity_id],
                 available_branches=result.branches,
+                consumed_branch_ids=[*old.consumed_branch_ids, branch_id],
                 exploration_depth=old.exploration_depth + 1,
                 evidence_history=result.sources, revision=old.revision + 1,
                 last_result=result, created_at=old.created_at,
