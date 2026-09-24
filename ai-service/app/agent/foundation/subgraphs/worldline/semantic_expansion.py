@@ -329,7 +329,13 @@ class RelationValidator:
                 reasons.append("evidence_span_missing")
             if not self._claim_is_present(document, candidate):
                 reasons.append("claim_not_in_document")
-        if candidate.confidence < self.threshold:
+        effective_confidence = min(
+            evidence.extraction_confidence,
+            evidence.verification_confidence,
+        )
+        if candidate.confidence != effective_confidence:
+            reasons.append("candidate_confidence_mismatch")
+        if effective_confidence < self.threshold:
             reasons.append("confidence_below_threshold")
         return list(dict.fromkeys(reasons))
 

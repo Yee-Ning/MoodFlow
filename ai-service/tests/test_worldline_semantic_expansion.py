@@ -13,6 +13,7 @@ from app.agent.foundation.subgraphs.worldline.models import (
     WorldLineSessionResult,
 )
 from app.agent.foundation.subgraphs.worldline.semantic_expansion import (
+    RelationValidator,
     SemanticExpansionService,
 )
 from app.rag.knowledge.entity_linking.models import (
@@ -243,6 +244,31 @@ class WorldLineSemanticExpansionTests(unittest.TestCase):
         self.assertIn(
             "confidence_below_threshold",
             result.rejected[0].rejection_reasons,
+        )
+
+    def test_validator_recomputes_candidate_confidence(self) -> None:
+        document = knowledge_document(confidence=0.84)
+        candidate = self.service.extractor.extract(
+            artist(),
+            search_plan(),
+            [document],
+        )[0].model_copy(update={"confidence": 1.0})
+
+        accepted, decisions = RelationValidator(registry()).validate(
+            artist(),
+            search_plan(),
+            [document],
+            [candidate],
+        )
+
+        self.assertEqual(accepted, [])
+        self.assertIn(
+            "candidate_confidence_mismatch",
+            decisions[0].rejection_reasons,
+        )
+        self.assertIn(
+            "confidence_below_threshold",
+            decisions[0].rejection_reasons,
         )
 
     def test_ignores_unsupported_predicate_and_unknown_genre(self) -> None:
