@@ -1,0 +1,6 @@
+{"tool_result_threshold":0.45,"cases":15,"required_preservation":1.0,"useful_recall":1.0,"irrelevant_retention":0.058823529411764705,"false_drop":0,"token_reduction":0.3647929678464029,"objective":1.9411764705882353}
+{"tool_result_threshold":0.4,"cases":15,"required_preservation":1.0,"useful_recall":1.0,"irrelevant_retention":0.0784313725490196,"false_drop":0,"token_reduction":0.3566967383761277,"objective":1.9215686274509804}
+{"tool_result_threshold":0.35,"cases":15,"required_preservation":1.0,"useful_recall":1.0,"irrelevant_retention":0.11764705882352941,"false_drop":0,"token_reduction":0.3395789960675457,"objective":1.8823529411764706}
+{"tool_result_threshold":0.5,"cases":15,"required_preservation":1.0,"useful_recall":0.9696969696969697,"irrelevant_retention":0.058823529411764705,"false_drop":1,"token_reduction":0.37288919731667824,"objective":1.8805704099821747}
+{"tool_result_threshold":0.3,"cases":15,"required_preservation":1.0,"useful_recall":1.0,"irrelevant_retention":0.17647058823529413,"false_drop":0,"token_reduction":0.31320842007864913,"objective":1.8235294117647058}
+{"tool_result_threshold":0.55,"cases":15,"required_preservation":1.0,"useful_recall":0.9393939393939394,"irrelevant_retention":0.058823529411764705,"false_drop":2,"token_reduction":0.38098542678695346,"objective":1.8199643493761142}

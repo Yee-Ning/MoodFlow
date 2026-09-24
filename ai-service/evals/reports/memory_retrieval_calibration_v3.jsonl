@@ -1,0 +1,10 @@
+{"strategy":"legacy","top_k":3,"cases":51,"hits":15,"recall":0.29411764705882354,"mean_candidates":3.0}
+{"strategy":"hybrid","top_k":3,"cases":51,"hits":47,"recall":0.9215686274509803,"mean_candidates":3.0}
+{"strategy":"legacy","top_k":5,"cases":51,"hits":18,"recall":0.35294117647058826,"mean_candidates":5.0}
+{"strategy":"hybrid","top_k":5,"cases":51,"hits":51,"recall":1.0,"mean_candidates":5.0}
+{"strategy":"legacy","top_k":8,"cases":51,"hits":22,"recall":0.43137254901960786,"mean_candidates":8.0}
+{"strategy":"hybrid","top_k":8,"cases":51,"hits":51,"recall":1.0,"mean_candidates":8.0}
+{"strategy":"legacy","top_k":10,"cases":51,"hits":25,"recall":0.49019607843137253,"mean_candidates":10.0}
+{"strategy":"hybrid","top_k":10,"cases":51,"hits":51,"recall":1.0,"mean_candidates":10.0}
+{"strategy":"legacy","top_k":20,"cases":51,"hits":33,"recall":0.6470588235294118,"mean_candidates":20.0}
+{"strategy":"hybrid","top_k":20,"cases":51,"hits":51,"recall":1.0,"mean_candidates":20.0}

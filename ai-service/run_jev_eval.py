@@ -60,6 +60,10 @@ def main() -> None:
         from evals.jev_shadow_v2_report import write_report_v2
 
         print(write_report_v2())
+    elif args.command.endswith("-v3"):
+        from evals.jev_targeted_v3_commands import dispatch
+
+        print(dispatch(args.command))
     else:
         path = Path(args.command)
         rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]

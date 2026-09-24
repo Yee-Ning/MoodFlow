@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 from datetime import UTC, datetime
 
 from .embeddings import MemoryEmbedder
@@ -40,7 +41,8 @@ class MemoryRetriever:
                 raise RuntimeError("episodic retrieval requires an embedding provider")
             vector = self.embedder.embed_query(request.query)
             candidates.extend(
-                self.store.search_active_episodes(
+                (memory, self._episode_relevance(memory, relevance, request))
+                for memory, relevance in self.store.search_active_episodes(
                     request.user_id,
                     vector,
                     scene=request.scene,
@@ -102,9 +104,32 @@ class MemoryRetriever:
             for term in (request.intent, request.scene)
             if term and term.strip()
         ]
-        if not terms:
-            return 0.75
-        return 1.0 if any(term in haystack for term in terms) else 0.65
+        if terms and any(term in haystack for term in terms):
+            return 1.0
+        query = re.sub(r"[^\w]+", "", request.query.casefold())
+        if not query:
+            return 0.75 if not terms else 0.65
+        fields = (memory.structured_content.get("subject"),
+                  memory.structured_content.get("topic"),
+                  memory.structured_content.get("scene"))
+        for value in fields:
+            if isinstance(value, str):
+                normalized = re.sub(r"[^\w]+", "", value.casefold())
+                if len(normalized) >= 2 and normalized in query:
+                    return 1.0
+        content = re.sub(r"[^\w]+", "", memory.content.casefold())
+        query_pairs = {query[index:index + 2] for index in range(len(query) - 1)}
+        content_pairs = {content[index:index + 2] for index in range(len(content) - 1)}
+        overlap = len(query_pairs & content_pairs) / len(query_pairs) if query_pairs else 0.0
+        return min(1.0, (0.35 if not terms else 0.3) + 0.65 * overlap)
+
+    @staticmethod
+    def _episode_relevance(
+        memory: MemoryRecord, relevance: float, request: MemoryRetrievalRequest
+    ) -> float:
+        del memory
+        history_cue = re.search(r"上次|之前|曾经|当时|那天|刚才|过去|回忆", request.query)
+        return min(1.0, relevance + (0.3 if history_cue else 0.0))
 
     @staticmethod
     def _recency(updated_at: datetime) -> float:

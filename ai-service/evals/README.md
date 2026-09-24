@@ -345,3 +345,33 @@ ContextPool 场景。全量复评顺序：
 数据集在 `datasets/*_eval_v2.jsonl`，逐 case 结果与完整 failure audit 在 `reports/`，
 报告见 `reports/jev_shadow_evaluation_v2.md`。`jev-latest` 为可变别名，结果逐项记录
 requested/response model 和 UTC timestamp；不要跨版本合并结果。
+
+## Jev Targeted Optimization v3
+
+继续使用 `run_jev_eval.py`。先冻结 dev/test，然后按以下顺序完成真实 Shadow 回放：
+
+```powershell
+.\.venv\Scripts\python.exe run_jev_eval.py prepare-v3
+.\.venv\Scripts\python.exe run_jev_eval.py router-v3
+.\.venv\Scripts\python.exe run_jev_eval.py router-calibrate-v3
+.\.venv\Scripts\python.exe run_jev_eval.py memory-diagnostic-v3
+.\.venv\Scripts\python.exe run_jev_eval.py memory-retrieval-dev-v3
+.\.venv\Scripts\python.exe run_jev_eval.py memory-calibrate-v3
+.\.venv\Scripts\python.exe run_jev_eval.py memory-filter-dev-v3
+.\.venv\Scripts\python.exe run_jev_eval.py memory-filter-calibrate-v3
+.\.venv\Scripts\python.exe run_jev_eval.py context-audit-v3
+.\.venv\Scripts\python.exe run_jev_eval.py context-calibrate-v3
+.\.venv\Scripts\python.exe run_jev_eval.py memory-retrieval-test-v3
+.\.venv\Scripts\python.exe run_jev_eval.py memory-filter-test-v3
+.\.venv\Scripts\python.exe run_jev_eval.py memory-filter-decide-v3
+.\.venv\Scripts\python.exe run_jev_eval.py memory-boundary-audit-v3
+.\.venv\Scripts\python.exe run_jev_eval.py context-test-v3
+.\.venv\Scripts\python.exe run_jev_eval.py report-v3
+```
+
+Router 用一次请求中的四个 Noul 得到多标签分数；阈值仅在 dev 校准。Memory exact/HNSW
+诊断和新旧 Retrieval 用 v2 合成记录临时插入本地 pgvector，结束后清理专用 user/ID；
+query/episode 向量仅缓存在 Git 忽略的 `evals/local/`。Context 只复核 v2 的九个误删并重放
+已记录的 Jev score，不重复调用 API。最终报告见
+`reports/jev_targeted_optimization_v3.md`，包含冻结 test 的质量、P50/P95/P99、模型血缘和
+Live 建议。整个流程要求 `JEV_SHADOW_MODE=true`，不会将 Router/Context 切 Live。
