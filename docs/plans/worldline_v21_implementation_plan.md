@@ -1,6 +1,6 @@
 # WorldLine Agent V2.1 实施计划
 
-状态：待确认。本文只规划 song / artist / album 的连续探索；确认后才修改业务代码。依据为当前工作树的 WorldLine 子图、API、checkpoint、前端调用和测试代码。
+状态：已确认并实施。本文只规划 song / artist / album 的连续探索。依据为实施前的 WorldLine 子图、API、checkpoint、前端调用和测试代码；实际结果见实施报告。
 
 ## 1. 当前问题
 
