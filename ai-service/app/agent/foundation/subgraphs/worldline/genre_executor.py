@@ -269,7 +269,12 @@ class GenreExecutor:
             evidence_valid,
         )
         decisions.extend(catalog_decisions)
-        graph, sources = self._project(value, genre.canonical_name, accepted)
+        try:
+            graph, sources = self._project(value, genre.canonical_name, accepted)
+        except GenreExecutorError:
+            raise
+        except (TypeError, ValueError) as exc:
+            raise GenreExecutorError("genre_projection_invalid") from exc
         rejected = [
             item
             for item in decisions

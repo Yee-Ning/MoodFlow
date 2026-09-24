@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from app.agent.foundation.subgraphs.worldline.entity_bridge import (
     EntityBridge,
@@ -449,6 +450,26 @@ class GenreExecutorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(retrieval_error.exception.code, "genre_retrieval_failed")
         self.assertEqual(catalog_error.exception.code, "catalog_artist_search_failed")
+
+    async def test_projection_validation_failure_uses_executor_error(self) -> None:
+        catalog_artist = ResolvedEntity(
+            entity_id="netease:artist:2",
+            entity_type=EntityType.ARTIST,
+            name="New Artist",
+            artist="New Artist",
+            source="netease",
+        )
+        executor, _ = self.build_executor([document()], [catalog_artist])
+
+        with patch.object(
+            executor,
+            "_project",
+            side_effect=ValueError("invalid graph"),
+        ):
+            with self.assertRaises(GenreExecutorError) as error:
+                await executor.execute(self.executor_input())
+
+        self.assertEqual(error.exception.code, "genre_projection_invalid")
 
     async def test_requires_trigger_evidence_and_executable_registry_genre(self) -> None:
         executor, _ = self.build_executor([], [])
