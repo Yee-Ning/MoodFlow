@@ -18,7 +18,7 @@ from app.rag.knowledge.entity_linking.models import (
     EntityType as KnowledgeEntityType,
     RegistryEntity,
 )
-from app.rag.knowledge.entity_linking.registry import EntityRegistry
+from app.rag.knowledge.entity_linking.registry import EntityRegistry, normalize_alias
 from app.rag.query_understanding.models import CatalogReference, SearchPlan
 
 
@@ -66,7 +66,10 @@ class WorldLineEntityReference(BaseModel):
                 raise ValueError("genre node id must equal knowledge identity")
         else:
             raise ValueError("entity bridge supports only artist and genre")
-        if len(self.aliases) != len(dict.fromkeys(self.aliases)):
+        normalized_aliases = [normalize_alias(item) for item in self.aliases]
+        if any(not item for item in normalized_aliases):
+            raise ValueError("entity reference aliases cannot be blank")
+        if len(normalized_aliases) != len(set(normalized_aliases)):
             raise ValueError("entity reference aliases must be unique")
         return self
 
@@ -250,11 +253,7 @@ class EntityBridge:
             canonical_name=registry_entity.canonical_name,
             knowledge_entity_id=registry_entity.entity_id,
             catalog_reference=catalog_reference,
-            aliases=list(
-                dict.fromkeys(
-                    [registry_entity.canonical_name, *registry_entity.aliases]
-                )
-            ),
+            aliases=registry_entity.aliases,
         )
         return CatalogResolutionResult(
             status=CatalogResolutionStatus.RESOLVED,

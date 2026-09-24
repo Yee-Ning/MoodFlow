@@ -129,6 +129,7 @@ class WorldLineEntityBridgeTests(unittest.TestCase):
             "artist:test_artist",
         )
         self.assertEqual(result.reference.catalog_reference.entity_id, "42")
+        self.assertEqual(result.reference.aliases, ["测试歌手"])
 
     def test_preserves_dual_identity_for_catalog_artist(self) -> None:
         result = self.bridge.reference_for_catalog_artist(

@@ -693,7 +693,7 @@ class SemanticExpansionService:
             graph,
         )
         LOGGER.info(
-            "worldline_semantic_expansion",
+            "worldline.semantic_expansion",
             extra={
                 "semantic_expansion_trace": trace.model_dump(mode="json")
             },
