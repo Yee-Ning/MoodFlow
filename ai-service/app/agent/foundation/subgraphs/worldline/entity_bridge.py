@@ -239,6 +239,66 @@ class EntityBridge:
             reason="genre_registry_match",
         )
 
+    def resolve_catalog_artist_candidates(
+        self,
+        knowledge_entity_id: str,
+        candidates: list[ResolvedEntity],
+    ) -> CatalogResolutionResult:
+        """Map a registered knowledge artist to one exact catalog artist."""
+
+        registry_entity = self.knowledge_registry.get(knowledge_entity_id)
+        if (
+            registry_entity is None
+            or registry_entity.entity_type is not KnowledgeEntityType.ARTIST
+        ):
+            return self._unresolved(
+                "knowledge_artist_not_registered",
+                [knowledge_entity_id],
+            )
+        accepted_names = {
+            normalize_alias(value)
+            for value in [
+                registry_entity.canonical_name,
+                *registry_entity.aliases,
+            ]
+        }
+        exact: dict[str, tuple[ResolvedEntity, str]] = {}
+        for candidate in candidates:
+            if candidate.entity_type is not EntityType.ARTIST:
+                continue
+            parts = candidate.entity_id.split(":")
+            if (
+                len(parts) != 3
+                or candidate.source != "netease"
+                or parts[0] != candidate.source
+                or parts[1] != EntityType.ARTIST.value
+                or not parts[2].isdigit()
+                or int(parts[2]) <= 0
+                or normalize_alias(candidate.name) not in accepted_names
+            ):
+                continue
+            exact.setdefault(candidate.entity_id, (candidate, parts[2]))
+        if not exact:
+            return self._unresolved(
+                "catalog_artist_not_found",
+                [knowledge_entity_id],
+            )
+        if len(exact) > 1:
+            return self._ambiguous(
+                [knowledge_entity_id],
+                "catalog_artist_ambiguous",
+            )
+        candidate, raw_id = next(iter(exact.values()))
+        return self._artist_reference(
+            registry_entity,
+            CatalogReference(
+                provider=candidate.source,
+                entity_id=raw_id,
+                entity_type=KnowledgeEntityType.ARTIST,
+                name=candidate.name,
+            ),
+        )
+
     @staticmethod
     def _artist_reference(
         registry_entity: RegistryEntity,

@@ -180,6 +180,47 @@ class WorldLineEntityBridgeTests(unittest.TestCase):
         )
         self.assertIsNone(unknown_genre.reference)
 
+    def test_maps_knowledge_artist_from_exact_catalog_candidates(self) -> None:
+        result = self.bridge.resolve_catalog_artist_candidates(
+            "artist:test_artist",
+            [artist()],
+        )
+
+        self.assertEqual(result.status, CatalogResolutionStatus.RESOLVED)
+        assert result.reference is not None
+        self.assertEqual(result.reference.node_id, "netease:artist:42")
+        self.assertEqual(
+            result.reference.knowledge_entity_id,
+            "artist:test_artist",
+        )
+
+    def test_rejects_missing_or_ambiguous_catalog_artist_candidates(self) -> None:
+        missing = self.bridge.resolve_catalog_artist_candidates(
+            "artist:test_artist",
+            [
+                ResolvedEntity(
+                    entity_id="netease:artist:7",
+                    entity_type=EntityType.ARTIST,
+                    name="Different Artist",
+                    source="netease",
+                )
+            ],
+        )
+        ambiguous = self.bridge.resolve_catalog_artist_candidates(
+            "artist:test_artist",
+            [
+                artist(),
+                artist().model_copy(
+                    update={"entity_id": "netease:artist:43"}
+                ),
+            ],
+        )
+
+        self.assertEqual(missing.status, CatalogResolutionStatus.UNRESOLVED)
+        self.assertEqual(missing.reason, "catalog_artist_not_found")
+        self.assertEqual(ambiguous.status, CatalogResolutionStatus.AMBIGUOUS)
+        self.assertEqual(ambiguous.reason, "catalog_artist_ambiguous")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,7 +11,7 @@ from app.rag.knowledge.entity_linking.registry import normalize_alias
 
 
 DEFAULT_GENRE_REGISTRY_PATH = (
-    Path(__file__).with_name("registry") / "genres_v1.yaml"
+    Path(__file__).with_name("registry") / "genres_v2.yaml"
 )
 
 

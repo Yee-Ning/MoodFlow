@@ -1,0 +1,27 @@
+registry_version: v2
+genres:
+  - canonical_id: genre:hip_hop
+    canonical_name: Hip-Hop
+    aliases: [Hip Hop, hiphop, 嘻哈]
+    executable: true
+    expandable: true
+  - canonical_id: genre:jazz
+    canonical_name: Jazz
+    aliases: [Jazz Music, 爵士, 爵士乐, 爵士樂]
+    executable: false
+    expandable: false
+  - canonical_id: genre:jazz_hip_hop
+    canonical_name: Jazz Hip-Hop
+    aliases: [Jazz Hip Hop, Jazzhop, Jazz Rap, 爵士嘻哈]
+    executable: false
+    expandable: false
+  - canonical_id: genre:r_and_b
+    canonical_name: R&B
+    aliases: [RnB, Rhythm and Blues, 节奏布鲁斯, 節奏藍調]
+    executable: false
+    expandable: false
+  - canonical_id: genre:c_pop
+    canonical_name: C-pop
+    aliases: [C Pop, Cpop, Chinese Pop, 华语流行, 華語流行]
+    executable: false
+    expandable: false

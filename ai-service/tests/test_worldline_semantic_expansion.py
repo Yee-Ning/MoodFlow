@@ -223,8 +223,8 @@ class WorldLineSemanticExpansionTests(unittest.TestCase):
             genre.metadata["entity_reference"]["knowledge_entity_id"],
             "genre:hip_hop",
         )
-        self.assertFalse(genre.metadata["executable"])
-        self.assertFalse(genre.metadata["expandable"])
+        self.assertTrue(genre.metadata["executable"])
+        self.assertTrue(genre.metadata["expandable"])
 
     def test_no_supported_evidence_only_enriches_artist_identity(self) -> None:
         result = self.expand([])
@@ -402,7 +402,7 @@ class WorldLineSemanticExpansionTests(unittest.TestCase):
         self.assertEqual(result.trace.source_artist, artist().entity_id)
         self.assertEqual(result.trace.target_genre, ["genre:hip_hop"])
         self.assertEqual(len(result.trace.evidence_ids), 1)
-        self.assertEqual(result.trace.registry_version, "v1")
+        self.assertEqual(result.trace.registry_version, "v2")
         self.assertEqual(result.trace.validator_version, "v1")
 
 
