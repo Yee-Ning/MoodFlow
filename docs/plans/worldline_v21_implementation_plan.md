@@ -8,7 +8,7 @@
 2. 当前 branch ID 是 `branch:1..3`，每轮重复；分支虽指向已有图节点，却没有服务端执行入口，也不能直接当作跨轮有效的 action ID。[generation.py](../../ai-service/app/agent/foundation/subgraphs/worldline/generation.py#L362)
 3. `WorldLineGraph` 限 15 节点/20 边，`WorldLineResult` 限 30 sources 且恰好三条 branches；V2.1 必须明确累计图容量和“少于三条可探索分支”的行为。[models.py](../../ai-service/app/agent/foundation/subgraphs/worldline/models.py#L170)
 4. 当前目录实体只覆盖 song/artist/album。genre/era 等类型仅有图枚举或可选测试注入，不能在本阶段当作可执行目标。[music_service.py](../../ai-service/app/agent/foundation/subgraphs/worldline/music_service.py#L57)、[builder.py](../../ai-service/app/agent/foundation/subgraphs/worldline/builder.py#L131)
-5. Foundation 有可复用的 memory/PostgreSQL checkpointer 工厂；现有 WorldLine 私有状态未接入。前端 `/worldline` 仍是静态页。[checkpointing.py](../../ai-service/app/agent/checkpointing.py#L206)、[App.tsx](../../soul-music-room/src/App.tsx#L70)
+5. 项目已有 PostgreSQL LangGraph checkpointer，应用启动时调用初始化函数；现有 WorldLine 私有状态未接入。示例配置仍写 `CHECKPOINT_BACKEND=memory`，因此 V2.1 生产入口需要显式校验持久化后端，不能默默退回进程内存。前端 `/worldline` 仍是静态页。[checkpointing.py](../../ai-service/app/agent/checkpointing.py#L227)、[main.py](../../ai-service/app/main.py#L20)、[App.tsx](../../soul-music-room/src/App.tsx#L70)
 
 ## 2. 修改方案与真实执行链
 
@@ -30,7 +30,7 @@
   → 返回保留原 root 的累计图及新一轮 actions
 ```
 
-会话持久化使用 `create_runtime_checkpointer()` 和单例的会话 `StateGraph`，以 `worldline:<session_id>` 为独立 thread key；checkpoint 内容使用 JSON 兼容字典，读取时再作 Pydantic 校验。计算下一轮图和响应期间不写会话；成功后才提交完整新快照。`memory` 模式只保证同进程连续性，已有 PostgreSQL 模式可跨重启恢复；不新增数据库或表。旧 `POST /api/ai/worldline` 和 Foundation 单轮路径保持原样。
+会话持久化使用**现有 PostgreSQL** `create_runtime_checkpointer()` 和单例的会话 `StateGraph`，以 `worldline:<session_id>` 为独立 thread key；checkpoint 内容使用 JSON 兼容字典，读取时再作 Pydantic 校验。生产路径无注入 saver 时要求 `checkpoint_backend()=="postgres"` 且 PostgreSQL saver 已由应用 lifespan 初始化；否则 V2.1 会话端点 fail closed，绝不创建正式 MemorySaver 会话。测试可显式注入现有 `InMemorySaver`，但不增加第二套存储实现。计算下一轮图和响应期间不写会话；成功后才提交完整新快照。不新增数据库或表。旧 `POST /api/ai/worldline` 和 Foundation 单轮路径保持原样。
 
 探索目标**不按名称重新猜测**：从服务端保存的当前 action 查对应 graph node，仅接受 `netease:song|artist|album:<正整数>`；根据该 canonical ID 复用 Music API 详情并校验返回实体身份。Query Understanding、SearchPlan 和现有可选 RAG 照常对该目标运行，不改底层实现。增量图的 root 必须等于目标 ID；合并后最终图 root 仍为首次实体。叙事输入额外给出原 root 与本轮 focus，事实来自本轮目标；引用仍从合并后的 sources 中校验。
 
@@ -50,7 +50,8 @@ V2.1 的分支候选由现有生成器的**可选探索模式**生成：只引�
 | `ai-service/app/agent/foundation/subgraphs/worldline/service.py`、`ai-service/app/api/worldline.py` | 两个新端点的编排与 HTTP 状态；保留原接口。 |
 | `soul-music-room/src/services/worldline.ts`、`soul-music-room/src/types/worldline.ts`、`soul-music-room/src/store/worldlineStore.ts`（新） | 保存 session ID 和完整结果，以 sessionStorage 保留页面导航状态，调用创建/探索 API。 |
 | `soul-music-room/src/pages/WorldLinePage.tsx`（新）、`soul-music-room/src/App.tsx` | 最小可用页面：输入、节点列表、叙事和 branch 按钮；本阶段不做复杂图谱布局。 |
-| `ai-service/tests/test_worldline_session.py`、`test_worldline_merge.py`（新），现有 WorldLine API/graph/generation 测试；前端相关测试 | 覆盖正常与失败链路、旧契约兼容。 |
+| `ai-service/tests/test_worldline_session.py`、`test_worldline_merge.py`（新），现有 WorldLine API/graph/generation 测试；前端相关测试 | 覆盖正常与失败链路、旧契约兼容；单元测试可显式注入 InMemorySaver。 |
+| `ai-service/tests/fixtures/worldline_postgres_restart_worker.py`、WorldLine PostgreSQL restart smoke 测试（新） | 两个独立进程复用真实 PostgreSQL checkpoint：创建并写入，模拟服务重启后恢复并继续探索；复用现有 [postgres_restart_worker.py](../../ai-service/tests/fixtures/postgres_restart_worker.py) 的进程测试模式。 |
 
 实现时只修改必要文件；不动 `app/rag/retrieval`、embedding、reranker、Query Understanding 核心实现、索引和数据库结构。
 
@@ -88,14 +89,15 @@ V2.1 的分支候选由现有生成器的**可选探索模式**生成：只引�
 
 ## 6. 测试方案与交付顺序
 
-1. **状态/merge**：内存 checkpoint 注入测试创建、恢复、revision、两 session 隔离；纯函数测试节点与边去重、证据并集、类型冲突、容量/来源冲突时旧状态不变。
+1. **状态/merge**：单元测试显式注入 InMemorySaver，覆盖创建、恢复、revision、两 session 隔离；纯函数测试节点与边去重、证据并集、类型冲突、容量/来源冲突时旧状态不变。另测生产入口在非 PostgreSQL 配置或 saver 未初始化时 fail closed。
 2. **API/执行**：以固定 MusicService、Retriever、Generator 替身创建 Feather session，再选择 Nujabes action；断言旧 Feather/Nujabes 与新目录节点共存、root 不变、visited/depth/revision 更新，随后可继续选下一未访问目标。
 3. **失败路径**：未知 session、无效/过期/跨 session branch、重复探索、genre branch、音乐 API 失败、LLM 失败、checkpoint 写失败；核对拒绝或失败后 snapshot 的图、证据、visited、revision 全不变。另测“无新关系”为已完成的空结果：旧图保持、目标记为已访问、revision 增加。
 4. **兼容/前端**：运行既有 WorldLine 单轮与 Foundation 测试，确认旧六字段及恰好三分支不变；前端测试保存完整响应和 branch 点击参数，并检查创建、再次探索、错误与禁用交互。
-5. **完整验证**：相关 `pytest`、必要的后端全套测试与静态检查、前端测试/构建/lint、关键交互及响应式检查；环境不具备在线网易云/Qdrant/LLM/PostgreSQL 时记录未验证范围。每个经验证的逻辑改动按 `AGENTS.md` 单独 commit。
+5. **PostgreSQL 重启验收（必过）**：复用真实生产 session 代码、`CHECKPOINT_BACKEND=postgres`、既有 checkpoint 表及测试 PostgreSQL。进程 A 创建 WorldLine session 并确认 checkpoint 已写入；结束进程模拟服务重启。进程 B 重新初始化 saver，仅凭 `session_id` 读回结构化状态，执行保存的 branch，断言初始 root、旧节点/边、sources 均保留且 revision/depth/visited 更新。再以进程 C 读回扩展后的图。Music API 与 LLM 可以用固定替身，**checkpoint 路径必须是真实 PostgreSQL**，不能用 InMemorySaver 冒充。
+6. **完整验证**：相关 `pytest`、必要的后端全套测试与静态检查、前端测试/构建/lint、关键交互及响应式检查。在线网易云/Qdrant/LLM 不可用时记录限制；若没有可用的测试 PostgreSQL，必须明确报告重启验收未通过，**不得宣称 V2.1 完成**。每个经验证的逻辑改动按 `AGENTS.md` 单独 commit。
 
 完成编码与验证后再生成 `docs/reports/worldline_v21_implementation_report.md`，记录实际修改文件、API、测试结果、限制和下一阶段建议。该报告不会提前声称实现完成。
 
 ## 本阶段范围边界
 
-本阶段交付“创建 → 选择 song/artist/album branch → 扩展并合并 → 保存 → 再探索”的闭环。Jazz Hip-Hop 等 genre 分支只返回不支持，不引入新知识抽取、RAG 调优、数据库或高级音乐关系。Foundation 聊天自然语言续问与复杂图谱 UI 不作为 V2.1 验收条件；后续可以复用本阶段会话服务接入。
+本阶段交付“创建 → 写入 PostgreSQL checkpoint → 服务重启恢复 → 选择 song/artist/album branch → 扩展并合并 → 再保存 → 再恢复”的闭环。Jazz Hip-Hop 等 genre 分支只返回不支持，不引入新知识抽取、RAG 调优、数据库或高级音乐关系。Foundation 聊天自然语言续问与复杂图谱 UI 不作为 V2.1 验收条件；后续可以复用本阶段会话服务接入。
