@@ -41,7 +41,7 @@ def knowledge_registry() -> EntityRegistry:
                     entity_id="artist:test_artist",
                     entity_type=KnowledgeEntityType.ARTIST,
                     canonical_name="Test Artist",
-                    aliases=["测试歌手"],
+                    aliases=["测试歌手", "TEST ALIAS", "test alias"],
                 ),
                 RegistryEntity(
                     entity_id="artist:other_artist",
@@ -129,7 +129,10 @@ class WorldLineEntityBridgeTests(unittest.TestCase):
             "artist:test_artist",
         )
         self.assertEqual(result.reference.catalog_reference.entity_id, "42")
-        self.assertEqual(result.reference.aliases, ["测试歌手"])
+        self.assertEqual(
+            result.reference.aliases,
+            ["测试歌手", "TEST ALIAS"],
+        )
 
     def test_preserves_dual_identity_for_catalog_artist(self) -> None:
         result = self.bridge.reference_for_catalog_artist(

@@ -244,6 +244,9 @@ class EntityBridge:
         registry_entity: RegistryEntity,
         catalog_reference: CatalogReference,
     ) -> CatalogResolutionResult:
+        aliases_by_key: dict[str, str] = {}
+        for alias in registry_entity.aliases:
+            aliases_by_key.setdefault(normalize_alias(alias), alias)
         reference = WorldLineEntityReference(
             node_id=(
                 f"{catalog_reference.provider}:artist:"
@@ -253,7 +256,7 @@ class EntityBridge:
             canonical_name=registry_entity.canonical_name,
             knowledge_entity_id=registry_entity.entity_id,
             catalog_reference=catalog_reference,
-            aliases=registry_entity.aliases,
+            aliases=list(aliases_by_key.values()),
         )
         return CatalogResolutionResult(
             status=CatalogResolutionStatus.RESOLVED,
