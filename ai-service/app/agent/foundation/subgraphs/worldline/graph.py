@@ -18,6 +18,7 @@ from app.agent.foundation.subgraphs.worldline.generation import (
     WorldLineGenerator,
 )
 from app.agent.foundation.subgraphs.worldline.models import (
+    EntityType,
     EntityResolutionStatus,
     NarrativeOutput,
     WorldLineResult,
@@ -31,6 +32,9 @@ from app.agent.foundation.subgraphs.worldline.music_service import (
 from app.agent.foundation.subgraphs.worldline.retrieval import (
     MusicKnowledgeRetriever,
     get_worldline_retrieval_runtime,
+)
+from app.agent.foundation.subgraphs.worldline.semantic_expansion import (
+    SemanticExpansionService,
 )
 from app.agent.foundation.subgraphs.worldline.state import WorldLineState
 from app.rag.knowledge.entity_linking.models import EntityType as KnowledgeEntityType
@@ -148,6 +152,7 @@ def build_worldline_subgraph(
     retriever: MusicKnowledgeRetriever | None = None,
     generator: WorldLineGenerator | None = None,
     query_understanding: QueryUnderstandingService | None = None,
+    semantic_expansion: SemanticExpansionService | None = None,
 ) -> StateGraph:
     service = music_service or JavaMusicEntityService()
     retrieval_runtime = (
@@ -157,6 +162,7 @@ def build_worldline_subgraph(
         retriever if retriever is not None else retrieval_runtime.retriever
     )
     worldline_generator = generator or StructuredWorldLineGenerator()
+    semantic_service = semantic_expansion or SemanticExpansionService()
     query_service = query_understanding or QueryUnderstandingService(
         index_profile=(
             retrieval_runtime.index_profile
@@ -474,6 +480,17 @@ def build_worldline_subgraph(
                 facts,
                 state.get("retrieved_docs", []),
             )
+            plan = state.get("search_plan")
+            if entity.entity_type is EntityType.ARTIST and plan is not None:
+                semantic_result = semantic_service.expand_artist_genres(
+                    entity,
+                    plan,
+                    graph,
+                    sources,
+                    state.get("retrieved_docs", []),
+                )
+                graph = semantic_result.graph
+                sources = semantic_result.sources
             if state.get("session_mode") and state.get("prior_graph") is not None:
                 graph, sources = merge_worldline_graph(
                     state["prior_graph"], graph,
@@ -712,10 +729,12 @@ def create_worldline_subgraph(
     retriever: MusicKnowledgeRetriever | None = None,
     generator: WorldLineGenerator | None = None,
     query_understanding: QueryUnderstandingService | None = None,
+    semantic_expansion: SemanticExpansionService | None = None,
 ) -> CompiledStateGraph:
     return build_worldline_subgraph(
         music_service=music_service,
         retriever=retriever,
         generator=generator,
         query_understanding=query_understanding,
+        semantic_expansion=semantic_expansion,
     ).compile(checkpointer=False)

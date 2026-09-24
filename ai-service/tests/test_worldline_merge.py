@@ -58,3 +58,42 @@ class WorldLineMergeTests(unittest.TestCase):
         ])
         with self.assertRaisesRegex(WorldLineMergeError, "missing_edge_evidence"):
             merge_worldline_graph(old, new, [], [], target_node_id=artist.id)
+
+    def test_semantic_edge_is_deduplicated_and_evidence_is_unioned(self):
+        artist = node("netease:artist:2", WorldLineNodeType.ARTIST)
+        genre = node("genre:hip_hop", WorldLineNodeType.GENRE)
+        old = WorldLineGraph(root=artist.id, nodes=[artist, genre], edges=[
+            WorldLineEdge(
+                source=artist.id,
+                target=genre.id,
+                relation=WorldLineRelation.ASSOCIATED_WITH,
+                evidence_ids=["relation-source-1"],
+            )
+        ])
+        increment = WorldLineGraph(
+            root=artist.id,
+            nodes=[artist, genre],
+            edges=[
+                WorldLineEdge(
+                    source=artist.id,
+                    target=genre.id,
+                    relation=WorldLineRelation.ASSOCIATED_WITH,
+                    evidence_ids=["relation-source-2"],
+                )
+            ],
+        )
+
+        merged, _ = merge_worldline_graph(
+            old,
+            increment,
+            [source("relation-source-1")],
+            [source("relation-source-2")],
+            target_node_id=artist.id,
+        )
+
+        self.assertEqual(len(merged.edges), 1)
+        self.assertEqual(
+            merged.edges[0].evidence_ids,
+            ["relation-source-1", "relation-source-2"],
+        )
+        self.assertEqual(old.edges[0].evidence_ids, ["relation-source-1"])

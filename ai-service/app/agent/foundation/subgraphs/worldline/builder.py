@@ -180,6 +180,12 @@ def _merge_structured_knowledge(
                 document.id,
             )
             continue
+        if edge.relation is WorldLineRelation.ASSOCIATED_WITH:
+            logger.warning(
+                "Ignoring unvalidated semantic relation metadata: document_id=%s",
+                document.id,
+            )
+            continue
         if edge.source not in nodes or edge.target not in nodes:
             continue
         _append_edge(edges, edge_keys, edge)

@@ -169,8 +169,21 @@ class WorldLineGenerationTests(unittest.TestCase):
 
     def test_exploration_with_no_targets_skips_llm(self) -> None:
         runtime = ScriptedRuntime([])
+        worldline = graph()
+        worldline = worldline.model_copy(
+            update={
+                "nodes": [
+                    *worldline.nodes,
+                    WorldLineNode(
+                        id="genre:hip_hop",
+                        type=WorldLineNodeType.GENRE,
+                        name="Hip-Hop",
+                    ),
+                ]
+            }
+        )
         branches = asyncio.run(StructuredWorldLineGenerator(runtime).generate_exploration_branches(
-            entity(), graph(), [],
+            entity(), worldline, [],
             visited_nodes=["netease:song:1", "netease:artist:2", "netease:album:3"],
         ))
         self.assertEqual(branches, [])

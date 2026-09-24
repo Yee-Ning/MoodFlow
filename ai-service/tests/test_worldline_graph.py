@@ -129,6 +129,40 @@ class CapturingRetriever:
         return []
 
 
+class SemanticDocsRetriever:
+    async def retrieve(self, entity, plan):
+        evidence = "周杰伦的音乐风格属于 Hip-Hop。"
+        return [
+            MusicKnowledgeDocument(
+                id="parent-semantic-1",
+                title="周杰伦风格资料",
+                content=f"背景。{evidence}更多资料。",
+                source="test-knowledge",
+                url="https://example.com/jay-chou-style",
+                metadata={
+                    "parent_id": "parent-semantic-1",
+                    "chunk_id": "child-semantic-1",
+                    "context_version": "context-v1",
+                    "retrieval_version": "retrieval-v1",
+                    "sufficiency_status": "sufficient",
+                    "supported_claims": [
+                        {
+                            "claim_id": "claim:000000000000000000000001",
+                            "statement": "周杰伦具有 Hip-Hop 风格",
+                            "subject_entity_id": "artist:jay_chou",
+                            "predicate": "has_genre",
+                            "object_entity_id": "genre:hip_hop",
+                            "source_chunk_id": "child-semantic-1",
+                            "evidence_span": evidence,
+                            "extraction_confidence": 0.94,
+                            "verification_confidence": 0.96,
+                        }
+                    ],
+                },
+            )
+        ]
+
+
 class FakeGenerator:
     def __init__(
         self,
@@ -179,6 +213,15 @@ class FakeGenerator:
         return branches
 
 
+class SemanticCitationGenerator(FakeGenerator):
+    async def generate_narrative(self, entity, facts, documents, graph, sources):
+        source = next(item for item in sources if item.id.startswith("knowledge:rel:"))
+        return NarrativeOutput(
+            narrative=f"周杰伦与 Hip-Hop 风格相关联。[{source.id}]",
+            citation_ids=[source.id],
+        )
+
+
 def initial_state(query: str) -> dict:
     return {
         "messages": [HumanMessage(content=query)],
@@ -216,6 +259,30 @@ async def invoke(graph, query: str) -> dict:
 
 
 class WorldLineGraphTests(unittest.TestCase):
+    def test_artist_semantic_relation_reaches_graph_and_citations(self) -> None:
+        root = entity(2, EntityType.ARTIST, "周杰伦")
+        graph = create_worldline_subgraph(
+            music_service=FakeMusicService(root),
+            retriever=SemanticDocsRetriever(),
+            generator=SemanticCitationGenerator(),
+        )
+
+        output = asyncio.run(invoke(graph, "探索歌手周杰伦的世界线"))
+
+        result = output["task_result"].data["worldline_result"]
+        semantic_edge = next(
+            edge
+            for edge in result["graph"]["edges"]
+            if edge["relation"] == "associated_with"
+        )
+        self.assertEqual(semantic_edge["source"], root.entity_id)
+        self.assertEqual(semantic_edge["target"], "genre:hip_hop")
+        source_id = semantic_edge["evidence_ids"][0]
+        source = next(item for item in result["sources"] if item["id"] == source_id)
+        self.assertEqual(source["excerpt"], "周杰伦的音乐风格属于 Hip-Hop。")
+        self.assertEqual(result["citations"], [source])
+        self.assertIn(f"[{source_id}]", result["narrative"])
+
     def test_grounded_narrative_citations_reach_worldline_result(self) -> None:
         song = entity(1, EntityType.SONG, "晴天")
         graph = create_worldline_subgraph(

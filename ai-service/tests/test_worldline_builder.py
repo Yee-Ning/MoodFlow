@@ -111,6 +111,43 @@ class WorldLineBuilderTests(unittest.TestCase):
         self.assertEqual(len(graph.nodes), 2)
         self.assertEqual(graph.edges[0].evidence_ids, ["knowledge:doc-2"])
 
+    def test_structured_metadata_cannot_inject_associated_with(self) -> None:
+        artist = entity(2, EntityType.ARTIST, "测试歌手")
+        document = MusicKnowledgeDocument(
+            id="doc-semantic-bypass",
+            title="未验证语义关系",
+            content="这条结构化边没有经过语义验证器。",
+            source="test-index",
+            metadata={
+                "graph_nodes": [
+                    {
+                        "id": "genre:test",
+                        "type": "genre",
+                        "name": "测试风格",
+                    }
+                ],
+                "graph_edges": [
+                    {
+                        "source": artist.entity_id,
+                        "target": "genre:test",
+                        "relation": "associated_with",
+                    }
+                ],
+            },
+        )
+
+        graph, _ = build_worldline_graph(
+            MusicEntityFacts(entity=artist),
+            [document],
+        )
+
+        self.assertFalse(
+            any(
+                edge.relation is WorldLineRelation.ASSOCIATED_WITH
+                for edge in graph.edges
+            )
+        )
+
     def test_graph_size_is_bounded(self) -> None:
         root = entity(1, EntityType.ARTIST, "测试歌手")
         related = [
