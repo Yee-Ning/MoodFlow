@@ -103,7 +103,7 @@ Validator 会重新核验 candidate 与原始本轮文档：
   tests/test_worldline_api.py
 ```
 
-结果：`54 passed`。
+结果：`55 passed`。
 
 ### 4.2 完整测试
 
@@ -113,7 +113,7 @@ Validator 会重新核验 candidate 与原始本轮文档：
 .\.venv\Scripts\python.exe -m pytest -q tests
 ```
 
-结果：`916 passed, 13 skipped, 206 subtests passed`。
+结果：`917 passed, 13 skipped, 206 subtests passed`。
 
 ### 4.3 静态检查与编译
 
@@ -140,3 +140,4 @@ Validator 会重新核验 candidate 与原始本轮文档：
 - `067ddbe feat(worldline): add semantic association relation`
 - `63c33ba feat(worldline): implement semantic expansion core`
 - `e80d473 feat(worldline): integrate semantic graph projection`
+- `4d1396a fix(worldline): recompute semantic confidence in validator`
