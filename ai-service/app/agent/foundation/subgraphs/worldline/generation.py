@@ -12,6 +12,7 @@ from app.agent.foundation.subgraphs.worldline.grounding import (
 
 from app.agent.foundation.subgraphs.worldline.models import (
     BranchDraftOutput,
+    ExplorationBranchDraftOutput,
     EvidenceSource,
     MusicEntityFacts,
     MusicKnowledgeDocument,
@@ -169,6 +170,7 @@ class StructuredWorldLineGenerator:
         user_query: str | None = None,
         search_plan: Any = None,
         continuity_context: dict[str, Any] | None = None,
+        original_root: ResolvedEntity | None = None,
     ) -> NarrativeOutput:
         payload = {
             "root_entity": entity.model_dump(
@@ -201,6 +203,11 @@ class StructuredWorldLineGenerator:
             payload["search_plan"] = search_plan.model_dump(mode="json", exclude_none=True)
         if continuity_context:
             payload["continuity_context"] = continuity_context
+        if original_root is not None:
+            payload["original_root_entity"] = original_root.model_dump(
+                mode="json", include={"entity_id", "entity_type", "name"}
+            )
+            payload["focus_entity"] = payload["root_entity"]
         disclosure = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
 
         def validate(draft: NarrativeDraft) -> None:
@@ -261,7 +268,19 @@ class StructuredWorldLineGenerator:
         user_query: str | None = None,
         search_plan: Any = None,
         continuity_context: dict[str, Any] | None = None,
+        visited_nodes: list[str] | None = None,
     ) -> list[WorldLineBranch]:
+        exploration = visited_nodes is not None
+        eligible = {
+            node.id for node in graph.nodes
+            if node.id not in (visited_nodes or [])
+            and node.type in {WorldLineNodeType.SONG, WorldLineNodeType.ARTIST, WorldLineNodeType.ALBUM}
+            and node.id.startswith(f"netease:{node.type.value}:")
+            and node.id.rsplit(":", 1)[-1].isdigit()
+            and int(node.id.rsplit(":", 1)[-1]) > 0
+        }
+        if exploration and not eligible:
+            return []
         payload = {
             "root_entity": entity.model_dump(mode="json", include={"entity_id", "name"}),
             "worldline_graph": _graph_payload(graph),
@@ -276,9 +295,13 @@ class StructuredWorldLineGenerator:
             payload["search_plan"] = search_plan.model_dump(mode="json", exclude_none=True)
         if continuity_context:
             payload["continuity_context"] = continuity_context
+        if exploration:
+            payload["eligible_target_node_ids"] = sorted(eligible)
 
-        def validate(draft: BranchDraftOutput) -> None:
-            _materialize_branches(draft, graph)
+        def validate(draft: BranchDraftOutput | ExplorationBranchDraftOutput) -> None:
+            branches = _materialize_branches(draft, graph)
+            if exploration and any(branch.target_entity.id not in eligible for branch in branches):
+                raise SemanticValidationError("ineligible_branch_target")
 
         def repair(raw: dict[str, Any], _: Any) -> dict[str, Any] | None:
             # Accept only the known V0 target shape; the graph supplies type/name/id.
@@ -301,19 +324,25 @@ class StructuredWorldLineGenerator:
                 repaired_items.append(branch)
             return {**raw, "branches": repaired_items} if changed else None
 
+        output_model = ExplorationBranchDraftOutput if exploration else BranchDraftOutput
         service = StructuredOutputService(
-            "worldline_branches", BranchDraftOutput,
+            "worldline_branches", output_model,
             semantic_validator=validate, repair=repair,
         )
 
         async def generate(attempt: int, feedback: str | None) -> str | ModelOutput:
             instructions = BRANCH_SYSTEM_PROMPT
+            if exploration:
+                instructions = instructions.replace("必须返回正好 3 条分支", "返回 0 到 3 条分支").replace(
+                    "三个分支应指向三个不同的真实节点", "分支应指向不同的真实节点"
+                )
+                instructions += "\n仅使用 eligible_target_node_ids 中的节点；只支持 song、artist、album。"
             if feedback:
                 instructions += f"\n{feedback}"
             return await self._runtime.generate(
                 payload,
                 instructions=instructions,
-                schema=BranchDraftOutput.model_json_schema(),
+                schema=output_model.model_json_schema(),
                 schema_name="worldline_branches",
                 retry=attempt > 1,
             )
@@ -323,6 +352,23 @@ class StructuredWorldLineGenerator:
         except StructuredOutputError as exc:
             raise WorldLineGenerationError("worldline_branches_invalid") from exc
         return _materialize_branches(draft, graph)
+
+    async def generate_exploration_branches(
+        self,
+        entity: ResolvedEntity,
+        graph: WorldLineGraph,
+        sources: list[EvidenceSource],
+        *,
+        visited_nodes: list[str],
+        user_query: str | None = None,
+        search_plan: Any = None,
+        continuity_context: dict[str, Any] | None = None,
+    ) -> list[WorldLineBranch]:
+        return await self.generate_branches(
+            entity, graph, sources, visited_nodes=visited_nodes,
+            user_query=user_query, search_plan=search_plan,
+            continuity_context=continuity_context,
+        )
 
 _BRANCH_TARGET_TYPES = {
     WorldLineBranchType.ARTIST: {WorldLineNodeType.ARTIST},
@@ -360,7 +406,7 @@ def _graph_payload(graph: WorldLineGraph) -> dict[str, Any]:
 
 
 def _materialize_branches(
-    draft: BranchDraftOutput,
+    draft: BranchDraftOutput | ExplorationBranchDraftOutput,
     graph: WorldLineGraph,
 ) -> list[WorldLineBranch]:
     nodes = {node.id: node for node in graph.nodes}

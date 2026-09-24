@@ -286,6 +286,46 @@ class BranchDraftOutput(BaseModel):
     branches: list[BranchDraft] = Field(min_length=3, max_length=3)
 
 
+class ExplorationBranchDraftOutput(BaseModel):
+    """V2.1 may finish naturally with fewer than three available targets."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    branches: list[BranchDraft] = Field(default_factory=list, max_length=3)
+
+
+class WorldLineSessionResult(WorldLineResult):
+    """Preserve the six result fields while allowing an exhausted exploration."""
+
+    branches: list[WorldLineBranch] = Field(default_factory=list, max_length=3)
+
+
+class WorldLineAction(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str = Field(min_length=1, max_length=128)
+    target_node_id: str = Field(min_length=1, max_length=128)
+    action_type: str = "explore_node"
+    enabled: bool
+    disabled_reason: str | None = None
+
+
+class WorldLineSessionResponse(WorldLineSessionResult):
+    session_id: str = Field(min_length=1, max_length=64)
+    current_node: str = Field(min_length=1, max_length=128)
+    available_actions: list[WorldLineAction] = Field(default_factory=list, max_length=3)
+    exploration_depth: int = Field(ge=0)
+    revision: int = Field(ge=1)
+    outcome: str | None = None
+
+
+class WorldLineExploreRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    session_id: str = Field(min_length=1, max_length=64)
+    branch_id: str = Field(min_length=1, max_length=128)
+
+
 class BranchesOutput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

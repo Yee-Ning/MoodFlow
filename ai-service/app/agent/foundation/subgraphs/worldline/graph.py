@@ -21,7 +21,9 @@ from app.agent.foundation.subgraphs.worldline.models import (
     EntityResolutionStatus,
     NarrativeOutput,
     WorldLineResult,
+    WorldLineSessionResult,
 )
+from app.agent.foundation.subgraphs.worldline.merge import WorldLineMergeError, merge_worldline_graph
 from app.agent.foundation.subgraphs.worldline.music_service import (
     JavaMusicEntityService,
     WorldLineMusicService,
@@ -215,6 +217,9 @@ def build_worldline_subgraph(
         config: RunnableConfig,
     ) -> dict[str, Any]:
         started_at = perf_counter()
+        trusted = state.get("trusted_target")
+        if trusted is not None:
+            return {"user_query": state["current_input"], "resolved_entity": trusted}
         try:
             resolution = await resolve_music_entity(
                 service,
@@ -469,6 +474,14 @@ def build_worldline_subgraph(
                 facts,
                 state.get("retrieved_docs", []),
             )
+            if state.get("session_mode") and state.get("prior_graph") is not None:
+                graph, sources = merge_worldline_graph(
+                    state["prior_graph"], graph,
+                    state.get("prior_sources", []), sources,
+                    target_node_id=entity.entity_id,
+                )
+        except WorldLineMergeError as exc:
+            return _failed_result(state, "世界线扩展无法合并。", exc.code)
         except Exception:
             _log_node(
                 "worldline.build_graph",
@@ -514,6 +527,8 @@ def build_worldline_subgraph(
                     *generation_args, user_query=state["user_query"],
                     search_plan=state.get("search_plan"),
                     continuity_context=state.get("continuity_context"),
+                    **({"original_root": state.get("root_entity")}
+                       if state.get("session_mode") else {}),
                 )
             else:
                 generated = await worldline_generator.generate_narrative(*generation_args)
@@ -565,19 +580,43 @@ def build_worldline_subgraph(
             raise RuntimeError("WorldLine branch inputs are unavailable")
         try:
             generation_args = (entity, graph, state.get("sources", []))
+            visited_nodes = list(dict.fromkeys([
+                *state.get("visited_nodes", []),
+                graph.root,
+            ]))
             if isinstance(worldline_generator, StructuredWorldLineGenerator):
-                branches = await worldline_generator.generate_branches(
-                    *generation_args, user_query=state["user_query"],
-                    search_plan=state.get("search_plan"),
-                    continuity_context=state.get("continuity_context"),
-                )
+                if state.get("session_mode"):
+                    branches = await worldline_generator.generate_exploration_branches(
+                        *generation_args, visited_nodes=visited_nodes,
+                        user_query=state["user_query"],
+                        search_plan=state.get("search_plan"),
+                        continuity_context=state.get("continuity_context"),
+                    )
+                else:
+                    branches = await worldline_generator.generate_branches(
+                        *generation_args, user_query=state["user_query"],
+                        search_plan=state.get("search_plan"),
+                        continuity_context=state.get("continuity_context"),
+                    )
             else:
                 branches = await worldline_generator.generate_branches(*generation_args)
+                if state.get("session_mode"):
+                    eligible_nodes = {node.id for node in graph.nodes}
+                    visited = set(visited_nodes)
+                    selected: set[str] = set()
+                    unique_branches = []
+                    for branch in branches:
+                        target = branch.target_entity.id
+                        if target in eligible_nodes and target not in visited and target not in selected:
+                            unique_branches.append(branch)
+                            selected.add(target)
+                    branches = unique_branches[:3]
             sources = state.get("sources", [])
             source_by_id = {item.id: item for item in sources}
             citations = [source_by_id[item] for item in state.get("citation_ids", [])]
-            result = WorldLineResult(
-                root_entity=entity,
+            result_model = WorldLineSessionResult if state.get("session_mode") else WorldLineResult
+            result = result_model(
+                root_entity=state.get("root_entity") or entity,
                 graph=graph,
                 narrative=narrative,
                 branches=branches,

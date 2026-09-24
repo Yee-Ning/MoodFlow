@@ -148,6 +148,34 @@ def valid_branch_drafts() -> str:
 
 
 class WorldLineGenerationTests(unittest.TestCase):
+    def test_exploration_branches_allow_fewer_than_three_and_reject_visited_target(self) -> None:
+        runtime = ScriptedRuntime([
+            json.dumps({"branches": [{
+                "title": "重复歌曲", "description": "重复", "branch_type": "related_work",
+                "target_node_id": "netease:song:1",
+            }]}),
+            json.dumps({"branches": [{
+                "title": "探索周杰伦", "description": "继续探索", "branch_type": "artist",
+                "target_node_id": "netease:artist:2",
+            }]}),
+        ])
+        branches = asyncio.run(StructuredWorldLineGenerator(runtime).generate_exploration_branches(
+            entity(), graph(), [], visited_nodes=["netease:song:1"],
+        ))
+        self.assertEqual([item.target_entity.id for item in branches], ["netease:artist:2"])
+        self.assertEqual(len(runtime.calls), 2)
+        self.assertEqual(runtime.calls[0]["payload"]["eligible_target_node_ids"],
+                         ["netease:album:3", "netease:artist:2"])
+
+    def test_exploration_with_no_targets_skips_llm(self) -> None:
+        runtime = ScriptedRuntime([])
+        branches = asyncio.run(StructuredWorldLineGenerator(runtime).generate_exploration_branches(
+            entity(), graph(), [],
+            visited_nodes=["netease:song:1", "netease:artist:2", "netease:album:3"],
+        ))
+        self.assertEqual(branches, [])
+        self.assertEqual(runtime.calls, [])
+
     def test_narrative_retries_invalid_structured_output_and_marks_empty_rag(self) -> None:
         runtime = ScriptedRuntime(
             [

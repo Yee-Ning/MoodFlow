@@ -16,6 +16,7 @@ from app.agent.foundation.subgraphs.worldline.models import (
     WorldLineNode,
     WorldLineNodeType,
     WorldLineResult,
+    WorldLineSessionResponse,
 )
 from app.agent.foundation.subgraphs.worldline.service import (
     WorldLineExecutionError,
@@ -121,6 +122,45 @@ class WorldLineApiTests(unittest.TestCase):
 
         self.assertEqual(raised.exception.code, "missing_worldline_result")
         self.assertEqual(raised.exception.status_code, 502)
+
+    def test_session_routes_keep_full_result_and_validate_input(self) -> None:
+        fixture = result_fixture().model_dump(mode="json")
+        session_result = WorldLineSessionResponse.model_validate({
+            **fixture,
+            "session_id": "session-1", "current_node": fixture["graph"]["root"],
+            "available_actions": [{
+                "id": "wlb:1:test", "target_node_id": fixture["graph"]["root"],
+                "action_type": "explore_node", "enabled": False,
+                "disabled_reason": "already_visited",
+            }],
+            "exploration_depth": 0, "revision": 1,
+        })
+        service = AsyncMock()
+        service.create.return_value = session_result
+        service.explore.return_value = session_result
+        with patch("app.api.worldline.get_worldline_session_service", return_value=service):
+            created = self.client.post("/api/ai/worldline/sessions", json={"query": "晴天"})
+            explored = self.client.post("/api/ai/worldline/explore", json={
+                "session_id": "session-1", "branch_id": "wlb:1:test",
+            })
+            invalid = self.client.post("/api/ai/worldline/explore", json={"session_id": "session-1"})
+        self.assertEqual(created.status_code, 200)
+        self.assertEqual(explored.status_code, 200)
+        self.assertEqual(invalid.status_code, 422)
+        self.assertEqual(created.json()["session_id"], "session-1")
+        self.assertEqual(created.json()["citations"], fixture["citations"])
+        service.create.assert_awaited_once_with("晴天")
+        service.explore.assert_awaited_once_with("session-1", "wlb:1:test")
+
+    def test_session_errors_return_stable_code(self) -> None:
+        service = AsyncMock()
+        service.explore.side_effect = WorldLineExecutionError("invalid_branch_id", "分支不存在或已过期。", 404)
+        with patch("app.api.worldline.get_worldline_session_service", return_value=service):
+            response = self.client.post("/api/ai/worldline/explore", json={
+                "session_id": "session-1", "branch_id": "expired",
+            })
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"]["code"], "invalid_branch_id")
 
 
 if __name__ == "__main__":

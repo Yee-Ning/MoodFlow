@@ -45,6 +45,12 @@ class WorldLineState(BaseAgentState):
     error: str | None
     answer: str | None
     task_result: TaskResult | None
+    session_mode: bool
+    trusted_target: ResolvedEntity | None
+    prior_graph: WorldLineGraph | None
+    prior_sources: list[EvidenceSource]
+    root_entity: ResolvedEntity | None
+    visited_nodes: list[str]
 
 
 def create_worldline_state(
@@ -79,4 +85,10 @@ def create_worldline_state(
         error=None,
         answer=None,
         task_result=None,
+        session_mode=False,
+        trusted_target=None,
+        prior_graph=None,
+        prior_sources=[],
+        root_entity=None,
+        visited_nodes=[],
     )

@@ -14,6 +14,7 @@ from app.agent.foundation.long_horizon.runtime import (
 from app.agent.memory.runtime import close_memory_runtime, get_memory_runtime, memory_backend
 from app.api.chat import router as chat_router
 from app.api.worldline import router as worldline_router
+from app.agent.foundation.subgraphs.worldline.session import get_worldline_session_service
 from app.config.settings import load_runtime_environment
 
 
@@ -28,6 +29,7 @@ async def lifespan(_app: FastAPI):
     try:
         yield
     finally:
+        get_worldline_session_service.cache_clear()
         close_long_horizon_service()
         close_memory_runtime()
         await close_runtime_checkpointer()
