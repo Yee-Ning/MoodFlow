@@ -2,6 +2,7 @@ import { ExternalLink, X } from 'lucide-react'
 import type {
   EraRelation,
   SceneRelation,
+  InfluenceRelation,
   WorldLineEdge,
   WorldLineNode,
   WorldLineSource,
@@ -15,6 +16,7 @@ interface WorldLineEvidencePanelProps {
   citations: WorldLineSource[]
   eraRelations?: EraRelation[]
   sceneRelations?: SceneRelation[]
+  influenceRelations?: InfluenceRelation[]
   onClose: () => void
 }
 
@@ -35,6 +37,7 @@ export default function WorldLineEvidencePanel({
   citations,
   eraRelations = [],
   sceneRelations = [],
+  influenceRelations = [],
   onClose,
 }: WorldLineEvidencePanelProps) {
   if (!edge) {
@@ -56,6 +59,11 @@ export default function WorldLineEvidencePanel({
   const sceneRelation = sceneRelations.find((relation) => (
     relation.source_entity.node_id === edge.source
     && (relation.target_entity?.node_id ?? relation.scene?.node_id) === edge.target
+    && relation.relation_type === edge.relation
+  ))
+  const influenceRelation = influenceRelations.find((relation) => (
+    relation.source_entity.node_id === edge.source
+    && relation.target_entity.node_id === edge.target
     && relation.relation_type === edge.relation
   ))
   const temporalRelation = eraRelation ?? sceneRelation
@@ -80,6 +88,20 @@ export default function WorldLineEvidencePanel({
       <dl className="worldline-evidence__relation">
         <div><dt>Relation</dt><dd>{edge.relation}</dd></div>
         <div><dt>Evidence IDs</dt><dd>{edge.evidence_ids.length ? edge.evidence_ids.join(', ') : '无'}</dd></div>
+        {influenceRelation && <>
+          <div><dt>Direction</dt><dd>{nodeName(nodes, edge.source)} (influencer) → {nodeName(nodes, edge.target)} (influenced)</dd></div>
+          <div><dt>Scope</dt><dd>{influenceRelation.influence_scope ?? '未限定'}</dd></div>
+          <div><dt>Confidence</dt><dd>{influenceRelation.confidence.toFixed(2)}</dd></div>
+          {influenceRelation.metadata.direction_conflict === true && (
+            <div><dt>Direction conflict</dt><dd>来源方向不一致；请查看各条原文证据。</dd></div>
+          )}
+          {influenceRelation.metadata.scope_conflict === true && (
+            <div><dt>Scope conflict</dt><dd>来源描述的影响范围不一致。</dd></div>
+          )}
+          {influenceRelation.metadata.attribution_conflict === true && (
+            <div><dt>Attribution conflict</dt><dd>来源对该影响关系存在冲突。</dd></div>
+          )}
+        </>}
         {temporalRelation && <>
           {sceneRelation && <>
             <div><dt>Scene</dt><dd>{sceneRelation.scene_name}</dd></div>
@@ -117,6 +139,12 @@ export default function WorldLineEvidencePanel({
               ) : (
                 <p className="worldline-evidence__missing">后端未提供 exact excerpt / span。</p>
               )}
+              {influenceRelation?.evidence.filter((item) => item.source_id === source.id).map((item) => (
+                <div key={item.evidence_id} className="worldline-evidence__influence">
+                  <p>Claim {item.claim_id} · {item.strength} · {item.stance}</p>
+                  <blockquote>{item.exact_span}</blockquote>
+                </div>
+              ))}
               {metadataEntries(source.metadata).length > 0 && (
                 <dl className="worldline-evidence__metadata">
                   {metadataEntries(source.metadata).map(([key, value]) => (

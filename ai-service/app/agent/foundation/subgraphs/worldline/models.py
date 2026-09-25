@@ -156,6 +156,9 @@ class WorldLineRelation(StrEnum):
     RELATED_TO = "related_to"
     INFLUENCED_BY = "influenced_by"
     INFLUENCED = "influenced"
+    INSPIRED = "inspired"
+    SHAPED_STYLE = "shaped_style"
+    CITED_AS_INFLUENCE = "cited_as_influence"
 
 
 class WorldLineNode(BaseModel):
@@ -414,6 +417,83 @@ class SceneRelation(BaseModel):
         return self
 
 
+class InfluenceRelationType(StrEnum):
+    INFLUENCED = "influenced"
+    INSPIRED = "inspired"
+    SHAPED_STYLE = "shaped_style"
+    CITED_AS_INFLUENCE = "cited_as_influence"
+
+
+class InfluenceDirection(StrEnum):
+    INFLUENCER_TO_INFLUENCED = "influencer_to_influenced"
+
+
+class InfluenceScope(StrEnum):
+    SOUND = "sound"
+    STYLE = "style"
+    SONGWRITING = "songwriting"
+    PRODUCTION = "production"
+    CAREER = "career"
+
+
+class InfluenceEvidenceStrength(StrEnum):
+    SELF_REPORTED = "self_reported"
+    HISTORICAL_ATTRIBUTION = "historical_attribution"
+    CRITICAL_ATTRIBUTION = "critical_attribution"
+    SPECULATIVE = "speculative"
+
+
+class InfluenceEvidenceStance(StrEnum):
+    SUPPORT = "support"
+    CONTRADICTION = "contradiction"
+
+
+class InfluenceRelationEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    evidence_id: str = Field(min_length=1, max_length=128)
+    source_id: str = Field(min_length=1, max_length=128)
+    claim_id: str = Field(min_length=1, max_length=128)
+    exact_span: str = Field(min_length=1, max_length=5_000)
+    confidence: float = Field(ge=0, le=1)
+    strength: InfluenceEvidenceStrength
+    stance: InfluenceEvidenceStance
+
+
+class InfluenceRelation(BaseModel):
+    """Directed, source-grounded relation; graph source always influences target."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source_entity: EraEntityReference
+    target_entity: EraEntityReference
+    relation_type: InfluenceRelationType
+    direction: InfluenceDirection = InfluenceDirection.INFLUENCER_TO_INFLUENCED
+    influence_scope: InfluenceScope | None = None
+    confidence: float = Field(ge=0, le=1)
+    evidence: list[InfluenceRelationEvidence] = Field(min_length=1, max_length=8)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_relation(self) -> "InfluenceRelation":
+        allowed = {
+            WorldLineNodeType.ARTIST,
+            WorldLineNodeType.SONG,
+            WorldLineNodeType.ALBUM,
+            WorldLineNodeType.GENRE,
+        }
+        if self.source_entity.node_type not in allowed or self.target_entity.node_type not in allowed:
+            raise ValueError("influence endpoints must be music entities")
+        if self.source_entity.node_id == self.target_entity.node_id:
+            raise ValueError("influence relation cannot be a self-loop")
+        evidence_ids = [item.evidence_id for item in self.evidence]
+        if len(evidence_ids) != len(set(evidence_ids)):
+            raise ValueError("influence evidence must be unique")
+        if not any(item.stance is InfluenceEvidenceStance.SUPPORT for item in self.evidence):
+            raise ValueError("influence relation needs supporting evidence")
+        return self
+
+
 class WorldLineResult(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -425,6 +505,7 @@ class WorldLineResult(BaseModel):
     citations: list[EvidenceSource] = Field(default_factory=list, max_length=30)
     era_relations: list[EraRelation] = Field(default_factory=list, max_length=20)
     scene_relations: list[SceneRelation] = Field(default_factory=list, max_length=20)
+    influence_relations: list[InfluenceRelation] = Field(default_factory=list, max_length=20)
 
     @model_validator(mode="after")
     def validate_citations(self) -> "WorldLineResult":
@@ -486,6 +567,23 @@ class WorldLineResult(BaseModel):
                 edge.evidence_ids
             ):
                 raise ValueError("era relation evidence must match graph edge")
+        for relation in self.influence_relations:
+            source = graph_node_by_id.get(relation.source_entity.node_id)
+            target = graph_node_by_id.get(relation.target_entity.node_id)
+            if source is None or target is None:
+                raise ValueError("influence endpoints must exist in graph")
+            if source.type is not relation.source_entity.node_type or target.type is not relation.target_entity.node_type:
+                raise ValueError("influence endpoint types must match graph")
+            edge = graph_edges.get((
+                source.id,
+                target.id,
+                WorldLineRelation(relation.relation_type.value),
+            ))
+            if edge is None:
+                raise ValueError("influence relation must match directed graph edge")
+            evidence_ids = {item.source_id for item in relation.evidence}
+            if not evidence_ids.issubset(source_by_id) or not evidence_ids.issubset(edge.evidence_ids):
+                raise ValueError("influence evidence must match graph and sources")
         return self
 
 

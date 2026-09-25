@@ -109,6 +109,9 @@
 .worldline-graph__edge:hover .worldline-graph__edge-line, .worldline-graph__edge:focus .worldline-graph__edge-line, .worldline-graph__edge.is-selected .worldline-graph__edge-line { stroke: #82d3dc; stroke-width: 3; }
 .worldline-graph__edge.is-selected text { fill: #b9f1f3; }
 .worldline-graph marker path { fill: rgba(130, 181, 193, .65); }
+.worldline-graph #worldline-influence-arrow path { fill: #e8b879; }
+.worldline-graph__edge.is-influence .worldline-graph__edge-line { stroke: #e8b879; stroke-width: 3; stroke-dasharray: 7 4; }
+.worldline-graph__edge.is-influence text { fill: #f0c894; }
 .worldline-graph__node { outline: none; }
 .worldline-graph__node.is-actionable { cursor: pointer; }
 .worldline-graph__node-aura { fill: transparent; stroke: transparent; transition: fill .2s, stroke .2s; }
@@ -134,6 +137,7 @@
 .worldline-graph__legend i.is-genre { border-color: #b49775; background: #44372c; }
 .worldline-graph__legend i.is-era { border-color: #c17d73; background: #3f3030; }
 .worldline-graph__legend i.is-scene { border-color: #86b6cf; background: #263b47; }
+.worldline-graph__legend i.is-influence { border-color: #e8b879; background: #8b582a; }
 .worldline-graph__legend i.is-visited { border-color: #aff6f3; box-shadow: 0 0 8px rgba(175, 246, 243, .6); }
 
 .worldline-page__graph-loading { position: absolute; inset: 0; border-radius: 20px; background: rgba(5, 18, 25, .7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; gap: 9px; color: #c3eaec; }

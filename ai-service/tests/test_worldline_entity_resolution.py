@@ -88,6 +88,18 @@ class EntityResolverTests(unittest.TestCase):
         self.assertEqual(parsed.query, "周杰伦")
         self.assertEqual(parsed.expected_entity_type, EntityType.ARTIST)
 
+    def test_unquoted_influence_questions_keep_target_identity(self) -> None:
+        for query in (
+            "歌手周杰伦的音乐影响",
+            "歌手周杰伦受谁影响",
+            "歌手周杰伦的风格来源",
+            "谁影响了歌手周杰伦",
+            "Who influenced 歌手周杰伦",
+        ):
+            parsed = parse_entity_query(query)
+            self.assertEqual(parsed.query, "周杰伦")
+            self.assertEqual(parsed.expected_entity_type, EntityType.ARTIST)
+
     def test_song_title_containing_scene_word_remains_exact_identity(self) -> None:
         service = FakeMusicService([resolved(78, EntityType.SONG, "Scene")])
         result = asyncio.run(resolve_music_entity(service, "歌曲 Scene"))

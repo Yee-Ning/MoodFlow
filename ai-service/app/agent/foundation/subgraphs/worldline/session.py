@@ -294,6 +294,9 @@ class WorldLineSessionService:
             "prior_scene_relations": (
                 previous.last_result.scene_relations if previous else []
             ),
+            "prior_influence_relations": (
+                previous.last_result.influence_relations if previous else []
+            ),
             "root_entity": previous.root_entity if previous else None,
             "visited_nodes": [*previous.visited_nodes, target.entity_id] if previous and target else [],
         })
@@ -397,6 +400,7 @@ class WorldLineSessionService:
                 citations=citations,
                 era_relations=old.last_result.era_relations,
                 scene_relations=old.last_result.scene_relations,
+                influence_relations=old.last_result.influence_relations,
             )
         except WorldLineMergeError as exc:
             raise WorldLineExecutionError(

@@ -39,6 +39,12 @@ class ClaimPredicate(StrEnum):
     SCENE_ASSOCIATION = "scene_association"
     STYLE_SCENE_ASSOCIATION = "style_scene_association"
     EMERGED_FROM_SCENE = "emerged_from_scene"
+    INFLUENCED = "influenced"
+    INFLUENCED_BY = "influenced_by"
+    INSPIRED = "inspired"
+    INSPIRED_BY = "inspired_by"
+    SHAPED_STYLE = "shaped_style"
+    CITED_AS_INFLUENCE = "cited_as_influence"
     OTHER = "other"
 
 

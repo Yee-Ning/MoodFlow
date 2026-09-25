@@ -59,6 +59,9 @@ export default function WorldLineGraph({
           <marker id="worldline-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" />
           </marker>
+          <marker id="worldline-influence-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" />
+          </marker>
           <filter id="worldline-glow" x="-80%" y="-80%" width="260%" height="260%">
             <feGaussianBlur stdDeviation="8" result="blur" />
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
@@ -76,9 +79,14 @@ export default function WorldLineGraph({
             const middleY = (source.y + target.y) / 2 + curve
             const path = `M ${source.x} ${source.y} Q ${middleX} ${middleY} ${target.x} ${target.y}`
             const selected = selectedKey === key
+            const influence = (result.influence_relations ?? []).some((relation) => (
+              relation.source_entity.node_id === edge.source
+              && relation.target_entity.node_id === edge.target
+              && relation.relation_type === edge.relation
+            ))
             return (
               <g
-                className={`worldline-graph__edge${selected ? ' is-selected' : ''}`}
+                className={`worldline-graph__edge${selected ? ' is-selected' : ''}${influence ? ' is-influence' : ''}`}
                 key={key}
                 role="button"
                 tabIndex={0}
@@ -91,7 +99,7 @@ export default function WorldLineGraph({
                   }
                 }}
               >
-                <path className="worldline-graph__edge-line" d={path} markerEnd="url(#worldline-arrow)" />
+                <path className="worldline-graph__edge-line" d={path} markerEnd={influence ? 'url(#worldline-influence-arrow)' : 'url(#worldline-arrow)'} />
                 <path className="worldline-graph__edge-hit" d={path} />
                 <text x={middleX} y={middleY - 8} textAnchor="middle">
                   {relationLabel(edge.relation)}
@@ -149,6 +157,7 @@ export default function WorldLineGraph({
         <span><i className="is-genre" />流派</span>
         <span><i className="is-era" />时代 / 阶段</span>
         <span><i className="is-scene" />音乐场景</span>
+        <span><i className="is-influence" />影响方向</span>
         <span><i className="is-visited" />已访问</span>
       </div>
     </div>

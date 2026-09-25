@@ -51,6 +51,14 @@ def build_worldline_graph(
             relation = WorldLineRelation(fact.predicate)
         except ValueError:
             continue
+        if relation in {
+            WorldLineRelation.INFLUENCED_BY,
+            WorldLineRelation.INFLUENCED,
+            WorldLineRelation.INSPIRED,
+            WorldLineRelation.SHAPED_STYLE,
+            WorldLineRelation.CITED_AS_INFLUENCE,
+        }:
+            continue
         if fact.subject_id not in nodes or fact.object_entity_id not in nodes:
             continue
         edge = WorldLineEdge(
@@ -192,9 +200,14 @@ def _merge_structured_knowledge(
             WorldLineRelation.SCENE_ASSOCIATION,
             WorldLineRelation.STYLE_SCENE_ASSOCIATION,
             WorldLineRelation.EMERGED_FROM_SCENE,
+            WorldLineRelation.INFLUENCED_BY,
+            WorldLineRelation.INFLUENCED,
+            WorldLineRelation.INSPIRED,
+            WorldLineRelation.SHAPED_STYLE,
+            WorldLineRelation.CITED_AS_INFLUENCE,
         }:
             logger.warning(
-                "Ignoring unvalidated semantic/era/scene relation metadata: document_id=%s",
+                "Ignoring unvalidated semantic/era/scene/influence relation metadata: document_id=%s",
                 document.id,
             )
             continue

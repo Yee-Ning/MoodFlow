@@ -6,6 +6,7 @@ from app.agent.foundation.state.base import BaseAgentState
 from app.agent.foundation.subgraphs.worldline.models import (
     EraRelation,
     SceneRelation,
+    InfluenceRelation,
     EntityResolution,
     EntityType,
     EvidenceSource,
@@ -57,6 +58,8 @@ class WorldLineState(BaseAgentState):
     prior_era_relations: list[EraRelation]
     scene_relations: list[SceneRelation]
     prior_scene_relations: list[SceneRelation]
+    influence_relations: list[InfluenceRelation]
+    prior_influence_relations: list[InfluenceRelation]
 
 
 def create_worldline_state(
@@ -101,4 +104,6 @@ def create_worldline_state(
         prior_era_relations=[],
         scene_relations=[],
         prior_scene_relations=[],
+        influence_relations=[],
+        prior_influence_relations=[],
     )

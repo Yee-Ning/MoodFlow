@@ -57,6 +57,26 @@ const sceneRelation = {
   evidence: [{ evidence_id: sceneEvidence.id, source_id: sceneEvidence.id, claim_id: 'claim:scene:1', exact_span: sceneEvidence.excerpt, start_year: 2003, end_year: 2003, raw_time: 'about 2003', confidence: 0.94 }],
   metadata: { temporal_conflict: false, location_conflict: false },
 }
+const influenceEvidence = {
+  id: 'knowledge:influence:1', source_type: 'knowledge', title: 'Influence profile',
+  source: 'Reviewed archive', url: 'https://example.com/influence',
+  excerpt: 'Nujabes influenced the song Feather.',
+  metadata: { document_id: 'parent-1', child_id: 'child-1', claim_id: 'claim:influence:1' },
+}
+const influenceEdge = {
+  source: 'netease:artist:2', target: 'netease:song:3', relation: 'influenced',
+  description: '', evidence_ids: [influenceEvidence.id],
+}
+const influenceRelation = {
+  source_entity: { node_id: 'netease:artist:2', node_type: 'artist', canonical_name: 'Nujabes', knowledge_entity_id: 'artist:nujabes' },
+  target_entity: { node_id: 'netease:song:3', node_type: 'song', canonical_name: 'Feather', knowledge_entity_id: 'song:feather' },
+  relation_type: 'influenced', direction: 'influencer_to_influenced',
+  influence_scope: 'sound', confidence: 0.94,
+  evidence: [{ evidence_id: influenceEvidence.id, source_id: influenceEvidence.id,
+    claim_id: 'claim:influence:1', exact_span: influenceEvidence.excerpt,
+    confidence: 0.94, strength: 'historical_attribution', stance: 'support' }],
+  metadata: { direction_conflict: false },
+}
 const result = {
   root_entity: {
     entity_id: 'netease:artist:2', entity_type: 'artist', name: 'Nujabes', artist: null,
@@ -69,16 +89,18 @@ const result = {
       { id: 'genre:jazz_hip_hop', type: 'genre', name: 'Jazz Hip-Hop', description: '', metadata: {} },
       { id: 'era:2000s', type: 'era', name: '2000s', description: '', metadata: { executable: false } },
       { id: 'scene:tokyo_hip_hop_scene', type: 'scene', name: 'Tokyo hip-hop scene', description: '', metadata: { executable: false } },
+      { id: 'netease:song:3', type: 'song', name: 'Feather', description: '', metadata: {} },
     ],
-    edges: [edge, eraEdge, sceneEdge],
+    edges: [edge, eraEdge, sceneEdge, influenceEdge],
   },
   narrative: 'Nujabes 与 Jazz Hip-Hop 有关联。[knowledge:rel:1]',
   branches: [{
     id: 'wlb:1:genre', title: 'Jazz Hip-Hop', description: '查看流派', branch_type: 'genre',
     target_entity: { id: 'genre:jazz_hip_hop', type: 'genre', name: 'Jazz Hip-Hop' },
   }],
-  sources: [knowledge, eraEvidence, sceneEvidence], citations: [knowledge],
-  era_relations: [eraRelation], scene_relations: [sceneRelation], session_id: 'session',
+  sources: [knowledge, eraEvidence, sceneEvidence, influenceEvidence], citations: [knowledge],
+  era_relations: [eraRelation], scene_relations: [sceneRelation],
+  influence_relations: [influenceRelation], session_id: 'session',
   current_node: 'netease:artist:2', visited_nodes: ['netease:artist:2'],
   available_actions: [{
     id: 'wlb:1:genre', target_node_id: 'genre:jazz_hip_hop', action_type: 'explore_node',
@@ -107,6 +129,8 @@ try {
   assert.match(graphMarkup, /is-visited/)
   assert.match(graphMarkup, /aria-disabled="true"/)
   assert.match(graphMarkup, /associated with/)
+  assert.match(graphMarkup, /is-influence/)
+  assert.match(graphMarkup, /worldline-influence-arrow/)
 
   const mapped = viewModel.resolveEdgeEvidence(edge, result.sources, result.citations)
   assert.equal(mapped.length, 1)
@@ -142,6 +166,17 @@ try {
   assert.match(sceneMarkup, /<dt>Location<\/dt><dd>Tokyo<\/dd>/)
   assert.match(sceneMarkup, /2003 · approximate/)
   assert.match(sceneMarkup, /Nujabes was part of the Tokyo hip-hop scene/)
+
+  const influenceMarkup = renderToStaticMarkup(React.createElement(EvidencePanel, {
+    edge: influenceEdge, nodes: result.graph.nodes, sources: result.sources,
+    citations: result.citations, influenceRelations: result.influence_relations,
+    onClose: () => {},
+  }))
+  assert.match(influenceMarkup, /Nujabes \(influencer\) → Feather \(influenced\)/)
+  assert.match(influenceMarkup, /<dt>Scope<\/dt><dd>sound<\/dd>/)
+  assert.match(influenceMarkup, /<dt>Confidence<\/dt><dd>0\.94<\/dd>/)
+  assert.match(influenceMarkup, /Nujabes influenced the song Feather/)
+  assert.match(influenceMarkup, /claim:influence:1/)
 
   const unavailableMarkup = renderToStaticMarkup(React.createElement(EvidencePanel, {
     edge: { ...edge, evidence_ids: ['missing'] }, nodes: result.graph.nodes,

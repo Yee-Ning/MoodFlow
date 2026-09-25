@@ -31,6 +31,21 @@ _TRAILING_SCENE_REQUEST = re.compile(
     r"音乐群体|音樂群體|地域音乐文化|地域音樂文化).*$",
     re.IGNORECASE,
 )
+_TRAILING_INFLUENCE_REQUEST = re.compile(
+    r"(?:的|\s+)(?:音乐|音樂|风格|風格)?"
+    r"(?:影响(?:关系|来源)?|影響(?:關係|來源)?|启发|啟發|"
+    r"风格来源|風格來源|"
+    r"influences?|influenced\s+by|inspired\s+by|musical\s+influence).*$",
+    re.IGNORECASE,
+)
+_LEADING_INFLUENCE_REQUEST = re.compile(
+    r"^(?:(?:谁|誰|哪些歌手|哪些艺人|哪些藝人)(?:影响|影響|启发|啟發)(?:了)?|"
+    r"who\s+(?:influenced|inspired))\s*",
+    re.IGNORECASE,
+)
+_TRAILING_WHO_INFLUENCED = re.compile(
+    r"(?:的)?(?:受|受到)(?:谁|誰)(?:的)?(?:影响|影響|启发|啟發).*$"
+)
 
 
 @dataclass(frozen=True)
@@ -52,6 +67,7 @@ def parse_entity_query(user_query: str) -> ParsedEntityQuery:
         query = quoted.group("name").strip()
     else:
         query = _LEADING_REQUEST.sub("", text, count=1).strip()
+        query = _LEADING_INFLUENCE_REQUEST.sub("", query, count=1).strip()
         query = _TRAILING_WORLDLINE.sub("", query, count=1).strip()
         prefixes = {
             EntityType.SONG: ("歌曲", "单曲"),
@@ -66,6 +82,8 @@ def parse_entity_query(user_query: str) -> ParsedEntityQuery:
         before_era_suffix = query
         query = _TRAILING_ERA_REQUEST.sub("", query).strip()
         query = _TRAILING_SCENE_REQUEST.sub("", query).strip()
+        query = _TRAILING_INFLUENCE_REQUEST.sub("", query).strip()
+        query = _TRAILING_WHO_INFLUENCED.sub("", query).strip()
         if query != before_era_suffix:
             alternate_query = before_era_suffix
         query = query.removesuffix("的").strip()

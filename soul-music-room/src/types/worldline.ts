@@ -104,6 +104,29 @@ export interface SceneRelation {
   metadata: Record<string, unknown>
 }
 
+export type InfluenceRelationType = 'influenced' | 'inspired' | 'shaped_style' | 'cited_as_influence'
+
+export interface InfluenceRelationEvidence {
+  evidence_id: string
+  source_id: string
+  claim_id: string
+  exact_span: string
+  confidence: number
+  strength: 'self_reported' | 'historical_attribution' | 'critical_attribution' | 'speculative'
+  stance: 'support' | 'contradiction'
+}
+
+export interface InfluenceRelation {
+  source_entity: EraEntityReference
+  target_entity: EraEntityReference
+  relation_type: InfluenceRelationType
+  direction: 'influencer_to_influenced'
+  influence_scope: 'sound' | 'style' | 'songwriting' | 'production' | 'career' | null
+  confidence: number
+  evidence: InfluenceRelationEvidence[]
+  metadata: Record<string, unknown>
+}
+
 export interface WorldLineBranch {
   id: string
   title: string
@@ -129,6 +152,7 @@ export interface WorldLineSessionResult {
   citations: WorldLineSource[]
   era_relations: EraRelation[]
   scene_relations: SceneRelation[]
+  influence_relations?: InfluenceRelation[]
   session_id: string
   current_node: string
   visited_nodes: string[]

@@ -21,6 +21,10 @@ from app.agent.foundation.subgraphs.worldline.scene_expansion import (
     SceneExpansionService,
     merge_scene_relations,
 )
+from app.agent.foundation.subgraphs.worldline.influence_expansion import (
+    InfluenceExpansionService,
+    merge_influence_relations,
+)
 from app.agent.foundation.subgraphs.worldline.generation import (
     StructuredWorldLineGenerator,
     WorldLineGenerator,
@@ -163,6 +167,7 @@ def build_worldline_subgraph(
     semantic_expansion: SemanticExpansionService | None = None,
     era_expansion: EraExpansionService | None = None,
     scene_expansion: SceneExpansionService | None = None,
+    influence_expansion: InfluenceExpansionService | None = None,
 ) -> StateGraph:
     service = music_service or JavaMusicEntityService()
     retrieval_runtime = (
@@ -175,6 +180,7 @@ def build_worldline_subgraph(
     semantic_service = semantic_expansion or SemanticExpansionService()
     era_service = era_expansion or EraExpansionService()
     scene_service = scene_expansion or SceneExpansionService()
+    influence_service = influence_expansion or InfluenceExpansionService()
     query_service = query_understanding or QueryUnderstandingService(
         index_profile=(
             retrieval_runtime.index_profile
@@ -505,6 +511,7 @@ def build_worldline_subgraph(
                 sources = semantic_result.sources
             era_relations = []
             scene_relations = []
+            influence_relations = []
             if plan is not None:
                 era_result = era_service.expand(
                     state["user_query"],
@@ -526,6 +533,16 @@ def build_worldline_subgraph(
                 graph = scene_result.graph
                 sources = scene_result.sources
                 scene_relations = scene_result.relations
+                influence_result = influence_service.expand(
+                    state["user_query"],
+                    plan,
+                    graph,
+                    sources,
+                    state.get("retrieved_docs", []),
+                )
+                graph = influence_result.graph
+                sources = influence_result.sources
+                influence_relations = influence_result.relations
             if state.get("session_mode") and state.get("prior_graph") is not None:
                 graph, sources = merge_worldline_graph(
                     state["prior_graph"], graph,
@@ -539,6 +556,10 @@ def build_worldline_subgraph(
                 scene_relations = merge_scene_relations(
                     state.get("prior_scene_relations", []),
                     scene_relations,
+                )
+                influence_relations = merge_influence_relations(
+                    state.get("prior_influence_relations", []),
+                    influence_relations,
                 )
         except WorldLineMergeError as exc:
             return _failed_result(state, "世界线扩展无法合并。", exc.code)
@@ -570,6 +591,7 @@ def build_worldline_subgraph(
             "sources": sources,
             "era_relations": era_relations,
             "scene_relations": scene_relations,
+            "influence_relations": influence_relations,
         }
 
     async def generate_narrative(
@@ -689,6 +711,7 @@ def build_worldline_subgraph(
                 citations=citations,
                 era_relations=state.get("era_relations", []),
                 scene_relations=state.get("scene_relations", []),
+                influence_relations=state.get("influence_relations", []),
             )
         except Exception:
             _log_node(
@@ -782,6 +805,7 @@ def create_worldline_subgraph(
     semantic_expansion: SemanticExpansionService | None = None,
     era_expansion: EraExpansionService | None = None,
     scene_expansion: SceneExpansionService | None = None,
+    influence_expansion: InfluenceExpansionService | None = None,
 ) -> CompiledStateGraph:
     return build_worldline_subgraph(
         music_service=music_service,
@@ -791,4 +815,5 @@ def create_worldline_subgraph(
         semantic_expansion=semantic_expansion,
         era_expansion=era_expansion,
         scene_expansion=scene_expansion,
+        influence_expansion=influence_expansion,
     ).compile(checkpointer=False)
