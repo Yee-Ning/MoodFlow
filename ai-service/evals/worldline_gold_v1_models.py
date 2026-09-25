@@ -23,6 +23,7 @@ from app.agent.foundation.subgraphs.worldline.genre_registry import (
 
 SCHEMA_VERSION = "worldline-gold-v1"
 DATASET_VERSION = "v1"
+DATASET_VERSION_V11 = "v1.1"
 DATASET_KIND = "real_gold_fixture"
 
 
@@ -58,6 +59,13 @@ class AmbiguityStatus(StrEnum):
 class RegistryScope(StrEnum):
     PRODUCTION = "production_registry"
     FIXTURE_ONLY = "fixture_only_registry"
+
+
+class GoldEvaluationTask(StrEnum):
+    SEMANTIC_EXPANSION = "semantic_expansion"
+    ENTITY_RESOLUTION = "entity_resolution"
+    GENRE_EXPLORATION = "genre_exploration"
+    GRAPH_MERGE = "graph_merge"
 
 
 class CatalogReferenceGold(BaseModel):
@@ -164,6 +172,85 @@ class GoldIdentity(BaseModel):
     )
 
 
+class GoldEvaluationSpec(BaseModel):
+    """Evaluation-only replay contract for reviewed V1.1 boundary cases."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    task: GoldEvaluationTask
+    scenario: Literal[
+        "semantic_no_evidence",
+        "semantic_wrong_predicate",
+        "semantic_missing_span",
+        "semantic_duplicate_evidence",
+        "identity_ambiguous",
+        "identity_missing",
+        "genre_disabled",
+        "merge_source_conflict",
+    ]
+    tier: Literal["component_replay", "session_replay"] = "component_replay"
+    expected_outcome: Literal[
+        "accepted",
+        "rejected",
+        "ambiguous",
+        "unresolved",
+    ]
+    candidate_count: int | None = Field(default=None, ge=0)
+    rejection_reasons: list[str] = Field(default_factory=list, max_length=20)
+    catalog_candidates: list[CatalogReferenceGold] = Field(
+        default_factory=list,
+        max_length=20,
+    )
+    expected_reason: str | None = Field(default=None, max_length=200)
+    error_code: str | None = Field(default=None, max_length=200)
+
+    @model_validator(mode="after")
+    def validate_scenario(self) -> "GoldEvaluationSpec":
+        scenario_tasks = {
+            "semantic_no_evidence": GoldEvaluationTask.SEMANTIC_EXPANSION,
+            "semantic_wrong_predicate": GoldEvaluationTask.SEMANTIC_EXPANSION,
+            "semantic_missing_span": GoldEvaluationTask.SEMANTIC_EXPANSION,
+            "semantic_duplicate_evidence": GoldEvaluationTask.SEMANTIC_EXPANSION,
+            "identity_ambiguous": GoldEvaluationTask.ENTITY_RESOLUTION,
+            "identity_missing": GoldEvaluationTask.ENTITY_RESOLUTION,
+            "genre_disabled": GoldEvaluationTask.GENRE_EXPLORATION,
+            "merge_source_conflict": GoldEvaluationTask.GRAPH_MERGE,
+        }
+        if scenario_tasks[self.scenario] is not self.task:
+            raise ValueError("gold_evaluation_scenario_task_mismatch")
+        if self.task is GoldEvaluationTask.SEMANTIC_EXPANSION:
+            if self.tier != "component_replay":
+                raise ValueError("gold_semantic_evaluation_requires_component_tier")
+            if self.expected_outcome == "rejected" and self.candidate_count is None:
+                raise ValueError("gold_semantic_rejection_candidate_count_required")
+            if self.expected_outcome not in {"accepted", "rejected"}:
+                raise ValueError("gold_semantic_evaluation_outcome_invalid")
+        elif self.task is GoldEvaluationTask.ENTITY_RESOLUTION:
+            if self.tier != "component_replay":
+                raise ValueError("gold_identity_evaluation_requires_component_tier")
+            if self.expected_outcome not in {"ambiguous", "unresolved"}:
+                raise ValueError("gold_identity_evaluation_outcome_invalid")
+            if not self.expected_reason:
+                raise ValueError("gold_identity_evaluation_reason_required")
+            if self.scenario == "identity_ambiguous" and len(
+                self.catalog_candidates
+            ) < 2:
+                raise ValueError("gold_identity_ambiguous_candidates_required")
+            if self.scenario == "identity_missing" and self.catalog_candidates:
+                raise ValueError("gold_identity_missing_candidates_forbidden")
+        elif self.task is GoldEvaluationTask.GENRE_EXPLORATION:
+            if self.tier != "session_replay":
+                raise ValueError("gold_genre_action_requires_session_tier")
+            if self.expected_outcome != "rejected" or not self.error_code:
+                raise ValueError("gold_genre_action_rejection_required")
+        elif self.task is GoldEvaluationTask.GRAPH_MERGE:
+            if self.tier != "component_replay":
+                raise ValueError("gold_merge_evaluation_requires_component_tier")
+            if self.expected_outcome != "rejected" or not self.error_code:
+                raise ValueError("gold_merge_rejection_required")
+        return self
+
+
 class GoldReview(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -193,9 +280,9 @@ class GoldCase(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema_version: Literal[SCHEMA_VERSION]
-    dataset_version: Literal[DATASET_VERSION]
+    dataset_version: Literal[DATASET_VERSION, DATASET_VERSION_V11]
     dataset_kind: Literal[DATASET_KIND]
-    case_id: str = Field(pattern=r"^wl-gold-v1-[a-z0-9][a-z0-9-]*$")
+    case_id: str = Field(pattern=r"^wl-gold-v(?:1|11)-[a-z0-9][a-z0-9-]*$")
     region: Literal["cjk_chinese", "western", "japanese", "korean"]
     tags: list[str] = Field(default_factory=list, max_length=20)
     artist: GoldArtist
@@ -207,6 +294,7 @@ class GoldCase(BaseModel):
     expected: GoldExpected
     identity: GoldIdentity
     review: GoldReview
+    evaluation: GoldEvaluationSpec | None = None
 
     @model_validator(mode="after")
     def validate_gold_contract(self) -> "GoldCase":
@@ -240,6 +328,31 @@ class GoldCase(BaseModel):
                 != self.artist.catalog_reference.node_id
             ):
                 raise ValueError("gold_case_accepted_catalog_node_mismatch")
+
+        evaluation = self.evaluation
+        if evaluation is not None:
+            if self.dataset_version != DATASET_VERSION_V11:
+                raise ValueError("gold_evaluation_spec_requires_v11")
+            if evaluation.scenario == "semantic_no_evidence" and self.evidence:
+                raise ValueError("gold_semantic_no_evidence_requires_empty_evidence")
+            if evaluation.scenario in {
+                "semantic_wrong_predicate",
+                "semantic_missing_span",
+                "semantic_duplicate_evidence",
+                "genre_disabled",
+                "merge_source_conflict",
+            } and not self.evidence:
+                raise ValueError("gold_evaluation_scenario_evidence_required")
+            if evaluation.task is GoldEvaluationTask.ENTITY_RESOLUTION:
+                expected_status = evaluation.expected_outcome
+                if self.identity.catalog_status.value != expected_status:
+                    raise ValueError("gold_identity_evaluation_status_mismatch")
+                if self.artist.catalog_reference is not None:
+                    raise ValueError("gold_hard_identity_catalog_reference_forbidden")
+                if self.identity.expected_catalog_node_id is not None:
+                    raise ValueError("gold_hard_identity_expected_node_forbidden")
+            if evaluation.scenario == "genre_disabled" and genre.executable:
+                raise ValueError("gold_disabled_genre_must_not_be_executable")
         return self
 
 

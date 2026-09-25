@@ -1,0 +1,12 @@
+{
+  "schema_version": "worldline-gold-v1",
+  "dataset_kind": "real_gold_fixture",
+  "dataset": "evals/datasets/worldline_gold_v11.jsonl",
+  "source_ledger": "evals/fixtures/worldline_gold_v11_sources.jsonl",
+  "results": "evals/reports/worldline_gold_v11_results.jsonl",
+  "metrics": "evals/reports/worldline_gold_v11_metrics.json",
+  "failures": "evals/reports/worldline_gold_v11_failures.jsonl",
+  "report": "evals/reports/worldline_gold_v11_report.md",
+  "tiers": ["component_replay", "session_replay"],
+  "postgres_env_flag": "RUN_WORLDLINE_EVAL_POSTGRES"
+}

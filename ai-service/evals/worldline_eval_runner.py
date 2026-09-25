@@ -85,7 +85,7 @@ from evals.worldline_gold_v1_models import (
 SERVICE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = SERVICE_ROOT / "evals" / "config" / "worldline_eval_v0.json"
 DEFAULT_GOLD_CONFIG = (
-    SERVICE_ROOT / "evals" / "config" / "worldline_gold_v1.json"
+    SERVICE_ROOT / "evals" / "config" / "worldline_gold_v11.json"
 )
 
 
@@ -935,7 +935,7 @@ async def run_worldline_gold_evaluation(
     ]
     run = WorldLineEvalRun(
         schema_version=SCHEMA_VERSION,
-        dataset_version="v1",
+        dataset_version=dataset.dataset_version,
         dataset_kind="real_gold_fixture",
         dataset_sha256=dataset.dataset_sha256,
         source_ledger_sha256=dataset.source_ledger_sha256,

@@ -32,7 +32,7 @@ def render_worldline_report(
     is_gold = run.dataset_kind == "real_gold_fixture"
     lines = [
         (
-            "# WorldLine Real Gold V1 Evaluation Report"
+            f"# WorldLine Real Gold {run.dataset_version.upper()} Evaluation Report"
             if is_gold
             else "# WorldLine Evaluation V0 Report"
         ),
@@ -82,6 +82,8 @@ def render_worldline_report(
         f"| Identity | Resolution success | {_format_metric(identity['knowledge_catalog_resolution_success_rate'])} |",
         f"| Identity | Catalog accuracy | {_format_metric(identity['catalog_identity_accuracy'])} |",
         f"| Identity | Ambiguity detection | {_format_metric(identity['ambiguity_detection_rate'])} |",
+        f"| Identity | Unresolved reason accuracy | {_format_metric(identity['unresolved_reason_accuracy'])} |",
+        f"| Identity | False executable identity | {_format_metric(identity['false_executable_identity_rate'])} |",
         f"| Reliability | Graph merge success | {_format_metric(reliability['graph_merge_success_rate'])} |",
         f"| Reliability | Invalid merge rejection | {_format_metric(reliability['invalid_merge_rejection_rate'])} |",
         f"| Reliability | Session continuity | {_format_metric(reliability['session_continuity_rate'])} |",

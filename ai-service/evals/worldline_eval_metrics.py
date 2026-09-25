@@ -215,6 +215,9 @@ def identity_metrics(results: list[WorldLineEvalResult]) -> dict[str, Any]:
         for row in rows
         if row.expected.get("status") != "resolved"
     )
+    non_resolvable = [
+        row for row in rows if row.expected.get("status") != "resolved"
+    ]
     return {
         "cases": len(rows),
         "knowledge_catalog_resolution_success_rate": _metric(
@@ -238,6 +241,10 @@ def identity_metrics(results: list[WorldLineEvalResult]) -> dict[str, Any]:
             len(unresolved),
         ),
         "false_executable_identity_count": false_executable,
+        "false_executable_identity_rate": _metric(
+            false_executable,
+            len(non_resolvable),
+        ),
     }
 
 

@@ -22,6 +22,10 @@ class WorldLineGoldDataset:
     source_ledger_sha256: str
 
     @property
+    def dataset_version(self) -> str:
+        return self.cases[0].dataset_version
+
+    @property
     def approved_cases(self) -> tuple[GoldCase, ...]:
         return tuple(
             case
@@ -75,7 +79,10 @@ def _validate_cases(
 ) -> None:
     source_by_fixture_id = {source.fixture_source_id: source for source in sources}
     case_ids: set[str] = set()
-    relations: set[tuple[str, str, str]] = set()
+    relations: set[tuple[str, str, str, str, str]] = set()
+    dataset_versions = {case.dataset_version for case in cases}
+    if len(dataset_versions) != 1:
+        raise ValueError("worldline_gold_dataset_version_mixed")
     for case in cases:
         if case.case_id in case_ids:
             raise ValueError(f"worldline_gold_duplicate_case:{case.case_id}")
@@ -84,6 +91,8 @@ def _validate_cases(
             case.artist.knowledge_entity_id,
             case.semantic_relation.target_genre.canonical_id,
             case.semantic_relation.relation_type,
+            case.evaluation.task.value if case.evaluation else "default",
+            case.evaluation.scenario if case.evaluation else "default",
         )
         if relation_key in relations:
             raise ValueError(

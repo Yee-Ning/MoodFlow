@@ -16,7 +16,7 @@ from evals.worldline_eval_models import (
     WorldLineEvalTier,
 )
 from evals.worldline_gold_v1_loader import WorldLineGoldDataset
-from evals.worldline_gold_v1_models import GoldCase, GoldOutcome
+from evals.worldline_gold_v1_models import GoldCase, GoldEvaluationTask, GoldOutcome
 
 
 @dataclass(frozen=True)
@@ -150,6 +150,179 @@ def _identity_case(case: GoldCase) -> WorldLineEvalCase:
     )
 
 
+def _explicit_semantic_case(case: GoldCase) -> WorldLineEvalCase:
+    evaluation = case.evaluation
+    if evaluation is None:
+        raise ValueError(f"worldline_gold_evaluation_missing:{case.case_id}")
+    catalog = case.artist.catalog_reference
+    catalog_node_id = (
+        catalog.node_id if catalog else f"eval:artist:{_slug(case.case_id)}"
+    )
+    evidence = case.evidence[0] if case.evidence else None
+    accepted = evaluation.expected_outcome == "accepted"
+    relation = {
+        "source_id": catalog_node_id,
+        "target_id": case.semantic_relation.target_genre.canonical_id,
+        "relation": case.semantic_relation.relation_type,
+        "claim_id": _claim_id(case),
+        "exact_span": evidence.exact_span if evidence else "",
+    }
+    return WorldLineEvalCase(
+        schema_version=EVAL_SCHEMA_VERSION,
+        dataset_version="v0",
+        case_id=f"wl-real-gold-semantic-{_slug(case.case_id)}",
+        tier="component_replay",
+        task=WorldLineEvalTask.SEMANTIC_EXPANSION,
+        tags=[
+            "real_gold",
+            "positive" if accepted else "negative",
+            *case.tags,
+        ],
+        input={
+            "artist_catalog_id": catalog_node_id,
+            "catalog_provider": catalog.provider if catalog else "eval",
+            "artist_name": case.artist.canonical_name,
+            "artist_alias": case.artist.aliases[0] if case.artist.aliases else None,
+            "artist_knowledge_id": case.artist.knowledge_entity_id,
+        },
+        fixtures={
+            "scenario": evaluation.scenario,
+            "documents": (
+                [
+                    {
+                        "content": evidence.evidence_text,
+                        "source_id": evidence.source_id,
+                        "fixture_source_id": evidence.fixture_source_id,
+                    }
+                ]
+                if evidence and evaluation.scenario != "semantic_no_evidence"
+                else []
+            ),
+        },
+        expected=(
+            {"outcome": "accepted", "relations": [relation]}
+            if accepted
+            else {
+                "outcome": "rejected",
+                "relations": [],
+                "candidate_count": evaluation.candidate_count,
+                "rejection_reasons": evaluation.rejection_reasons,
+                "gold_reason": case.expected.reason,
+            }
+        ),
+        label_provenance=_provenance(case),
+    )
+
+
+def _explicit_identity_case(case: GoldCase) -> WorldLineEvalCase:
+    evaluation = case.evaluation
+    if evaluation is None:
+        raise ValueError(f"worldline_gold_evaluation_missing:{case.case_id}")
+    return WorldLineEvalCase(
+        schema_version=EVAL_SCHEMA_VERSION,
+        dataset_version="v0",
+        case_id=f"wl-real-gold-identity-{_slug(case.case_id)}",
+        tier="component_replay",
+        task=WorldLineEvalTask.ENTITY_RESOLUTION,
+        tags=["real_gold", "negative", *case.tags],
+        input={
+            "knowledge_entity_id": case.artist.knowledge_entity_id,
+            "canonical_name": case.artist.canonical_name,
+            "aliases": case.artist.aliases,
+            "catalog_candidates": [
+                {
+                    "id": item.node_id,
+                    "name": item.name,
+                    "provider": item.provider,
+                }
+                for item in evaluation.catalog_candidates
+            ],
+        },
+        fixtures={"scenario": evaluation.scenario},
+        expected={
+            "outcome": evaluation.expected_outcome,
+            "status": evaluation.expected_outcome,
+            "reason": evaluation.expected_reason,
+            "catalog_node_id": None,
+        },
+        label_provenance=_provenance(case),
+    )
+
+
+def _explicit_genre_case(case: GoldCase) -> WorldLineEvalCase:
+    evaluation = case.evaluation
+    catalog = case.artist.catalog_reference
+    evidence = case.evidence[0] if case.evidence else None
+    if evaluation is None or catalog is None or evidence is None:
+        raise ValueError(f"worldline_gold_genre_boundary_invalid:{case.case_id}")
+    return WorldLineEvalCase(
+        schema_version=EVAL_SCHEMA_VERSION,
+        dataset_version="v0",
+        case_id=f"wl-real-gold-genre-{_slug(case.case_id)}",
+        tier=evaluation.tier,
+        task=WorldLineEvalTask.GENRE_EXPLORATION,
+        tags=["real_gold", "negative", *case.tags],
+        input={
+            "target_genre_id": case.semantic_relation.target_genre.canonical_id,
+            "root_artist_id": catalog.node_id,
+            "root_artist_name": case.artist.canonical_name,
+            "root_artist_knowledge_id": case.artist.knowledge_entity_id,
+            "root_catalog_provider": catalog.provider,
+        },
+        fixtures={
+            "scenario": evaluation.scenario,
+            "documents": [
+                {
+                    "content": evidence.evidence_text,
+                    "source_id": evidence.source_id,
+                    "fixture_source_id": evidence.fixture_source_id,
+                }
+            ],
+        },
+        expected={
+            "outcome": "rejected",
+            "error_code": evaluation.error_code,
+            "projected_artist_count": 0,
+        },
+        label_provenance=_provenance(case),
+    )
+
+
+def _explicit_merge_case(case: GoldCase) -> WorldLineEvalCase:
+    evaluation = case.evaluation
+    if evaluation is None:
+        raise ValueError(f"worldline_gold_evaluation_missing:{case.case_id}")
+    return WorldLineEvalCase(
+        schema_version=EVAL_SCHEMA_VERSION,
+        dataset_version="v0",
+        case_id=f"wl-real-gold-merge-{_slug(case.case_id)}",
+        tier="component_replay",
+        task=WorldLineEvalTask.GRAPH_MERGE,
+        tags=["real_gold", "negative", *case.tags],
+        input={"scenario": evaluation.scenario},
+        fixtures={"scenario": evaluation.scenario},
+        expected={
+            "outcome": "rejected",
+            "error_code": evaluation.error_code,
+            "old_snapshot_unchanged": True,
+        },
+        label_provenance=_provenance(case),
+    )
+
+
+def _explicit_case(case: GoldCase) -> WorldLineEvalCase:
+    evaluation = case.evaluation
+    if evaluation is None:
+        raise ValueError(f"worldline_gold_evaluation_missing:{case.case_id}")
+    builders = {
+        GoldEvaluationTask.SEMANTIC_EXPANSION: _explicit_semantic_case,
+        GoldEvaluationTask.ENTITY_RESOLUTION: _explicit_identity_case,
+        GoldEvaluationTask.GENRE_EXPLORATION: _explicit_genre_case,
+        GoldEvaluationTask.GRAPH_MERGE: _explicit_merge_case,
+    }
+    return builders[evaluation.task](case)
+
+
 def _genre_case(root: GoldCase, target: GoldCase) -> WorldLineEvalCase:
     root_catalog = root.artist.catalog_reference
     target_catalog = target.artist.catalog_reference
@@ -203,9 +376,11 @@ def adapt_worldline_gold_dataset(
     """Create isolated replay cases without mutating any production registry."""
 
     approved = list(dataset.approved_cases)
-    semantic = [_semantic_case(case) for case in approved]
+    defaults = [case for case in approved if case.evaluation is None]
+    explicit = [_explicit_case(case) for case in approved if case.evaluation]
+    semantic = [_semantic_case(case) for case in defaults]
     accepted = [
-        case for case in approved if case.expected.outcome is GoldOutcome.ACCEPTED
+        case for case in defaults if case.expected.outcome is GoldOutcome.ACCEPTED
     ]
     identity = [_identity_case(case) for case in accepted]
 
@@ -224,13 +399,19 @@ def adapt_worldline_gold_dataset(
         root = ordered[0]
         genre_cases.extend(_genre_case(root, target) for target in ordered[1:])
 
-    cases = tuple([*semantic, *identity, *genre_cases])
+    cases = tuple([*semantic, *identity, *genre_cases, *explicit])
     if len({case.case_id for case in cases}) != len(cases):
         raise ValueError("worldline_gold_adapter_duplicate_eval_case")
     return GoldAdapterResult(
         cases=cases,
-        semantic_case_count=len(semantic),
-        identity_case_count=len(identity),
-        genre_case_count=len(genre_cases),
+        semantic_case_count=sum(
+            case.task is WorldLineEvalTask.SEMANTIC_EXPANSION for case in cases
+        ),
+        identity_case_count=sum(
+            case.task is WorldLineEvalTask.ENTITY_RESOLUTION for case in cases
+        ),
+        genre_case_count=sum(
+            case.task is WorldLineEvalTask.GENRE_EXPLORATION for case in cases
+        ),
         approved_gold_case_count=len(approved),
     )

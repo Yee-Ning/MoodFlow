@@ -134,7 +134,7 @@ class WorldLineEvalRun(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema_version: Literal[SCHEMA_VERSION]
-    dataset_version: str = Field(pattern=r"^v\d+$")
+    dataset_version: str = Field(pattern=r"^v\d+(?:\.\d+)?$")
     dataset_kind: Literal[
         "synthetic_contract_fixture",
         "real_gold_fixture",
