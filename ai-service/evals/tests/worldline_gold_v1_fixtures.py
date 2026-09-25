@@ -101,6 +101,8 @@ def case_payload(
             "adjudicator": None,
             "reviewed_at": "2026-09-25T00:00:00Z",
             "notes": "",
+            "reviewer_notes": "fixture review",
+            "promotion_time": "2026-09-25T00:00:00Z",
         },
     }
 

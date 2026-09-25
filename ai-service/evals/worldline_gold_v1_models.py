@@ -7,7 +7,14 @@ from enum import StrEnum
 from hashlib import sha256
 from typing import Literal
 
-from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    AliasChoices,
+    AnyHttpUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 
 from app.agent.foundation.subgraphs.worldline.genre_registry import (
     GenreVocabularyRegistry,
@@ -167,6 +174,8 @@ class GoldReview(BaseModel):
     adjudicator: str | None = Field(default=None, max_length=200)
     reviewed_at: datetime | None = None
     notes: str = Field(default="", max_length=4_000)
+    reviewer_notes: str = Field(default="", max_length=4_000)
+    promotion_time: datetime | None = None
 
     @model_validator(mode="after")
     def validate_approval(self) -> "GoldReview":
@@ -175,6 +184,8 @@ class GoldReview(BaseModel):
                 raise ValueError("gold_review_approved_reviewer_missing")
             if self.reviewed_at is None:
                 raise ValueError("gold_review_approved_timestamp_missing")
+            if self.promotion_time is None:
+                raise ValueError("gold_review_approved_promotion_time_missing")
         return self
 
 
@@ -188,7 +199,10 @@ class GoldCase(BaseModel):
     region: Literal["cjk_chinese", "western", "japanese", "korean"]
     tags: list[str] = Field(default_factory=list, max_length=20)
     artist: GoldArtist
-    semantic_relation: GoldSemanticRelation
+    semantic_relation: GoldSemanticRelation = Field(
+        validation_alias=AliasChoices("semantic_relation", "relation"),
+        serialization_alias="relation",
+    )
     evidence: list[GoldEvidence] = Field(default_factory=list, max_length=20)
     expected: GoldExpected
     identity: GoldIdentity
