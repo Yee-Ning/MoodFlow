@@ -87,9 +87,13 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first.exploration_depth, 0)
         self.assertEqual(first.revision, 1)
         self.assertEqual(first.graph.root, self.catalog.song.entity_id)
+        self.assertEqual(first.visited_nodes, [self.catalog.song.entity_id])
         self.assertEqual(len(first.branches), 2)
         stored = await self.service.load(first.session_id)
         self.assertEqual(stored.current_graph, first.graph)
+        recovered = await self.service.recover(first.session_id)
+        self.assertEqual(recovered, first)
+        self.assertEqual((await self.service.load(first.session_id)).revision, 1)
         artist_action = next(a for a in first.available_actions if a.target_node_id == self.catalog.artist.entity_id)
         second = await self.service.explore(first.session_id, artist_action.id)
         self.assertEqual(second.graph.root, first.graph.root)
@@ -97,6 +101,10 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(self.catalog.other.entity_id, {n.id for n in second.graph.nodes})
         self.assertEqual(second.exploration_depth, 1)
         self.assertEqual(second.revision, 2)
+        self.assertEqual(
+            second.visited_nodes,
+            [self.catalog.song.entity_id, self.catalog.artist.entity_id],
+        )
         self.assertEqual((await self.service.load(first.session_id)).visited_nodes,
                          [self.catalog.song.entity_id, self.catalog.artist.entity_id])
         next_action = next(a for a in second.available_actions if a.target_node_id == self.catalog.other.entity_id)

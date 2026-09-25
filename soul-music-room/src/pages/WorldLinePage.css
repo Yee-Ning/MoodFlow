@@ -1,21 +1,209 @@
-.worldline-page { min-height: 100svh; padding: clamp(32px, 6vw, 80px); color: #eaf5fa; background: linear-gradient(145deg, #07121c, #102b38); }
-.worldline-page__header { max-width: 850px; margin: 0 auto 52px; }
-.worldline-page__header > p:first-child { color: #86bdd2; font-size: .7rem; letter-spacing: .18em; }
-.worldline-page h1 { font-size: clamp(2.2rem, 5vw, 4.8rem); font-weight: 400; margin: 12px 0 32px; }
-.worldline-page h2 { font-size: 1.25rem; font-weight: 500; }
-.worldline-page form label { display: block; margin-bottom: 9px; color: #b7d0da; }
-.worldline-page form > div { display: flex; gap: 12px; }
-.worldline-page input { flex: 1; min-width: 0; padding: 13px 15px; border-radius: 12px; border: 1px solid #527180; color: white; background: #122b37; }
-.worldline-page button { cursor: pointer; border-radius: 12px; border: 1px solid #577b8d; color: #eaf5fa; background: #193846; padding: 12px 16px; }
-.worldline-page button:hover:enabled { background: #27546a; }
-.worldline-page button:disabled { cursor: default; opacity: .5; }
-.worldline-page__error { color: #ffb7a9; }
-.worldline-page__content { max-width: 1100px; margin: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
-.worldline-page__nodes, .worldline-page__branches { padding: 0; list-style: none; display: grid; gap: 10px; }
-.worldline-page__nodes button, .worldline-page__branches button { width: 100%; text-align: left; display: flex; align-items: center; gap: 14px; }
-.worldline-page__nodes span { color: #a2cbdc; font-size: .7rem; text-transform: uppercase; }
-.worldline-page__nodes em { margin-left: auto; font-size: .7rem; color: #9dcee0; }
-.worldline-page__narrative { line-height: 1.9; white-space: pre-wrap; }
-.worldline-page__branches button { flex-direction: column; align-items: flex-start; }
-.worldline-page__branches span { color: #b4ced8; font-size: .85rem; }
-@media (max-width: 720px) { .worldline-page { padding: 30px 18px 150px; } .worldline-page__content { grid-template-columns: 1fr; gap: 20px; } .worldline-page form > div { flex-direction: column; } }
+.worldline-page {
+  --wl-panel: rgba(8, 25, 34, .82);
+  --wl-line: rgba(151, 203, 218, .16);
+  --wl-muted: #8ea9b3;
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: clamp(28px, 4vw, 64px);
+  color: #edf7f8;
+  background: #07141c;
+}
+
+.worldline-page__ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 78% 5%, rgba(42, 132, 143, .18), transparent 34%),
+    radial-gradient(circle at 22% 66%, rgba(31, 82, 110, .16), transparent 36%),
+    linear-gradient(155deg, #061018 0%, #0a1d26 54%, #07141c 100%);
+}
+
+.worldline-page > *:not(.worldline-page__ambient) { position: relative; z-index: 1; }
+.worldline-page button, .worldline-page input { font: inherit; }
+.worldline-eyebrow { margin: 0 0 8px; color: #78b7c2; font-size: .66rem; font-weight: 700; letter-spacing: .2em; }
+
+.worldline-page__header {
+  width: min(1380px, 100%);
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.worldline-page__header h1 { max-width: 820px; margin: 0; font-size: clamp(2rem, 4vw, 4.6rem); font-weight: 350; line-height: .98; letter-spacing: -.055em; }
+.worldline-page__lede { max-width: 720px; margin: 20px 0 0; color: #a8bec5; line-height: 1.7; }
+.worldline-page__reset, .worldline-page__entry button, .worldline-page__error button {
+  border: 1px solid rgba(138, 207, 218, .28);
+  border-radius: 999px;
+  color: #e9f8f9;
+  background: rgba(34, 91, 104, .36);
+  padding: 11px 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.worldline-page button:hover:enabled { border-color: rgba(154, 224, 231, .55); background: rgba(49, 115, 128, .52); }
+.worldline-page button:disabled { cursor: default; opacity: .48; }
+
+.worldline-page__entry {
+  width: min(850px, 100%);
+  margin: clamp(60px, 10vh, 120px) auto;
+  padding: clamp(28px, 6vw, 62px);
+  border: 1px solid var(--wl-line);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(15, 44, 56, .9), rgba(8, 26, 35, .72));
+  box-shadow: 0 34px 100px rgba(0, 0, 0, .28);
+}
+.worldline-page__entry-mark { width: 64px; height: 64px; margin-bottom: 34px; border: 1px solid rgba(139, 215, 225, .34); border-radius: 50%; color: #8cd5dc; display: grid; place-items: center; }
+.worldline-page__entry h2 { margin: 0 0 30px; font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 400; }
+.worldline-page__entry label { display: block; margin-bottom: 10px; color: #9eb6be; font-size: .82rem; }
+.worldline-page__entry form > div { display: flex; gap: 10px; }
+.worldline-page__entry input { min-width: 0; flex: 1; border: 1px solid rgba(143, 198, 210, .25); border-radius: 999px; outline: none; color: #edf8f9; background: rgba(4, 16, 23, .55); padding: 14px 20px; }
+.worldline-page__entry input:focus { border-color: #6cb6c2; box-shadow: 0 0 0 3px rgba(81, 168, 180, .12); }
+.worldline-page__recovery { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--wl-line); color: #9db8c0; display: flex; align-items: center; gap: 9px; }
+.worldline-page__recovery button { margin-left: auto; padding: 6px 12px; }
+
+.worldline-page__error { width: min(1380px, 100%); margin: 0 auto 20px; border: 1px solid rgba(239, 139, 112, .28); border-radius: 14px; background: rgba(86, 35, 27, .35); color: #ffc1ae; padding: 13px 16px; display: flex; align-items: center; gap: 12px; }
+.worldline-page__error small { color: #d9a99b; }
+.worldline-page__error button { margin-left: auto; padding: 6px 12px; }
+
+.worldline-page__session {
+  width: min(1380px, 100%);
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  border: 1px solid var(--wl-line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(4, 17, 24, .48);
+}
+.worldline-page__session > div { min-width: 115px; padding: 12px 16px; border-right: 1px solid var(--wl-line); display: flex; flex-direction: column; gap: 3px; }
+.worldline-page__session span { color: #6f939f; font-size: .58rem; letter-spacing: .15em; }
+.worldline-page__session strong { font-size: .88rem; font-weight: 500; }
+.worldline-page__session code { margin-left: auto; padding: 0 18px; color: #70919b; font-size: .68rem; }
+
+.worldline-page__workspace { width: min(1380px, 100%); margin: auto; display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(300px, .75fr); gap: 14px; }
+.worldline-page__graph-panel, .worldline-evidence, .worldline-page__narrative, .worldline-page__branches {
+  border: 1px solid var(--wl-line);
+  border-radius: 20px;
+  background: var(--wl-panel);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, .18);
+}
+.worldline-page__graph-panel { position: relative; min-width: 0; padding: 20px; }
+.worldline-page__section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.worldline-page__section-heading h2 { margin: 0; font-size: 1.15rem; font-weight: 500; }
+.worldline-page__section-heading > span { color: #73949e; font: .67rem ui-monospace, monospace; }
+
+.worldline-graph { margin-top: 8px; }
+.worldline-graph svg { display: block; width: 100%; min-height: 430px; overflow: visible; }
+.worldline-graph__edge { cursor: pointer; outline: none; }
+.worldline-graph__edge-line { fill: none; stroke: rgba(130, 181, 193, .32); stroke-width: 2; transition: stroke .18s, stroke-width .18s; }
+.worldline-graph__edge-hit { fill: none; stroke: transparent; stroke-width: 22; }
+.worldline-graph__edge text { fill: #7799a3; font-size: 11px; letter-spacing: .05em; pointer-events: none; }
+.worldline-graph__edge:hover .worldline-graph__edge-line, .worldline-graph__edge:focus .worldline-graph__edge-line, .worldline-graph__edge.is-selected .worldline-graph__edge-line { stroke: #82d3dc; stroke-width: 3; }
+.worldline-graph__edge.is-selected text { fill: #b9f1f3; }
+.worldline-graph marker path { fill: rgba(130, 181, 193, .65); }
+.worldline-graph__node { outline: none; }
+.worldline-graph__node.is-actionable { cursor: pointer; }
+.worldline-graph__node-aura { fill: transparent; stroke: transparent; transition: fill .2s, stroke .2s; }
+.worldline-graph__node-core { fill: #102c36; stroke: #4e7782; stroke-width: 2; transition: transform .2s, filter .2s, stroke .2s; }
+.worldline-graph__node--song .worldline-graph__node-core { fill: #173849; stroke: #62a5bd; }
+.worldline-graph__node--artist .worldline-graph__node-core { fill: #193c3a; stroke: #66afa2; }
+.worldline-graph__node--album .worldline-graph__node-core { fill: #383044; stroke: #a18bb5; }
+.worldline-graph__node--genre .worldline-graph__node-core { fill: #44372c; stroke: #b49775; }
+.worldline-graph__node.is-visited .worldline-graph__node-aura { fill: rgba(109, 196, 202, .05); stroke: rgba(109, 196, 202, .22); }
+.worldline-graph__node.is-current .worldline-graph__node-core { stroke: #aff6f3; stroke-width: 3; filter: url(#worldline-glow); }
+.worldline-graph__node.is-actionable:hover .worldline-graph__node-core, .worldline-graph__node.is-actionable:focus .worldline-graph__node-core { transform: scale(1.08); stroke: #cffcfb; }
+.worldline-graph__node.is-disabled { opacity: .66; }
+.worldline-graph__node-type { fill: #7fa5ae; font-size: 8px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+.worldline-graph__node-name { fill: #f1fbfb; font-size: 12px; font-weight: 600; pointer-events: none; }
+.worldline-graph__node-state { fill: #8bd1d7; font-size: 8px; font-weight: 700; letter-spacing: .16em; }
+.worldline-graph__legend { padding-top: 12px; border-top: 1px solid var(--wl-line); color: #849fa8; display: flex; flex-wrap: wrap; gap: 16px; font-size: .67rem; }
+.worldline-graph__legend span { display: flex; align-items: center; gap: 6px; }
+.worldline-graph__legend i { width: 8px; height: 8px; border: 1px solid #62a5bd; border-radius: 50%; background: #173849; }
+.worldline-graph__legend i.is-artist { border-color: #66afa2; background: #193c3a; }
+.worldline-graph__legend i.is-album { border-color: #a18bb5; background: #383044; }
+.worldline-graph__legend i.is-genre { border-color: #b49775; background: #44372c; }
+.worldline-graph__legend i.is-visited { border-color: #aff6f3; box-shadow: 0 0 8px rgba(175, 246, 243, .6); }
+
+.worldline-page__graph-loading { position: absolute; inset: 0; border-radius: 20px; background: rgba(5, 18, 25, .7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; gap: 9px; color: #c3eaec; }
+.worldline-spin { animation: worldline-spin .8s linear infinite; }
+@keyframes worldline-spin { to { transform: rotate(360deg); } }
+
+.worldline-evidence { min-height: 520px; padding: 22px; overflow: hidden; }
+.worldline-evidence--empty { display: flex; flex-direction: column; justify-content: center; color: #849fa8; }
+.worldline-evidence--empty h2 { margin: 0 0 10px; color: #eef8f9; font-weight: 450; }
+.worldline-evidence--empty p:last-child { line-height: 1.7; }
+.worldline-evidence__header { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 18px; border-bottom: 1px solid var(--wl-line); }
+.worldline-evidence__header h2 { margin: 0; font-size: 1.05rem; font-weight: 500; }
+.worldline-evidence__header button { width: 34px; height: 34px; border: 1px solid var(--wl-line); border-radius: 50%; color: #a4bec5; background: transparent; display: grid; place-items: center; cursor: pointer; }
+.worldline-evidence__relation { margin: 16px 0; display: grid; gap: 9px; }
+.worldline-evidence__relation div { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 8px; }
+.worldline-evidence dt { color: #6f929c; font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; }
+.worldline-evidence dd { min-width: 0; margin: 0; overflow-wrap: anywhere; color: #c4d7dc; font-size: .72rem; }
+.worldline-evidence__sources { max-height: 510px; padding-right: 4px; overflow: auto; display: grid; gap: 12px; }
+.worldline-evidence__source { border: 1px solid var(--wl-line); border-radius: 14px; background: rgba(8, 29, 38, .7); padding: 15px; }
+.worldline-evidence__source-heading > div { display: flex; gap: 6px; margin-bottom: 8px; }
+.worldline-evidence__source-heading span { border: 1px solid rgba(116, 179, 191, .2); border-radius: 999px; color: #78a9b3; padding: 2px 6px; font-size: .55rem; text-transform: uppercase; }
+.worldline-evidence__source-heading span.is-cited { color: #a8d8ba; border-color: rgba(96, 178, 126, .3); }
+.worldline-evidence__source-heading strong, .worldline-evidence__source-heading small { display: block; }
+.worldline-evidence__source-heading strong { font-size: .83rem; line-height: 1.4; }
+.worldline-evidence__source-heading small { margin-top: 4px; color: #78949d; }
+.worldline-evidence blockquote { margin: 14px 0; border-left: 2px solid #5a9eaa; padding: 3px 0 3px 12px; color: #c9dcdf; font-size: .77rem; line-height: 1.65; }
+.worldline-evidence__missing, .worldline-evidence__unavailable { color: #8fa6ad; font-size: .75rem; line-height: 1.6; }
+.worldline-evidence__unavailable { margin-top: 30px; border: 1px dashed rgba(144, 178, 187, .25); border-radius: 13px; padding: 16px; }
+.worldline-evidence__unavailable strong { color: #bdcfd3; }
+.worldline-evidence__metadata { display: grid; gap: 5px; }
+.worldline-evidence__metadata div { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 7px; }
+.worldline-evidence__source a { margin-top: 12px; color: #82c9d2; display: inline-flex; align-items: center; gap: 5px; font-size: .72rem; text-decoration: none; }
+.worldline-evidence__source code { display: block; margin-top: 10px; color: #587781; font-size: .58rem; overflow-wrap: anywhere; }
+
+.worldline-page__lower-grid { width: min(1380px, 100%); margin: 14px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.worldline-page__narrative, .worldline-page__branches { padding: 22px; }
+.worldline-page__narrative > p { margin: 24px 0 0; color: #c4d7db; line-height: 1.85; white-space: pre-wrap; }
+.worldline-page__narrative > small { display: block; margin-top: 16px; color: #82a3ac; }
+.worldline-page__branches ul { margin: 18px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.worldline-page__branches li > button { width: 100%; border: 1px solid var(--wl-line); border-radius: 13px; color: #e8f3f4; background: rgba(16, 47, 58, .55); padding: 12px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 11px; text-align: left; cursor: pointer; }
+.worldline-page__branches li > button > span:nth-child(2) { min-width: 0; }
+.worldline-page__branches li strong, .worldline-page__branches li small { display: block; }
+.worldline-page__branches li small { margin-top: 3px; color: #819da5; line-height: 1.45; }
+.worldline-page__branches li > small { padding-left: 12px; color: #a28e7c; font-size: .65rem; }
+.worldline-page__branch-type { border: 1px solid rgba(120, 183, 194, .24); border-radius: 999px; color: #7eb3bd; padding: 4px 7px; font-size: .58rem; text-transform: uppercase; }
+.worldline-page__branch-type.is-genre { border-color: rgba(180, 151, 117, .35); color: #c1a785; }
+.worldline-page__no-actions { color: #8ba2aa; font-size: .74rem; }
+.worldline-page__empty { min-height: 120px; color: #859ea6; display: grid; place-items: center; text-align: center; }
+
+.worldline-page__footer { width: min(1380px, 100%); margin: 14px auto 0; color: #66848e; display: flex; gap: 18px; font-size: .65rem; }
+.worldline-page__checkpoint { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; }
+
+@media (max-width: 1080px) {
+  .worldline-page__workspace { grid-template-columns: 1fr; }
+  .worldline-evidence { min-height: 0; }
+  .worldline-evidence__sources { max-height: none; }
+}
+
+@media (max-width: 760px) {
+  .worldline-page { padding: 24px 14px 130px; }
+  .worldline-page__header { align-items: flex-start; flex-direction: column; }
+  .worldline-page__header h1 { font-size: 2.6rem; }
+  .worldline-page__entry form > div, .worldline-page__error { align-items: stretch; flex-direction: column; }
+  .worldline-page__entry button { width: 100%; }
+  .worldline-page__session { overflow-x: auto; }
+  .worldline-page__session > div { min-width: 92px; }
+  .worldline-page__session code { display: none; }
+  .worldline-page__graph-panel { padding: 14px; }
+  .worldline-graph svg { min-height: 360px; }
+  .worldline-page__lower-grid { grid-template-columns: 1fr; }
+  .worldline-page__footer { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .worldline-spin { animation: none; }
+  .worldline-graph__node-core, .worldline-graph__edge-line { transition: none; }
+}

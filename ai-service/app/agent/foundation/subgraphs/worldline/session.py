@@ -184,6 +184,7 @@ def _response(
         **state.last_result.model_dump(mode="json"),
         "session_id": state.session_id,
         "current_node": state.current_node,
+        "visited_nodes": state.visited_nodes,
         "available_actions": [
             action.model_dump(mode="json")
             for action in _actions(state, genre_policy)
@@ -449,6 +450,12 @@ class WorldLineSessionService:
             revision=1, last_result=result, created_at=now, updated_at=now,
         )
         await self._commit(state)
+        return _response(state, self._genre_policy)
+
+    async def recover(self, session_id: str) -> WorldLineSessionResponse:
+        """Restore the latest public response without mutating its checkpoint."""
+
+        state = await self._read(session_id)
         return _response(state, self._genre_policy)
 
     async def explore(self, session_id: str, branch_id: str) -> WorldLineSessionResponse:

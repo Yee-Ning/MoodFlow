@@ -314,10 +314,24 @@ class WorldLineAction(BaseModel):
 class WorldLineSessionResponse(WorldLineSessionResult):
     session_id: str = Field(min_length=1, max_length=64)
     current_node: str = Field(min_length=1, max_length=128)
+    visited_nodes: list[str] = Field(min_length=1, max_length=15)
     available_actions: list[WorldLineAction] = Field(default_factory=list, max_length=3)
     exploration_depth: int = Field(ge=0)
     revision: int = Field(ge=1)
     outcome: str | None = None
+
+    @model_validator(mode="after")
+    def validate_session_nodes(self) -> "WorldLineSessionResponse":
+        node_ids = {node.id for node in self.graph.nodes}
+        if self.current_node not in node_ids:
+            raise ValueError("worldline current node must exist in graph")
+        if len(self.visited_nodes) != len(set(self.visited_nodes)):
+            raise ValueError("worldline visited nodes must be unique")
+        if not set(self.visited_nodes).issubset(node_ids):
+            raise ValueError("worldline visited nodes must exist in graph")
+        if self.current_node not in self.visited_nodes:
+            raise ValueError("worldline current node must be visited")
+        return self
 
 
 class WorldLineExploreRequest(BaseModel):

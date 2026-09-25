@@ -128,6 +128,7 @@ class WorldLineApiTests(unittest.TestCase):
         session_result = WorldLineSessionResponse.model_validate({
             **fixture,
             "session_id": "session-1", "current_node": fixture["graph"]["root"],
+            "visited_nodes": [fixture["graph"]["root"]],
             "available_actions": [{
                 "id": "wlb:1:test", "target_node_id": fixture["graph"]["root"],
                 "action_type": "explore_node", "enabled": False,
@@ -137,19 +138,24 @@ class WorldLineApiTests(unittest.TestCase):
         })
         service = AsyncMock()
         service.create.return_value = session_result
+        service.recover.return_value = session_result
         service.explore.return_value = session_result
         with patch("app.api.worldline.get_worldline_session_service", return_value=service):
             created = self.client.post("/api/ai/worldline/sessions", json={"query": "晴天"})
+            recovered = self.client.get("/api/ai/worldline/sessions/session-1")
             explored = self.client.post("/api/ai/worldline/explore", json={
                 "session_id": "session-1", "branch_id": "wlb:1:test",
             })
             invalid = self.client.post("/api/ai/worldline/explore", json={"session_id": "session-1"})
         self.assertEqual(created.status_code, 200)
+        self.assertEqual(recovered.status_code, 200)
         self.assertEqual(explored.status_code, 200)
         self.assertEqual(invalid.status_code, 422)
         self.assertEqual(created.json()["session_id"], "session-1")
         self.assertEqual(created.json()["citations"], fixture["citations"])
+        self.assertEqual(recovered.json()["visited_nodes"], [fixture["graph"]["root"]])
         service.create.assert_awaited_once_with("晴天")
+        service.recover.assert_awaited_once_with("session-1")
         service.explore.assert_awaited_once_with("session-1", "wlb:1:test")
 
     def test_session_errors_return_stable_code(self) -> None:
@@ -161,6 +167,19 @@ class WorldLineApiTests(unittest.TestCase):
             })
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"]["code"], "invalid_branch_id")
+
+    def test_session_recovery_errors_return_stable_code(self) -> None:
+        service = AsyncMock()
+        service.recover.side_effect = WorldLineExecutionError(
+            "session_not_found",
+            "WorldLine 会话不存在。",
+            404,
+        )
+        with patch("app.api.worldline.get_worldline_session_service", return_value=service):
+            response = self.client.get("/api/ai/worldline/sessions/expired")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"]["code"], "session_not_found")
+        service.recover.assert_awaited_once_with("expired")
 
 
 if __name__ == "__main__":

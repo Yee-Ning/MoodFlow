@@ -1,14 +1,28 @@
+export type WorldLineNodeType =
+  | 'song'
+  | 'artist'
+  | 'album'
+  | 'genre'
+  | 'creator'
+  | 'era'
+  | 'related_work'
+
 export interface WorldLineEntity {
   entity_id: string
   entity_type: 'song' | 'artist' | 'album'
   name: string
+  artist: string | null
+  album: string | null
+  source: string
+  metadata: Record<string, unknown>
 }
 
 export interface WorldLineNode {
   id: string
-  type: string
+  type: WorldLineNodeType
   name: string
   description: string
+  metadata: Record<string, unknown>
 }
 
 export interface WorldLineEdge {
@@ -21,9 +35,12 @@ export interface WorldLineEdge {
 
 export interface WorldLineSource {
   id: string
+  source_type: 'music_api' | 'knowledge'
   title: string
   source: string
   url: string | null
+  excerpt: string | null
+  metadata: Record<string, unknown>
 }
 
 export interface WorldLineBranch {
@@ -31,7 +48,7 @@ export interface WorldLineBranch {
   title: string
   description: string
   branch_type: string
-  target_entity: { id: string; type: string; name: string }
+  target_entity: { id: string; type: WorldLineNodeType; name: string }
 }
 
 export interface WorldLineAction {
@@ -51,6 +68,7 @@ export interface WorldLineSessionResult {
   citations: WorldLineSource[]
   session_id: string
   current_node: string
+  visited_nodes: string[]
   available_actions: WorldLineAction[]
   exploration_depth: number
   revision: number

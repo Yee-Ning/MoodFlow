@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Path
 
 from app.agent.foundation.subgraphs.worldline.models import (
     WorldLineRequest,
@@ -30,6 +30,22 @@ async def worldline(request: WorldLineRequest) -> WorldLineResult:
 async def create_worldline_session(request: WorldLineRequest) -> WorldLineSessionResponse:
     try:
         return await get_worldline_session_service().create(request.query)
+    except WorldLineExecutionError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"code": exc.code, "message": exc.public_message},
+        ) from exc
+
+
+@router.get(
+    "/worldline/sessions/{session_id}",
+    response_model=WorldLineSessionResponse,
+)
+async def recover_worldline_session(
+    session_id: str = Path(min_length=1, max_length=64),
+) -> WorldLineSessionResponse:
+    try:
+        return await get_worldline_session_service().recover(session_id)
     except WorldLineExecutionError as exc:
         raise HTTPException(
             status_code=exc.status_code,
