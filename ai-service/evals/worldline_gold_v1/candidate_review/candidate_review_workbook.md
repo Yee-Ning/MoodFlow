@@ -554,4 +554,3 @@
 - Relation review status: `pending`
 - Identity review status: `pending`
 - Final outcome: **leave blank in Batch A preparation**
-

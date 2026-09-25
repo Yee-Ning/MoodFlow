@@ -84,6 +84,7 @@ def test_workbook_generation_keeps_all_outcomes_unassigned(
     assert content.count("Final outcome: **leave blank") == 14
     assert "accepted" not in content.casefold()
     assert "rejected" not in content.casefold()
+    assert not content.endswith("\n\n")
 
 
 def test_evidence_snapshot_validator_checks_span_and_hash() -> None:

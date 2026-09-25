@@ -413,7 +413,7 @@ def render_workbook(rows: list[dict[str, Any]]) -> str:
                 "",
             ]
         )
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def generate_workbook(path: Path = WORKBOOK) -> Path:
