@@ -1,0 +1,93 @@
+{
+  "record_type": "worldline_gold_candidate_review",
+  "candidate_status": "pending_review",
+  "artist": {
+    "candidate_id": "wl-candidate-v1-epik-high",
+    "canonical_name": "Epik High",
+    "aliases": [
+      "에픽하이"
+    ],
+    "region": "korean"
+  },
+  "relation_hypothesis": {
+    "target_genre": {
+      "canonical_id": "genre:hip_hop",
+      "canonical_name": "Hip-Hop",
+      "registry_version": "v2"
+    },
+    "relation_type": "associated_with"
+  },
+  "source": {
+    "source_id": "src:ygex:epik-high-profile",
+    "fixture_source_id": "pending:batch-a:epik-high",
+    "title": "PROFILE - EPIK HIGH OFFICIAL WEBSITE",
+    "publisher": "YGEX",
+    "url": "https://ygex.jp/epikhigh/profile/",
+    "local_provenance": null,
+    "source_type": "official_artist_profile",
+    "language": "ja",
+    "content_hash": "12d9aac633326be9562ca5217f7c5461ea0ffdce4bd199a63615ff7f76e9c453",
+    "source_review_status": "pending",
+    "collected_at": "2026-09-25"
+  },
+  "evidence": {
+    "evidence_text": "2001年結成の3人組HIP HOPグループ。",
+    "exact_span": "2001年結成の3人組HIP HOPグループ。",
+    "span_start": 0,
+    "span_end": 23,
+    "evidence_status": "pending",
+    "review_notes": "Confirm current page provenance and keep the group identity separate from member artist pages."
+  },
+  "identity": {
+    "knowledge_entity_id": "artist:epik-high",
+    "catalog_reference": null,
+    "identity_status": "pending",
+    "catalog_candidates": [
+      {
+        "catalog_reference_candidate": "netease:artist:126682",
+        "artist_id": 126682,
+        "name": "EPIK HIGH",
+        "aliases": [],
+        "translation": "에픽하이",
+        "representative_tracks": [
+          "1분 1초",
+          "내 마음 들리나요",
+          "춥다"
+        ],
+        "catalog_url": "https://music.163.com/#/artist?id=126682",
+        "candidate_status": "pending_identity_review"
+      }
+    ],
+    "collision_candidates": [
+      {
+        "artist_id": 1044158,
+        "name": "DJ TUKUTZ",
+        "aliases": []
+      },
+      {
+        "artist_id": 124872,
+        "name": "TABLO",
+        "aliases": [
+          "李善雄",
+          "Lee Seon-woong",
+          "Daniel Armand Lee"
+        ]
+      },
+      {
+        "artist_id": 1081147,
+        "name": "MITHRA JIN",
+        "aliases": []
+      }
+    ],
+    "review_notes": "Resolve the group page only; member pages are listed as collision risks and must not be substituted."
+  },
+  "review": {
+    "relation_review_status": "pending",
+    "identity_review_status": "pending",
+    "relation_reviewer": null,
+    "identity_reviewer": null,
+    "reviewed_at": null,
+    "reviewer_notes": "Source and catalog candidates prepared; no review decision has been made."
+  },
+  "final_outcome": null
+}

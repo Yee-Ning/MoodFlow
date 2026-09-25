@@ -1,0 +1,76 @@
+{
+  "record_type": "worldline_gold_candidate_review",
+  "candidate_status": "pending_review",
+  "artist": {
+    "candidate_id": "wl-candidate-v1-hikaru-utada",
+    "canonical_name": "宇多田光",
+    "aliases": [
+      "Hikaru Utada",
+      "Utada Hikaru"
+    ],
+    "region": "japanese"
+  },
+  "relation_hypothesis": {
+    "target_genre": {
+      "canonical_id": "genre:r_and_b",
+      "canonical_name": "R&B",
+      "registry_version": "v2"
+    },
+    "relation_type": "associated_with"
+  },
+  "source": {
+    "source_id": "src:web-japan:tj990626",
+    "fixture_source_id": "pending:batch-a:hikaru-utada",
+    "title": "Wonder Girl: Teen Sensation Tops Pop Charts",
+    "publisher": "Web Japan / Japan Echo Inc.",
+    "url": "https://web-japan.org/trends00/honbun/tj990626.html",
+    "local_provenance": null,
+    "source_type": "government_portal_editorial",
+    "language": "en",
+    "content_hash": "86d1da2780aaed8c1f7d1e6844adfa1a1b1cd63d195318379eab6fddc5fdb3ef",
+    "source_review_status": "pending",
+    "collected_at": "2026-09-25"
+  },
+  "evidence": {
+    "evidence_text": "She has superior talent and an authentic R & B (rhythm and blues) sound.",
+    "exact_span": "She has superior talent and an authentic R & B (rhythm and blues) sound.",
+    "span_start": 0,
+    "span_end": 72,
+    "evidence_status": "pending",
+    "review_notes": "The source is from 1999; review temporal scope and whether it supports the artist-level relation used by the dataset."
+  },
+  "identity": {
+    "knowledge_entity_id": "artist:hikaru-utada",
+    "catalog_reference": null,
+    "identity_status": "pending",
+    "catalog_candidates": [
+      {
+        "catalog_reference_candidate": "netease:artist:18122",
+        "artist_id": 18122,
+        "name": "宇多田ヒカル",
+        "aliases": [
+          "Hikaru Utada"
+        ],
+        "translation": "宇多田光",
+        "representative_tracks": [
+          "Come Back To Me",
+          "One Last Kiss",
+          "First Love"
+        ],
+        "catalog_url": "https://music.163.com/#/artist?id=18122",
+        "candidate_status": "pending_identity_review"
+      }
+    ],
+    "collision_candidates": [],
+    "review_notes": "Verify Japanese script, Chinese translation, Romanized alias, and representative works as one identity."
+  },
+  "review": {
+    "relation_review_status": "pending",
+    "identity_review_status": "pending",
+    "relation_reviewer": null,
+    "identity_reviewer": null,
+    "reviewed_at": null,
+    "reviewer_notes": "Source and catalog candidates prepared; no review decision has been made."
+  },
+  "final_outcome": null
+}

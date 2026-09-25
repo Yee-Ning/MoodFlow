@@ -1,0 +1,86 @@
+{
+  "record_type": "worldline_gold_candidate_review",
+  "candidate_status": "pending_review",
+  "artist": {
+    "candidate_id": "wl-candidate-v1-jolin-tsai",
+    "canonical_name": "蔡依林",
+    "aliases": [
+      "Jolin Tsai"
+    ],
+    "region": "cjk_chinese"
+  },
+  "relation_hypothesis": {
+    "target_genre": {
+      "canonical_id": "genre:c_pop",
+      "canonical_name": "C-pop",
+      "registry_version": "v2"
+    },
+    "relation_type": "associated_with"
+  },
+  "source": {
+    "source_id": "src:sony-music-taiwan:jolin-karma-20190506",
+    "fixture_source_id": "pending:batch-a:jolin-tsai",
+    "title": "Jolin蔡依林MV化身「復仇女王蜂」",
+    "publisher": "Sony Music Taiwan",
+    "url": "https://www.sonymusic.com.tw/news/20190506-jolin-karma/",
+    "local_provenance": null,
+    "source_type": "official_label_editorial",
+    "language": "zh-Hant",
+    "content_hash": "5f64b0be2faed5e6b6ee4d6537fcb5dbe9e0a5d1700d92a421953ba5b7058a37",
+    "source_review_status": "pending",
+    "collected_at": "2026-09-25"
+  },
+  "evidence": {
+    "evidence_text": "華語樂壇天后Jolin蔡依林",
+    "exact_span": "華語樂壇天后Jolin蔡依林",
+    "span_start": 0,
+    "span_end": 14,
+    "evidence_status": "pending",
+    "review_notes": "The source places Jolin in the Chinese-language music scene; a reviewer must decide whether that wording directly supports registry genre:c_pop."
+  },
+  "identity": {
+    "knowledge_entity_id": "artist:jolin-tsai",
+    "catalog_reference": null,
+    "identity_status": "pending",
+    "catalog_candidates": [
+      {
+        "catalog_reference_candidate": "netease:artist:7219",
+        "artist_id": 7219,
+        "name": "蔡依林",
+        "aliases": [
+          "Jolin Cai"
+        ],
+        "translation": null,
+        "representative_tracks": [
+          "倒带",
+          "日不落",
+          "今天你要嫁给我"
+        ],
+        "catalog_url": "https://music.163.com/#/artist?id=7219",
+        "candidate_status": "pending_identity_review"
+      }
+    ],
+    "collision_candidates": [
+      {
+        "artist_id": 138671,
+        "name": "Jolin Tsai",
+        "aliases": []
+      },
+      {
+        "artist_id": 55166186,
+        "name": "R3HAB & Jolin Tsai",
+        "aliases": []
+      }
+    ],
+    "review_notes": "Romanization differs between Tsai and Cai; verify aliases and distinguish the collaboration page."
+  },
+  "review": {
+    "relation_review_status": "pending",
+    "identity_review_status": "pending",
+    "relation_reviewer": null,
+    "identity_reviewer": null,
+    "reviewed_at": null,
+    "reviewer_notes": "Source and catalog candidates prepared; no review decision has been made."
+  },
+  "final_outcome": null
+}

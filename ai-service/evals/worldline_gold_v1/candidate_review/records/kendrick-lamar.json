@@ -1,0 +1,77 @@
+{
+  "record_type": "worldline_gold_candidate_review",
+  "candidate_status": "pending_review",
+  "artist": {
+    "candidate_id": "wl-candidate-v1-kendrick-lamar",
+    "canonical_name": "Kendrick Lamar",
+    "aliases": [],
+    "region": "western"
+  },
+  "relation_hypothesis": {
+    "target_genre": {
+      "canonical_id": "genre:hip_hop",
+      "canonical_name": "Hip-Hop",
+      "registry_version": "v2"
+    },
+    "relation_type": "associated_with"
+  },
+  "source": {
+    "source_id": "src:apple-music:kendrick-lamar-368183298",
+    "fixture_source_id": "pending:batch-a:kendrick-lamar",
+    "title": "Kendrick Lamar - Apple Music",
+    "publisher": "Apple Music",
+    "url": "https://music.apple.com/us/artist/kendrick-lamar/368183298",
+    "local_provenance": null,
+    "source_type": "streaming_catalog_editorial",
+    "language": "en",
+    "content_hash": "a50cf93b76c74dfe74fabceb2a6d94dd3e1c46ad401b53a790bfcaa8a58c3cdf",
+    "source_review_status": "pending",
+    "collected_at": "2026-09-25"
+  },
+  "evidence": {
+    "evidence_text": "Kendrick Lamar Essentials\nApple Music Hip-Hop",
+    "exact_span": "Kendrick Lamar Essentials\nApple Music Hip-Hop",
+    "span_start": 0,
+    "span_end": 45,
+    "evidence_status": "pending",
+    "review_notes": "Verify that the artist playlist classification is acceptable as relation evidence under the Gold review policy."
+  },
+  "identity": {
+    "knowledge_entity_id": "artist:kendrick-lamar",
+    "catalog_reference": null,
+    "identity_status": "pending",
+    "catalog_candidates": [
+      {
+        "catalog_reference_candidate": "netease:artist:37995",
+        "artist_id": 37995,
+        "name": "Kendrick Lamar",
+        "aliases": [],
+        "translation": "肯德里克·拉马尔",
+        "representative_tracks": [
+          "luther",
+          "Not Like Us",
+          "Don't Wanna Know"
+        ],
+        "catalog_url": "https://music.163.com/#/artist?id=37995",
+        "candidate_status": "pending_identity_review"
+      }
+    ],
+    "collision_candidates": [
+      {
+        "artist_id": 1147029,
+        "name": "Kendrick Lamar & Wheathin",
+        "aliases": []
+      }
+    ],
+    "review_notes": "The top exact-name result has matching current works; keep the collaboration page separate."
+  },
+  "review": {
+    "relation_review_status": "pending",
+    "identity_review_status": "pending",
+    "relation_reviewer": null,
+    "identity_reviewer": null,
+    "reviewed_at": null,
+    "reviewer_notes": "Source and catalog candidates prepared; no review decision has been made."
+  },
+  "final_outcome": null
+}
