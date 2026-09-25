@@ -1,4 +1,4 @@
-"""Offline runner for the WorldLine V0 evaluation dataset."""
+"""Offline runner for isolated WorldLine synthetic and Real Gold suites."""
 
 from __future__ import annotations
 
@@ -75,10 +75,18 @@ from evals.worldline_eval_models import (
     load_worldline_dataset,
 )
 from evals.worldline_eval_report import render_worldline_report
+from evals.worldline_gold_v1_adapter import adapt_worldline_gold_dataset
+from evals.worldline_gold_v1_loader import load_worldline_gold_dataset
+from evals.worldline_gold_v1_models import (
+    SCHEMA_VERSION as GOLD_SCHEMA_VERSION,
+)
 
 
 SERVICE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = SERVICE_ROOT / "evals" / "config" / "worldline_eval_v0.json"
+DEFAULT_GOLD_CONFIG = (
+    SERVICE_ROOT / "evals" / "config" / "worldline_gold_v1.json"
+)
 
 
 def _relation_key(value: dict[str, Any]) -> tuple[str, str, str]:
@@ -404,7 +412,7 @@ async def _identity_case(case: WorldLineEvalCase) -> tuple[dict, dict, list[str]
             entity_type=EntityType.ARTIST,
             name=item["name"],
             artist=item["name"],
-            source="netease",
+            source=item.get("provider", "netease"),
         )
         for item in case.input["catalog_candidates"]
     ]
@@ -775,6 +783,30 @@ def _read_config(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _read_gold_config(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    required = {
+        "schema_version",
+        "dataset_kind",
+        "dataset",
+        "source_ledger",
+        "results",
+        "metrics",
+        "failures",
+        "report",
+        "tiers",
+        "postgres_env_flag",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise ValueError(f"worldline_gold_config_invalid:{path}")
+    if (
+        payload["schema_version"] != GOLD_SCHEMA_VERSION
+        or payload["dataset_kind"] != "real_gold_fixture"
+    ):
+        raise ValueError(f"worldline_gold_config_invalid:{path}")
+    return payload
+
+
 def _git_commit() -> str:
     completed = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -795,6 +827,54 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def _write_evaluation_outputs(
+    run: WorldLineEvalRun,
+    metrics: dict[str, Any],
+    paths: dict[str, Path],
+) -> None:
+    _write_jsonl(
+        paths["results"],
+        [result.model_dump(mode="json") for result in run.results],
+    )
+    _write_jsonl(
+        paths["failures"],
+        [
+            {
+                "case_id": result.case_id,
+                "tier": result.tier.value,
+                "task": result.task.value,
+                "status": result.status,
+                "expected": result.expected,
+                "actual": result.actual,
+                "failures": result.failures,
+            }
+            for result in run.results
+            if not result.passed
+        ],
+    )
+    paths["metrics"].parent.mkdir(parents=True, exist_ok=True)
+    paths["metrics"].write_text(
+        json.dumps(
+            {
+                "schema_version": SCHEMA_VERSION,
+                "dataset_version": run.dataset_version,
+                "dataset_kind": run.dataset_kind,
+                "dataset_sha256": run.dataset_sha256,
+                "source_ledger_sha256": run.source_ledger_sha256,
+                "git_commit": run.git_commit,
+                "evaluation_timestamp": run.evaluation_timestamp,
+                "metrics": metrics,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    render_worldline_report(run, metrics, paths["report"])
 
 
 async def run_worldline_evaluation(
@@ -820,6 +900,7 @@ async def run_worldline_evaluation(
     run = WorldLineEvalRun(
         schema_version=SCHEMA_VERSION,
         dataset_version="v0",
+        dataset_kind="synthetic_contract_fixture",
         dataset_sha256=dataset_sha256(dataset_path),
         git_commit=_git_commit(),
         evaluation_timestamp=datetime.now(UTC).isoformat(),
@@ -830,66 +911,113 @@ async def run_worldline_evaluation(
         key: SERVICE_ROOT / config[key]
         for key in ("results", "metrics", "failures", "report")
     }
-    _write_jsonl(
-        paths["results"],
-        [result.model_dump(mode="json") for result in results],
-    )
-    _write_jsonl(
-        paths["failures"],
-        [
-            {
-                "case_id": result.case_id,
-                "tier": result.tier.value,
-                "task": result.task.value,
-                "status": result.status,
-                "expected": result.expected,
-                "actual": result.actual,
-                "failures": result.failures,
-            }
-            for result in results
-            if not result.passed
-        ],
-    )
-    paths["metrics"].write_text(
-        json.dumps(
-            {
-                "schema_version": SCHEMA_VERSION,
-                "dataset_version": run.dataset_version,
-                "dataset_sha256": run.dataset_sha256,
-                "git_commit": run.git_commit,
-                "evaluation_timestamp": run.evaluation_timestamp,
-                "metrics": metrics,
-            },
-            ensure_ascii=False,
-            indent=2,
-            sort_keys=True,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    render_worldline_report(run, metrics, paths["report"])
+    _write_evaluation_outputs(run, metrics, paths)
     return run, metrics, paths
+
+
+async def run_worldline_gold_evaluation(
+    config_path: Path = DEFAULT_GOLD_CONFIG,
+) -> tuple[WorldLineEvalRun, dict[str, Any], dict[str, Path]]:
+    config = _read_gold_config(config_path)
+    dataset = load_worldline_gold_dataset(
+        SERVICE_ROOT / config["dataset"],
+        SERVICE_ROOT / config["source_ledger"],
+    )
+    adapted = adapt_worldline_gold_dataset(dataset)
+    tiers = {WorldLineEvalTier(value) for value in config["tiers"]}
+    selected = [case for case in adapted.cases if case.tier in tiers]
+    results = [
+        await evaluate_case(
+            case,
+            postgres_env_flag=config["postgres_env_flag"],
+        )
+        for case in selected
+    ]
+    run = WorldLineEvalRun(
+        schema_version=SCHEMA_VERSION,
+        dataset_version="v1",
+        dataset_kind="real_gold_fixture",
+        dataset_sha256=dataset.dataset_sha256,
+        source_ledger_sha256=dataset.source_ledger_sha256,
+        git_commit=_git_commit(),
+        evaluation_timestamp=datetime.now(UTC).isoformat(),
+        results=results,
+    )
+    metrics = compute_worldline_metrics(results)
+    paths = {
+        key: SERVICE_ROOT / config[key]
+        for key in ("results", "metrics", "failures", "report")
+    }
+    _write_evaluation_outputs(run, metrics, paths)
+    return run, metrics, paths
+
+
+async def run_worldline_evaluation_suite(
+    suite: str,
+    *,
+    synthetic_config: Path = DEFAULT_CONFIG,
+    gold_config: Path = DEFAULT_GOLD_CONFIG,
+    include_postgres: bool = False,
+) -> dict[
+    str,
+    tuple[WorldLineEvalRun, dict[str, Any], dict[str, Path]],
+]:
+    if suite not in {"synthetic", "real-gold", "all"}:
+        raise ValueError(f"worldline_eval_suite_invalid:{suite}")
+    runs = {}
+    if suite in {"synthetic", "all"}:
+        runs["synthetic_baseline"] = await run_worldline_evaluation(
+            synthetic_config,
+            include_postgres=include_postgres,
+        )
+    if suite in {"real-gold", "all"}:
+        runs["real_gold_baseline"] = await run_worldline_gold_evaluation(
+            gold_config,
+        )
+    return runs
 
 
 async def _main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument(
+        "--suite",
+        choices=("synthetic", "real-gold", "all"),
+        default="synthetic",
+    )
+    parser.add_argument("--config", type=Path)
+    parser.add_argument("--synthetic-config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument("--gold-config", type=Path, default=DEFAULT_GOLD_CONFIG)
     parser.add_argument("--include-postgres", action="store_true")
     args = parser.parse_args()
-    run, metrics, _ = await run_worldline_evaluation(
-        args.config,
+    if args.config is not None and args.suite == "all":
+        parser.error("--config cannot be used with --suite all")
+    synthetic_config = (
+        args.config if args.config is not None and args.suite == "synthetic"
+        else args.synthetic_config
+    )
+    gold_config = (
+        args.config if args.config is not None and args.suite == "real-gold"
+        else args.gold_config
+    )
+    suites = await run_worldline_evaluation_suite(
+        args.suite,
+        synthetic_config=synthetic_config,
+        gold_config=gold_config,
         include_postgres=args.include_postgres,
     )
-    print(
-        json.dumps(
-            {
-                "cases": len(run.results),
-                **metrics["summary"],
-            },
-            ensure_ascii=False,
-        )
-    )
-    return 0 if metrics["summary"]["failed"] == 0 and metrics["summary"]["errors"] == 0 else 1
+    summaries = {
+        name: {
+            "dataset_kind": run.dataset_kind,
+            "cases": len(run.results),
+            **metrics["summary"],
+        }
+        for name, (run, metrics, _) in suites.items()
+    }
+    print(json.dumps(summaries, ensure_ascii=False))
+    return 0 if all(
+        summary["failed"] == 0 and summary["errors"] == 0
+        for summary in summaries.values()
+    ) else 1
 
 
 if __name__ == "__main__":

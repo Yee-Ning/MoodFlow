@@ -1,115 +1,15 @@
-import json
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from evals.worldline_gold_v1_loader import load_worldline_gold_dataset
-from evals.worldline_gold_v1_models import GoldCase, content_sha256
-
-
-def source_payload(content: str = "Nujabes is associated with Hip-Hop.") -> dict:
-    return {
-        "source_id": "source:nujabes-profile",
-        "fixture_source_id": "fixture:nujabes-profile",
-        "title": "Nujabes profile",
-        "publisher": "Reviewed Music Source",
-        "url": "https://example.com/nujabes",
-        "provenance": None,
-        "language": "en",
-        "source_type": "editorial",
-        "content": content,
-        "content_hash": content_sha256(content),
-    }
-
-
-def case_payload(content: str = "Nujabes is associated with Hip-Hop.") -> dict:
-    exact_span = "Nujabes is associated with Hip-Hop."
-    return {
-        "schema_version": "worldline-gold-v1",
-        "dataset_version": "v1",
-        "dataset_kind": "real_gold_fixture",
-        "case_id": "wl-gold-v1-nujabes-hip-hop",
-        "region": "japanese",
-        "tags": ["accepted", "artist_to_genre"],
-        "artist": {
-            "canonical_name": "Nujabes",
-            "knowledge_entity_id": "artist:nujabes",
-            "aliases": [],
-            "registry_scope": "fixture_only_registry",
-            "catalog_reference": {
-                "provider": "netease",
-                "entity_id": "123",
-                "entity_type": "artist",
-                "name": "Nujabes",
-            },
-        },
-        "semantic_relation": {
-            "source_entity_id": "artist:nujabes",
-            "target_genre": {
-                "canonical_id": "genre:hip_hop",
-                "canonical_name": "Hip-Hop",
-                "registry_version": "v2",
-            },
-            "relation_type": "associated_with",
-        },
-        "evidence": [
-            {
-                "source_id": "source:nujabes-profile",
-                "source_title": "Nujabes profile",
-                "publisher": "Reviewed Music Source",
-                "source_url": "https://example.com/nujabes",
-                "source_type": "editorial",
-                "language": "en",
-                "exact_span": exact_span,
-                "evidence_text": content,
-                "span_start": content.index(exact_span),
-                "span_end": content.index(exact_span) + len(exact_span),
-                "content_sha256": content_sha256(content),
-                "fixture_source_id": "fixture:nujabes-profile",
-            }
-        ],
-        "expected": {
-            "outcome": "accepted",
-            "reason": "direct_source_support",
-            "runtime_relation": "associated_with",
-            "runtime_rejection_reason": None,
-        },
-        "identity": {
-            "knowledge_status": "resolved",
-            "catalog_status": "resolved",
-            "ambiguity_status": "unambiguous",
-            "expected_catalog_node_id": "netease:artist:123",
-            "identity_evidence_source_ids": ["source:nujabes-profile"],
-        },
-        "review": {
-            "status": "approved",
-            "method": "source_and_identity_review",
-            "relation_reviewer": "reviewer-a",
-            "identity_reviewer": "reviewer-b",
-            "adjudicator": None,
-            "reviewed_at": "2026-09-25T00:00:00Z",
-            "notes": "",
-        },
-    }
-
-
-def write_dataset(
-    tmp_path: Path,
-    cases: list[dict],
-    sources: list[dict],
-) -> tuple[Path, Path]:
-    dataset = tmp_path / "worldline_gold_v1.jsonl"
-    ledger = tmp_path / "worldline_gold_v1_sources.jsonl"
-    dataset.write_text(
-        "".join(json.dumps(row) + "\n" for row in cases),
-        encoding="utf-8",
-    )
-    ledger.write_text(
-        "".join(json.dumps(row) + "\n" for row in sources),
-        encoding="utf-8",
-    )
-    return dataset, ledger
+from evals.worldline_gold_v1_models import GoldCase
+from evals.tests.worldline_gold_v1_fixtures import (
+    case_payload,
+    source_payload,
+    write_dataset,
+)
 
 
 def test_gold_schema_and_source_ledger_load() -> None:

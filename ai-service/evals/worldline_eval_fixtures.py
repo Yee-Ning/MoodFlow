@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 from typing import Any
 
 from app.agent.foundation.models import TaskResult, TaskStatus
@@ -136,7 +137,7 @@ def semantic_fixture(case: WorldLineEvalCase) -> SemanticFixture:
         entity_type=EntityType.ARTIST,
         name=case.input["artist_name"],
         artist=case.input["artist_name"],
-        source="netease",
+        source=case.input.get("catalog_provider", "netease"),
     )
     aliases = [case.input["artist_alias"]] if case.input.get("artist_alias") else []
     registry = _registry(
@@ -292,7 +293,7 @@ def genre_fixture(case: WorldLineEvalCase) -> GenreFixture:
         canonical_name=root_name,
         knowledge_entity_id=root_knowledge_id,
         catalog_reference=CatalogReference(
-            provider="netease",
+            provider=case.input.get("root_catalog_provider", "netease"),
             entity_id=root_id.rsplit(":", 1)[-1],
             entity_type=KnowledgeEntityType.ARTIST,
             name=root_name,
@@ -353,7 +354,10 @@ def genre_fixture(case: WorldLineEvalCase) -> GenreFixture:
     )
     scenario = case.fixtures["scenario"]
     expected_artists = case.expected.get("artists", [])
-    case_number = int(case.case_id.rsplit("-", 1)[-1])
+    try:
+        case_number = int(case.case_id.rsplit("-", 1)[-1])
+    except ValueError:
+        case_number = int(sha256(case.case_id.encode("utf-8")).hexdigest()[:8], 16)
     target = expected_artists[0] if expected_artists else {
         "knowledge_entity_id": f"artist:eval_{case_number}",
         "catalog_node_id": "netease:artist:999",
@@ -428,7 +432,7 @@ def genre_fixture(case: WorldLineEvalCase) -> GenreFixture:
                 entity_type=EntityType.ARTIST,
                 name=candidate_name,
                 artist=candidate_name,
-                source="netease",
+                source=target.get("catalog_provider", "netease"),
             )
         )
         if scenario == "genre_catalog_ambiguous":
@@ -483,7 +487,7 @@ def genre_fixture(case: WorldLineEvalCase) -> GenreFixture:
         entity_type=EntityType.ARTIST,
         name=root_name,
         artist=root_name,
-        source="netease",
+        source=case.input.get("root_catalog_provider", "netease"),
     )
     initial_result = WorldLineSessionResult(
         root_entity=root,

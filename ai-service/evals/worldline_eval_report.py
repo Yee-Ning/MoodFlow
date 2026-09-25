@@ -29,16 +29,31 @@ def render_worldline_report(
     identity = metrics["identity_resolution"]
     reliability = metrics["system_reliability"]
     failures = [result for result in run.results if not result.passed]
+    is_gold = run.dataset_kind == "real_gold_fixture"
     lines = [
-        "# WorldLine Evaluation V0 Report",
+        (
+            "# WorldLine Real Gold V1 Evaluation Report"
+            if is_gold
+            else "# WorldLine Evaluation V0 Report"
+        ),
         "",
         "## 1. Run Metadata",
         "",
         f"- Dataset version: `{run.dataset_version}`",
+        f"- Dataset kind: `{run.dataset_kind}`",
         f"- Dataset SHA256: `{run.dataset_sha256}`",
+        *(
+            [f"- Source ledger SHA256: `{run.source_ledger_sha256}`"]
+            if run.source_ledger_sha256
+            else []
+        ),
         f"- Git commit: `{run.git_commit}`",
         f"- Evaluation timestamp: `{run.evaluation_timestamp}`",
-        "- Dataset provenance: synthetic contract fixtures approved for deterministic regression; these labels are not independent real-world music fact annotations.",
+        (
+            "- Dataset provenance: reviewed real-gold fixtures with loader-verified source-ledger integrity."
+            if is_gold
+            else "- Dataset provenance: synthetic contract fixtures approved for deterministic regression; these labels are not independent real-world music fact annotations."
+        ),
         "",
         "## 2. Summary",
         "",
@@ -106,8 +121,12 @@ def render_worldline_report(
             "",
             "## 6. Scope and Limits",
             "",
-            "- V0 covers artist → genre and executable Hip-Hop genre → artist only.",
-            "- Component and session fixtures are frozen synthetic contracts. They verify implementation behavior but do not establish real-world music knowledge accuracy.",
+            "- The current scope covers artist → genre and executable Hip-Hop genre → artist only.",
+            (
+                "- Real Gold inputs remain evaluation-only and do not modify the production Knowledge Base or Entity Registry."
+                if is_gold
+                else "- Component and session fixtures are frozen synthetic contracts. They verify implementation behavior but do not establish real-world music knowledge accuracy."
+            ),
             "- PostgreSQL metrics are N/A unless the run includes the postgres tier with `RUN_WORLDLINE_EVAL_POSTGRES=1`.",
             "- RAG ranking, Embedding, RRF and Reranker quality are outside this evaluation scope.",
             "- No LLM Judge is used for deterministic relation, identity, graph, citation or checkpoint checks.",

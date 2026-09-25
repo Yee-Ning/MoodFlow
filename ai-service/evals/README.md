@@ -22,6 +22,26 @@ $env:RUN_WORLDLINE_EVAL_POSTGRES='1'
 fixtures，验证执行边界和失败原子性，不表示已经完成真实音乐事实 Gold 的独立人工审核。
 运行会生成逐案例结果、指标、失败审计和 Markdown 报告到 `evals/reports/`。
 
+## WorldLine Gold Dataset V1 Infrastructure
+
+WorldLine runner 支持彼此隔离的 suite：
+
+```powershell
+.\.venv\Scripts\python.exe run_worldline_eval.py --suite synthetic
+.\.venv\Scripts\python.exe run_worldline_eval.py --suite real-gold
+.\.venv\Scripts\python.exe run_worldline_eval.py --suite all
+```
+
+`synthetic` 继续读取 V0 contract fixture。`real-gold` 读取
+`evals/datasets/worldline_gold_v1.jsonl` 与
+`evals/fixtures/worldline_gold_v1_sources.jsonl`，在任何 case 执行前完成 schema、exact span、
+source hash、ledger 引用、重复 relation 和 identity 校验。`all` 顺序执行两个 suite，
+分别输出 `synthetic_baseline` 与 `real_gold_baseline`，不会混合统计。
+
+Gold V1 的 adapter 只在 `evals/` 中构造隔离的 replay 输入，不会写入生产 Knowledge Base、
+Entity Registry、WorldLine Graph 或数据库。本阶段没有创建 Gold JSONL；在真实审核数据冻结前，
+`--suite real-gold` 会以 `worldline_gold_dataset_missing` 明确失败。
+
 本目录承载离线评测资产，不参与在线请求。V0 的目标是先冻结
 `Query Understanding -> Top40 -> Rerank Top12 -> Context Top8 -> Generation`
 的可回放合同，再用同一份人工标签分别评估检索、上下文和最终回答。

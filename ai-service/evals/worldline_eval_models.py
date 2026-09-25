@@ -36,6 +36,7 @@ class LabelProvenance(BaseModel):
         "synthetic_contract_fixture",
         "frozen_supported_claim",
         "manual_review",
+        "real_gold_fixture",
     ]
     review_status: Literal["approved", "pending", "rejected"]
     reviewer: str | None = Field(default=None, max_length=200)
@@ -133,8 +134,16 @@ class WorldLineEvalRun(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema_version: Literal[SCHEMA_VERSION]
-    dataset_version: Literal["v0"]
+    dataset_version: str = Field(pattern=r"^v\d+$")
+    dataset_kind: Literal[
+        "synthetic_contract_fixture",
+        "real_gold_fixture",
+    ] = "synthetic_contract_fixture"
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_ledger_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
     git_commit: str
     evaluation_timestamp: str
     results: list[WorldLineEvalResult]
