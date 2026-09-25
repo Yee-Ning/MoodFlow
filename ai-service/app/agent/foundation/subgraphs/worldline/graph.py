@@ -17,6 +17,10 @@ from app.agent.foundation.subgraphs.worldline.era_expansion import (
     EraExpansionService,
     merge_era_relations,
 )
+from app.agent.foundation.subgraphs.worldline.scene_expansion import (
+    SceneExpansionService,
+    merge_scene_relations,
+)
 from app.agent.foundation.subgraphs.worldline.generation import (
     StructuredWorldLineGenerator,
     WorldLineGenerator,
@@ -158,6 +162,7 @@ def build_worldline_subgraph(
     query_understanding: QueryUnderstandingService | None = None,
     semantic_expansion: SemanticExpansionService | None = None,
     era_expansion: EraExpansionService | None = None,
+    scene_expansion: SceneExpansionService | None = None,
 ) -> StateGraph:
     service = music_service or JavaMusicEntityService()
     retrieval_runtime = (
@@ -169,6 +174,7 @@ def build_worldline_subgraph(
     worldline_generator = generator or StructuredWorldLineGenerator()
     semantic_service = semantic_expansion or SemanticExpansionService()
     era_service = era_expansion or EraExpansionService()
+    scene_service = scene_expansion or SceneExpansionService()
     query_service = query_understanding or QueryUnderstandingService(
         index_profile=(
             retrieval_runtime.index_profile
@@ -498,6 +504,7 @@ def build_worldline_subgraph(
                 graph = semantic_result.graph
                 sources = semantic_result.sources
             era_relations = []
+            scene_relations = []
             if plan is not None:
                 era_result = era_service.expand(
                     state["user_query"],
@@ -509,6 +516,16 @@ def build_worldline_subgraph(
                 graph = era_result.graph
                 sources = era_result.sources
                 era_relations = era_result.relations
+                scene_result = scene_service.expand(
+                    state["user_query"],
+                    plan,
+                    graph,
+                    sources,
+                    state.get("retrieved_docs", []),
+                )
+                graph = scene_result.graph
+                sources = scene_result.sources
+                scene_relations = scene_result.relations
             if state.get("session_mode") and state.get("prior_graph") is not None:
                 graph, sources = merge_worldline_graph(
                     state["prior_graph"], graph,
@@ -518,6 +535,10 @@ def build_worldline_subgraph(
                 era_relations = merge_era_relations(
                     state.get("prior_era_relations", []),
                     era_relations,
+                )
+                scene_relations = merge_scene_relations(
+                    state.get("prior_scene_relations", []),
+                    scene_relations,
                 )
         except WorldLineMergeError as exc:
             return _failed_result(state, "世界线扩展无法合并。", exc.code)
@@ -548,6 +569,7 @@ def build_worldline_subgraph(
             "worldline_graph": graph,
             "sources": sources,
             "era_relations": era_relations,
+            "scene_relations": scene_relations,
         }
 
     async def generate_narrative(
@@ -666,6 +688,7 @@ def build_worldline_subgraph(
                 sources=sources,
                 citations=citations,
                 era_relations=state.get("era_relations", []),
+                scene_relations=state.get("scene_relations", []),
             )
         except Exception:
             _log_node(
@@ -758,6 +781,7 @@ def create_worldline_subgraph(
     query_understanding: QueryUnderstandingService | None = None,
     semantic_expansion: SemanticExpansionService | None = None,
     era_expansion: EraExpansionService | None = None,
+    scene_expansion: SceneExpansionService | None = None,
 ) -> CompiledStateGraph:
     return build_worldline_subgraph(
         music_service=music_service,
@@ -766,4 +790,5 @@ def create_worldline_subgraph(
         query_understanding=query_understanding,
         semantic_expansion=semantic_expansion,
         era_expansion=era_expansion,
+        scene_expansion=scene_expansion,
     ).compile(checkpointer=False)

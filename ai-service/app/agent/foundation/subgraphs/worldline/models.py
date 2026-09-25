@@ -131,6 +131,7 @@ class WorldLineNodeType(StrEnum):
     CREATOR = "creator"
     GENRE = "genre"
     ERA = "era"
+    SCENE = "scene"
     RELATED_WORK = "related_work"
 
 
@@ -147,6 +148,11 @@ class WorldLineRelation(StrEnum):
     TEMPORAL_ASSOCIATION = "temporal_association"
     CAREER_PHASE = "career_phase"
     STYLE_ERA_ASSOCIATION = "style_era_association"
+    BELONGS_TO_SCENE = "belongs_to_scene"
+    REPRESENTATIVE_OF_SCENE = "representative_of_scene"
+    SCENE_ASSOCIATION = "scene_association"
+    STYLE_SCENE_ASSOCIATION = "style_scene_association"
+    EMERGED_FROM_SCENE = "emerged_from_scene"
     RELATED_TO = "related_to"
     INFLUENCED_BY = "influenced_by"
     INFLUENCED = "influenced"
@@ -326,6 +332,88 @@ class EraRelation(BaseModel):
         return self
 
 
+class SceneRelationType(StrEnum):
+    BELONGS_TO_SCENE = "belongs_to_scene"
+    REPRESENTATIVE_OF_SCENE = "representative_of_scene"
+    SCENE_ASSOCIATION = "scene_association"
+    STYLE_SCENE_ASSOCIATION = "style_scene_association"
+    EMERGED_FROM_SCENE = "emerged_from_scene"
+
+
+class SceneDescriptor(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    node_id: str = Field(pattern=r"^scene:[a-z0-9][a-z0-9_]*$")
+    canonical_name: str = Field(min_length=1, max_length=300)
+
+
+class SceneRelationEvidence(EraRelationEvidence):
+    """Use the existing claim/source/time evidence contract."""
+
+
+class SceneRelation(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source_entity: EraEntityReference
+    target_entity: EraEntityReference | None = None
+    scene: SceneDescriptor | None = None
+    relation_type: SceneRelationType
+    scene_name: str = Field(min_length=1, max_length=300)
+    location: str | None = Field(default=None, min_length=1, max_length=200)
+    start_year: int | None = Field(default=None, ge=1000, le=2999)
+    end_year: int | None = Field(default=None, ge=1000, le=2999)
+    temporal_precision: EraTemporalPrecision = EraTemporalPrecision.UNKNOWN
+    confidence: float = Field(ge=0, le=1)
+    evidence: list[SceneRelationEvidence] = Field(min_length=1, max_length=8)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_relation(self) -> "SceneRelation":
+        if (self.target_entity is None) == (self.scene is None):
+            raise ValueError("scene relation requires exactly one target form")
+        if self.relation_type is SceneRelationType.SCENE_ASSOCIATION:
+            if (
+                self.source_entity.node_type is not WorldLineNodeType.ARTIST
+                or self.target_entity is None
+                or self.target_entity.node_type is not WorldLineNodeType.ARTIST
+                or self.source_entity.node_id == self.target_entity.node_id
+            ):
+                raise ValueError("scene association requires two distinct artists")
+        elif self.relation_type is SceneRelationType.REPRESENTATIVE_OF_SCENE:
+            if (
+                self.source_entity.node_type is not WorldLineNodeType.SCENE
+                or self.target_entity is None
+                or self.target_entity.node_type not in {
+                    WorldLineNodeType.ARTIST,
+                    WorldLineNodeType.SONG,
+                    WorldLineNodeType.ALBUM,
+                }
+                or self.source_entity.canonical_name != self.scene_name
+            ):
+                raise ValueError("representative relation requires scene source")
+        elif self.scene is None or self.scene.canonical_name != self.scene_name:
+            raise ValueError("scene relation requires matching scene target")
+        elif self.relation_type is SceneRelationType.STYLE_SCENE_ASSOCIATION:
+            if self.source_entity.node_type is not WorldLineNodeType.GENRE:
+                raise ValueError("style scene relation requires genre source")
+        elif self.source_entity.node_type not in {
+            WorldLineNodeType.ARTIST,
+            WorldLineNodeType.SONG,
+            WorldLineNodeType.ALBUM,
+        }:
+            raise ValueError("scene membership requires music entity source")
+        if (
+            self.start_year is not None
+            and self.end_year is not None
+            and self.start_year > self.end_year
+        ):
+            raise ValueError("scene relation start_year must not exceed end_year")
+        evidence_ids = [item.evidence_id for item in self.evidence]
+        if len(evidence_ids) != len(set(evidence_ids)):
+            raise ValueError("scene relation evidence must be unique")
+        return self
+
+
 class WorldLineResult(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -336,6 +424,7 @@ class WorldLineResult(BaseModel):
     sources: list[EvidenceSource] = Field(default_factory=list, max_length=30)
     citations: list[EvidenceSource] = Field(default_factory=list, max_length=30)
     era_relations: list[EraRelation] = Field(default_factory=list, max_length=20)
+    scene_relations: list[SceneRelation] = Field(default_factory=list, max_length=20)
 
     @model_validator(mode="after")
     def validate_citations(self) -> "WorldLineResult":
@@ -350,26 +439,41 @@ class WorldLineResult(BaseModel):
         if any(f"[{citation_id}]" not in self.narrative for citation_id in citation_ids):
             raise ValueError("worldline citations must have inline narrative anchors")
         graph_node_ids = {node.id for node in self.graph.nodes}
+        graph_node_by_id = {node.id: node for node in self.graph.nodes}
         graph_edges = {
             (edge.source, edge.target, edge.relation): edge
             for edge in self.graph.edges
         }
-        for relation in self.era_relations:
+        for relation in [*self.era_relations, *self.scene_relations]:
+            descriptor = relation.era if isinstance(relation, EraRelation) else relation.scene
             if relation.source_entity.node_id not in graph_node_ids:
-                raise ValueError("era relation source must exist in graph")
+                raise ValueError("semantic relation source must exist in graph")
             if (
                 relation.target_entity is not None
                 and relation.target_entity.node_id not in graph_node_ids
             ):
-                raise ValueError("era relation target must exist in graph")
-            if relation.era is not None and relation.era.node_id not in graph_node_ids:
-                raise ValueError("era relation era must exist in graph")
+                raise ValueError("semantic relation target must exist in graph")
+            if descriptor is not None and descriptor.node_id not in graph_node_ids:
+                raise ValueError("semantic relation descriptor must exist in graph")
+            if isinstance(relation, SceneRelation):
+                if graph_node_by_id[relation.source_entity.node_id].type is not relation.source_entity.node_type:
+                    raise ValueError("scene relation source type must match graph")
+                if relation.target_entity is not None and (
+                    graph_node_by_id[relation.target_entity.node_id].type
+                    is not relation.target_entity.node_type
+                ):
+                    raise ValueError("scene relation target type must match graph")
+                if descriptor is not None and (
+                    graph_node_by_id[descriptor.node_id].type is not WorldLineNodeType.SCENE
+                    or graph_node_by_id[descriptor.node_id].name != descriptor.canonical_name
+                ):
+                    raise ValueError("scene descriptor must match graph node")
             if any(item.source_id not in source_by_id for item in relation.evidence):
                 raise ValueError("era relation evidence must reference result sources")
             target_id = (
                 relation.target_entity.node_id
                 if relation.target_entity is not None
-                else relation.era.node_id
+                else descriptor.node_id
             )
             edge = graph_edges.get((
                 relation.source_entity.node_id,

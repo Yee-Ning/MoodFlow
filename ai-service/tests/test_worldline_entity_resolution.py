@@ -83,6 +83,17 @@ class EntityResolverTests(unittest.TestCase):
         self.assertEqual(result.status, EntityResolutionStatus.RESOLVED)
         self.assertEqual(result.entity.entity_id, "netease:song:77")
 
+    def test_unquoted_scene_question_keeps_artist_identity(self) -> None:
+        parsed = parse_entity_query("歌手周杰伦的音乐场景")
+        self.assertEqual(parsed.query, "周杰伦")
+        self.assertEqual(parsed.expected_entity_type, EntityType.ARTIST)
+
+    def test_song_title_containing_scene_word_remains_exact_identity(self) -> None:
+        service = FakeMusicService([resolved(78, EntityType.SONG, "Scene")])
+        result = asyncio.run(resolve_music_entity(service, "歌曲 Scene"))
+        self.assertEqual(result.status, EntityResolutionStatus.RESOLVED)
+        self.assertEqual(result.entity.entity_id, "netease:song:78")
+
     def test_same_name_song_and_album_is_ambiguous_without_type(self) -> None:
         service = FakeMusicService(
             [

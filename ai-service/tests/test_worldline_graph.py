@@ -195,6 +195,37 @@ class EraDocsRetriever:
         )]
 
 
+class SceneDocsRetriever:
+    async def retrieve(self, entity, plan):
+        evidence = "周杰伦在 2004 年属于 Taipei indie scene 音乐场景。"
+        return [MusicKnowledgeDocument(
+            id="parent-scene-1",
+            title="周杰伦场景资料",
+            content=f"背景。{evidence}更多资料。",
+            source="test-knowledge",
+            url="https://example.com/jay-chou-scene",
+            metadata={
+                "parent_id": "parent-scene-1",
+                "chunk_id": "child-scene-1",
+                "context_version": "context-v1",
+                "retrieval_version": "retrieval-v1",
+                "sufficiency_status": "sufficient",
+                "supported_claims": [{
+                    "claim_id": "claim:000000000000000000000098",
+                    "subject_entity_id": "artist:jay_chou",
+                    "predicate": "belongs_to_scene",
+                    "object_value": "Taipei indie scene",
+                    "scene_location": "Taipei",
+                    "time": {"year": 2004},
+                    "source_chunk_id": "child-scene-1",
+                    "evidence_span": evidence,
+                    "extraction_confidence": 0.96,
+                    "verification_confidence": 0.96,
+                }],
+            },
+        )]
+
+
 class FakeGenerator:
     def __init__(
         self,
@@ -291,6 +322,73 @@ async def invoke(graph, query: str) -> dict:
 
 
 class WorldLineGraphTests(unittest.TestCase):
+    def test_scene_relation_reaches_runtime_graph_only_for_scene_query(self) -> None:
+        root = entity(2, EntityType.ARTIST, "周杰伦")
+        graph = create_worldline_subgraph(
+            music_service=FakeMusicService(root),
+            retriever=SceneDocsRetriever(),
+            generator=FakeGenerator(),
+        )
+        scene_output = asyncio.run(invoke(graph, "歌手周杰伦的音乐场景"))
+        scene_result = scene_output["task_result"].data["worldline_result"]
+        self.assertEqual(len(scene_result["scene_relations"]), 1)
+        relation = scene_result["scene_relations"][0]
+        self.assertEqual(relation["relation_type"], "belongs_to_scene")
+        self.assertEqual(relation["scene"]["node_id"], "scene:taipei_indie_scene")
+        self.assertEqual(relation["location"], "Taipei")
+        edge = next(item for item in scene_result["graph"]["edges"] if item["relation"] == "belongs_to_scene")
+        self.assertEqual(edge["evidence_ids"], [relation["evidence"][0]["source_id"]])
+
+        ordinary = asyncio.run(invoke(graph, "探索歌手周杰伦的世界线"))
+        ordinary_result = ordinary["task_result"].data["worldline_result"]
+        self.assertEqual(ordinary_result["scene_relations"], [])
+        self.assertNotIn("scene:taipei_indie_scene", {item["id"] for item in ordinary_result["graph"]["nodes"]})
+
+    def test_scene_relation_survives_checkpointed_non_scene_exploration(self) -> None:
+        root = entity(2, EntityType.ARTIST, "周杰伦")
+        song = entity(7, EntityType.SONG, "七里香")
+
+        class SceneCatalog(FakeMusicService):
+            async def load_entity_facts(self, target):
+                if target.entity_id == song.entity_id:
+                    return MusicEntityFacts(
+                        entity=target,
+                        sources=[EvidenceSource(
+                            id="music-api:song:7",
+                            source_type=EvidenceType.MUSIC_API,
+                            title="七里香目录", source="test-catalog",
+                        )],
+                    )
+                return await super().load_entity_facts(target)
+
+        graph = create_worldline_subgraph(
+            music_service=SceneCatalog(root, [song]),
+            retriever=SceneDocsRetriever(),
+            generator=FakeGenerator(),
+        )
+        saver = create_memory_checkpointer()
+
+        async def run():
+            service = WorldLineSessionService(saver, turn_graph=graph)
+            first = await service.create("歌手周杰伦的音乐场景")
+            restored = await WorldLineSessionService(saver, turn_graph=graph).recover(first.session_id)
+            action = next(
+                item for item in restored.available_actions
+                if item.target_node_id == song.entity_id and item.enabled
+            )
+            second = await service.explore(first.session_id, action.id)
+            return first, restored, second
+
+        first, restored, second = asyncio.run(run())
+        self.assertEqual(restored.scene_relations, first.scene_relations)
+        self.assertEqual(second.scene_relations, first.scene_relations)
+        self.assertIn("scene:taipei_indie_scene", {item.id for item in second.graph.nodes})
+        self.assertIn(
+            first.scene_relations[0].evidence[0].source_id,
+            {item.id for item in second.sources},
+        )
+        self.assertEqual(second.revision, 2)
+
     def test_era_relation_reaches_runtime_graph_and_dto_only_for_era_query(self) -> None:
         root = entity(2, EntityType.ARTIST, "周杰伦")
         graph = create_worldline_subgraph(

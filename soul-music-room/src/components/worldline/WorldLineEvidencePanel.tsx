@@ -1,6 +1,7 @@
 import { ExternalLink, X } from 'lucide-react'
 import type {
   EraRelation,
+  SceneRelation,
   WorldLineEdge,
   WorldLineNode,
   WorldLineSource,
@@ -13,6 +14,7 @@ interface WorldLineEvidencePanelProps {
   sources: WorldLineSource[]
   citations: WorldLineSource[]
   eraRelations?: EraRelation[]
+  sceneRelations?: SceneRelation[]
   onClose: () => void
 }
 
@@ -32,6 +34,7 @@ export default function WorldLineEvidencePanel({
   sources,
   citations,
   eraRelations = [],
+  sceneRelations = [],
   onClose,
 }: WorldLineEvidencePanelProps) {
   if (!edge) {
@@ -50,12 +53,18 @@ export default function WorldLineEvidencePanel({
     && (relation.target_entity?.node_id ?? relation.era?.node_id) === edge.target
     && relation.relation_type === edge.relation
   ))
-  const timeLabel = eraRelation
-    ? eraRelation.start_year === null && eraRelation.end_year === null
+  const sceneRelation = sceneRelations.find((relation) => (
+    relation.source_entity.node_id === edge.source
+    && (relation.target_entity?.node_id ?? relation.scene?.node_id) === edge.target
+    && relation.relation_type === edge.relation
+  ))
+  const temporalRelation = eraRelation ?? sceneRelation
+  const timeLabel = temporalRelation
+    ? temporalRelation.start_year === null && temporalRelation.end_year === null
       ? '时间未确定'
-      : eraRelation.start_year === eraRelation.end_year
-        ? String(eraRelation.start_year)
-        : `${eraRelation.start_year ?? '?'}–${eraRelation.end_year ?? '?'}`
+      : temporalRelation.start_year === temporalRelation.end_year
+        ? String(temporalRelation.start_year)
+        : `${temporalRelation.start_year ?? '?'}–${temporalRelation.end_year ?? '?'}`
     : null
   return (
     <aside className="worldline-evidence" aria-label="关系证据" aria-live="polite">
@@ -71,11 +80,18 @@ export default function WorldLineEvidencePanel({
       <dl className="worldline-evidence__relation">
         <div><dt>Relation</dt><dd>{edge.relation}</dd></div>
         <div><dt>Evidence IDs</dt><dd>{edge.evidence_ids.length ? edge.evidence_ids.join(', ') : '无'}</dd></div>
-        {eraRelation && <>
-          <div><dt>Period</dt><dd>{timeLabel} · {eraRelation.temporal_precision}</dd></div>
-          <div><dt>Confidence</dt><dd>{eraRelation.confidence.toFixed(2)}</dd></div>
-          {eraRelation.metadata.temporal_conflict === true && (
+        {temporalRelation && <>
+          {sceneRelation && <>
+            <div><dt>Scene</dt><dd>{sceneRelation.scene_name}</dd></div>
+            <div><dt>Location</dt><dd>{sceneRelation.location ?? '未确认'}</dd></div>
+          </>}
+          <div><dt>Period</dt><dd>{timeLabel} · {temporalRelation.temporal_precision}</dd></div>
+          <div><dt>Confidence</dt><dd>{temporalRelation.confidence.toFixed(2)}</dd></div>
+          {temporalRelation.metadata.temporal_conflict === true && (
             <div><dt>Time conflict</dt><dd>来源年份不一致，精确年份未确定。请查看各条证据。</dd></div>
+          )}
+          {sceneRelation?.metadata.location_conflict === true && (
+            <div><dt>Location conflict</dt><dd>来源地点不一致，地点未确定。请查看各条证据。</dd></div>
           )}
         </>}
       </dl>

@@ -34,6 +34,11 @@ class ClaimPredicate(StrEnum):
     TEMPORAL_ASSOCIATION = "temporal_association"
     CAREER_PHASE = "career_phase"
     STYLE_ERA_ASSOCIATION = "style_era_association"
+    BELONGS_TO_SCENE = "belongs_to_scene"
+    REPRESENTATIVE_OF_SCENE = "representative_of_scene"
+    SCENE_ASSOCIATION = "scene_association"
+    STYLE_SCENE_ASSOCIATION = "style_scene_association"
+    EMERGED_FROM_SCENE = "emerged_from_scene"
     OTHER = "other"
 
 

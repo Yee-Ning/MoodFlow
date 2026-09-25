@@ -118,6 +118,7 @@
 .worldline-graph__node--album .worldline-graph__node-core { fill: #383044; stroke: #a18bb5; }
 .worldline-graph__node--genre .worldline-graph__node-core { fill: #44372c; stroke: #b49775; }
 .worldline-graph__node--era .worldline-graph__node-core { fill: #3f3030; stroke: #c17d73; }
+.worldline-graph__node--scene .worldline-graph__node-core { fill: #263b47; stroke: #86b6cf; }
 .worldline-graph__node.is-visited .worldline-graph__node-aura { fill: rgba(109, 196, 202, .05); stroke: rgba(109, 196, 202, .22); }
 .worldline-graph__node.is-current .worldline-graph__node-core { stroke: #aff6f3; stroke-width: 3; filter: url(#worldline-glow); }
 .worldline-graph__node.is-actionable:hover .worldline-graph__node-core, .worldline-graph__node.is-actionable:focus .worldline-graph__node-core { transform: scale(1.08); stroke: #cffcfb; }
@@ -132,6 +133,7 @@
 .worldline-graph__legend i.is-album { border-color: #a18bb5; background: #383044; }
 .worldline-graph__legend i.is-genre { border-color: #b49775; background: #44372c; }
 .worldline-graph__legend i.is-era { border-color: #c17d73; background: #3f3030; }
+.worldline-graph__legend i.is-scene { border-color: #86b6cf; background: #263b47; }
 .worldline-graph__legend i.is-visited { border-color: #aff6f3; box-shadow: 0 0 8px rgba(175, 246, 243, .6); }
 
 .worldline-page__graph-loading { position: absolute; inset: 0; border-radius: 20px; background: rgba(5, 18, 25, .7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; gap: 9px; color: #c3eaec; }

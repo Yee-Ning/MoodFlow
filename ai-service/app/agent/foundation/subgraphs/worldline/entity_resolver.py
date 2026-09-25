@@ -25,6 +25,12 @@ _TRAILING_ERA_REQUEST = re.compile(
     r"(?:时代|時代|时期|時期|年代|时间线|時間線|历程|歷程|"
     r"阶段|階段|早期|初期|突破期|巅峰期|巔峰期|晚期)).*$"
 )
+_TRAILING_SCENE_REQUEST = re.compile(
+    r"(?:的|\s+)(?:(?:所属|參與|参与|关联|關聯|所在|相关|相關)的?)?"
+    r"(?:音乐|音樂|地域)?(?:场景|場景|scene|社群|音乐圈|音樂圈|"
+    r"音乐群体|音樂群體|地域音乐文化|地域音樂文化).*$",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -59,6 +65,7 @@ def parse_entity_query(user_query: str) -> ParsedEntityQuery:
                     break
         before_era_suffix = query
         query = _TRAILING_ERA_REQUEST.sub("", query).strip()
+        query = _TRAILING_SCENE_REQUEST.sub("", query).strip()
         if query != before_era_suffix:
             alternate_query = before_era_suffix
         query = query.removesuffix("的").strip()

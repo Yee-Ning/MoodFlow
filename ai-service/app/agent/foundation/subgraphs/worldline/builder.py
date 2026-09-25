@@ -187,9 +187,14 @@ def _merge_structured_knowledge(
             WorldLineRelation.TEMPORAL_ASSOCIATION,
             WorldLineRelation.CAREER_PHASE,
             WorldLineRelation.STYLE_ERA_ASSOCIATION,
+            WorldLineRelation.BELONGS_TO_SCENE,
+            WorldLineRelation.REPRESENTATIVE_OF_SCENE,
+            WorldLineRelation.SCENE_ASSOCIATION,
+            WorldLineRelation.STYLE_SCENE_ASSOCIATION,
+            WorldLineRelation.EMERGED_FROM_SCENE,
         }:
             logger.warning(
-                "Ignoring unvalidated semantic/era relation metadata: document_id=%s",
+                "Ignoring unvalidated semantic/era/scene relation metadata: document_id=%s",
                 document.id,
             )
             continue

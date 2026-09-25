@@ -5,6 +5,7 @@ export type WorldLineNodeType =
   | 'genre'
   | 'creator'
   | 'era'
+  | 'scene'
   | 'related_work'
 
 export interface WorldLineEntity {
@@ -81,6 +82,28 @@ export interface EraRelation {
   metadata: Record<string, unknown>
 }
 
+export type SceneRelationType =
+  | 'belongs_to_scene'
+  | 'representative_of_scene'
+  | 'scene_association'
+  | 'style_scene_association'
+  | 'emerged_from_scene'
+
+export interface SceneRelation {
+  source_entity: EraEntityReference
+  target_entity: EraEntityReference | null
+  scene: { node_id: string; canonical_name: string } | null
+  relation_type: SceneRelationType
+  scene_name: string
+  location: string | null
+  start_year: number | null
+  end_year: number | null
+  temporal_precision: 'exact' | 'approximate' | 'unknown'
+  confidence: number
+  evidence: EraRelationEvidence[]
+  metadata: Record<string, unknown>
+}
+
 export interface WorldLineBranch {
   id: string
   title: string
@@ -105,6 +128,7 @@ export interface WorldLineSessionResult {
   sources: WorldLineSource[]
   citations: WorldLineSource[]
   era_relations: EraRelation[]
+  scene_relations: SceneRelation[]
   session_id: string
   current_node: string
   visited_nodes: string[]
