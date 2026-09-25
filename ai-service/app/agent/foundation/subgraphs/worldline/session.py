@@ -288,6 +288,9 @@ class WorldLineSessionService:
             "trusted_target": target,
             "prior_graph": previous.current_graph if previous else None,
             "prior_sources": previous.evidence_history if previous else [],
+            "prior_era_relations": (
+                previous.last_result.era_relations if previous else []
+            ),
             "root_entity": previous.root_entity if previous else None,
             "visited_nodes": [*previous.visited_nodes, target.entity_id] if previous and target else [],
         })
@@ -389,6 +392,7 @@ class WorldLineSessionService:
                 branches=branches,
                 sources=sources,
                 citations=citations,
+                era_relations=old.last_result.era_relations,
             )
         except WorldLineMergeError as exc:
             raise WorldLineExecutionError(

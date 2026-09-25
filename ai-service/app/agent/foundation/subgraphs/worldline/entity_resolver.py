@@ -20,12 +20,18 @@ _TRAILING_WORLDLINE = re.compile(
     r"(?:的)?(?:音乐)?(?:世界线|world\s*line)(?:图谱)?[。.!！?？]*$",
     re.IGNORECASE,
 )
+_TRAILING_ERA_REQUEST = re.compile(
+    r"(?:的|\s+)(?:\s*(?:18|19|20)\d{2}\s*年(?:代)?|\s*"
+    r"(?:时代|時代|时期|時期|年代|时间线|時間線|历程|歷程|"
+    r"阶段|階段|早期|初期|突破期|巅峰期|巔峰期|晚期)).*$"
+)
 
 
 @dataclass(frozen=True)
 class ParsedEntityQuery:
     query: str
     expected_entity_type: EntityType | None
+    alternate_query: str | None = None
 
 
 def parse_entity_query(user_query: str) -> ParsedEntityQuery:
@@ -35,6 +41,7 @@ def parse_entity_query(user_query: str) -> ParsedEntityQuery:
 
     expected = _expected_type(text)
     quoted = _QUOTED_ENTITY.search(text)
+    alternate_query: str | None = None
     if quoted is not None:
         query = quoted.group("name").strip()
     else:
@@ -50,11 +57,19 @@ def parse_entity_query(user_query: str) -> ParsedEntityQuery:
                 if query.startswith(prefix):
                     query = query[len(prefix):].strip(" ：:")
                     break
+        before_era_suffix = query
+        query = _TRAILING_ERA_REQUEST.sub("", query).strip()
+        if query != before_era_suffix:
+            alternate_query = before_era_suffix
         query = query.removesuffix("的").strip()
 
     if not query or len(query) > 300:
         raise ValueError("WorldLine entity query could not be extracted")
-    return ParsedEntityQuery(query=query, expected_entity_type=expected)
+    return ParsedEntityQuery(
+        query=query,
+        expected_entity_type=expected,
+        alternate_query=alternate_query,
+    )
 
 
 def _expected_type(text: str) -> EntityType | None:
@@ -81,6 +96,41 @@ async def resolve_music_entity(
     user_query: str,
 ) -> EntityResolution:
     parsed = parse_entity_query(user_query)
+    if parsed.alternate_query is not None:
+        # A title may itself contain "年代" or "时代". Prefer an exact catalog
+        # title before treating the suffix as a question about the entity.
+        try:
+            alternate_candidates = await service.search_entities(
+                parsed.alternate_query,
+                parsed.expected_entity_type,
+            )
+        except Exception:
+            alternate_candidates = []
+        if parsed.expected_entity_type is not None:
+            alternate_candidates = [
+                item for item in alternate_candidates
+                if item.entity_type is parsed.expected_entity_type
+            ]
+        alternate_name = _normalized_name(parsed.alternate_query)
+        alternate_exact = [
+            item for item in alternate_candidates
+            if _normalized_name(item.name) == alternate_name
+        ]
+        if len(alternate_exact) == 1:
+            return EntityResolution(
+                status=EntityResolutionStatus.RESOLVED,
+                query=parsed.alternate_query,
+                expected_entity_type=parsed.expected_entity_type,
+                entity=alternate_exact[0],
+                candidates=alternate_exact,
+            )
+        if len(alternate_exact) > 1:
+            return EntityResolution(
+                status=EntityResolutionStatus.AMBIGUOUS,
+                query=parsed.alternate_query,
+                expected_entity_type=parsed.expected_entity_type,
+                candidates=alternate_exact[:10],
+            )
     candidates = await service.search_entities(
         parsed.query,
         parsed.expected_entity_type,

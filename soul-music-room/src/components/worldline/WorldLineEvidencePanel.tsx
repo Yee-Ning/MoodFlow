@@ -1,5 +1,6 @@
 import { ExternalLink, X } from 'lucide-react'
 import type {
+  EraRelation,
   WorldLineEdge,
   WorldLineNode,
   WorldLineSource,
@@ -11,6 +12,7 @@ interface WorldLineEvidencePanelProps {
   nodes: WorldLineNode[]
   sources: WorldLineSource[]
   citations: WorldLineSource[]
+  eraRelations?: EraRelation[]
   onClose: () => void
 }
 
@@ -29,6 +31,7 @@ export default function WorldLineEvidencePanel({
   nodes,
   sources,
   citations,
+  eraRelations = [],
   onClose,
 }: WorldLineEvidencePanelProps) {
   if (!edge) {
@@ -42,6 +45,18 @@ export default function WorldLineEvidencePanel({
   }
 
   const resolved = resolveEdgeEvidence(edge, sources, citations)
+  const eraRelation = eraRelations.find((relation) => (
+    relation.source_entity.node_id === edge.source
+    && (relation.target_entity?.node_id ?? relation.era?.node_id) === edge.target
+    && relation.relation_type === edge.relation
+  ))
+  const timeLabel = eraRelation
+    ? eraRelation.start_year === null && eraRelation.end_year === null
+      ? '时间未确定'
+      : eraRelation.start_year === eraRelation.end_year
+        ? String(eraRelation.start_year)
+        : `${eraRelation.start_year ?? '?'}–${eraRelation.end_year ?? '?'}`
+    : null
   return (
     <aside className="worldline-evidence" aria-label="关系证据" aria-live="polite">
       <header className="worldline-evidence__header">
@@ -56,6 +71,13 @@ export default function WorldLineEvidencePanel({
       <dl className="worldline-evidence__relation">
         <div><dt>Relation</dt><dd>{edge.relation}</dd></div>
         <div><dt>Evidence IDs</dt><dd>{edge.evidence_ids.length ? edge.evidence_ids.join(', ') : '无'}</dd></div>
+        {eraRelation && <>
+          <div><dt>Period</dt><dd>{timeLabel} · {eraRelation.temporal_precision}</dd></div>
+          <div><dt>Confidence</dt><dd>{eraRelation.confidence.toFixed(2)}</dd></div>
+          {eraRelation.metadata.temporal_conflict === true && (
+            <div><dt>Time conflict</dt><dd>来源年份不一致，精确年份未确定。请查看各条证据。</dd></div>
+          )}
+        </>}
       </dl>
       {resolved.length === 0 ? (
         <div className="worldline-evidence__unavailable" role="status">

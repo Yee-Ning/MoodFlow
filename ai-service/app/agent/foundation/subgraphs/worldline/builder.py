@@ -180,9 +180,16 @@ def _merge_structured_knowledge(
                 document.id,
             )
             continue
-        if edge.relation is WorldLineRelation.ASSOCIATED_WITH:
+        if edge.relation in {
+            WorldLineRelation.ASSOCIATED_WITH,
+            WorldLineRelation.BELONGS_TO_ERA,
+            WorldLineRelation.REPRESENTATIVE_OF_ERA,
+            WorldLineRelation.TEMPORAL_ASSOCIATION,
+            WorldLineRelation.CAREER_PHASE,
+            WorldLineRelation.STYLE_ERA_ASSOCIATION,
+        }:
             logger.warning(
-                "Ignoring unvalidated semantic relation metadata: document_id=%s",
+                "Ignoring unvalidated semantic/era relation metadata: document_id=%s",
                 document.id,
             )
             continue

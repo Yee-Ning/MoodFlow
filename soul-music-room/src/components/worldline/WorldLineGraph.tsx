@@ -147,6 +147,7 @@ export default function WorldLineGraph({
         <span><i className="is-artist" />艺人</span>
         <span><i className="is-album" />专辑</span>
         <span><i className="is-genre" />流派</span>
+        <span><i className="is-era" />时代 / 阶段</span>
         <span><i className="is-visited" />已访问</span>
       </div>
     </div>

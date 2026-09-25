@@ -13,6 +13,10 @@ from app.agent.foundation.subgraphs.worldline.builder import build_worldline_gra
 from app.agent.foundation.subgraphs.worldline.entity_resolver import (
     resolve_music_entity,
 )
+from app.agent.foundation.subgraphs.worldline.era_expansion import (
+    EraExpansionService,
+    merge_era_relations,
+)
 from app.agent.foundation.subgraphs.worldline.generation import (
     StructuredWorldLineGenerator,
     WorldLineGenerator,
@@ -153,6 +157,7 @@ def build_worldline_subgraph(
     generator: WorldLineGenerator | None = None,
     query_understanding: QueryUnderstandingService | None = None,
     semantic_expansion: SemanticExpansionService | None = None,
+    era_expansion: EraExpansionService | None = None,
 ) -> StateGraph:
     service = music_service or JavaMusicEntityService()
     retrieval_runtime = (
@@ -163,6 +168,7 @@ def build_worldline_subgraph(
     )
     worldline_generator = generator or StructuredWorldLineGenerator()
     semantic_service = semantic_expansion or SemanticExpansionService()
+    era_service = era_expansion or EraExpansionService()
     query_service = query_understanding or QueryUnderstandingService(
         index_profile=(
             retrieval_runtime.index_profile
@@ -491,11 +497,27 @@ def build_worldline_subgraph(
                 )
                 graph = semantic_result.graph
                 sources = semantic_result.sources
+            era_relations = []
+            if plan is not None:
+                era_result = era_service.expand(
+                    state["user_query"],
+                    plan,
+                    graph,
+                    sources,
+                    state.get("retrieved_docs", []),
+                )
+                graph = era_result.graph
+                sources = era_result.sources
+                era_relations = era_result.relations
             if state.get("session_mode") and state.get("prior_graph") is not None:
                 graph, sources = merge_worldline_graph(
                     state["prior_graph"], graph,
                     state.get("prior_sources", []), sources,
                     target_node_id=entity.entity_id,
+                )
+                era_relations = merge_era_relations(
+                    state.get("prior_era_relations", []),
+                    era_relations,
                 )
         except WorldLineMergeError as exc:
             return _failed_result(state, "世界线扩展无法合并。", exc.code)
@@ -522,7 +544,11 @@ def build_worldline_subgraph(
             entity_id=entity.entity_id,
             entity_type=entity.entity_type.value,
         )
-        return {"worldline_graph": graph, "sources": sources}
+        return {
+            "worldline_graph": graph,
+            "sources": sources,
+            "era_relations": era_relations,
+        }
 
     async def generate_narrative(
         state: WorldLineState,
@@ -639,6 +665,7 @@ def build_worldline_subgraph(
                 branches=branches,
                 sources=sources,
                 citations=citations,
+                era_relations=state.get("era_relations", []),
             )
         except Exception:
             _log_node(
@@ -730,6 +757,7 @@ def create_worldline_subgraph(
     generator: WorldLineGenerator | None = None,
     query_understanding: QueryUnderstandingService | None = None,
     semantic_expansion: SemanticExpansionService | None = None,
+    era_expansion: EraExpansionService | None = None,
 ) -> CompiledStateGraph:
     return build_worldline_subgraph(
         music_service=music_service,
@@ -737,4 +765,5 @@ def create_worldline_subgraph(
         generator=generator,
         query_understanding=query_understanding,
         semantic_expansion=semantic_expansion,
+        era_expansion=era_expansion,
     ).compile(checkpointer=False)

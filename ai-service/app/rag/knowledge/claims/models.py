@@ -29,6 +29,11 @@ class ClaimPredicate(StrEnum):
     ARRANGED = "arranged"
     PRODUCED = "produced"
     OCCURRED_AT = "occurred_at"
+    BELONGS_TO_ERA = "belongs_to_era"
+    REPRESENTATIVE_OF_ERA = "representative_of_era"
+    TEMPORAL_ASSOCIATION = "temporal_association"
+    CAREER_PHASE = "career_phase"
+    STYLE_ERA_ASSOCIATION = "style_era_association"
     OTHER = "other"
 
 

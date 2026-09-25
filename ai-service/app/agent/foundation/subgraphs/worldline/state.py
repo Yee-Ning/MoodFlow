@@ -4,6 +4,7 @@ from app.agent.foundation.models import TaskResult
 from app.agent.foundation.routing import RoutingContext
 from app.agent.foundation.state.base import BaseAgentState
 from app.agent.foundation.subgraphs.worldline.models import (
+    EraRelation,
     EntityResolution,
     EntityType,
     EvidenceSource,
@@ -51,6 +52,8 @@ class WorldLineState(BaseAgentState):
     prior_sources: list[EvidenceSource]
     root_entity: ResolvedEntity | None
     visited_nodes: list[str]
+    era_relations: list[EraRelation]
+    prior_era_relations: list[EraRelation]
 
 
 def create_worldline_state(
@@ -91,4 +94,6 @@ def create_worldline_state(
         prior_sources=[],
         root_entity=None,
         visited_nodes=[],
+        era_relations=[],
+        prior_era_relations=[],
     )

@@ -83,6 +83,8 @@ _TYPE_RULES: tuple[tuple[QueryType, re.Pattern[str]], ...] = (
         QueryType.TIMELINE,
         re.compile(
             r"时间线|時間線|历程|歷程|阶段|階段|演变|演變|"
+            r"时代|時代|时期|時期|年代|早期|初期|突破期|巅峰期|巔峰期|晚期|"
+            r"(?:18|19|20)\d{2}\s*年|"
             r"\d{4}\s*年?\s*(?:到|至|[-—–~～])\s*\d{4}"
         ),
     ),

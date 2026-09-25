@@ -68,7 +68,7 @@ function WorldLinePage() {
       <div className="worldline-page__ambient" aria-hidden="true" />
       <header className="worldline-page__header">
         <div>
-          <p className="worldline-eyebrow">MUSIC WORLDLINE / V2.3C</p>
+          <p className="worldline-eyebrow">MUSIC WORLDLINE / V2.4A</p>
           <h1>沿证据，继续探索音乐关系</h1>
           <p className="worldline-page__lede">从一首歌、一位艺人或一张专辑出发。每次扩展都由服务端验证，并保留在同一条 WorldLine 会话中。</p>
         </div>
@@ -166,6 +166,7 @@ function WorldLinePage() {
               nodes={result.graph.nodes}
               sources={result.sources}
               citations={result.citations}
+              eraRelations={result.era_relations}
               onClose={() => setSelectedEdge(null)}
             />
           </div>

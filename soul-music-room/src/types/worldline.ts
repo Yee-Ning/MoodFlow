@@ -43,6 +43,44 @@ export interface WorldLineSource {
   metadata: Record<string, unknown>
 }
 
+export type EraRelationType =
+  | 'belongs_to_era'
+  | 'representative_of_era'
+  | 'temporal_association'
+  | 'career_phase'
+  | 'style_era_association'
+
+export interface EraEntityReference {
+  node_id: string
+  node_type: WorldLineNodeType
+  canonical_name: string
+  knowledge_entity_id: string | null
+}
+
+export interface EraRelationEvidence {
+  evidence_id: string
+  source_id: string
+  claim_id: string
+  exact_span: string
+  start_year: number | null
+  end_year: number | null
+  raw_time: string | null
+  confidence: number
+}
+
+export interface EraRelation {
+  source_entity: EraEntityReference
+  target_entity: EraEntityReference | null
+  era: { node_id: string; canonical_name: string } | null
+  relation_type: EraRelationType
+  start_year: number | null
+  end_year: number | null
+  temporal_precision: 'exact' | 'approximate' | 'unknown'
+  confidence: number
+  evidence: EraRelationEvidence[]
+  metadata: Record<string, unknown>
+}
+
 export interface WorldLineBranch {
   id: string
   title: string
@@ -66,6 +104,7 @@ export interface WorldLineSessionResult {
   branches: WorldLineBranch[]
   sources: WorldLineSource[]
   citations: WorldLineSource[]
+  era_relations: EraRelation[]
   session_id: string
   current_node: string
   visited_nodes: string[]

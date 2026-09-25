@@ -143,6 +143,10 @@ class WorldLineRelation(StrEnum):
     ASSOCIATED_WITH = "associated_with"
     BELONGS_TO_GENRE = "belongs_to_genre"
     BELONGS_TO_ERA = "belongs_to_era"
+    REPRESENTATIVE_OF_ERA = "representative_of_era"
+    TEMPORAL_ASSOCIATION = "temporal_association"
+    CAREER_PHASE = "career_phase"
+    STYLE_ERA_ASSOCIATION = "style_era_association"
     RELATED_TO = "related_to"
     INFLUENCED_BY = "influenced_by"
     INFLUENCED = "influenced"
@@ -224,6 +228,104 @@ class WorldLineBranch(BaseModel):
     target_entity: WorldLineBranchTarget
 
 
+class EraRelationType(StrEnum):
+    """Closed V2.4A vocabulary; model output cannot introduce synonyms."""
+
+    BELONGS_TO_ERA = "belongs_to_era"
+    REPRESENTATIVE_OF_ERA = "representative_of_era"
+    TEMPORAL_ASSOCIATION = "temporal_association"
+    CAREER_PHASE = "career_phase"
+    STYLE_ERA_ASSOCIATION = "style_era_association"
+
+
+class EraTemporalPrecision(StrEnum):
+    EXACT = "exact"
+    APPROXIMATE = "approximate"
+    UNKNOWN = "unknown"
+
+
+class EraEntityReference(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    node_id: str = Field(min_length=1, max_length=128)
+    node_type: WorldLineNodeType
+    canonical_name: str = Field(min_length=1, max_length=500)
+    knowledge_entity_id: str | None = Field(default=None, max_length=128)
+
+
+class EraDescriptor(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    node_id: str = Field(pattern=r"^era:[a-z0-9][a-z0-9_]*$")
+    canonical_name: str = Field(min_length=1, max_length=300)
+
+
+class EraRelationEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    evidence_id: str = Field(min_length=1, max_length=128)
+    source_id: str = Field(min_length=1, max_length=128)
+    claim_id: str = Field(min_length=1, max_length=128)
+    exact_span: str = Field(min_length=1, max_length=5_000)
+    start_year: int | None = Field(default=None, ge=1000, le=2999)
+    end_year: int | None = Field(default=None, ge=1000, le=2999)
+    raw_time: str | None = Field(default=None, max_length=200)
+    confidence: float = Field(ge=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_years(self) -> "EraRelationEvidence":
+        if (
+            self.start_year is not None
+            and self.end_year is not None
+            and self.start_year > self.end_year
+        ):
+            raise ValueError("era evidence start_year must not exceed end_year")
+        return self
+
+
+class EraRelation(BaseModel):
+    """Public evidence-first Era DTO persisted with the WorldLine result."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source_entity: EraEntityReference
+    target_entity: EraEntityReference | None = None
+    era: EraDescriptor | None = None
+    relation_type: EraRelationType
+    start_year: int | None = Field(default=None, ge=1000, le=2999)
+    end_year: int | None = Field(default=None, ge=1000, le=2999)
+    temporal_precision: EraTemporalPrecision = EraTemporalPrecision.UNKNOWN
+    confidence: float = Field(ge=0, le=1)
+    evidence: list[EraRelationEvidence] = Field(min_length=1, max_length=8)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_relation(self) -> "EraRelation":
+        if (self.target_entity is None) == (self.era is None):
+            raise ValueError("era relation requires exactly one target form")
+        if (
+            self.start_year is not None
+            and self.end_year is not None
+            and self.start_year > self.end_year
+        ):
+            raise ValueError("era relation start_year must not exceed end_year")
+        if self.relation_type is EraRelationType.TEMPORAL_ASSOCIATION:
+            if self.target_entity is None:
+                raise ValueError("temporal association requires target entity")
+        elif self.relation_type is EraRelationType.REPRESENTATIVE_OF_ERA:
+            if (
+                self.source_entity.node_type is not WorldLineNodeType.ERA
+                or self.target_entity is None
+            ):
+                raise ValueError("representative relation requires era source")
+        elif self.era is None:
+            raise ValueError("this era relation requires an era target")
+        evidence_ids = [item.evidence_id for item in self.evidence]
+        if len(evidence_ids) != len(set(evidence_ids)):
+            raise ValueError("era relation evidence must be unique")
+        return self
+
+
 class WorldLineResult(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -233,6 +335,7 @@ class WorldLineResult(BaseModel):
     branches: list[WorldLineBranch] = Field(min_length=3, max_length=3)
     sources: list[EvidenceSource] = Field(default_factory=list, max_length=30)
     citations: list[EvidenceSource] = Field(default_factory=list, max_length=30)
+    era_relations: list[EraRelation] = Field(default_factory=list, max_length=20)
 
     @model_validator(mode="after")
     def validate_citations(self) -> "WorldLineResult":
@@ -246,6 +349,39 @@ class WorldLineResult(BaseModel):
             raise ValueError("worldline citations must equal their result sources")
         if any(f"[{citation_id}]" not in self.narrative for citation_id in citation_ids):
             raise ValueError("worldline citations must have inline narrative anchors")
+        graph_node_ids = {node.id for node in self.graph.nodes}
+        graph_edges = {
+            (edge.source, edge.target, edge.relation): edge
+            for edge in self.graph.edges
+        }
+        for relation in self.era_relations:
+            if relation.source_entity.node_id not in graph_node_ids:
+                raise ValueError("era relation source must exist in graph")
+            if (
+                relation.target_entity is not None
+                and relation.target_entity.node_id not in graph_node_ids
+            ):
+                raise ValueError("era relation target must exist in graph")
+            if relation.era is not None and relation.era.node_id not in graph_node_ids:
+                raise ValueError("era relation era must exist in graph")
+            if any(item.source_id not in source_by_id for item in relation.evidence):
+                raise ValueError("era relation evidence must reference result sources")
+            target_id = (
+                relation.target_entity.node_id
+                if relation.target_entity is not None
+                else relation.era.node_id
+            )
+            edge = graph_edges.get((
+                relation.source_entity.node_id,
+                target_id,
+                WorldLineRelation(relation.relation_type.value),
+            ))
+            if edge is None:
+                raise ValueError("era relation must reference result graph edge")
+            if not {item.source_id for item in relation.evidence}.issubset(
+                edge.evidence_ids
+            ):
+                raise ValueError("era relation evidence must match graph edge")
         return self
 
 
