@@ -1,0 +1,49 @@
+{
+  "record_type": "worldline_gold_candidate_review",
+  "candidate_status": "pending_review",
+  "artist": {
+    "candidate_id": "<required candidate id>",
+    "canonical_name": "<candidate canonical name>",
+    "aliases": [],
+    "region": "<cjk_chinese|western|japanese|korean>"
+  },
+  "relation_hypothesis": {
+    "target_genre": {
+      "canonical_id": "<registered genre id>",
+      "canonical_name": "<registered canonical name>",
+      "registry_version": "v2"
+    },
+    "relation_type": "associated_with"
+  },
+  "source": {
+    "source_id": null,
+    "fixture_source_id": null,
+    "title": null,
+    "publisher": null,
+    "url": null,
+    "local_provenance": null,
+    "source_type": null,
+    "language": null,
+    "content_hash": null
+  },
+  "evidence": {
+    "evidence_text": null,
+    "exact_span": null,
+    "span_start": null,
+    "span_end": null
+  },
+  "identity": {
+    "knowledge_entity_id": null,
+    "catalog_reference": null,
+    "identity_status": "pending"
+  },
+  "review": {
+    "relation_review_status": "pending",
+    "identity_review_status": "pending",
+    "relation_reviewer": null,
+    "identity_reviewer": null,
+    "reviewed_at": null,
+    "reviewer_notes": ""
+  },
+  "final_outcome": null
+}

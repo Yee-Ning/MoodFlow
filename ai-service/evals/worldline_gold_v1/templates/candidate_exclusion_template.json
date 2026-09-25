@@ -1,0 +1,8 @@
+{
+  "candidate_id": "<candidate id>",
+  "reason": "<genre_not_registered|weak_source|no_direct_evidence|identity_ambiguous|catalog_missing>",
+  "source_id": null,
+  "reviewer": null,
+  "reviewed_at": null,
+  "notes": ""
+}
