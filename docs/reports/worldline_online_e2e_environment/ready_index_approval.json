@@ -1,0 +1,12 @@
+{
+  "status": "approved",
+  "scope": "retrieval_build_integrity_only",
+  "semantic_source_context_readiness_approved": false,
+  "reviewer": "Codex environment preparation",
+  "manifest_sha256": "sha256:c83a60216cbec622b8c80311b90dc1dfdf30eac9213f766b32dda8da6dec1ff2",
+  "source_release_id": "knowledge-v2-ed11e2baaf47553d",
+  "collection_name": "worldline_knowledge_v4_ed11e2baaf47553d_v1_v2_v4",
+  "projection_fingerprint": "sha256:df379ce1c56aab7e538caad402d1aba80cc6ad2a5cf6955c78860dc332b78cea",
+  "live_payloads_and_vectors_verified": 1270,
+  "eval_gold_or_review_pack_used_as_index_data": false
+}

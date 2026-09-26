@@ -1,0 +1,3 @@
+# Preserve the exact release manifest bytes used by readiness SHA verification.
+index_build_manifest.json -text
+knowledge_release_manifest.json -text
