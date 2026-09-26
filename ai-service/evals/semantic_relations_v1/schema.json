@@ -1,0 +1,1218 @@
+{
+  "gold": {
+    "$defs": {
+      "ExpectedRelation": {
+        "additionalProperties": false,
+        "properties": {
+          "source_entity": {
+            "title": "Source Entity",
+            "type": "string"
+          },
+          "target_entity": {
+            "title": "Target Entity",
+            "type": "string"
+          },
+          "predicate": {
+            "title": "Predicate",
+            "type": "string"
+          },
+          "evidence_claim_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Evidence Claim Ids",
+            "type": "array"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "title": "Fields",
+            "type": "object"
+          },
+          "conflict_flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conflict Flags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source_entity",
+          "target_entity",
+          "predicate",
+          "evidence_claim_ids"
+        ],
+        "title": "ExpectedRelation",
+        "type": "object"
+      },
+      "Review": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "synthetic"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "pending_human",
+              "human",
+              "synthetic"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "reviewer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reviewer"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reviewed At"
+          },
+          "record_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Record Path"
+          },
+          "record_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Record Sha256"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "method"
+        ],
+        "title": "Review",
+        "type": "object"
+      },
+      "Span": {
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "chunk_id": {
+            "title": "Chunk Id",
+            "type": "string"
+          },
+          "claim_id": {
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "exact_span": {
+            "minLength": 1,
+            "title": "Exact Span",
+            "type": "string"
+          },
+          "span_start": {
+            "minimum": 0,
+            "title": "Span Start",
+            "type": "integer"
+          },
+          "span_end": {
+            "exclusiveMinimum": 0,
+            "title": "Span End",
+            "type": "integer"
+          },
+          "stance": {
+            "default": "support",
+            "enum": [
+              "support",
+              "contradiction",
+              "context"
+            ],
+            "title": "Stance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "document_id",
+          "chunk_id",
+          "claim_id",
+          "exact_span",
+          "span_start",
+          "span_end"
+        ],
+        "title": "Span",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": "semantic-relations-evaluation-v1",
+        "default": "semantic-relations-evaluation-v1",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "case_id": {
+        "minLength": 1,
+        "title": "Case Id",
+        "type": "string"
+      },
+      "dataset_kind": {
+        "enum": [
+          "real_source",
+          "synthetic"
+        ],
+        "title": "Dataset Kind",
+        "type": "string"
+      },
+      "query": {
+        "minLength": 1,
+        "title": "Query",
+        "type": "string"
+      },
+      "relation_type": {
+        "enum": [
+          "era",
+          "scene",
+          "influence"
+        ],
+        "title": "Relation Type",
+        "type": "string"
+      },
+      "source_entity": {
+        "title": "Source Entity",
+        "type": "string"
+      },
+      "target_entity": {
+        "title": "Target Entity",
+        "type": "string"
+      },
+      "label": {
+        "enum": [
+          "positive",
+          "negative"
+        ],
+        "title": "Label",
+        "type": "string"
+      },
+      "categories": {
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1,
+        "title": "Categories",
+        "type": "array"
+      },
+      "expected_relations": {
+        "items": {
+          "$ref": "#/$defs/ExpectedRelation"
+        },
+        "title": "Expected Relations",
+        "type": "array"
+      },
+      "supporting_evidence": {
+        "items": {
+          "$ref": "#/$defs/Span"
+        },
+        "minItems": 1,
+        "title": "Supporting Evidence",
+        "type": "array"
+      },
+      "review": {
+        "$ref": "#/$defs/Review"
+      },
+      "rationale": {
+        "minLength": 1,
+        "title": "Rationale",
+        "type": "string"
+      }
+    },
+    "required": [
+      "case_id",
+      "dataset_kind",
+      "query",
+      "relation_type",
+      "source_entity",
+      "target_entity",
+      "label",
+      "categories",
+      "expected_relations",
+      "supporting_evidence",
+      "review",
+      "rationale"
+    ],
+    "title": "SemanticGoldCase",
+    "type": "object"
+  },
+  "input": {
+    "$defs": {
+      "CatalogReference": {
+        "additionalProperties": false,
+        "description": "Provider-specific identity kept separate from knowledge-index identity.",
+        "properties": {
+          "provider": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "entity_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_type": {
+            "$ref": "#/$defs/EntityType"
+          },
+          "name": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "entity_id",
+          "entity_type",
+          "name"
+        ],
+        "title": "CatalogReference",
+        "type": "object"
+      },
+      "EntityType": {
+        "enum": [
+          "artist",
+          "song",
+          "album",
+          "genre",
+          "award",
+          "chart",
+          "label",
+          "person",
+          "organization",
+          "place",
+          "event",
+          "other"
+        ],
+        "title": "EntityType",
+        "type": "string"
+      },
+      "FilterCondition": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "condition",
+            "default": "condition",
+            "title": "Kind",
+            "type": "string"
+          },
+          "field": {
+            "$ref": "#/$defs/MetadataField"
+          },
+          "operator": {
+            "$ref": "#/$defs/FilterOperator"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Value"
+          },
+          "gte": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gte"
+          },
+          "lte": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lte"
+          }
+        },
+        "required": [
+          "field",
+          "operator"
+        ],
+        "title": "FilterCondition",
+        "type": "object"
+      },
+      "FilterGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "group",
+            "default": "group",
+            "title": "Kind",
+            "type": "string"
+          },
+          "operator": {
+            "enum": [
+              "all",
+              "any"
+            ],
+            "title": "Operator",
+            "type": "string"
+          },
+          "children": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FilterCondition"
+                },
+                {
+                  "$ref": "#/$defs/FilterGroup"
+                }
+              ]
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Children",
+            "type": "array"
+          }
+        },
+        "required": [
+          "operator",
+          "children"
+        ],
+        "title": "FilterGroup",
+        "type": "object"
+      },
+      "FilterOperator": {
+        "enum": [
+          "match_value",
+          "match_any",
+          "range"
+        ],
+        "title": "FilterOperator",
+        "type": "string"
+      },
+      "IndexProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_name": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Collection Name",
+            "type": "string"
+          },
+          "source_release_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source Release Id",
+            "type": "string"
+          },
+          "index_schema_version": {
+            "pattern": "^v\\d+$",
+            "title": "Index Schema Version",
+            "type": "string"
+          },
+          "projection_version": {
+            "pattern": "^v\\d+$",
+            "title": "Projection Version",
+            "type": "string"
+          },
+          "registry_version": {
+            "pattern": "^v\\d+$",
+            "title": "Registry Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "collection_name",
+          "source_release_id",
+          "index_schema_version",
+          "projection_version",
+          "registry_version"
+        ],
+        "title": "IndexProfile",
+        "type": "object"
+      },
+      "MetadataField": {
+        "enum": [
+          "entity_ids",
+          "entity_types",
+          "year",
+          "start_year",
+          "end_year",
+          "min_mentioned_year",
+          "max_mentioned_year",
+          "language",
+          "content_type",
+          "knowledge_status",
+          "verification_statuses"
+        ],
+        "title": "MetadataField",
+        "type": "string"
+      },
+      "MetadataFilter": {
+        "additionalProperties": false,
+        "properties": {
+          "root": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/FilterGroup"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "MetadataFilter",
+        "type": "object"
+      },
+      "MusicKnowledgeDocument": {
+        "additionalProperties": false,
+        "description": "Retriever-neutral knowledge item for a future hybrid RAG backend.",
+        "properties": {
+          "id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "source": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Url"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "content",
+          "source"
+        ],
+        "title": "MusicKnowledgeDocument",
+        "type": "object"
+      },
+      "QueryEntityStatus": {
+        "enum": [
+          "resolved",
+          "unresolved",
+          "ambiguous"
+        ],
+        "title": "QueryEntityStatus",
+        "type": "string"
+      },
+      "QueryType": {
+        "enum": [
+          "fact",
+          "timeline",
+          "relationship",
+          "comparison",
+          "influence_style",
+          "exploratory"
+        ],
+        "title": "QueryType",
+        "type": "string"
+      },
+      "QueryVariant": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/$defs/QueryVariantKind"
+          },
+          "channel": {
+            "$ref": "#/$defs/SearchChannel"
+          },
+          "weight": {
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "text",
+          "kind",
+          "channel",
+          "weight"
+        ],
+        "title": "QueryVariant",
+        "type": "object"
+      },
+      "QueryVariantKind": {
+        "enum": [
+          "original",
+          "alias",
+          "decomposed",
+          "semantic"
+        ],
+        "title": "QueryVariantKind",
+        "type": "string"
+      },
+      "ResolvedQueryEntity": {
+        "additionalProperties": false,
+        "properties": {
+          "surface": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Surface",
+            "type": "string"
+          },
+          "canonical_name": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Canonical Name"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EntityType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "knowledge_entity_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z][a-z0-9_]*:[a-z0-9][a-z0-9_]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Knowledge Entity Id"
+          },
+          "catalog_reference": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CatalogReference"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Aliases",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/$defs/QueryEntityStatus"
+          },
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "candidate_knowledge_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Candidate Knowledge Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "surface",
+          "status",
+          "confidence"
+        ],
+        "title": "ResolvedQueryEntity",
+        "type": "object"
+      },
+      "RetrievalStrategy": {
+        "enum": [
+          "hybrid",
+          "multi_query_hybrid"
+        ],
+        "title": "RetrievalStrategy",
+        "type": "string"
+      },
+      "SearchChannel": {
+        "enum": [
+          "both",
+          "dense",
+          "lexical"
+        ],
+        "title": "SearchChannel",
+        "type": "string"
+      },
+      "SearchPlan": {
+        "additionalProperties": false,
+        "description": "Executable boundary consumed by the future online retriever.",
+        "properties": {
+          "plan_id": {
+            "pattern": "^query-plan:[0-9a-f]{24}$",
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "original_query": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Original Query",
+            "type": "string"
+          },
+          "standalone_query": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Standalone Query",
+            "type": "string"
+          },
+          "query_types": {
+            "items": {
+              "$ref": "#/$defs/QueryType"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Query Types",
+            "type": "array"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/$defs/ResolvedQueryEntity"
+            },
+            "maxItems": 20,
+            "title": "Entities",
+            "type": "array"
+          },
+          "queries": {
+            "items": {
+              "$ref": "#/$defs/QueryVariant"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Queries",
+            "type": "array"
+          },
+          "metadata_filter": {
+            "$ref": "#/$defs/MetadataFilter"
+          },
+          "post_exclusions": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Post Exclusions",
+            "type": "array"
+          },
+          "strategy": {
+            "$ref": "#/$defs/RetrievalStrategy"
+          },
+          "candidate_top_k": {
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Candidate Top K",
+            "type": "integer"
+          },
+          "final_top_k": {
+            "maximum": 50,
+            "minimum": 1,
+            "title": "Final Top K",
+            "type": "integer"
+          },
+          "needs_rerank": {
+            "title": "Needs Rerank",
+            "type": "boolean"
+          },
+          "analysis_version": {
+            "pattern": "^v\\d+$",
+            "title": "Analysis Version",
+            "type": "string"
+          },
+          "prompt_version": {
+            "pattern": "^v\\d+$",
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "index_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/IndexProfile"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "plan_id",
+          "original_query",
+          "standalone_query",
+          "query_types",
+          "queries",
+          "metadata_filter",
+          "strategy",
+          "candidate_top_k",
+          "final_top_k",
+          "needs_rerank",
+          "analysis_version",
+          "prompt_version"
+        ],
+        "title": "SearchPlan",
+        "type": "object"
+      },
+      "WorldLineEdge": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Target",
+            "type": "string"
+          },
+          "relation": {
+            "$ref": "#/$defs/WorldLineRelation"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Description",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Evidence Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "relation"
+        ],
+        "title": "WorldLineEdge",
+        "type": "object"
+      },
+      "WorldLineGraph": {
+        "additionalProperties": false,
+        "properties": {
+          "root": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Root",
+            "type": "string"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/$defs/WorldLineNode"
+            },
+            "maxItems": 15,
+            "minItems": 1,
+            "title": "Nodes",
+            "type": "array"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/$defs/WorldLineEdge"
+            },
+            "maxItems": 20,
+            "title": "Edges",
+            "type": "array"
+          }
+        },
+        "required": [
+          "root",
+          "nodes"
+        ],
+        "title": "WorldLineGraph",
+        "type": "object"
+      },
+      "WorldLineNode": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/$defs/WorldLineNodeType"
+          },
+          "name": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Description",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name"
+        ],
+        "title": "WorldLineNode",
+        "type": "object"
+      },
+      "WorldLineNodeType": {
+        "enum": [
+          "song",
+          "artist",
+          "album",
+          "creator",
+          "genre",
+          "era",
+          "scene",
+          "related_work"
+        ],
+        "title": "WorldLineNodeType",
+        "type": "string"
+      },
+      "WorldLineRelation": {
+        "enum": [
+          "performed_by",
+          "belongs_to_album",
+          "lyrics_by",
+          "composed_by",
+          "produced_by",
+          "associated_with",
+          "belongs_to_genre",
+          "belongs_to_era",
+          "representative_of_era",
+          "temporal_association",
+          "career_phase",
+          "style_era_association",
+          "belongs_to_scene",
+          "representative_of_scene",
+          "scene_association",
+          "style_scene_association",
+          "emerged_from_scene",
+          "related_to",
+          "influenced_by",
+          "influenced",
+          "inspired",
+          "shaped_style",
+          "cited_as_influence"
+        ],
+        "title": "WorldLineRelation",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Frozen retrieved context and identities, stored independently of Gold.",
+    "properties": {
+      "case_id": {
+        "title": "Case Id",
+        "type": "string"
+      },
+      "query": {
+        "title": "Query",
+        "type": "string"
+      },
+      "search_plan": {
+        "$ref": "#/$defs/SearchPlan"
+      },
+      "graph": {
+        "$ref": "#/$defs/WorldLineGraph"
+      },
+      "documents": {
+        "items": {
+          "$ref": "#/$defs/MusicKnowledgeDocument"
+        },
+        "title": "Documents",
+        "type": "array"
+      },
+      "input_kind": {
+        "enum": [
+          "real_source_annotation",
+          "synthetic_adversarial"
+        ],
+        "title": "Input Kind",
+        "type": "string"
+      },
+      "retrieval_mode": {
+        "const": "frozen_context_replay",
+        "default": "frozen_context_replay",
+        "title": "Retrieval Mode",
+        "type": "string"
+      }
+    },
+    "required": [
+      "case_id",
+      "query",
+      "search_plan",
+      "graph",
+      "documents",
+      "input_kind"
+    ],
+    "title": "ReplayInput",
+    "type": "object"
+  },
+  "source": {
+    "additionalProperties": false,
+    "properties": {
+      "source_id": {
+        "maxLength": 500,
+        "minLength": 1,
+        "title": "Source Id",
+        "type": "string"
+      },
+      "fixture_source_id": {
+        "maxLength": 500,
+        "minLength": 1,
+        "title": "Fixture Source Id",
+        "type": "string"
+      },
+      "title": {
+        "maxLength": 500,
+        "minLength": 1,
+        "title": "Title",
+        "type": "string"
+      },
+      "publisher": {
+        "maxLength": 300,
+        "minLength": 1,
+        "title": "Publisher",
+        "type": "string"
+      },
+      "url": {
+        "anyOf": [
+          {
+            "format": "uri",
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Url"
+      },
+      "provenance": {
+        "anyOf": [
+          {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Provenance"
+      },
+      "language": {
+        "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]+)*$",
+        "title": "Language",
+        "type": "string"
+      },
+      "source_type": {
+        "maxLength": 100,
+        "minLength": 1,
+        "title": "Source Type",
+        "type": "string"
+      },
+      "content": {
+        "maxLength": 20000,
+        "minLength": 1,
+        "title": "Content",
+        "type": "string"
+      },
+      "content_hash": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Content Hash",
+        "type": "string"
+      },
+      "origin": {
+        "enum": [
+          "real_source",
+          "synthetic"
+        ],
+        "title": "Origin",
+        "type": "string"
+      },
+      "retrieved_at": {
+        "title": "Retrieved At",
+        "type": "string"
+      },
+      "locator": {
+        "title": "Locator",
+        "type": "string"
+      },
+      "capture_method": {
+        "enum": [
+          "verbatim_web_excerpt",
+          "synthetic_fixture"
+        ],
+        "title": "Capture Method",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source_id",
+      "fixture_source_id",
+      "title",
+      "publisher",
+      "language",
+      "source_type",
+      "content",
+      "content_hash",
+      "origin",
+      "retrieved_at",
+      "locator",
+      "capture_method"
+    ],
+    "title": "SourceSnapshot",
+    "type": "object"
+  }
+}

@@ -1,0 +1,3 @@
+# Freeze hashes are byte-based; keep identical bytes after Windows checkout.
+*.json text eol=lf
+*.jsonl text eol=lf

@@ -1,5 +1,13 @@
 # MoodFlow RAG Eval Harness V0
 
+## Semantic Relations Evaluation v1
+
+Era + Scene + Influence 使用同一评测入口：`.\.venv\Scripts\python.exe run_semantic_relations_eval.py`。
+数据 schema、独立来源快照、freeze、指标分母和人工审核流程见
+[`semantic_relations_v1/README.md`](semantic_relations_v1/README.md)。
+正式人工 Gold、待审核真实诊断和 synthetic 回归分别计分；正式 Gold 覆盖不足时退出码为 2，
+不将待审核样本或 synthetic 通过率报告为真实 baseline。结果位于 `reports/semantic_relations_v1/`。
+
 ## WorldLine Evaluation V0
 
 WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用

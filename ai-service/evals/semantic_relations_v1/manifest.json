@@ -1,0 +1,24 @@
+{
+  "version": "semantic-relations-evaluation-v1",
+  "created_at": "2026-09-26T02:46:15.815727+00:00",
+  "files": {
+    "gold.jsonl": "e0ecf98e1048d6dd81dacc217302e822bbf2b536e3ed458f3f057b13f918a1ba",
+    "inputs.jsonl": "9a40e8384ed049bed500ce4428e7aab706e011660c83ebe2a11ebf4ebcc48477",
+    "sources.jsonl": "3edfae785cb01f355c90a0599d4e64cb0f227f310d44e0d98ef4abbed8ee5c6e",
+    "schema.json": "019033ce34e5ad97bb6c2f1703dd97f4b300ba871bda46d8ad23b0dfa66fb193"
+  },
+  "rule": "Do not edit frozen Gold to pass evaluation. New reviewed labels require a new version and human receipt.",
+  "provenance_correction": {
+    "previous_source_ledger_hash": "0af317eb1379263d157ae225fbf3e871e530c04d8eacdcec5bc5659b3c053ae7",
+    "reason": "Real source acquisition was observed at date precision only; remove unobserved time-of-day placeholders. Source content, labels and runtime inputs unchanged."
+  },
+  "checkout_normalization": {
+    "previous_file_hashes": {
+      "gold.jsonl": "d3a2adec46cb67b068b89b07b4e930baeb698b846165e4ad673636b517eec0de",
+      "inputs.jsonl": "0c2eff29b834d68c0849cc3bf2593a76b09836e100723a3ed01a6221881227a4",
+      "sources.jsonl": "69df5b9c913b9dec785dafa558e95332a982c395ee58e6fd8b00b3faa88955f1",
+      "schema.json": "f9e58d7229b8583e0b44cbec47d5dddd1b321e8799faac38fad39d5ee0717972"
+    },
+    "reason": "Canonical LF serialization plus .gitattributes preserves byte freeze after Windows Git checkout. Parsed labels, inputs, schema and source content unchanged; no score-dependent label edits."
+  }
+}

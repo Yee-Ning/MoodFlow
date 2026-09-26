@@ -1,0 +1,756 @@
+{
+  "schema_version": "semantic-relations-evaluation-v1",
+  "created_at": "2026-09-26T03:05:38.267386+00:00",
+  "manifest": {
+    "version": "semantic-relations-evaluation-v1",
+    "created_at": "2026-09-26T02:46:15.815727+00:00",
+    "files": {
+      "gold.jsonl": "e0ecf98e1048d6dd81dacc217302e822bbf2b536e3ed458f3f057b13f918a1ba",
+      "inputs.jsonl": "9a40e8384ed049bed500ce4428e7aab706e011660c83ebe2a11ebf4ebcc48477",
+      "sources.jsonl": "3edfae785cb01f355c90a0599d4e64cb0f227f310d44e0d98ef4abbed8ee5c6e",
+      "schema.json": "019033ce34e5ad97bb6c2f1703dd97f4b300ba871bda46d8ad23b0dfa66fb193"
+    },
+    "rule": "Do not edit frozen Gold to pass evaluation. New reviewed labels require a new version and human receipt.",
+    "provenance_correction": {
+      "previous_source_ledger_hash": "0af317eb1379263d157ae225fbf3e871e530c04d8eacdcec5bc5659b3c053ae7",
+      "reason": "Real source acquisition was observed at date precision only; remove unobserved time-of-day placeholders. Source content, labels and runtime inputs unchanged."
+    },
+    "checkout_normalization": {
+      "previous_file_hashes": {
+        "gold.jsonl": "d3a2adec46cb67b068b89b07b4e930baeb698b846165e4ad673636b517eec0de",
+        "inputs.jsonl": "0c2eff29b834d68c0849cc3bf2593a76b09836e100723a3ed01a6221881227a4",
+        "sources.jsonl": "69df5b9c913b9dec785dafa558e95332a982c395ee58e6fd8b00b3faa88955f1",
+        "schema.json": "f9e58d7229b8583e0b44cbec47d5dddd1b321e8799faac38fad39d5ee0717972"
+      },
+      "reason": "Canonical LF serialization plus .gitattributes preserves byte freeze after Windows Git checkout. Parsed labels, inputs, schema and source content unchanged; no score-dependent label edits."
+    }
+  },
+  "metrics": {
+    "approved_real_baseline": {
+      "overall": {
+        "case_count": 0,
+        "passed": 0,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "checkpoint_continuity": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          }
+        },
+        "failure_categories": {}
+      },
+      "era": {
+        "case_count": 0,
+        "passed": 0,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "checkpoint_continuity": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          }
+        },
+        "failure_categories": {}
+      },
+      "scene": {
+        "case_count": 0,
+        "passed": 0,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "checkpoint_continuity": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          }
+        },
+        "failure_categories": {}
+      },
+      "influence": {
+        "case_count": 0,
+        "passed": 0,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "checkpoint_continuity": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          }
+        },
+        "failure_categories": {}
+      }
+    },
+    "pending_real_diagnostic": {
+      "overall": {
+        "case_count": 12,
+        "passed": 9,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "evidence_coverage": {
+            "numerator": 1,
+            "denominator": 4,
+            "value": 0.25
+          },
+          "evidence_traceability": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 2,
+            "value": 0.0
+          },
+          "weak_evidence_rejection": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "evidence mismatch": 1,
+          "direction error": 2
+        }
+      },
+      "era": {
+        "case_count": 4,
+        "passed": 4,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "evidence_coverage": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "evidence_traceability": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {}
+      },
+      "scene": {
+        "case_count": 4,
+        "passed": 3,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "evidence mismatch": 1
+        }
+      },
+      "influence": {
+        "case_count": 4,
+        "passed": 2,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 2,
+            "value": 0.0
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 2,
+            "value": 0.0
+          },
+          "weak_evidence_rejection": {
+            "numerator": 2,
+            "denominator": 2,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "direction error": 2
+        }
+      }
+    },
+    "synthetic_regression": {
+      "overall": {
+        "case_count": 28,
+        "passed": 20,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 10,
+            "denominator": 12,
+            "value": 0.8333333333333334
+          },
+          "evidence_coverage": {
+            "numerator": 13,
+            "denominator": 19,
+            "value": 0.6842105263157895
+          },
+          "evidence_traceability": {
+            "numerator": 15,
+            "denominator": 15,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 2,
+            "denominator": 12,
+            "value": 0.16666666666666666
+          },
+          "influence_direction_accuracy": {
+            "numerator": 4,
+            "denominator": 6,
+            "value": 0.6666666666666666
+          },
+          "weak_evidence_rejection": {
+            "numerator": 1,
+            "denominator": 3,
+            "value": 0.3333333333333333
+          },
+          "negation_rejection": {
+            "numerator": 3,
+            "denominator": 3,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 3,
+            "denominator": 3,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 28,
+            "denominator": 28,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 28,
+            "denominator": 28,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "unsupported relation": 2,
+          "weak evidence accepted": 2,
+          "retrieval failure": 3,
+          "evidence mismatch": 2,
+          "direction error": 1
+        }
+      },
+      "era": {
+        "case_count": 9,
+        "passed": 6,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 3,
+            "denominator": 4,
+            "value": 0.75
+          },
+          "evidence_coverage": {
+            "numerator": 4,
+            "denominator": 6,
+            "value": 0.6666666666666666
+          },
+          "evidence_traceability": {
+            "numerator": 5,
+            "denominator": 5,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 1,
+            "denominator": 4,
+            "value": 0.25
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "negation_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 9,
+            "denominator": 9,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 9,
+            "denominator": 9,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "unsupported relation": 1,
+          "weak evidence accepted": 1,
+          "retrieval failure": 1,
+          "evidence mismatch": 1
+        }
+      },
+      "scene": {
+        "case_count": 9,
+        "passed": 6,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 3,
+            "denominator": 4,
+            "value": 0.75
+          },
+          "evidence_coverage": {
+            "numerator": 4,
+            "denominator": 6,
+            "value": 0.6666666666666666
+          },
+          "evidence_traceability": {
+            "numerator": 5,
+            "denominator": 5,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 1,
+            "denominator": 4,
+            "value": 0.25
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "negation_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 9,
+            "denominator": 9,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 9,
+            "denominator": 9,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "unsupported relation": 1,
+          "weak evidence accepted": 1,
+          "retrieval failure": 1,
+          "evidence mismatch": 1
+        }
+      },
+      "influence": {
+        "case_count": 10,
+        "passed": 8,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          },
+          "evidence_coverage": {
+            "numerator": 5,
+            "denominator": 7,
+            "value": 0.7142857142857143
+          },
+          "evidence_traceability": {
+            "numerator": 5,
+            "denominator": 5,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 4,
+            "value": 0.0
+          },
+          "influence_direction_accuracy": {
+            "numerator": 4,
+            "denominator": 6,
+            "value": 0.6666666666666666
+          },
+          "weak_evidence_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 10,
+            "denominator": 10,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 10,
+            "denominator": 10,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "retrieval failure": 1,
+          "direction error": 1
+        }
+      }
+    }
+  },
+  "blockers": [
+    "era: approved real coverage missing conflict, confusable, isolation, negation, negative, positive, weak_evidence",
+    "scene: approved real coverage missing conflict, confusable, isolation, negation, negative, positive, weak_evidence",
+    "influence: approved real coverage missing conflict, confusable, direction_sensitive, isolation, negation, negative, positive, weak_evidence"
+  ],
+  "baseline_ready": false,
+  "can_enter_targeted_repairs": false,
+  "code_revision": "f4b436f57f38daf01e265c56aedf75fd120beb36",
+  "code_dirty": true,
+  "scope": "frozen_context_replay_with_annotated_claims"
+}
