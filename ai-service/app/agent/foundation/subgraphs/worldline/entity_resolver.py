@@ -6,6 +6,7 @@ from app.agent.foundation.subgraphs.worldline.models import (
     EntityResolution,
     EntityResolutionStatus,
     EntityType,
+    ResolvedEntity,
 )
 from app.agent.foundation.subgraphs.worldline.music_service import (
     WorldLineMusicService,
@@ -116,6 +117,18 @@ def _normalized_name(value: str) -> str:
     return "".join(character for character in normalized if character.isalnum())
 
 
+def _exact_candidates(candidates: list[ResolvedEntity], query: str) -> list[ResolvedEntity]:
+    # Preserve punctuation when an actual catalog name exactly matches. Removing
+    # it first conflates an artist with unrelated decorated catalog identities.
+    literal = unicodedata.normalize("NFKC", query).strip().casefold()
+    faithful = [candidate for candidate in candidates
+                if unicodedata.normalize("NFKC", candidate.name).strip().casefold() == literal]
+    if faithful:
+        return faithful
+    normalized = _normalized_name(query)
+    return [candidate for candidate in candidates if _normalized_name(candidate.name) == normalized]
+
+
 async def resolve_music_entity(
     service: WorldLineMusicService,
     user_query: str,
@@ -136,11 +149,7 @@ async def resolve_music_entity(
                 item for item in alternate_candidates
                 if item.entity_type is parsed.expected_entity_type
             ]
-        alternate_name = _normalized_name(parsed.alternate_query)
-        alternate_exact = [
-            item for item in alternate_candidates
-            if _normalized_name(item.name) == alternate_name
-        ]
+        alternate_exact = _exact_candidates(alternate_candidates, parsed.alternate_query)
         if len(alternate_exact) == 1:
             return EntityResolution(
                 status=EntityResolutionStatus.RESOLVED,
@@ -167,12 +176,7 @@ async def resolve_music_entity(
             if item.entity_type is parsed.expected_entity_type
         ]
 
-    expected_name = _normalized_name(parsed.query)
-    exact = [
-        candidate
-        for candidate in candidates
-        if _normalized_name(candidate.name) == expected_name
-    ]
+    exact = _exact_candidates(candidates, parsed.query)
     if len(exact) == 1:
         return EntityResolution(
             status=EntityResolutionStatus.RESOLVED,

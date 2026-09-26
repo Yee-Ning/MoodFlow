@@ -126,6 +126,45 @@ class EntityResolverTests(unittest.TestCase):
 
         self.assertEqual(result.status, EntityResolutionStatus.UNRESOLVED)
 
+    def test_literal_catalog_identity_precedes_decorated_names(self) -> None:
+        service = FakeMusicService([
+            resolved(1, EntityType.ARTIST, "Example Artist"),
+            resolved(2, EntityType.ARTIST, "Example Artist."),
+            resolved(3, EntityType.ARTIST, "Example Artist♚"),
+        ])
+        result = asyncio.run(resolve_music_entity(service, '歌手《Example Artist》的世界线'))
+        self.assertEqual(result.status, EntityResolutionStatus.RESOLVED)
+        self.assertEqual(result.entity.entity_id, "netease:artist:1")
+
+    def test_genuinely_identical_names_still_require_disambiguation(self) -> None:
+        service = FakeMusicService([
+            resolved(1, EntityType.ARTIST, "Example Artist"),
+            resolved(2, EntityType.ARTIST, "Example Artist"),
+            resolved(3, EntityType.ARTIST, "Example Artist."),
+        ])
+        result = asyncio.run(resolve_music_entity(service, '歌手《Example Artist》的世界线'))
+        self.assertEqual(result.status, EntityResolutionStatus.AMBIGUOUS)
+        self.assertEqual(len(result.candidates), 2)
+
+    def test_normalized_fallback_keeps_ambiguous_and_unresolved_boundaries(self) -> None:
+        for names, status in [
+            (["Example Artist."], EntityResolutionStatus.RESOLVED),
+            (["Example Artist.", "Example Artist♚"], EntityResolutionStatus.AMBIGUOUS),
+            (["Other Artist"], EntityResolutionStatus.UNRESOLVED),
+        ]:
+            service = FakeMusicService([resolved(i + 1, EntityType.ARTIST, name) for i, name in enumerate(names)])
+            result = asyncio.run(resolve_music_entity(service, '歌手《Example Artist》的世界线'))
+            self.assertEqual(result.status, status)
+
+    def test_alternate_catalog_title_keeps_its_literal_identity(self) -> None:
+        service = FakeMusicService([
+            resolved(1, EntityType.SONG, "Example 2000年代"),
+            resolved(2, EntityType.SONG, "Example 2000年代."),
+        ])
+        result = asyncio.run(resolve_music_entity(service, "歌曲Example 2000年代"))
+        self.assertEqual(result.status, EntityResolutionStatus.RESOLVED)
+        self.assertEqual(result.entity.entity_id, "netease:song:1")
+
 
 class JavaMusicEntityServiceTests(unittest.TestCase):
     def test_load_facts_preserves_grounded_relations_and_source(self) -> None:
