@@ -1,0 +1,12 @@
+{
+  "request": {
+    "query": "歌手《周杰伦》的出道和专辑发行时间线、音乐场景与地域文化、创作影响的音乐世界线"
+  },
+  "response": {
+    "detail": {
+      "code": "entity_ambiguous",
+      "message": "这个名称对应多个音乐实体，请明确是歌曲、歌手还是专辑。候选：artist《周杰伦》、artist《周杰伦.》、artist《周杰伦♚》"
+    }
+  },
+  "http_status": 502
+}

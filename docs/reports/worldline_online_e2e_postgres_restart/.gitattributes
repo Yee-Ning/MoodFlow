@@ -1,0 +1,5 @@
+# Preserve bytes used by the acceptance evidence inventory.
+*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.jsonl -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.xml -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.log -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

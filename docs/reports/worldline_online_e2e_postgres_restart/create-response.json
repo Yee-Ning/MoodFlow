@@ -1,0 +1,3483 @@
+{
+  "root_entity": {
+    "entity_id": "netease:artist:6452",
+    "entity_type": "artist",
+    "name": "周杰伦",
+    "artist": "周杰伦",
+    "album": null,
+    "source": "netease",
+    "metadata": {
+      "aliases": [
+        "Jay Chou",
+        "周董"
+      ],
+      "album_size": 44,
+      "music_size": 568,
+      "description": "周杰伦（Jay Chou），1979年1月18日出生于台湾省新北市，祖籍福建省永春县，华语流行乐男歌手、音乐人、演员、导演，毕业于淡江中学 。\n2000年，发行个人首张音乐专辑《Jay》 ，并在华语乐坛获得广泛关注 。2001年，凭借音乐专辑《范特西》奠定其在乐坛的地位 ，并获得三座台湾金曲奖 [38]。2003年，登上美国《时代》杂志封面 ；此后，推出《叶惠美》《七里香》《11月的萧邦》《依然范特西》等商业与口碑兼具的音乐专辑 。2005年，主演个人首部电影《头文字D》 ，凭借该片获得香港电影金像奖和台湾电影金马奖“最佳新演员奖” 。2007年，成立“杰威尔音乐有限公司” ，首度自编自导并领衔主演爱情片《不能说的秘密》 。2009年起，凭借音乐专辑《魔杰座》和《跨时代》两度获得台湾金曲奖“最佳国语男歌手奖” ；之后，持续产出作品并举行巡演 。2023年，凭借音乐专辑《最伟大的作品》成为首位获得全球年度销量冠军的华语歌手 。2024年，成为首位在台北大巨蛋开唱的歌手 。2026年，发行音乐专辑《太阳之子》。\n周杰伦共获得15座台湾金曲奖，是获得该奖最多的音乐人 。他四次获得世界音乐大奖“中国区最畅销艺人奖” 、两次获得MTV亚洲大奖“最受欢迎歌手奖” ，并被美国CNN评为“25位亚洲最具影响力人物”之一 、被《Fast Company》杂志评为“全球百大创意人物”之一 。作为音乐人，他为自己的所有原唱歌曲作曲并担任制作人 ，更将R&B、嘻哈等风格的唱法与中国传统音乐融合，使得“中国风”这一名词登上流行音乐行列",
+      "cover_url": "https://p4.music.126.net/NWv6PtSBkyWZzqbJVzBr7g==/109951169164936450.jpg"
+    }
+  },
+  "graph": {
+    "root": "netease:artist:6452",
+    "nodes": [
+      {
+        "id": "netease:artist:6452",
+        "type": "artist",
+        "name": "周杰伦",
+        "description": "世界线根实体；netease 音乐目录中的artist实体",
+        "metadata": {
+          "aliases": [
+            "Jay Chou",
+            "周董"
+          ],
+          "album_size": 44,
+          "music_size": 568,
+          "description": "周杰伦（Jay Chou），1979年1月18日出生于台湾省新北市，祖籍福建省永春县，华语流行乐男歌手、音乐人、演员、导演，毕业于淡江中学 。\n2000年，发行个人首张音乐专辑《Jay》 ，并在华语乐坛获得广泛关注 。2001年，凭借音乐专辑《范特西》奠定其在乐坛的地位 ，并获得三座台湾金曲奖 [38]。2003年，登上美国《时代》杂志封面 ；此后，推出《叶惠美》《七里香》《11月的萧邦》《依然范特西》等商业与口碑兼具的音乐专辑 。2005年，主演个人首部电影《头文字D》 ，凭借该片获得香港电影金像奖和台湾电影金马奖“最佳新演员奖” 。2007年，成立“杰威尔音乐有限公司” ，首度自编自导并领衔主演爱情片《不能说的秘密》 。2009年起，凭借音乐专辑《魔杰座》和《跨时代》两度获得台湾金曲奖“最佳国语男歌手奖” ；之后，持续产出作品并举行巡演 。2023年，凭借音乐专辑《最伟大的作品》成为首位获得全球年度销量冠军的华语歌手 。2024年，成为首位在台北大巨蛋开唱的歌手 。2026年，发行音乐专辑《太阳之子》。\n周杰伦共获得15座台湾金曲奖，是获得该奖最多的音乐人 。他四次获得世界音乐大奖“中国区最畅销艺人奖” 、两次获得MTV亚洲大奖“最受欢迎歌手奖” ，并被美国CNN评为“25位亚洲最具影响力人物”之一 、被《Fast Company》杂志评为“全球百大创意人物”之一 。作为音乐人，他为自己的所有原唱歌曲作曲并担任制作人 ，更将R&B、嘻哈等风格的唱法与中国传统音乐融合，使得“中国风”这一名词登上流行音乐行列",
+          "cover_url": "https://p4.music.126.net/NWv6PtSBkyWZzqbJVzBr7g==/109951169164936450.jpg",
+          "artist": "周杰伦",
+          "album": null,
+          "source": "netease",
+          "entity_reference": {
+            "node_id": "netease:artist:6452",
+            "node_type": "artist",
+            "canonical_name": "周杰伦",
+            "knowledge_entity_id": "artist:jay_chou",
+            "catalog_reference": {
+              "provider": "netease",
+              "entity_id": "6452",
+              "entity_type": "artist",
+              "name": "周杰伦"
+            },
+            "aliases": [
+              "周杰倫",
+              "周董",
+              "Jay Chou",
+              "Chou",
+              "Jay"
+            ]
+          }
+        }
+      },
+      {
+        "id": "netease:song:210049",
+        "type": "song",
+        "name": "布拉格广场",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "蔡依林、周杰伦",
+          "album": "看我72变",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:5257138",
+        "type": "song",
+        "name": "屋顶",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "周杰伦、温岚、吴宗宪",
+          "album": "男女情歌对唱冠军全记录",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:509781655",
+        "type": "song",
+        "name": "想你就写信 (Live)",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "周杰伦、李硕、张鑫",
+          "album": "中国新歌声第二季 第13期",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:1888354230",
+        "type": "song",
+        "name": "默 (Live)",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "李荣浩、周杰伦",
+          "album": "2021中国好声音 第1期",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:255020",
+        "type": "song",
+        "name": "刀马旦",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "李玟、周杰伦",
+          "album": "Promise",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:5268423",
+        "type": "song",
+        "name": "手牵手",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "王力宏、陶喆、蔡琴、江蕙、苏芮、庾澄庆、张惠妹、顺子、动力火车、张清芳、周华健、张信哲、伍思凯、张宇、周杰伦、李玟、吴宗宪、陶晶莹、林慧萍、蔡依林、许茹芸、萧亚轩、孙燕姿、徐若瑄、彭佳慧、信乐团、游鸿明、范逸臣、迪克牛仔、李心洁、S.H.E、周渝民、朱孝天、Energy、可米小子、B.A.D、黄立成&麻吉、Tension、林志炫、罗志祥、欧汉声、光良、品冠、万芳、温岚、黄立行、王心凌、杨丞琳、范玮琪、潘玮柏、丁文琪、林晓培、袁惟仁、张惠春、康康、黄韵玲、黄嘉千、许慧欣、路嘉欣、萧潇、江美琪、Lisa Djaati",
+          "album": "用音乐加油！！手牵手大合唱",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:210062",
+        "type": "song",
+        "name": "骑士精神",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "蔡依林、周杰伦",
+          "album": "看我72变",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:490595315",
+        "type": "song",
+        "name": "因为爱情 (Live)",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "周杰伦、那英",
+          "album": "中国新歌声第二季 第1期",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "era:netease_artist_6452_early_career",
+        "type": "era",
+        "name": "Early career",
+        "description": "由已验证音乐证据投影的时代或职业阶段",
+        "metadata": {
+          "era_expansion_version": "v1",
+          "executable": false,
+          "expandable": false
+        }
+      },
+      {
+        "id": "era:2000s",
+        "type": "era",
+        "name": "2000s",
+        "description": "由已验证音乐证据投影的时代或职业阶段",
+        "metadata": {
+          "era_expansion_version": "v1",
+          "executable": false,
+          "expandable": false
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "netease:song:210049",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "布拉格广场 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:5257138",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "屋顶 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:509781655",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "想你就写信 (Live) performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:1888354230",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "默 (Live) performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:255020",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "刀马旦 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:5268423",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "手牵手 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:210062",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "骑士精神 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:490595315",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "因为爱情 (Live) performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:artist:6452",
+        "target": "era:netease_artist_6452_early_career",
+        "relation": "career_phase",
+        "description": "周杰伦 在 Early career 有已验证出道活动",
+        "evidence_ids": [
+          "knowledge:era:2aae8efd0afc31eb2e84a72d",
+          "knowledge:era:05d36d32e12db7ef82f29652"
+        ]
+      },
+      {
+        "source": "netease:artist:6452",
+        "target": "era:2000s",
+        "relation": "belongs_to_era",
+        "description": "周杰伦 在 2000s 有已验证发行活动",
+        "evidence_ids": [
+          "knowledge:era:2c1d65985d2f04c096688449"
+        ]
+      }
+    ]
+  },
+  "narrative": "这张图谱以周杰伦（网易云音乐 artist 6452）为根节点，向外连接两条线索：一条是八首标注为“performed_by 周杰伦”的歌曲节点——布拉格广场、屋顶、想你就写信 (Live)、默 (Live)、刀马旦、手牵手、骑士精神、因为爱情 (Live)；另一条是两个时代节点“Early career”与“2000s”，分别通过 career_phase 和 belongs_to_era 关系与根节点相连。[music-api:artist:6452]\n\n目录事实层面，该艺人条目记录专辑数为 44、曲目数为 568，并附有一段艺人简介，其中提到 2000 年发行个人首张音乐专辑《Jay》、2001 年凭借《范特西》奠定乐坛地位，以及此后推出《叶惠美》《七里香》《11月的萧邦》《依然范特西》等专辑。[music-api:artist:6452]\n\n知识库资料为早期出道时间线提供了更具体的锚点：2000 年 11 月 6 日首张个人创作专辑《Jay》发行，融合多元曲风的风格被视为为流行乐坛带来新革命，并开启华语乐坛新纪元；另有资料记为 2000 年 11 月 7 日推出第一张同名专辑《JAY》。[knowledge:era:2c1d65985d2f04c096688449][knowledge:chunk:3e2a80ad90a91c6a4ce7ad18] 出道前的创作经历方面，资料提到他初期写过多首歌曲但有不少因风格独特被退稿，1998 年发表第一首创作歌曲〈三暝三日〉由吴宗宪演唱，音乐总监杨俊荣听到〈可爱女人〉后大为赞赏并推动唱片计划。[knowledge:chunk:178d28bd38cac5d826711d47][knowledge:chunk:927a46de9cf37335ddd01e53]\n\n关于“Early career”这一阶段节点，资料将其界定为 2000 年至 2002 年出道前三年，特征被描述为青涩和张狂，并指出真正让他一炮而红的是第二张专辑《范特西》。[knowledge:era:2aae8efd0afc31eb2e84a72d] 另一条资料则提到自 2000 年出道以来保持一年一张专辑的发片速度，以及他本人表示“会有第二个 10 年、第三个 10 年”。[knowledge:era:05d36d32e12db7ef82f29652]\n\n需要如实说明的是：图谱中的歌曲节点只承载“由周杰伦演唱”这一关系，资料未提供这些歌曲各自的发行时间、所属专辑或创作分工，因此无法据此排出单曲级时间线；两个时代节点也只覆盖早期出道与 2000 年代，图谱未包含更晚的阶段划分。此外，关于“音乐场景”与“创作影响”，现有资料仅涉及出道前后的创作被采用与被退稿、以及中国风与 R&B、嘻哈融合的概括性描述，缺少对具体场景、合作网络与影响范围的系统记录，这部分内容在本图谱中尚属缺失。[music-api:artist:6452][knowledge:chunk:178d28bd38cac5d826711d47]",
+  "branches": [
+    {
+      "id": "wlb:1:300c8ddc42d34be9bfb14cb93587628d",
+      "title": "布拉格广场",
+      "description": "周杰伦演唱的歌曲，图中与周杰伦存在 performed_by 关系，可作为继续探索其作品的方向。",
+      "branch_type": "related_work",
+      "target_entity": {
+        "id": "netease:song:210049",
+        "type": "song",
+        "name": "布拉格广场"
+      }
+    },
+    {
+      "id": "wlb:1:11d8ee79427c46399c5ada76dc2638b4",
+      "title": "屋顶",
+      "description": "周杰伦演唱的歌曲，图中与周杰伦存在 performed_by 关系，可作为继续探索其作品的方向。",
+      "branch_type": "related_work",
+      "target_entity": {
+        "id": "netease:song:5257138",
+        "type": "song",
+        "name": "屋顶"
+      }
+    },
+    {
+      "id": "wlb:1:b30cff2e75cc47beb8924313ffaf9a94",
+      "title": "刀马旦",
+      "description": "周杰伦演唱的歌曲，图中与周杰伦存在 performed_by 关系，可作为继续探索其作品的方向。",
+      "branch_type": "related_work",
+      "target_entity": {
+        "id": "netease:song:255020",
+        "type": "song",
+        "name": "刀马旦"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "music-api:artist:6452",
+      "source_type": "music_api",
+      "title": "网易云音乐 artist entity 6452",
+      "source": "MoodFlow Java Music Service",
+      "url": null,
+      "excerpt": null,
+      "metadata": {
+        "provider": "netease",
+        "entity_type": "artist",
+        "entity_id": 6452
+      }
+    },
+    {
+      "id": "knowledge:chunk:178d28bd38cac5d826711d47",
+      "source_type": "knowledge",
+      "title": "周杰倫",
+      "source": "Wikipedia",
+      "url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+      "excerpt": "初期周杰伦雖寫過多首歌曲，但仍有不少曲目由於其超時代的獨特性未被他人採用而退稿，如刘德华〈眼泪知道〉和張惠妹〈忍者〉等。在此期間，吳宗憲對周杰倫大力支持，不僅在自己的唱片公司阿爾發音樂多數歌手的歌曲中采用他的創作歌曲，還讓他登上自己的節目，並在節目中大力推薦。公司總監楊俊榮在偶然聽到周杰倫〈可愛女人〉的旋律後大為讚賞，立馬致電吳宗憲，並且幫助周杰倫開始實施唱片推出計劃。而當專輯一經發出，周杰倫的歌曲很快變成當時非常流行且爆火的音樂，日後也成為了真正的亞洲巨星，他也曾在金曲獎頒獎典禮上說過：沒有吳宗憲就沒有周杰倫。1998年，周杰倫发表第一首創作歌曲〈三暝三日〉，由吳宗憲演唱。",
+      "metadata": {
+        "point_id": "175bbbde-af7e-5638-a7a0-d1ccee5f7e99",
+        "source_id": "jc-v1-030",
+        "document_metadata": {
+          "parser_metadata": {
+            "omitted_parser_tree": true,
+            "original_value_sha256": "255b0bc77f4263f30aa094f6eec0e7ea2c96d81e906f5a078d6f5f0da2d5ddbd"
+          },
+          "source_metadata": {
+            "source_id": "jc-v1-030",
+            "title": "周杰倫",
+            "url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+            "publisher": "Wikipedia",
+            "author": "Wikipedia contributors",
+            "published_at": null,
+            "source_type": "encyclopedia",
+            "file_type": "html",
+            "artist": "周杰伦",
+            "album": null,
+            "topics": [
+              "音乐风格演变",
+              "合作关系",
+              "作品影响"
+            ],
+            "source_tier": 3,
+            "source_quality": "medium",
+            "reason": "可追溯修订历史与参考文献的百科总览，适合作为导航和交叉核验来源而非唯一事实依据。",
+            "status": "approved",
+            "original_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+            "content_type": "text/html; charset=UTF-8",
+            "content_hash": "sha256:d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+            "fetched_at": "2026-09-10T01:02:37.995171Z",
+            "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+            "http_status": 200,
+            "corpus_version": "jay-chou-corpus-v1"
+          },
+          "parse_fingerprint": "html:1.2.0:auto",
+          "source_context_captures": [
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[2]; decoded text [4194:4404]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "自2000年发行首张专辑《杰倫》出道至今，周杰伦多次获得华语乐坛重要的音乐奖项[11]，包括15座臺灣金曲獎和2座MTV亞洲大獎[12]。2003年登上亞洲版《時代》雜誌的封面，其後至今開展了8次世界巡演。2009年獲美國CNN評選為亞洲最具影響力的25位人物之一[13]。2016年起，他曾擔任三季《中国好声音》系列導師。2022年推出的專輯《最偉大的作品》奪下了國際唱片協會IFPI認證全球最暢銷專輯冠軍[14]。\n",
+              "content_sha256": "e26bcf90a38c7306c44242f88b4767748ba614210366062d8b81d7a6d762ffa5",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "自2000年发行首张专辑《杰倫》出道至今，周杰伦多次获得华语乐坛重要的音乐奖项[11]，包括15座臺灣金曲獎和2座MTV亞洲大獎[12]。2003年登上亞洲版《時代》雜誌的封面，其後至今開展了8次世界巡演。2009年獲美國CNN評選為亞洲最具影響力的25位人物之一[13]。2016年起，他曾擔任三季《中国好声音》系列導師。2022年推出的專輯《最偉大的作品》奪下了國際唱片協會IFPI認證全球最暢銷專輯冠軍[14]。\n",
+                  "start": 0,
+                  "end": 210
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[9]; decoded text [5694:5779]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "1999年的〈落雨聲〉是周杰倫第一首賣出的歌，由江蕙演唱，也是第一次和方文山合作的知名作品。兩人的合作作品最受青睞，無形中兩人的合作形成一種絕佳的必勝“定律”[22]。\n",
+              "content_sha256": "6174107681949a24663be09f642d4d046c6d4c2b47090fa00c191dc3b3d368fd",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "1999年的〈落雨聲〉是周杰倫第一首賣出的歌，由江蕙演唱，也是第一次和方文山合作的知名作品。兩人的合作作品最受青睞，無形中兩人的合作形成一種絕佳的必勝“定律”[22]。\n",
+                  "start": 0,
+                  "end": 85
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[11]; decoded text [6005:6133]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2001年9月周杰倫發行個人第2張專輯《范特西》，專輯名稱來自英文“fantasy”的音譯[27]；憑藉這張專輯周杰倫在2002年度臺灣第13屆金曲獎頒獎典禮中斬獲“最佳作曲人獎”、“最佳專輯製作人獎”以及“最佳流行音樂演唱專輯獎”等五項大獎。[28]。\n",
+              "content_sha256": "3817cd05ddd3e5b9c431022be746ba4c45151a32143116752d8739750b3077b7",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2001年9月周杰倫發行個人第2張專輯《范特西》，專輯名稱來自英文“fantasy”的音譯[27]；憑藉這張專輯周杰倫在2002年度臺灣第13屆金曲獎頒獎典禮中斬獲“最佳作曲人獎”、“最佳專輯製作人獎”以及“最佳流行音樂演唱專輯獎”等五項大獎。[28]。\n",
+                  "start": 0,
+                  "end": 128
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[10]; decoded text [5815:6005]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2000年在獲得楊俊榮的推薦與推動下，阿爾發公司提供了新台幣四千萬元作為專輯籌備的部份資金，於當年11月發行周杰倫首張個人專輯《Jay》。此專輯有了別於市場的突破曲風，風格融合了R&B、Hip-Hop、古典和“中國風”[22]，初步建立了周杰倫「周式曲風」的歌手形象[22]。周杰倫除了為自己製作、輯印音樂專輯外，亦曾經替其它歌手作曲，如知名歌手S.H.E.、陳小春、劉德華等。\n",
+              "content_sha256": "7a303365e564de24e9c65b3f14c2cb9733e055ea253167d05c282d88248152d6",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2000年在獲得楊俊榮的推薦與推動下，阿爾發公司提供了新台幣四千萬元作為專輯籌備的部份資金，於當年11月發行周杰倫首張個人專輯《Jay》。此專輯有了別於市場的突破曲風，風格融合了R&B、Hip-Hop、古典和“中國風”[22]，初步建立了周杰倫「周式曲風」的歌手形象[22]。周杰倫除了為自己製作、輯印音樂專輯外，亦曾經替其它歌手作曲，如知名歌手S.H.E.、陳小春、劉德華等。\n",
+                  "start": 0,
+                  "end": 190
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[12]; decoded text [6133:6284]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2002年7月周杰倫發行個人第3張專輯《八度空間》；9月28日個人首次世界巡回演唱會“THE ONE”於臺北市立體育場拉開帷幕。2003年7月，全亞洲超過50家電台定7月16日為“周杰倫日”，並同步首播其第4張個人新專輯《葉惠美》中的主打歌曲〈以父之名〉[29]，此后每張專輯必定有一首中國風的歌曲。\n",
+              "content_sha256": "2abd6e901ec66b340fc0e81f8cc1f9c96126f438406ba3f186b2962c093e5208",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2002年7月周杰倫發行個人第3張專輯《八度空間》；9月28日個人首次世界巡回演唱會“THE ONE”於臺北市立體育場拉開帷幕。2003年7月，全亞洲超過50家電台定7月16日為“周杰倫日”，並同步首播其第4張個人新專輯《葉惠美》中的主打歌曲〈以父之名〉[29]，此后每張專輯必定有一首中國風的歌曲。\n",
+                  "start": 0,
+                  "end": 151
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[14]; decoded text [6469:6591]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2005年11月周杰倫發行個人第6張音樂專輯《11月的蕭邦》，自這張專輯周杰倫開始作為音樂總監，并嘗試執導一些自己歌曲的MV。2006年9月周杰倫發行個人第7張音樂專輯《依然范特西》，專輯中的中國風歌曲〈千里之外〉请来老牌歌手費玉清一起合唱。\n",
+              "content_sha256": "da5c1b5d4d59d4368962a3eaf5993f347850d8d980b7c741ff584deee4cc2c24",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2005年11月周杰倫發行個人第6張音樂專輯《11月的蕭邦》，自這張專輯周杰倫開始作為音樂總監，并嘗試執導一些自己歌曲的MV。2006年9月周杰倫發行個人第7張音樂專輯《依然范特西》，專輯中的中國風歌曲〈千里之外〉请来老牌歌手費玉清一起合唱。\n",
+                  "start": 0,
+                  "end": 122
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[13]; decoded text [6346:6469]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2004年7月周杰倫發行個人第5張專輯《七里香》，并憑藉該專輯首次獲得世界音樂大獎“大中華區最暢銷藝人”[30]；同時，根據國際唱片業協會IFPI的統計，專輯《七里香》銷量位居年度世界第42位，[31]；同年以歌曲〈龍拳〉首次亮相春節聯歡晚會。\n",
+              "content_sha256": "7c99a5611f19d2e419bd262951b155635a5d71c25f14e8d09ffb071fae164ca6",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2004年7月周杰倫發行個人第5張專輯《七里香》，并憑藉該專輯首次獲得世界音樂大獎“大中華區最暢銷藝人”[30]；同時，根據國際唱片業協會IFPI的統計，專輯《七里香》銷量位居年度世界第42位，[31]；同年以歌曲〈龍拳〉首次亮相春節聯歡晚會。\n",
+                  "start": 0,
+                  "end": 123
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[15]; decoded text [6591:6803]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2007年4月，由周杰倫與多年合作夥伴方文山、楊峻榮三人共同創辦的杰威爾音樂成立；11月2日，發行個人第8張音樂專輯《我很忙》，11月24日周杰倫在中國大陸上海八萬人體育場開展《2007世界巡迴演唱會》，與此同時，周杰倫的《THE ONE》、《無與倫比》兩次世界巡迴演唱會已先後在美國康涅狄格州、洛杉磯、拉斯維加斯、加拿大、澳大利亞、日本東京、新加坡、馬來西亞吉隆坡、泰國曼谷、香港、臺灣、中國大陆等多個國家地區舉辦多場。\n",
+              "content_sha256": "ef215e27667de54fef5f9e3a12e4926331d924a58d46490cc3133aa27a80ab7c",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2007年4月，由周杰倫與多年合作夥伴方文山、楊峻榮三人共同創辦的杰威爾音樂成立；11月2日，發行個人第8張音樂專輯《我很忙》，11月24日周杰倫在中國大陸上海八萬人體育場開展《2007世界巡迴演唱會》，與此同時，周杰倫的《THE ONE》、《無與倫比》兩次世界巡迴演唱會已先後在美國康涅狄格州、洛杉磯、拉斯維加斯、加拿大、澳大利亞、日本東京、新加坡、馬來西亞吉隆坡、泰國曼谷、香港、臺灣、中國大陆等多個國家地區舉辦多場。\n",
+                  "start": 0,
+                  "end": 212
+                }
+              ]
+            }
+          ],
+          "source_context_capture_provenance": [
+            {
+              "content_sha256": "e26bcf90a38c7306c44242f88b4767748ba614210366062d8b81d7a6d762ffa5",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 4194,
+              "source_text_end": 4404,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[2]; decoded text [4194:4404]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "6174107681949a24663be09f642d4d046c6d4c2b47090fa00c191dc3b3d368fd",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 5694,
+              "source_text_end": 5779,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[9]; decoded text [5694:5779]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "3817cd05ddd3e5b9c431022be746ba4c45151a32143116752d8739750b3077b7",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6005,
+              "source_text_end": 6133,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[11]; decoded text [6005:6133]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "7a303365e564de24e9c65b3f14c2cb9733e055ea253167d05c282d88248152d6",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 5815,
+              "source_text_end": 6005,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[10]; decoded text [5815:6005]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "2abd6e901ec66b340fc0e81f8cc1f9c96126f438406ba3f186b2962c093e5208",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6133,
+              "source_text_end": 6284,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[12]; decoded text [6133:6284]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "da5c1b5d4d59d4368962a3eaf5993f347850d8d980b7c741ff584deee4cc2c24",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6469,
+              "source_text_end": 6591,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[14]; decoded text [6469:6591]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "7c99a5611f19d2e419bd262951b155635a5d71c25f14e8d09ffb071fae164ca6",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6346,
+              "source_text_end": 6469,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[13]; decoded text [6346:6469]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "ef215e27667de54fef5f9e3a12e4926331d924a58d46490cc3133aa27a80ab7c",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6591,
+              "source_text_end": 6803,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[15]; decoded text [6591:6803]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            }
+          ],
+          "source_identity_proofs": {},
+          "source_context_preparation_version": "worldline-verbatim-v4-20260926"
+        },
+        "source_locator": "周杰倫 > 音樂事業 > 1997年—2001年: 〈三暝三日〉〈落雨声〉",
+        "source_content_sha256": "d9d34b319f2191bfdbaef2bf6526983afe44ea24e9a8b2e4ede57623b3b6fa1d",
+        "parent_content_sha256": "853612f8c9fa84a191db5288db01e2a162555f1af34c9e50b0946fed7369b642",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:4fde589d9c24bdea9d2c53dcaf3a9e35e4b3ce39d4222ec86e8e85a5a9ea7ec6",
+        "index_input_hash": "sha256:399a2895aff96ce0e588f5d20a9fa8cf949ee13bb68d64e9922bf8701b5953ac",
+        "source_response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+        "chunk_id": "child-5f529ba523df4dc63765c6e2",
+        "parent_id": "parent-35487c91c9077427f4346634",
+        "doc_id": "doc-jc-v1-030-00f0479d20c219dffad5",
+        "matched_child_ids": [
+          "child-5f529ba523df4dc63765c6e2",
+          "child-b606cac246881f7ca972e157",
+          "child-a16687b2432310c69c80af50"
+        ],
+        "entity_ids": [
+          "artist:amei",
+          "artist:andy_lau",
+          "artist:jacky_wu",
+          "artist:jay_chou",
+          "award:golden_melody_awards"
+        ],
+        "supported_claims": [],
+        "fusion_score": 0.04703985346000787,
+        "channel_evidence": [
+          {
+            "chunk_id": "child-5f529ba523df4dc63765c6e2",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 9,
+            "raw_score": 0.6154804,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-5f529ba523df4dc63765c6e2",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 12,
+            "raw_score": 20.223335,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-5f529ba523df4dc63765c6e2",
+            "subquery_id": "q1:alias",
+            "retrieval_leg": "q1:alias:lexical",
+            "variant_index": 1,
+            "variant_kind": "alias",
+            "channel": "lexical",
+            "rank": 47,
+            "raw_score": 0.96269876,
+            "weight": 0.85
+          },
+          {
+            "chunk_id": "child-5f529ba523df4dc63765c6e2",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 10,
+            "raw_score": 0.62153816,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-b606cac246881f7ca972e157",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 2,
+            "raw_score": 0.6470119,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-b606cac246881f7ca972e157",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 74,
+            "raw_score": 13.2294,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-b606cac246881f7ca972e157",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 3,
+            "raw_score": 0.6509067,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-a16687b2432310c69c80af50",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 64,
+            "raw_score": 0.5135914,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-a16687b2432310c69c80af50",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 61,
+            "raw_score": 13.786364,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-a16687b2432310c69c80af50",
+            "subquery_id": "q1:alias",
+            "retrieval_leg": "q1:alias:lexical",
+            "variant_index": 1,
+            "variant_kind": "alias",
+            "channel": "lexical",
+            "rank": 38,
+            "raw_score": 0.97053003,
+            "weight": 0.85
+          },
+          {
+            "chunk_id": "child-a16687b2432310c69c80af50",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 74,
+            "raw_score": 0.5133363,
+            "weight": 0.75
+          }
+        ],
+        "retrieval_status": "success",
+        "retrieval_version": "v1",
+        "index_profile": {
+          "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+          "source_release_id": "knowledge-v2-aa5271a36860debb",
+          "index_schema_version": "v2",
+          "projection_version": "v4",
+          "registry_version": "v3"
+        },
+        "retrieval_warnings": [
+          "timeline_navigation_sections_removed:3"
+        ],
+        "context_version": "v1",
+        "context_warnings": [
+          "context_token_budget_applied",
+          "source_context_budget_omitted:child-47f20fb8758857fea2a887a0",
+          "source_context_budget_omitted:child-feeb73b0b5bc0c8c58a6db75",
+          "near_duplicate_evidence_removed:2"
+        ],
+        "context_pack_rank": 1,
+        "context_source_rank": 1,
+        "context_token_count": 318,
+        "context_token_budget": 3000,
+        "evidence_span": "初期周杰伦雖寫過多首歌曲，但仍有不少曲目由於其超時代的獨特性未被他人採用而退稿，如刘德华〈眼泪知道〉和張惠妹〈忍者〉等。在此期間，吳宗憲對周杰倫大力支持，不僅在自己的唱片公司阿爾發音樂多數歌手的歌曲中采用他的創作歌曲，還讓他登上自己的節目，並在節目中大力推薦。公司總監楊俊榮在偶然聽到周杰倫〈可愛女人〉的旋律後大為讚賞，立馬致電吳宗憲，並且幫助周杰倫開始實施唱片推出計劃。而當專輯一經發出，周杰倫的歌曲很快變成當時非常流行且爆火的音樂，日後也成為了真正的亞洲巨星，他也曾在金曲獎頒獎典禮上說過：沒有吳宗憲就沒有周杰倫。1998年，周杰倫发表第一首創作歌曲〈三暝三日〉，由吳宗憲演唱。",
+        "subquery_ids": [
+          "q0:original",
+          "q1:alias",
+          "q2:semantic"
+        ],
+        "retrieval_legs": [
+          "q0:original:dense",
+          "q0:original:lexical",
+          "q1:alias:lexical",
+          "q2:semantic:dense"
+        ],
+        "sufficiency_status": "sufficient",
+        "source_evidence_content": "初期周杰伦雖寫過多首歌曲，但仍有不少曲目由於其超時代的獨特性未被他人採用而退稿，如刘德华〈眼泪知道〉和張惠妹〈忍者〉等。在此期間，吳宗憲對周杰倫大力支持，不僅在自己的唱片公司阿爾發音樂多數歌手的歌曲中采用他的創作歌曲，還讓他登上自己的節目，並在節目中大力推薦。公司總監楊俊榮在偶然聽到周杰倫〈可愛女人〉的旋律後大為讚賞，立馬致電吳宗憲，並且幫助周杰倫開始實施唱片推出計劃。而當專輯一經發出，周杰倫的歌曲很快變成當時非常流行且爆火的音樂，日後也成為了真正的亞洲巨星，他也曾在金曲獎頒獎典禮上說過：沒有吳宗憲就沒有周杰倫。1998年，周杰倫发表第一首創作歌曲〈三暝三日〉，由吳宗憲演唱。",
+        "rerank_status": "off"
+      }
+    },
+    {
+      "id": "knowledge:chunk:3e2a80ad90a91c6a4ce7ad18",
+      "source_type": "knowledge",
+      "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+      "source": "澎湃新闻",
+      "url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+      "excerpt": "原创 最人物出品 最人物\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n谁叫我是周杰伦。”\n\n——周杰伦\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n在这四年间，他发行了5首单曲，参演了2部电影，举办了138场演唱会，但每次出现在采访中时，总免不了被问到同一个问题：\n\n“下一张专辑什么时候出？”\n\n近些年，周杰伦放缓了发片速度，从过去的一年两张，到两年一张，再到如今的四年没推出新专辑。\n\n可是，纵使如此，每一次他推出新歌，都总能引起巨大讨论。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n今年，是周杰伦出道的第20年。\n\n时间回到20年前的11月7日，周杰伦推出第一张同名专辑《JAY》，在当天的发片记者会前，经纪人问他：“你害怕没有人来参加哦。”\n\n周杰伦摆弄着手中的手机，点了点头。\n\n那时他大概未曾想到，从这一天起，自己将成为一个时代的开启者。",
+      "metadata": {
+        "point_id": "99de6dee-3b09-51ea-8676-d946d9630d14",
+        "source_id": "jc-v2-007",
+        "document_metadata": {
+          "parser_metadata": {
+            "omitted_parser_tree": true,
+            "original_value_sha256": "714d72e26b81bd79146bc0dc1517b3490594bc8d564d4f4e303bb4e4527f2fdc"
+          },
+          "source_metadata": {
+            "source_id": "jc-v2-007",
+            "original_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+            "content_type": "text/html; charset=utf-8",
+            "content_hash": "sha256:77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+            "fetched_at": "2026-09-10T03:33:26.777463Z",
+            "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+            "http_status": 200,
+            "source_quality": "high",
+            "corpus_version": "jay-chou-corpus-v1",
+            "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+            "publisher": "澎湃新闻",
+            "author": null,
+            "file_type": "html",
+            "source_type": "media_article",
+            "source_tier": 2,
+            "artist": "周杰伦",
+            "album": "范特西",
+            "topics": [
+              "音乐史 / 时代背景",
+              "创作背景",
+              "作品影响"
+            ],
+            "replacement_of": "jc-v1-028"
+          },
+          "parse_fingerprint": "html:1.1.0:auto",
+          "source_context_captures": [
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[49]; decoded text [1856:1899]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "在第一张专辑之后，周杰伦保持着一年一张专辑的频率，先后发行了《范特西》与《八度空间》。",
+              "content_sha256": "dc821ccc9298697756b029fcd7fbc7cd9123a1d7fcf706984db5f36b8348dc7d",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "在第一张专辑之后，周杰伦保持着一年一张专辑的频率，先后发行了《范特西》与《八度空间》。",
+                  "start": 0,
+                  "end": 43
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[67]; decoded text [2664:2726]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "早在2001年，22岁的周杰伦在李玟演唱会上担任嘉宾，在后台接受采访时，他就说过：“要让人家知道中国人也可以写得这么流行。”",
+              "content_sha256": "d75eb0b850d5f1ecaf2acb4f1e15e6a9c7e23d8d936402933708201832acd444",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "早在2001年，22岁的周杰伦在李玟演唱会上担任嘉宾，在后台接受采访时，他就说过：“要让人家知道中国人也可以写得这么流行。”",
+                  "start": 0,
+                  "end": 62
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[68]; decoded text [2726:2772]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "如今看，周杰伦似乎始终都将向世界传播中国文化作为自己的使命，并开创了“中国风”这一流行曲风。",
+              "content_sha256": "159ad6eadeb8643eb547ecf17004948b7ac3339bf399c9c193d79e2b0968630f",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "如今看，周杰伦似乎始终都将向世界传播中国文化作为自己的使命，并开创了“中国风”这一流行曲风。",
+                  "start": 0,
+                  "end": 46
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[81]; decoded text [3168:3210]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "这一年，周杰伦离开了之前的公司，创办了自己的公司；这一年，他发行了新专辑《我很忙》；",
+              "content_sha256": "d3f59019677bd4bbd72361bc382bc77a87aebfe1a9b10e04227ff8a7a4d3233e",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "这一年，周杰伦离开了之前的公司，创办了自己的公司；这一年，他发行了新专辑《我很忙》；",
+                  "start": 0,
+                  "end": 42
+                }
+              ]
+            }
+          ],
+          "source_context_capture_provenance": [
+            {
+              "content_sha256": "dc821ccc9298697756b029fcd7fbc7cd9123a1d7fcf706984db5f36b8348dc7d",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 1856,
+              "source_text_end": 1899,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[49]; decoded text [1856:1899]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "d75eb0b850d5f1ecaf2acb4f1e15e6a9c7e23d8d936402933708201832acd444",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 2664,
+              "source_text_end": 2726,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[67]; decoded text [2664:2726]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "159ad6eadeb8643eb547ecf17004948b7ac3339bf399c9c193d79e2b0968630f",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 2726,
+              "source_text_end": 2772,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[68]; decoded text [2726:2772]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "d3f59019677bd4bbd72361bc382bc77a87aebfe1a9b10e04227ff8a7a4d3233e",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 3168,
+              "source_text_end": 3210,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[81]; decoded text [3168:3210]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            }
+          ],
+          "source_identity_proofs": {},
+          "source_context_preparation_version": "worldline-verbatim-v4-20260926"
+        },
+        "source_locator": "41岁周杰伦：时代变了，但我的时代不会过去",
+        "source_content_sha256": "2b1f10f2500941d3e477cedf35fd7d005b3329d050e38f766de4a2a84512eac5",
+        "parent_content_sha256": "4d75e7684f9af68c7c151ad81e8b1d00ddeebae435d75fabb2e57f5d179ee042",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:64c16d71fed8c2d1c4c93b7e9cffc5990b274db9c70f2246170a6e3b487760ba",
+        "index_input_hash": "sha256:8940a693a9a6b58a9a6c09be2aba9b4074e5aa620dee20363baa439b66e5e74f",
+        "source_response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+        "chunk_id": "child-128c22f7d442883f8ba8620f",
+        "parent_id": "parent-19653b37f18f4b5a753a5b6e",
+        "doc_id": "doc-jc-v2-007-d65a5eb1d97ff8ebd12b",
+        "matched_child_ids": [
+          "child-128c22f7d442883f8ba8620f",
+          "child-6ee20a8c6beb92512f33911d",
+          "child-b99acb049d36aa328fc92116"
+        ],
+        "entity_ids": [
+          "album:fantasy",
+          "album:jay_2000",
+          "artist:jay_chou"
+        ],
+        "supported_claims": [],
+        "fusion_score": 0.043106389578163776,
+        "channel_evidence": [
+          {
+            "chunk_id": "child-128c22f7d442883f8ba8620f",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 4,
+            "raw_score": 0.62930715,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-128c22f7d442883f8ba8620f",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 5,
+            "raw_score": 23.619211,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-128c22f7d442883f8ba8620f",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 2,
+            "raw_score": 0.6518543,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-6ee20a8c6beb92512f33911d",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 7,
+            "raw_score": 0.61708957,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-6ee20a8c6beb92512f33911d",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 26,
+            "raw_score": 17.626144,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-6ee20a8c6beb92512f33911d",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 4,
+            "raw_score": 0.6415889,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-b99acb049d36aa328fc92116",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 21,
+            "raw_score": 0.5588466,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-b99acb049d36aa328fc92116",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 29,
+            "raw_score": 16.874853,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-b99acb049d36aa328fc92116",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 20,
+            "raw_score": 0.5777445,
+            "weight": 0.75
+          }
+        ],
+        "retrieval_status": "success",
+        "retrieval_version": "v1",
+        "index_profile": {
+          "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+          "source_release_id": "knowledge-v2-aa5271a36860debb",
+          "index_schema_version": "v2",
+          "projection_version": "v4",
+          "registry_version": "v3"
+        },
+        "retrieval_warnings": [
+          "timeline_navigation_sections_removed:3"
+        ],
+        "context_version": "v1",
+        "context_warnings": [
+          "context_token_budget_applied",
+          "source_context_budget_omitted:child-47f20fb8758857fea2a887a0",
+          "source_context_budget_omitted:child-feeb73b0b5bc0c8c58a6db75",
+          "near_duplicate_evidence_removed:2"
+        ],
+        "context_pack_rank": 2,
+        "context_source_rank": 2,
+        "context_token_count": 385,
+        "context_token_budget": 3000,
+        "evidence_span": "原创 最人物出品 最人物\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n谁叫我是周杰伦。”\n\n——周杰伦\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n在这四年间，他发行了5首单曲，参演了2部电影，举办了138场演唱会，但每次出现在采访中时，总免不了被问到同一个问题：\n\n“下一张专辑什么时候出？”\n\n近些年，周杰伦放缓了发片速度，从过去的一年两张，到两年一张，再到如今的四年没推出新专辑。\n\n可是，纵使如此，每一次他推出新歌，都总能引起巨大讨论。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n今年，是周杰伦出道的第20年。\n\n时间回到20年前的11月7日，周杰伦推出第一张同名专辑《JAY》，在当天的发片记者会前，经纪人问他：“你害怕没有人来参加哦。”\n\n周杰伦摆弄着手中的手机，点了点头。\n\n那时他大概未曾想到，从这一天起，自己将成为一个时代的开启者。",
+        "subquery_ids": [
+          "q0:original",
+          "q2:semantic"
+        ],
+        "retrieval_legs": [
+          "q0:original:dense",
+          "q0:original:lexical",
+          "q2:semantic:dense"
+        ],
+        "sufficiency_status": "sufficient",
+        "source_evidence_content": "原创 最人物出品 最人物\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n谁叫我是周杰伦。”\n\n——周杰伦\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n在这四年间，他发行了5首单曲，参演了2部电影，举办了138场演唱会，但每次出现在采访中时，总免不了被问到同一个问题：\n\n“下一张专辑什么时候出？”\n\n近些年，周杰伦放缓了发片速度，从过去的一年两张，到两年一张，再到如今的四年没推出新专辑。\n\n可是，纵使如此，每一次他推出新歌，都总能引起巨大讨论。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n今年，是周杰伦出道的第20年。\n\n时间回到20年前的11月7日，周杰伦推出第一张同名专辑《JAY》，在当天的发片记者会前，经纪人问他：“你害怕没有人来参加哦。”\n\n周杰伦摆弄着手中的手机，点了点头。\n\n那时他大概未曾想到，从这一天起，自己将成为一个时代的开启者。",
+        "rerank_status": "off"
+      }
+    },
+    {
+      "id": "knowledge:chunk:2ac152284dd2020d9882b528",
+      "source_type": "knowledge",
+      "title": "周杰倫20年音樂軌跡：14張經典專輯變身黑膠唱片",
+      "source": "杰威爾音樂",
+      "url": "https://www.jvrmusic.com.tw/artist/news/detail/1275679152900542464?lang=zh_TW",
+      "excerpt": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！從實體專輯到音樂串流的20年，周杰倫的音樂有大家的青春、夢想、感動與愛情記憶，唱片公司將在周杰倫出道屆滿20年之際，於今年11月6日推出他過去14張專輯的黑膠唱片供歌迷珍藏，6月30日起於各大唱片行及線上通路展開預購。",
+      "metadata": {
+        "point_id": "e0dd6b40-4267-5cbf-a05d-479663a76c00",
+        "source_id": "jc-v1-002",
+        "document_metadata": {
+          "parser_metadata": {
+            "omitted_parser_tree": true,
+            "original_value_sha256": "003b8e49ac4cea9463abea2c6394911c2bd2f72e8a8ee8c541eae83ef4eff42e"
+          },
+          "source_metadata": {
+            "source_id": "jc-v1-002",
+            "title": "周杰倫20年音樂軌跡：14張經典專輯變身黑膠唱片",
+            "url": "https://www.jvrmusic.com.tw/artist/news/detail/1275679152900542464?lang=zh_TW",
+            "publisher": "杰威爾音樂",
+            "author": null,
+            "published_at": null,
+            "source_type": "official_news",
+            "file_type": "html",
+            "artist": "周杰伦",
+            "album": null,
+            "topics": [
+              "专辑制作过程",
+              "音乐风格演变",
+              "作品影响"
+            ],
+            "source_tier": 1,
+            "source_quality": "high",
+            "reason": "唱片公司说明14张专辑母带重制、刻片与发行过程，并回顾二十年音乐轨迹。",
+            "status": "approved",
+            "original_url": "https://www.jvrmusic.com.tw/artist/news/detail/1275679152900542464?lang=zh_TW",
+            "content_type": "text/html; charset=utf-8",
+            "content_hash": "sha256:4ecac97530c36eaf72c4c1b7d4717647710b516840b8687d5cab38b3d73e269e",
+            "fetched_at": "2026-09-10T01:01:40.629140Z",
+            "raw_path": "data/raw/html/jc-v1-002--20260910T010140.629140Z--4ecac97530c36eaf.html",
+            "http_status": 200,
+            "corpus_version": "jay-chou-corpus-v1",
+            "replacement_of": null
+          },
+          "parse_fingerprint": "html:1.1.0:auto",
+          "source_context_captures": [
+            {
+              "source_url": "https://www.jvrmusic.com.tw/artist/news/detail/1275679152900542464?lang=zh_TW",
+              "publisher": "杰威爾音樂",
+              "title": "周杰倫20年音樂軌跡：14張經典專輯變身黑膠唱片",
+              "locator": "DOM p[5]; decoded text [363:2065]",
+              "captured_at": "2026-09-10T01:01:40.629140Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "4ecac97530c36eaf72c4c1b7d4717647710b516840b8687d5cab38b3d73e269e",
+              "content": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！從實體專輯到音樂串流的20年，周杰倫的音樂有大家的青春、夢想、感動與愛情記憶，唱片公司將在周杰倫出道屆滿20年之際，於今年11月6日推出他過去14張專輯的黑膠唱片供歌迷珍藏，6月30日起於各大唱片行及線上通路展開預購。特別的是，在一整套14張大碟的珍藏套裝裡，預留了第15張專輯的空位，間接預告了周杰倫第15張專輯的誕生！     黑膠唱片的魅力一直以來令喜愛黑膠唱片的朋友深深著迷，他們認為黑膠唱片的音質最接近原聲，有最具臨場感的聆聽體驗，所以在黑膠風潮興起的這些年，一直有不少樂迷向唱片公司提出，希望周杰倫的專輯也能夠出版黑膠唱片的願望，如今這個願望就要在周杰倫出道屆滿20年之際實現了，周杰倫說：「這是我第一次推出黑膠唱片，今年的11月6日是我第一張專輯推出剛剛好滿20年，公司一口氣把過去14張專輯都製作成了黑膠唱片，我想這對我及對歌迷來說都是很有意義的！我自己其實也很期待！」     喜歡收藏老東西的方文山，也收藏黑膠唱盤機及一些老唱片黑膠，他認為：「黑膠是一種懷舊時期的聽覺記憶，黑膠的音色有聽覺的質感，它就是一種聽覺美學。」對於合作搭檔周杰倫即將推出20年黑膠大碟，方文山說：「杰倫的音樂本身就是一個指標、一個經典，所以夠資格列入聽覺美學的範疇內，就好像『時空膠囊』，把聽覺記憶鎖在黑膠唱片裡面，值得收藏。」黑膠迷認為把黑膠唱片放在唱盤上，再擺上唱針，一連串的動作很有聽音樂的「儀式感」，方文山說：「杰倫的音樂陪很多人成長，旋律裡有很多人的青春和成長的記憶，把他的音樂用黑膠的型式去保存，在聽覺美學基礎上重溫記憶的儀式感就很強。」     把14張專輯變身成黑膠唱片是一場跨越國際的合作，唱片公司先將原始母帶送至紐約後期錄音室Sterling Sound，由曾為Madonna、Lady Gaga、Jay-Z…等歌手進行母帶後期製作的工程師Chris Gehringer負責黑膠母帶音源製作，歷經三個月的時間將14張專輯的音源完美重生，轉化成經典的黑膠母帶，再委託德國黑膠刻片大廠Optimal Media GmbH升級DMM(金屬直刻)刻板，德國工藝對音樂品質的要求自是不在話下，而為了保留唱針軌道最大的運作空間，33又1/3 RPM(轉速)單面不超過18分鐘的限制要求，每張專輯都製作成雙片裝黑膠，14張專輯完整曲目變身28片黑膠唱片，全程德國製作、空運來台，如此不計成本製作完成，就是為了將周杰倫20年的音樂軌跡完美呈獻給歌迷。     唱片公司將周杰倫出道20年來，14張經典專輯變身成黑膠唱片重回樂迷視線，除了14張專輯的150首歌曲之外，還收錄周杰倫EP的7首歌曲作為彩蛋獻給歌迷，收錄在每首單曲推出時、時間年份最接近的專輯裡，像是「霍元甲」收錄在「十一月的蕭邦」專輯中、「不能說的秘密」及「周大俠」收錄在「我很忙」專輯……，全套黑膠大碟總計收錄了周杰倫157首曲目。而在包裝上也是煞費苦心！設計手提箱造型的「Jay Chou 20蒐藏箱」裝束美好回憶，為了能夠乘載28張黑膠的重量，特別使用強韌耐衝擊的PC及鋁合金原件來製作黑膠蒐藏箱，減低外包裝的重量之外，更有保護黑膠唱片的功能。     周杰倫本月推出最新單曲「Mojito」，官方YouTube上線7天即突破1000萬點閱次數！目前仍持續飆升中，周杰倫曾說：「『Mojito』推出之後暫時不會有單曲的推出，再來就是新專輯了！」對照周杰倫全套黑膠大碟珍藏套裝裡預留的第15張專輯的空位，不僅預告了新專輯即將誕生，也預告了新專輯除了發行CD之外，更將推出黑膠唱片，供喜愛黑膠的樂迷朋友收藏。     周杰倫14張經典專輯變身成黑膠唱片，將於今年11月6日發行，自6月30日中午12:00起於各大唱片行及線上通路展開預購，限量收單至7月14日24:00截止。歌迷可購買單張專輯黑膠，亦可購買全套黑膠大碟，特製的「Jay Chou 20蒐藏箱」則是送給購買整套黑膠的樂迷、一份精緻的紀念禮物。",
+              "content_sha256": "d2c8e6bdeffef9df4f61b1997f25371adbc187c2d08c9ce87132b58f1f871b72",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！從實體專輯到音樂串流的20年，周杰倫的音樂有大家的青春、夢想、感動與愛情記憶，唱片公司將在周杰倫出道屆滿20年之際，於今年11月6日推出他過去14張專輯的黑膠唱片供歌迷珍藏，6月30日起於各大唱片行及線上通路展開預購。特別的是，在一整套14張大碟的珍藏套裝裡，預留了第15張專輯的空位，間接預告了周杰倫第15張專輯的誕生！     黑膠唱片的魅力一直以來令喜愛黑膠唱片的朋友深深著迷，他們認為黑膠唱片的音質最接近原聲，有最具臨場感的聆聽體驗，所以在黑膠風潮興起的這些年，一直有不少樂迷向唱片公司提出，希望周杰倫的專輯也能夠出版黑膠唱片的願望，如今這個願望就要在周杰倫出道屆滿20年之際實現了，周杰倫說：「這是我第一次推出黑膠唱片，今年的11月6日是我第一張專輯推出剛剛好滿20年，公司一口氣把過去14張專輯都製作成了黑膠唱片，我想這對我及對歌迷來說都是很有意義的！我自己其實也很期待！」     喜歡收藏老東西的方文山，也收藏黑膠唱盤機及一些老唱片黑膠，他認為：「黑膠是一種懷舊時期的聽覺記憶，黑膠的音色有聽覺的質感，它就是一種聽覺美學。」對於合作搭檔周杰倫即將推出20年黑膠大碟，方文山說：「杰倫的音樂本身就是一個指標、一個經典，所以夠資格列入聽覺美學的範疇內，就好像『時空膠囊』，把聽覺記憶鎖在黑膠唱片裡面，值得收藏。」黑膠迷認為把黑膠唱片放在唱盤上，再擺上唱針，一連串的動作很有聽音樂的「儀式感」，方文山說：「杰倫的音樂陪很多人成長，旋律裡有很多人的青春和成長的記憶，把他的音樂用黑膠的型式去保存，在聽覺美學基礎上重溫記憶的儀式感就很強。」     把14張專輯變身成黑膠唱片是一場跨越國際的合作，唱片公司先將原始母帶送至紐約後期錄音室Sterling Sound，由曾為Madonna、Lady Gaga、Jay-Z…等歌手進行母帶後期製作的工程師Chris Gehringer負責黑膠母帶音源製作，歷經三個月的時間將14張專輯的音源完美重生，轉化成經典的黑膠母帶，再委託德國黑膠刻片大廠Optimal Media GmbH升級DMM(金屬直刻)刻板，德國工藝對音樂品質的要求自是不在話下，而為了保留唱針軌道最大的運作空間，33又1/3 RPM(轉速)單面不超過18分鐘的限制要求，每張專輯都製作成雙片裝黑膠，14張專輯完整曲目變身28片黑膠唱片，全程德國製作、空運來台，如此不計成本製作完成，就是為了將周杰倫20年的音樂軌跡完美呈獻給歌迷。     唱片公司將周杰倫出道20年來，14張經典專輯變身成黑膠唱片重回樂迷視線，除了14張專輯的150首歌曲之外，還收錄周杰倫EP的7首歌曲作為彩蛋獻給歌迷，收錄在每首單曲推出時、時間年份最接近的專輯裡，像是「霍元甲」收錄在「十一月的蕭邦」專輯中、「不能說的秘密」及「周大俠」收錄在「我很忙」專輯……，全套黑膠大碟總計收錄了周杰倫157首曲目。而在包裝上也是煞費苦心！設計手提箱造型的「Jay Chou 20蒐藏箱」裝束美好回憶，為了能夠乘載28張黑膠的重量，特別使用強韌耐衝擊的PC及鋁合金原件來製作黑膠蒐藏箱，減低外包裝的重量之外，更有保護黑膠唱片的功能。     周杰倫本月推出最新單曲「Mojito」，官方YouTube上線7天即突破1000萬點閱次數！目前仍持續飆升中，周杰倫曾說：「『Mojito』推出之後暫時不會有單曲的推出，再來就是新專輯了！」對照周杰倫全套黑膠大碟珍藏套裝裡預留的第15張專輯的空位，不僅預告了新專輯即將誕生，也預告了新專輯除了發行CD之外，更將推出黑膠唱片，供喜愛黑膠的樂迷朋友收藏。     周杰倫14張經典專輯變身成黑膠唱片，將於今年11月6日發行，自6月30日中午12:00起於各大唱片行及線上通路展開預購，限量收單至7月14日24:00截止。歌迷可購買單張專輯黑膠，亦可購買全套黑膠大碟，特製的「Jay Chou 20蒐藏箱」則是送給購買整套黑膠的樂迷、一份精緻的紀念禮物。",
+                  "start": 0,
+                  "end": 1702
+                }
+              ]
+            }
+          ],
+          "source_context_capture_provenance": [
+            {
+              "content_sha256": "d2c8e6bdeffef9df4f61b1997f25371adbc187c2d08c9ce87132b58f1f871b72",
+              "response_sha256": "4ecac97530c36eaf72c4c1b7d4717647710b516840b8687d5cab38b3d73e269e",
+              "raw_path": "data/raw/html/jc-v1-002--20260910T010140.629140Z--4ecac97530c36eaf.html",
+              "source_text_start": 363,
+              "source_text_end": 2065,
+              "source_text_sha256": "f3ba988ddcf7d5e50f8ac1c68f42d2319dc99a44ebb8a4854ac2bcb92f8c2541",
+              "locator": "DOM p[5]; decoded text [363:2065]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            }
+          ],
+          "source_identity_proofs": {},
+          "source_context_preparation_version": "worldline-verbatim-v4-20260926"
+        },
+        "source_locator": "藝人專區 > 周杰倫20年音樂軌跡 14張經典專輯變身黑膠唱片",
+        "source_content_sha256": "130e06a111a0fe6fe2d00adb5a474ba065fac437962f2ba0454191646881649d",
+        "parent_content_sha256": "cf0efcadc4ccf244d4644ceafa9f3d3b3c19dc3dddacc24219a511cff6c775fa",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:389c2bf5da6dff81eb7e1df2be48ab61c5debdb944cd6ee2e4c6807a364ab7e1",
+        "index_input_hash": "sha256:5ad6210d59f6586513bd2c9141faef5edf92d70e6fca2cab8039c82f373c8990",
+        "source_response_sha256": "4ecac97530c36eaf72c4c1b7d4717647710b516840b8687d5cab38b3d73e269e",
+        "chunk_id": "child-47f20fb8758857fea2a887a0",
+        "parent_id": "parent-cca31e09c6d05f09267862a1",
+        "doc_id": "doc-jc-v1-002-04f3fc502cebf6f24481",
+        "matched_child_ids": [
+          "child-47f20fb8758857fea2a887a0"
+        ],
+        "entity_ids": [
+          "album:jay_2000",
+          "artist:jay_chou"
+        ],
+        "supported_claims": [
+          {
+            "claim_id": "claim:868e9742f0cc9053c1bfd602",
+            "statement": "周杰伦于2000年发行Jay",
+            "subject_entity_id": "artist:jay_chou",
+            "predicate": "released",
+            "object_entity_id": "album:jay_2000",
+            "time": {
+              "year": 2000,
+              "date": null,
+              "start_year": null,
+              "end_year": null,
+              "raw": "2000年"
+            },
+            "source_chunk_id": "child-47f20fb8758857fea2a887a0",
+            "evidence_span": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！",
+            "extraction_confidence": 0.96,
+            "verification_confidence": 0.96,
+            "extraction_source": "rule"
+          }
+        ],
+        "fusion_score": 0.04160201404505464,
+        "channel_evidence": [
+          {
+            "chunk_id": "child-47f20fb8758857fea2a887a0",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 11,
+            "raw_score": 0.6032449,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-47f20fb8758857fea2a887a0",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 36,
+            "raw_score": 16.131416,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-47f20fb8758857fea2a887a0",
+            "subquery_id": "q1:alias",
+            "retrieval_leg": "q1:alias:lexical",
+            "variant_index": 1,
+            "variant_kind": "alias",
+            "channel": "lexical",
+            "rank": 80,
+            "raw_score": 0.9398003,
+            "weight": 0.85
+          },
+          {
+            "chunk_id": "child-47f20fb8758857fea2a887a0",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 8,
+            "raw_score": 0.6292533,
+            "weight": 0.75
+          }
+        ],
+        "retrieval_status": "success",
+        "retrieval_version": "v1",
+        "index_profile": {
+          "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+          "source_release_id": "knowledge-v2-aa5271a36860debb",
+          "index_schema_version": "v2",
+          "projection_version": "v4",
+          "registry_version": "v3"
+        },
+        "retrieval_warnings": [
+          "timeline_navigation_sections_removed:3"
+        ],
+        "context_version": "v1",
+        "context_warnings": [
+          "context_token_budget_applied",
+          "source_context_budget_omitted:child-47f20fb8758857fea2a887a0",
+          "source_context_budget_omitted:child-feeb73b0b5bc0c8c58a6db75",
+          "near_duplicate_evidence_removed:2"
+        ],
+        "context_pack_rank": 3,
+        "context_source_rank": 3,
+        "context_token_count": 900,
+        "context_token_budget": 3000,
+        "evidence_span": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！從實體專輯到音樂串流的20年，周杰倫的音樂有大家的青春、夢想、感動與愛情記憶，唱片公司將在周杰倫出道屆滿20年之際，於今年11月6日推出他過去14張專輯的黑膠唱片供歌迷珍藏，6月30日起於各大唱片行及線上通路展開預購。",
+        "subquery_ids": [
+          "q0:original",
+          "q1:alias",
+          "q2:semantic"
+        ],
+        "retrieval_legs": [
+          "q0:original:dense",
+          "q0:original:lexical",
+          "q1:alias:lexical",
+          "q2:semantic:dense"
+        ],
+        "sufficiency_status": "sufficient",
+        "source_evidence_content": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！從實體專輯到音樂串流的20年，周杰倫的音樂有大家的青春、夢想、感動與愛情記憶，唱片公司將在周杰倫出道屆滿20年之際，於今年11月6日推出他過去14張專輯的黑膠唱片供歌迷珍藏，6月30日起於各大唱片行及線上通路展開預購。",
+        "rerank_status": "off"
+      }
+    },
+    {
+      "id": "knowledge:chunk:b87f622e6ad568ad2051b020",
+      "source_type": "knowledge",
+      "title": "周杰伦：为妈妈和外婆而歌唱",
+      "source": "湖南日报报业集团",
+      "url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+      "excerpt": "歌坛“三级跳”\n\n刚出道时的周杰伦 总喜欢把鸭舌帽拉得低低的 脸上的表情也带着<sub>一</sub>些羞涩 经过 10 年的“磨砺”后 无论是在演唱会 新闻发布会上 还是在 M （音乐录影带）中 人们看到的是 个越来越成熟的“周天王”\n\n对流行音乐和古典音乐有着专门研究的中国戏曲学院田震子老师认为周杰伦 10 年的音乐道路 大致经历了 3个阶段\n\n2000 年至 2002 年 周杰伦出道的前三年可以视为第一个阶段 他这个时期主要的特征是青涩和张狂 真正让周杰伦 炮而红的是第二张专辑《范特西》 主打歌曲《双截棍》中那句“快使用双截棍 哼哼哈嘿” 一下成了当时的“流行语” “那个时期 周杰伦的创作虽然给流行乐坛带来了 股另类之风 但还略显青涩和幼稚 他将更多的注意力放在‘炫耀’ 些音乐技巧上 只是以更多元的形式来吸引人们的目光 在歌词中 他想展示的是自己特立独行和天马行空的音乐想法 ”",
+      "metadata": {
+        "point_id": "7d7305cb-63d6-5337-b925-42f061a9626d",
+        "source_id": "jc-v2-048",
+        "document_metadata": {
+          "parser_metadata": {
+            "omitted_parser_tree": true,
+            "original_value_sha256": "aac4af172c7acf7e2ad012f6efbac407da22c3e691e806ec0920cd58c8d9a46f"
+          },
+          "source_metadata": {
+            "source_id": "jc-v2-048",
+            "original_url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+            "content_type": "application/pdf",
+            "content_hash": "sha256:92322461616cb18750f3a4801a7d03efd53d11a520ba5aa0c7fb52a700fb4532",
+            "fetched_at": "2026-09-10T03:32:59.307843Z",
+            "raw_path": "data/raw/pdf/jc-v2-048--20260910T033259.307843Z--92322461616cb187.pdf",
+            "http_status": 200,
+            "source_quality": "medium",
+            "corpus_version": "jay-chou-corpus-v1",
+            "publisher": "湖南日报报业集团",
+            "title": "周杰伦：为妈妈和外婆而歌唱"
+          },
+          "parse_fingerprint": "pdf-cascade:1.0.0:auto",
+          "source_context_captures": [],
+          "source_context_capture_provenance": [],
+          "source_identity_proofs": {
+            "publisher": {
+              "request_url": "https://epaper.voc.com.cn/jtdb/",
+              "response_url": "https://epaper.voc.com.cn/jtdb/",
+              "http_status": 200,
+              "captured_at": "2026-09-26T14:05:25.611839+00:00",
+              "raw_path": "data/raw/worldline-source-context-v4-20260926/publisher-newspaper.html",
+              "response_sha256": "7a4f0bec40186bb1e5c63501bd8acb36551667201d641411b92efb12e07fa025",
+              "value": "湖南日报报业集团",
+              "exact_span": "湖南日报报业集团",
+              "start": 14,
+              "end": 22,
+              "locator": "HTML title metadata / publication owner",
+              "extracted_text": " 家庭导报 -多媒体数字报-湖南日报报业集团",
+              "extracted_text_sha256": "cdd0f806e7347b680c35348a3dfdc9946d8a99c4a7edd7d0efc1c6e2970bbc9f",
+              "offset_unit": "unicode_code_point_in_extracted_response_text"
+            },
+            "title": {
+              "raw_path": "data/raw/pdf/jc-v2-048--20260910T033259.307843Z--92322461616cb187.pdf",
+              "response_url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+              "response_sha256": "92322461616cb18750f3a4801a7d03efd53d11a520ba5aa0c7fb52a700fb4532",
+              "captured_at": "2026-09-10T03:32:59.307843Z",
+              "value": "周杰伦：为妈妈和外婆而歌唱",
+              "exact_span": "周杰伦：为妈妈和外婆而歌唱",
+              "start": 4064,
+              "end": 4077,
+              "locator": "PDF page 1 / article headline",
+              "extracted_text": "今年是台湾歌手周杰伦进入乐坛\n的第十年。刚出道时，他是人们口中的\n“小天王”；如今，人们已自觉地把那个\n“小” 字去掉，没人怀疑他在华语乐坛\n“天王”的地位。从6 月11 日起，周杰伦\n开始了他出道以来的第四轮巡回演出。\n台北是首站，随后他还要在上海、北京\n等地举行41 场演唱会。\n自2000 年出道以来，周杰伦保持\n着一年一张专辑的发片速度。2009 年，\n由于忙于拍摄《刺陵》、《苏乞儿》、《熊猫\n人》等影视作品，他破天荒地在音乐领\n域交了白卷。在今年5 月推出新专辑\n《跨时代》之后，他马上举办巡演，来巩\n固自己在歌坛的形象和地位。在接受台\n湾媒体的采访时，周杰伦表示，自己能\n够在歌坛继续走下去，“会有第二个10\n年，第三个10 年”。\n单亲家庭的音乐天才\n在台北的3 场演唱会上，周杰伦生\n命中最重要的3 位亲人——\n—母亲、外婆\n和父亲，抛弃了过去的冷漠与对立，一\n连3 天到现场观看，并出席了庆功宴。\n只不过，3 人虽然同时在场，母亲和外婆\n与他的父亲却没有任何交流，而是各坐\n各的。自称“最重视家庭和乐”的周杰\n伦，在脸上灿烂的笑容中，分明带着一\n丝遗憾。\n周杰伦的歌迷们都知道，他是在一\n个单亲家庭长大的。不过，他也享受过\n一段快乐、幸福的童年时光。\n1979 年1 月，周杰伦出生在台北。\n他的母亲叶惠美是台北淡江小学的一\n名美术老师，父亲是淡江中学的生物老\n师。\n周杰伦的父亲周耀中是当地一些\n人眼中所谓的“外省人”，与其他“外省\n人”一样，都是因战乱才移民到台湾的。\n周杰伦的祖父原名周赞文，是一名共产\n党人，曾是福建省泉州市永春县地下文\n艺社的负责人。1943 年，蒋介石为削弱\n共产党领导的人民革命力量，发动第三\n次反共高潮，对共产党人展开“清剿”行\n动。周赞文先是带领幸存的知识分子逃\n到厦门，后来又被迫背井离乡，带着几\n个朋友辗转到了台湾。在台湾，他隐姓\n埋名，把自己的名字改为周赞旺；后来\n他给儿子取名“耀中”，希望儿子有一天\n能够光耀中华。\n周耀中长大后，成了一名老师。\n1978 年，他和中学时的校友叶惠美完\n婚。一年后，周杰伦出生。\n周耀中曾回忆说：“杰伦小的时候，\n我们一家三口经常一起到海边踏浪玩\n耍。鬼灵精的他拍照姿势也特别多，当\n其他小朋友都乖乖站着、蹲着拍照时，\n他一定会跑到镜头的最前面，或扭腰或\n做鬼脸，抢镜头。”\n周杰伦4 岁时，母亲叶惠美把他送\n到淡江山叶幼儿音乐班学弹钢琴。平时\n活泼好动的小杰伦一站到钢琴前，竟出\n奇地安静，听老师弹奏一遍后，自己就\n能复弹出来。老师告诉叶惠美：“这孩子\n很有天分！”\n叶惠美决定全力培养儿子。但她没\n想到在这件事上，她会和丈夫产生十分\n严重的矛盾，还为他们的婚姻埋下了隐\n患。叶惠美主张拿出家里的全部积蓄，\n为周杰伦买一架好钢琴，还要请最好的\n钢琴老师来辅导；周耀中则认为，不必\n这么认真，“男孩子嘛，随意一点，没必\n要拿出全部积蓄投资。”最后，叶惠美还\n是背着丈夫，为儿子买了一架钢琴。上\n小学三年级时的一天，周杰伦偶然听到\n世界名曲《天鹅湖》，被大提琴奏出的忧\n伤凄美的曲调深深迷住。叶惠美没和丈\n夫商量，又为儿子买了一把大提琴。周\n耀中对妻子“孤注一掷”的做法嗤之以\n鼻，并为此经常指责妻子，家里的争吵\n因此越来越多。\n对于那段家庭失和的经历，周耀中\n后来有过反省。他表示，当时他辞掉教\n师工作，开始学做生意，但常常遇到困\n难，就借酒浇愁，醉了就在家里乱发脾\n气。\n周杰伦14 岁那年，父母终于离婚。\n在周杰伦的第二张专辑《范特西》中有\n一首《爸，我回来了》，歌词描写的是父\n母离异、母亲遭受家庭暴力的故事。这\n首歌推出后，外界认为周杰伦是在写自\n己的亲身经历。但他出来辟谣说：“很多\n人误会我是在说父亲家暴，有朋友责备\n我为何要这样写，因为我的父亲根本不\n是这样的人。我只能告诉大家，我是在\n反映一种社会现象。”\n学钢琴的周杰伦，最初的梦想是当\n一名钢琴老师。他最终走上作曲、歌唱\n的道路，是一连串偶然因素所致。\n高中毕业后，周杰伦在台北的一家\n餐厅打工，负责端盘子。他因时常打翻\n菜盘，每个月的工资几乎都要被扣掉一\n半。餐厅里有一架钢琴，一次闲暇时，周\n杰伦弹了一首肖邦的曲子，把老板惊呆\n了。老板决定不再让他端盘子，改在餐\n厅里弹琴，还请来电视台的记者采访。\n但在餐厅里弹琴终究不是长久之\n计。母亲替周杰伦在电视台的娱乐节目\n《超级新人王》报了名。为了参加比赛，\n周杰伦特意创作了一首歌曲《梦有翅\n膀》。那时，他对自己的唱功实在没有信\n心，因此请了一位歌手演唱。但那名歌\n手不理解他的曲风，致使他的钢琴伴奏\n显得有些怪异，结果引来台下听众的一\n片嘘声。周杰伦的第一次表演，就这么\n被彻底搞砸了。\n叶惠美急了。性格内向的她，鼓起\n勇气找到节目主持人吴宗宪，把《梦有\n翅膀》的曲谱拿给他看。吴宗宪当时还\n是台湾阿尔发音乐公司的老板。他应付\n着拿起曲谱扫了一眼。这一“扫”顿时让\n他眼睛放光——\n—歌谱抄写得工工整整，\n曲子谱得也好。“这孩子还可以，明天叫\n他到我的公司来上班！”吴宗宪改变了\n主意，周杰伦的人生也因此发生了改\n变。\n歌坛“三级跳”\n刚出道时的周杰伦，总喜欢把鸭舌\n帽拉得低低的，脸上的表情也带着一些\n羞涩。经过10 年的“磨砺”后，无论是在\n演唱会、新闻发布会上，还是在MV（音\n乐录影带）中，人们看到的是一个越来\n越成熟的“周天王”。\n对流行音乐和古典音乐有着专门\n研究的中国戏曲学院田震子老师认为，\n周杰伦10 年的音乐道路，大致经历了3\n个阶段。\n2000 年至2002 年，周杰伦出道的\n前三年可以视为第一个阶段。他这个时\n期主要的特征是青涩和张狂。真正让周\n杰伦一炮而红的是第二张专辑《范特\n西》。主打歌曲《双截棍》中那句“快使用\n双截棍，哼哼哈嘿”，一下成了当时的\n“流行语”。“那个时期，周杰伦的创作虽\n然给流行乐坛带来了一股另类之风，但\n还略显青涩和幼稚。他将更多的注意力\n放在‘炫耀’一些音乐技巧上，只是以更\n多元的形式来吸引人们的目光。在歌词\n中，他想展示的是自己特立独行和天马\n行空的音乐想法。”\n第二个阶段是2003 年至2007 年。\n2003 年7 月，周杰伦以他妈妈的名字出\n了第四张专辑《叶惠美》。这时，他的音\n乐“舍弃了当初的一些浮躁，融入了更\n多情感，有了更多思考”，由此跨上一个\n新的台阶。“情情爱爱”是以往华语乐坛\n常见的题材，周杰伦却将“笔墨”放到了\n“另一种更深沉的爱”。\n从专辑《叶惠美》开始，人们听到的\n周杰伦作品，越来越注重“情感”，以深\n情的旋律和厚重的歌词来打动人。在之\n后的几张专辑中，周杰伦通过旋律和歌\n词所表达的亲情，变得更加浓烈。如歌\n曲《外婆》有这样的歌词：“外婆她的期\n待/慢慢变成无奈/大人们始终不明白/\n她要的是陪伴/而不是六百块……”他\n要告诉人们不要只顾赚钱而忽视老人\n的感受。\n在2006 年推出的《七里香》专辑\n中，有一首《听妈妈的话》。他在歌中唱\n道：“听妈妈的话/别让她受伤/想快快长\n大/才能保护她……”\n小时候，周杰伦有过被母亲逼着练\n琴的经历。长大后，他明白如果没有严\n厉的母亲，就没有他的今天。“所以，我\n写了一首《听妈妈的话》，希望大家都能\n谅解母亲的用心。大家小时候也许会对\n父母的严厉督导不满，但长大后会理\n解。”一次，当叶惠美听到儿子唱这首歌\n时，感动得流下了眼泪。\n2008 年至2010 年是周杰伦音乐道\n路的第三个阶段。其间，周杰伦的音乐\n开始步入成熟期，他创作了更多“中国\n风”的作品。在2008 年中央电视台的春\n节联欢晚会上，周杰伦演唱的《青花\n瓷》，一夜间让更多的中国人都喜爱上\n了他的“中国风”。这首作品也被认为是\n周杰伦对“中国风”诠释的巅峰之作。\n田震子认为，“中国风”是近年来流\n行乐坛一种新兴的流行趋势。这些歌在\n乐曲中融进中国特有的传统曲风、乐\n器、诗词等音乐文化元素和内容，具有\n强烈的东方韵味。外表冷酷的周杰伦对\n中华文化有着很深的情结。也正是因为\n周杰伦在音乐上对“中国风”的推崇，他\n和大陆民族唱法歌唱家宋祖英有了多\n次合作。\n“平庸的歌手追随潮流，伟大的歌\n手制造潮流。”这句话恰如其分地概括\n了周杰伦与其他歌手的区别。10 年之\n前，人们无论如何也想不到，小眼睛、单\n眼皮也能“帅”；支离破碎的语句、咬字\n不清的唱腔也是“酷”——\n—周杰伦把自\n己的“缺点”，都变成了“流行”。\n周杰伦最大的“另类”，就是颠覆了\n字正腔圆的准则。以往的歌手，一直将\n“吐字清晰”作为基本功，但周杰伦唱歌\n的一大特点是咬字不清。他的这种唱法\n曾遭到质疑，但他回应说：“咬字不清正\n是我音乐的精髓所在。如果字正腔圆，\n那就不是我的风格了。”\n每一分荣耀都是努力换来的\n10 年的打拼，周杰伦收获的不仅仅\n是音乐成果。他已由一名歌手，成长为\n集音乐人、影视演员、电影导演、经纪公\n司老板等多重身份于一身的“全能王”。\n一手发掘周杰伦的“伯乐”吴宗宪\n曾说，周杰伦能有今天的成就，出众的\n天赋只是原因之一，认真和勤奋才是关\n键。周杰伦的好友刘畊宏说：“杰伦经常\n半夜下飞机，工作人员都催他赶紧休\n息，他却直奔家里编曲，或是到录音室\n讨论音乐。所以他取得的每一分荣耀都\n是努力换来的，绝无侥幸。”\n10 年是一个不长不短的时间段。能\n火10 年，证明了周杰伦的实力。但未来\n的10 年、20 年，他会怎样呢？“或许，对\n于这个问题，我们还是得让时间来回\n答。”著名乐评人李皖认为，“周杰伦在\n20 年后是否会被铭记？结果当然重要，\n但并非那么重要……我们希望的可不\n是20 年，而是更久。”\n吴亚明萧师言刘雅婷崔瑾月\n·名人\n16\n编辑：吴岱霞Email:jtdb1@yahoo.cn 美编：浩子\n透视光环背后的真实生活\nＦ\nGUIDE\nAMILY\n2010 年11 月30 日—12 月6 日\n周杰伦：为妈妈和外婆而歌唱\n周杰伦非常重视家庭和乐。\n廖先生在海尔专卖店购买1 台海\n尔冰箱和热水器给家里年迈的父母使\n用。当天海尔售后安装人员跟商场送货\n人员就一起到达廖先生家。海尔售后安\n装人员很有礼貌的及面带笑容向廖先\n生出示一张上岗证，穿上自备的鞋套，\n并从工作包中拿出一张服务卡温和的\n向廖先生讲解上面的内容，之后还请廖\n先生按上面讲的几项服务规范进行监\n督他安装的全过程。后因老人家对使用\n不太了解，师傅一遍一遍不耐其烦的讲\n指导直到廖先生父母对使用完全熟练\n止。更让廖先生感动的是师傅不但将自\n己该装的产品服务好后，还为廖先生家\n其他家电及插座全部检查一遍，通过通\n检，师傅发现廖先生家的微波炉会漏\n电，师傅不但没有拒绝维修二话不说，\n现场帮廖先生解决了漏电故障。廖先生\n购买了海尔产品真的很放心，买家电选\n海尔，果然值！\n海尔服务\n创造感动\n",
+              "extracted_text_sha256": "8f20fde6ce884a3d5fa8c701146da3091dbfe311afe6ba9ded2363a70a05af6a",
+              "offset_unit": "unicode_code_point_in_extracted_response_text"
+            }
+          },
+          "source_context_preparation_version": "worldline-verbatim-v4-20260926"
+        },
+        "source_locator": "未命名文档",
+        "source_content_sha256": "db5612077500cd6dec2a99e513a6911ba867c1561d5ab0ad7b14058c880b1d81",
+        "parent_content_sha256": "26279986226faca41bc0416ee1ab24504001257ff055610e0c8229bec673c704",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:eb5da84c175c50c08d81b50181724a38175dea53ecf843bcbac46aa2ee446d43",
+        "index_input_hash": "sha256:14163399821a5cca21cd074ef48b304fdb5ee6f93206628670def687736df7f7",
+        "source_response_sha256": "92322461616cb18750f3a4801a7d03efd53d11a520ba5aa0c7fb52a700fb4532",
+        "chunk_id": "child-2c9c01d1c6765c3ca5271d72",
+        "parent_id": "parent-bc23e565000bbb36d4ec44e9",
+        "doc_id": "doc-jc-v2-048-d0a320ed0eb9ab94ede2",
+        "matched_child_ids": [
+          "child-2c9c01d1c6765c3ca5271d72"
+        ],
+        "entity_ids": [
+          "album:fantasy",
+          "artist:jay_chou",
+          "song:nunchucks"
+        ],
+        "supported_claims": [
+          {
+            "claim_id": "claim:217c9e0609104466d789e270",
+            "statement": "周杰伦于2000年出道",
+            "subject_entity_id": "artist:jay_chou",
+            "predicate": "debuted",
+            "object_value": "出道",
+            "time": {
+              "year": 2000,
+              "date": null,
+              "start_year": null,
+              "end_year": null,
+              "raw": "2000 年"
+            },
+            "source_chunk_id": "child-2c9c01d1c6765c3ca5271d72",
+            "evidence_span": "2000 年至 2002 年 周杰伦出道的前三年可以视为第一个阶段 他这个时期主要的特征是青涩和张狂 真正让周杰伦 炮而红的是第二张专辑《范特西》 主打歌曲《双截棍》中那句“快使用双截棍 哼哼哈嘿” 一下成了当时的“流行语” “那个时期 周杰伦的创作虽然给流行乐坛带来了 股另类之风 但还略显青涩和幼稚 他将更多的注意力放在‘炫耀’ 些音乐技巧上 只是以更多元的形式来吸引人们的目光 在歌词中 他想展示的是自己特立独行和天马行空的音乐想法 ”",
+            "extraction_confidence": 0.98,
+            "verification_confidence": 0.98,
+            "extraction_source": "rule"
+          }
+        ],
+        "fusion_score": 0.04103420360250962,
+        "channel_evidence": [
+          {
+            "chunk_id": "child-2c9c01d1c6765c3ca5271d72",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 1,
+            "raw_score": 0.6901486,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-2c9c01d1c6765c3ca5271d72",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 21,
+            "raw_score": 18.143984,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-2c9c01d1c6765c3ca5271d72",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 1,
+            "raw_score": 0.73258334,
+            "weight": 0.75
+          }
+        ],
+        "retrieval_status": "success",
+        "retrieval_version": "v1",
+        "index_profile": {
+          "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+          "source_release_id": "knowledge-v2-aa5271a36860debb",
+          "index_schema_version": "v2",
+          "projection_version": "v4",
+          "registry_version": "v3"
+        },
+        "retrieval_warnings": [
+          "timeline_navigation_sections_removed:3"
+        ],
+        "context_version": "v1",
+        "context_warnings": [
+          "context_token_budget_applied",
+          "source_context_budget_omitted:child-47f20fb8758857fea2a887a0",
+          "source_context_budget_omitted:child-feeb73b0b5bc0c8c58a6db75",
+          "near_duplicate_evidence_removed:2"
+        ],
+        "context_pack_rank": 4,
+        "context_source_rank": 4,
+        "context_token_count": 348,
+        "context_token_budget": 3000,
+        "evidence_span": "歌坛“三级跳”\n\n刚出道时的周杰伦 总喜欢把鸭舌帽拉得低低的 脸上的表情也带着<sub>一</sub>些羞涩 经过 10 年的“磨砺”后 无论是在演唱会 新闻发布会上 还是在 M （音乐录影带）中 人们看到的是 个越来越成熟的“周天王”\n\n对流行音乐和古典音乐有着专门研究的中国戏曲学院田震子老师认为周杰伦 10 年的音乐道路 大致经历了 3个阶段\n\n2000 年至 2002 年 周杰伦出道的前三年可以视为第一个阶段 他这个时期主要的特征是青涩和张狂 真正让周杰伦 炮而红的是第二张专辑《范特西》 主打歌曲《双截棍》中那句“快使用双截棍 哼哼哈嘿” 一下成了当时的“流行语” “那个时期 周杰伦的创作虽然给流行乐坛带来了 股另类之风 但还略显青涩和幼稚 他将更多的注意力放在‘炫耀’ 些音乐技巧上 只是以更多元的形式来吸引人们的目光 在歌词中 他想展示的是自己特立独行和天马行空的音乐想法 ”",
+        "subquery_ids": [
+          "q0:original",
+          "q2:semantic"
+        ],
+        "retrieval_legs": [
+          "q0:original:dense",
+          "q0:original:lexical",
+          "q2:semantic:dense"
+        ],
+        "sufficiency_status": "sufficient",
+        "source_evidence_content": "歌坛“三级跳”\n\n刚出道时的周杰伦 总喜欢把鸭舌帽拉得低低的 脸上的表情也带着<sub>一</sub>些羞涩 经过 10 年的“磨砺”后 无论是在演唱会 新闻发布会上 还是在 M （音乐录影带）中 人们看到的是 个越来越成熟的“周天王”\n\n对流行音乐和古典音乐有着专门研究的中国戏曲学院田震子老师认为周杰伦 10 年的音乐道路 大致经历了 3个阶段\n\n2000 年至 2002 年 周杰伦出道的前三年可以视为第一个阶段 他这个时期主要的特征是青涩和张狂 真正让周杰伦 炮而红的是第二张专辑《范特西》 主打歌曲《双截棍》中那句“快使用双截棍 哼哼哈嘿” 一下成了当时的“流行语” “那个时期 周杰伦的创作虽然给流行乐坛带来了 股另类之风 但还略显青涩和幼稚 他将更多的注意力放在‘炫耀’ 些音乐技巧上 只是以更多元的形式来吸引人们的目光 在歌词中 他想展示的是自己特立独行和天马行空的音乐想法 ”",
+        "rerank_status": "off"
+      }
+    },
+    {
+      "id": "knowledge:chunk:927a46de9cf37335ddd01e53",
+      "source_type": "knowledge",
+      "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+      "source": "澎湃新闻",
+      "url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+      "excerpt": "也正是因为这种好胜，让他对自己的音乐格外认真，用制作人杨俊荣的话说就是：“他从来不是‘差不多先生’，而是‘差一点就很多先生’。”\n\n转机在这年7月到来。\n\n2000年7月，新来的音乐总监杨俊荣听到了周杰伦的《可爱女人》，听完之后，杨俊荣跑出录音室打电话给吴宗宪：\n\n“你居然把他摆在角落那么久？”\n\n“如果周杰伦做不起来，我就不干了，所以让我赌赌看。”\n\n就这样，公司最终决定替周杰伦推出一张专辑，在这一年11月，他的第一张同名专辑《JAY》，正式发行。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n专辑发行不久后，就是春节。\n\n周杰伦的好友刘畊宏后来回忆道：“春节一过，街上就开始在放他的歌。过完年，公司告诉我们，那张（周杰伦专辑）大卖。他们赶紧补货，临时还更换了封面。”",
+      "metadata": {
+        "point_id": "259d4848-e00f-5662-a769-9201d8307446",
+        "source_id": "jc-v2-007",
+        "document_metadata": {
+          "parser_metadata": {
+            "omitted_parser_tree": true,
+            "original_value_sha256": "714d72e26b81bd79146bc0dc1517b3490594bc8d564d4f4e303bb4e4527f2fdc"
+          },
+          "source_metadata": {
+            "source_id": "jc-v2-007",
+            "original_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+            "content_type": "text/html; charset=utf-8",
+            "content_hash": "sha256:77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+            "fetched_at": "2026-09-10T03:33:26.777463Z",
+            "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+            "http_status": 200,
+            "source_quality": "high",
+            "corpus_version": "jay-chou-corpus-v1",
+            "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+            "publisher": "澎湃新闻",
+            "author": null,
+            "file_type": "html",
+            "source_type": "media_article",
+            "source_tier": 2,
+            "artist": "周杰伦",
+            "album": "范特西",
+            "topics": [
+              "音乐史 / 时代背景",
+              "创作背景",
+              "作品影响"
+            ],
+            "replacement_of": "jc-v1-028"
+          },
+          "parse_fingerprint": "html:1.1.0:auto",
+          "source_context_captures": [
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[49]; decoded text [1856:1899]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "在第一张专辑之后，周杰伦保持着一年一张专辑的频率，先后发行了《范特西》与《八度空间》。",
+              "content_sha256": "dc821ccc9298697756b029fcd7fbc7cd9123a1d7fcf706984db5f36b8348dc7d",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "在第一张专辑之后，周杰伦保持着一年一张专辑的频率，先后发行了《范特西》与《八度空间》。",
+                  "start": 0,
+                  "end": 43
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[67]; decoded text [2664:2726]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "早在2001年，22岁的周杰伦在李玟演唱会上担任嘉宾，在后台接受采访时，他就说过：“要让人家知道中国人也可以写得这么流行。”",
+              "content_sha256": "d75eb0b850d5f1ecaf2acb4f1e15e6a9c7e23d8d936402933708201832acd444",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "早在2001年，22岁的周杰伦在李玟演唱会上担任嘉宾，在后台接受采访时，他就说过：“要让人家知道中国人也可以写得这么流行。”",
+                  "start": 0,
+                  "end": 62
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[68]; decoded text [2726:2772]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "如今看，周杰伦似乎始终都将向世界传播中国文化作为自己的使命，并开创了“中国风”这一流行曲风。",
+              "content_sha256": "159ad6eadeb8643eb547ecf17004948b7ac3339bf399c9c193d79e2b0968630f",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "如今看，周杰伦似乎始终都将向世界传播中国文化作为自己的使命，并开创了“中国风”这一流行曲风。",
+                  "start": 0,
+                  "end": 46
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[81]; decoded text [3168:3210]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "这一年，周杰伦离开了之前的公司，创办了自己的公司；这一年，他发行了新专辑《我很忙》；",
+              "content_sha256": "d3f59019677bd4bbd72361bc382bc77a87aebfe1a9b10e04227ff8a7a4d3233e",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "这一年，周杰伦离开了之前的公司，创办了自己的公司；这一年，他发行了新专辑《我很忙》；",
+                  "start": 0,
+                  "end": 42
+                }
+              ]
+            }
+          ],
+          "source_context_capture_provenance": [
+            {
+              "content_sha256": "dc821ccc9298697756b029fcd7fbc7cd9123a1d7fcf706984db5f36b8348dc7d",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 1856,
+              "source_text_end": 1899,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[49]; decoded text [1856:1899]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "d75eb0b850d5f1ecaf2acb4f1e15e6a9c7e23d8d936402933708201832acd444",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 2664,
+              "source_text_end": 2726,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[67]; decoded text [2664:2726]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "159ad6eadeb8643eb547ecf17004948b7ac3339bf399c9c193d79e2b0968630f",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 2726,
+              "source_text_end": 2772,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[68]; decoded text [2726:2772]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "d3f59019677bd4bbd72361bc382bc77a87aebfe1a9b10e04227ff8a7a4d3233e",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 3168,
+              "source_text_end": 3210,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[81]; decoded text [3168:3210]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            }
+          ],
+          "source_identity_proofs": {},
+          "source_context_preparation_version": "worldline-verbatim-v4-20260926"
+        },
+        "source_locator": "41岁周杰伦：时代变了，但我的时代不会过去",
+        "source_content_sha256": "f2518b3472704dc9dfcac4febc1fe43e002cfaae80486f8950e803cc53d4d004",
+        "parent_content_sha256": "11bc9c42c6531436b18d8670cbef16e139bd4be5992da0dbc43396a57f5a6d09",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:8e468ae11993c9eeeb3089689c4327114a6fd2fcc6f2ca17fe68f1bfa5c4dfe2",
+        "index_input_hash": "sha256:134a1b78d2a96d40651052de898151c1a39e556f591605b78252ce91b0a98aff",
+        "source_response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+        "chunk_id": "child-31b28da1a05516dd05a86f7c",
+        "parent_id": "parent-5ba80a812804e7ee7f9c7008",
+        "doc_id": "doc-jc-v2-007-d65a5eb1d97ff8ebd12b",
+        "matched_child_ids": [
+          "child-31b28da1a05516dd05a86f7c",
+          "child-4d988d9eec2e3cf141acd436",
+          "child-f2438f02de4c6216f9d00a4b"
+        ],
+        "entity_ids": [
+          "album:fantasy",
+          "album:jay_2000",
+          "artist:jacky_wu",
+          "artist:jay_chou"
+        ],
+        "supported_claims": [],
+        "fusion_score": 0.04073709751459112,
+        "channel_evidence": [
+          {
+            "chunk_id": "child-31b28da1a05516dd05a86f7c",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 8,
+            "raw_score": 0.6162306,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-31b28da1a05516dd05a86f7c",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 9,
+            "raw_score": 21.940992,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-31b28da1a05516dd05a86f7c",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 5,
+            "raw_score": 0.6357051,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-4d988d9eec2e3cf141acd436",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 28,
+            "raw_score": 0.5458544,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-4d988d9eec2e3cf141acd436",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 16,
+            "raw_score": 19.429573,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-4d988d9eec2e3cf141acd436",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 21,
+            "raw_score": 0.57361704,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-f2438f02de4c6216f9d00a4b",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 31,
+            "raw_score": 0.54175025,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-f2438f02de4c6216f9d00a4b",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 30,
+            "raw_score": 0.55700755,
+            "weight": 0.75
+          }
+        ],
+        "retrieval_status": "success",
+        "retrieval_version": "v1",
+        "index_profile": {
+          "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+          "source_release_id": "knowledge-v2-aa5271a36860debb",
+          "index_schema_version": "v2",
+          "projection_version": "v4",
+          "registry_version": "v3"
+        },
+        "retrieval_warnings": [
+          "timeline_navigation_sections_removed:3"
+        ],
+        "context_version": "v1",
+        "context_warnings": [
+          "context_token_budget_applied",
+          "source_context_budget_omitted:child-47f20fb8758857fea2a887a0",
+          "source_context_budget_omitted:child-feeb73b0b5bc0c8c58a6db75",
+          "near_duplicate_evidence_removed:2"
+        ],
+        "context_pack_rank": 5,
+        "context_source_rank": 5,
+        "context_token_count": 357,
+        "context_token_budget": 3000,
+        "evidence_span": "也正是因为这种好胜，让他对自己的音乐格外认真，用制作人杨俊荣的话说就是：“他从来不是‘差不多先生’，而是‘差一点就很多先生’。”\n\n转机在这年7月到来。\n\n2000年7月，新来的音乐总监杨俊荣听到了周杰伦的《可爱女人》，听完之后，杨俊荣跑出录音室打电话给吴宗宪：\n\n“你居然把他摆在角落那么久？”\n\n“如果周杰伦做不起来，我就不干了，所以让我赌赌看。”\n\n就这样，公司最终决定替周杰伦推出一张专辑，在这一年11月，他的第一张同名专辑《JAY》，正式发行。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n专辑发行不久后，就是春节。\n\n周杰伦的好友刘畊宏后来回忆道：“春节一过，街上就开始在放他的歌。过完年，公司告诉我们，那张（周杰伦专辑）大卖。他们赶紧补货，临时还更换了封面。”",
+        "subquery_ids": [
+          "q0:original",
+          "q2:semantic"
+        ],
+        "retrieval_legs": [
+          "q0:original:dense",
+          "q0:original:lexical",
+          "q2:semantic:dense"
+        ],
+        "sufficiency_status": "sufficient",
+        "source_evidence_content": "也正是因为这种好胜，让他对自己的音乐格外认真，用制作人杨俊荣的话说就是：“他从来不是‘差不多先生’，而是‘差一点就很多先生’。”\n\n转机在这年7月到来。\n\n2000年7月，新来的音乐总监杨俊荣听到了周杰伦的《可爱女人》，听完之后，杨俊荣跑出录音室打电话给吴宗宪：\n\n“你居然把他摆在角落那么久？”\n\n“如果周杰伦做不起来，我就不干了，所以让我赌赌看。”\n\n就这样，公司最终决定替周杰伦推出一张专辑，在这一年11月，他的第一张同名专辑《JAY》，正式发行。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n专辑发行不久后，就是春节。\n\n周杰伦的好友刘畊宏后来回忆道：“春节一过，街上就开始在放他的歌。过完年，公司告诉我们，那张（周杰伦专辑）大卖。他们赶紧补货，临时还更换了封面。”",
+        "rerank_status": "off"
+      }
+    },
+    {
+      "id": "knowledge:chunk:6bf6c43a7f5afaceb5013e2f",
+      "source_type": "knowledge",
+      "title": "周杰伦：为妈妈和外婆而歌唱",
+      "source": "湖南日报报业集团",
+      "url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+      "excerpt": "周杰伦：为妈妈和外婆而歌唱\n\n![](images/88a9241398537bfd466a4ec5a8229dbe75379864c8a3df4751f5d03d00bafd40.jpg)\n\n今年是台湾歌手周杰伦进入乐坛的第十年 刚出道时 他是人们口中的“小天王” 如今 人们已自觉地把那个“小” 字去掉 没人怀疑他在华语乐坛“天王”的地位 从6 月 11 日起 周杰伦开始了他出道以来的第四轮巡回演出台北是首站 随后他还要在上海 北京等地举行41 场演唱会\n\n自 2000 年出道以来 周杰伦保持着 年 张专辑的发片速度 2009 年由于忙于拍摄《刺陵》《苏乞儿》《熊猫人》等影视作品 他破天荒地在音乐领域交了白卷 在今年 5 月推出新专辑《跨时代》之后 他马上举办巡演 来巩固自己在歌坛的形象和地位 在接受台湾媒体的采访时 周杰伦表示 自己能够在歌坛继续走下去“会有第二个 10年 第三个10 年”\n\n单亲家庭的音乐天才",
+      "metadata": {
+        "point_id": "f9740179-3208-538b-a74d-c7fb2f96445e",
+        "source_id": "jc-v2-048",
+        "document_metadata": {
+          "parser_metadata": {
+            "omitted_parser_tree": true,
+            "original_value_sha256": "aac4af172c7acf7e2ad012f6efbac407da22c3e691e806ec0920cd58c8d9a46f"
+          },
+          "source_metadata": {
+            "source_id": "jc-v2-048",
+            "original_url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+            "content_type": "application/pdf",
+            "content_hash": "sha256:92322461616cb18750f3a4801a7d03efd53d11a520ba5aa0c7fb52a700fb4532",
+            "fetched_at": "2026-09-10T03:32:59.307843Z",
+            "raw_path": "data/raw/pdf/jc-v2-048--20260910T033259.307843Z--92322461616cb187.pdf",
+            "http_status": 200,
+            "source_quality": "medium",
+            "corpus_version": "jay-chou-corpus-v1",
+            "publisher": "湖南日报报业集团",
+            "title": "周杰伦：为妈妈和外婆而歌唱"
+          },
+          "parse_fingerprint": "pdf-cascade:1.0.0:auto",
+          "source_context_captures": [],
+          "source_context_capture_provenance": [],
+          "source_identity_proofs": {
+            "publisher": {
+              "request_url": "https://epaper.voc.com.cn/jtdb/",
+              "response_url": "https://epaper.voc.com.cn/jtdb/",
+              "http_status": 200,
+              "captured_at": "2026-09-26T14:05:25.611839+00:00",
+              "raw_path": "data/raw/worldline-source-context-v4-20260926/publisher-newspaper.html",
+              "response_sha256": "7a4f0bec40186bb1e5c63501bd8acb36551667201d641411b92efb12e07fa025",
+              "value": "湖南日报报业集团",
+              "exact_span": "湖南日报报业集团",
+              "start": 14,
+              "end": 22,
+              "locator": "HTML title metadata / publication owner",
+              "extracted_text": " 家庭导报 -多媒体数字报-湖南日报报业集团",
+              "extracted_text_sha256": "cdd0f806e7347b680c35348a3dfdc9946d8a99c4a7edd7d0efc1c6e2970bbc9f",
+              "offset_unit": "unicode_code_point_in_extracted_response_text"
+            },
+            "title": {
+              "raw_path": "data/raw/pdf/jc-v2-048--20260910T033259.307843Z--92322461616cb187.pdf",
+              "response_url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+              "response_sha256": "92322461616cb18750f3a4801a7d03efd53d11a520ba5aa0c7fb52a700fb4532",
+              "captured_at": "2026-09-10T03:32:59.307843Z",
+              "value": "周杰伦：为妈妈和外婆而歌唱",
+              "exact_span": "周杰伦：为妈妈和外婆而歌唱",
+              "start": 4064,
+              "end": 4077,
+              "locator": "PDF page 1 / article headline",
+              "extracted_text": "今年是台湾歌手周杰伦进入乐坛\n的第十年。刚出道时，他是人们口中的\n“小天王”；如今，人们已自觉地把那个\n“小” 字去掉，没人怀疑他在华语乐坛\n“天王”的地位。从6 月11 日起，周杰伦\n开始了他出道以来的第四轮巡回演出。\n台北是首站，随后他还要在上海、北京\n等地举行41 场演唱会。\n自2000 年出道以来，周杰伦保持\n着一年一张专辑的发片速度。2009 年，\n由于忙于拍摄《刺陵》、《苏乞儿》、《熊猫\n人》等影视作品，他破天荒地在音乐领\n域交了白卷。在今年5 月推出新专辑\n《跨时代》之后，他马上举办巡演，来巩\n固自己在歌坛的形象和地位。在接受台\n湾媒体的采访时，周杰伦表示，自己能\n够在歌坛继续走下去，“会有第二个10\n年，第三个10 年”。\n单亲家庭的音乐天才\n在台北的3 场演唱会上，周杰伦生\n命中最重要的3 位亲人——\n—母亲、外婆\n和父亲，抛弃了过去的冷漠与对立，一\n连3 天到现场观看，并出席了庆功宴。\n只不过，3 人虽然同时在场，母亲和外婆\n与他的父亲却没有任何交流，而是各坐\n各的。自称“最重视家庭和乐”的周杰\n伦，在脸上灿烂的笑容中，分明带着一\n丝遗憾。\n周杰伦的歌迷们都知道，他是在一\n个单亲家庭长大的。不过，他也享受过\n一段快乐、幸福的童年时光。\n1979 年1 月，周杰伦出生在台北。\n他的母亲叶惠美是台北淡江小学的一\n名美术老师，父亲是淡江中学的生物老\n师。\n周杰伦的父亲周耀中是当地一些\n人眼中所谓的“外省人”，与其他“外省\n人”一样，都是因战乱才移民到台湾的。\n周杰伦的祖父原名周赞文，是一名共产\n党人，曾是福建省泉州市永春县地下文\n艺社的负责人。1943 年，蒋介石为削弱\n共产党领导的人民革命力量，发动第三\n次反共高潮，对共产党人展开“清剿”行\n动。周赞文先是带领幸存的知识分子逃\n到厦门，后来又被迫背井离乡，带着几\n个朋友辗转到了台湾。在台湾，他隐姓\n埋名，把自己的名字改为周赞旺；后来\n他给儿子取名“耀中”，希望儿子有一天\n能够光耀中华。\n周耀中长大后，成了一名老师。\n1978 年，他和中学时的校友叶惠美完\n婚。一年后，周杰伦出生。\n周耀中曾回忆说：“杰伦小的时候，\n我们一家三口经常一起到海边踏浪玩\n耍。鬼灵精的他拍照姿势也特别多，当\n其他小朋友都乖乖站着、蹲着拍照时，\n他一定会跑到镜头的最前面，或扭腰或\n做鬼脸，抢镜头。”\n周杰伦4 岁时，母亲叶惠美把他送\n到淡江山叶幼儿音乐班学弹钢琴。平时\n活泼好动的小杰伦一站到钢琴前，竟出\n奇地安静，听老师弹奏一遍后，自己就\n能复弹出来。老师告诉叶惠美：“这孩子\n很有天分！”\n叶惠美决定全力培养儿子。但她没\n想到在这件事上，她会和丈夫产生十分\n严重的矛盾，还为他们的婚姻埋下了隐\n患。叶惠美主张拿出家里的全部积蓄，\n为周杰伦买一架好钢琴，还要请最好的\n钢琴老师来辅导；周耀中则认为，不必\n这么认真，“男孩子嘛，随意一点，没必\n要拿出全部积蓄投资。”最后，叶惠美还\n是背着丈夫，为儿子买了一架钢琴。上\n小学三年级时的一天，周杰伦偶然听到\n世界名曲《天鹅湖》，被大提琴奏出的忧\n伤凄美的曲调深深迷住。叶惠美没和丈\n夫商量，又为儿子买了一把大提琴。周\n耀中对妻子“孤注一掷”的做法嗤之以\n鼻，并为此经常指责妻子，家里的争吵\n因此越来越多。\n对于那段家庭失和的经历，周耀中\n后来有过反省。他表示，当时他辞掉教\n师工作，开始学做生意，但常常遇到困\n难，就借酒浇愁，醉了就在家里乱发脾\n气。\n周杰伦14 岁那年，父母终于离婚。\n在周杰伦的第二张专辑《范特西》中有\n一首《爸，我回来了》，歌词描写的是父\n母离异、母亲遭受家庭暴力的故事。这\n首歌推出后，外界认为周杰伦是在写自\n己的亲身经历。但他出来辟谣说：“很多\n人误会我是在说父亲家暴，有朋友责备\n我为何要这样写，因为我的父亲根本不\n是这样的人。我只能告诉大家，我是在\n反映一种社会现象。”\n学钢琴的周杰伦，最初的梦想是当\n一名钢琴老师。他最终走上作曲、歌唱\n的道路，是一连串偶然因素所致。\n高中毕业后，周杰伦在台北的一家\n餐厅打工，负责端盘子。他因时常打翻\n菜盘，每个月的工资几乎都要被扣掉一\n半。餐厅里有一架钢琴，一次闲暇时，周\n杰伦弹了一首肖邦的曲子，把老板惊呆\n了。老板决定不再让他端盘子，改在餐\n厅里弹琴，还请来电视台的记者采访。\n但在餐厅里弹琴终究不是长久之\n计。母亲替周杰伦在电视台的娱乐节目\n《超级新人王》报了名。为了参加比赛，\n周杰伦特意创作了一首歌曲《梦有翅\n膀》。那时，他对自己的唱功实在没有信\n心，因此请了一位歌手演唱。但那名歌\n手不理解他的曲风，致使他的钢琴伴奏\n显得有些怪异，结果引来台下听众的一\n片嘘声。周杰伦的第一次表演，就这么\n被彻底搞砸了。\n叶惠美急了。性格内向的她，鼓起\n勇气找到节目主持人吴宗宪，把《梦有\n翅膀》的曲谱拿给他看。吴宗宪当时还\n是台湾阿尔发音乐公司的老板。他应付\n着拿起曲谱扫了一眼。这一“扫”顿时让\n他眼睛放光——\n—歌谱抄写得工工整整，\n曲子谱得也好。“这孩子还可以，明天叫\n他到我的公司来上班！”吴宗宪改变了\n主意，周杰伦的人生也因此发生了改\n变。\n歌坛“三级跳”\n刚出道时的周杰伦，总喜欢把鸭舌\n帽拉得低低的，脸上的表情也带着一些\n羞涩。经过10 年的“磨砺”后，无论是在\n演唱会、新闻发布会上，还是在MV（音\n乐录影带）中，人们看到的是一个越来\n越成熟的“周天王”。\n对流行音乐和古典音乐有着专门\n研究的中国戏曲学院田震子老师认为，\n周杰伦10 年的音乐道路，大致经历了3\n个阶段。\n2000 年至2002 年，周杰伦出道的\n前三年可以视为第一个阶段。他这个时\n期主要的特征是青涩和张狂。真正让周\n杰伦一炮而红的是第二张专辑《范特\n西》。主打歌曲《双截棍》中那句“快使用\n双截棍，哼哼哈嘿”，一下成了当时的\n“流行语”。“那个时期，周杰伦的创作虽\n然给流行乐坛带来了一股另类之风，但\n还略显青涩和幼稚。他将更多的注意力\n放在‘炫耀’一些音乐技巧上，只是以更\n多元的形式来吸引人们的目光。在歌词\n中，他想展示的是自己特立独行和天马\n行空的音乐想法。”\n第二个阶段是2003 年至2007 年。\n2003 年7 月，周杰伦以他妈妈的名字出\n了第四张专辑《叶惠美》。这时，他的音\n乐“舍弃了当初的一些浮躁，融入了更\n多情感，有了更多思考”，由此跨上一个\n新的台阶。“情情爱爱”是以往华语乐坛\n常见的题材，周杰伦却将“笔墨”放到了\n“另一种更深沉的爱”。\n从专辑《叶惠美》开始，人们听到的\n周杰伦作品，越来越注重“情感”，以深\n情的旋律和厚重的歌词来打动人。在之\n后的几张专辑中，周杰伦通过旋律和歌\n词所表达的亲情，变得更加浓烈。如歌\n曲《外婆》有这样的歌词：“外婆她的期\n待/慢慢变成无奈/大人们始终不明白/\n她要的是陪伴/而不是六百块……”他\n要告诉人们不要只顾赚钱而忽视老人\n的感受。\n在2006 年推出的《七里香》专辑\n中，有一首《听妈妈的话》。他在歌中唱\n道：“听妈妈的话/别让她受伤/想快快长\n大/才能保护她……”\n小时候，周杰伦有过被母亲逼着练\n琴的经历。长大后，他明白如果没有严\n厉的母亲，就没有他的今天。“所以，我\n写了一首《听妈妈的话》，希望大家都能\n谅解母亲的用心。大家小时候也许会对\n父母的严厉督导不满，但长大后会理\n解。”一次，当叶惠美听到儿子唱这首歌\n时，感动得流下了眼泪。\n2008 年至2010 年是周杰伦音乐道\n路的第三个阶段。其间，周杰伦的音乐\n开始步入成熟期，他创作了更多“中国\n风”的作品。在2008 年中央电视台的春\n节联欢晚会上，周杰伦演唱的《青花\n瓷》，一夜间让更多的中国人都喜爱上\n了他的“中国风”。这首作品也被认为是\n周杰伦对“中国风”诠释的巅峰之作。\n田震子认为，“中国风”是近年来流\n行乐坛一种新兴的流行趋势。这些歌在\n乐曲中融进中国特有的传统曲风、乐\n器、诗词等音乐文化元素和内容，具有\n强烈的东方韵味。外表冷酷的周杰伦对\n中华文化有着很深的情结。也正是因为\n周杰伦在音乐上对“中国风”的推崇，他\n和大陆民族唱法歌唱家宋祖英有了多\n次合作。\n“平庸的歌手追随潮流，伟大的歌\n手制造潮流。”这句话恰如其分地概括\n了周杰伦与其他歌手的区别。10 年之\n前，人们无论如何也想不到，小眼睛、单\n眼皮也能“帅”；支离破碎的语句、咬字\n不清的唱腔也是“酷”——\n—周杰伦把自\n己的“缺点”，都变成了“流行”。\n周杰伦最大的“另类”，就是颠覆了\n字正腔圆的准则。以往的歌手，一直将\n“吐字清晰”作为基本功，但周杰伦唱歌\n的一大特点是咬字不清。他的这种唱法\n曾遭到质疑，但他回应说：“咬字不清正\n是我音乐的精髓所在。如果字正腔圆，\n那就不是我的风格了。”\n每一分荣耀都是努力换来的\n10 年的打拼，周杰伦收获的不仅仅\n是音乐成果。他已由一名歌手，成长为\n集音乐人、影视演员、电影导演、经纪公\n司老板等多重身份于一身的“全能王”。\n一手发掘周杰伦的“伯乐”吴宗宪\n曾说，周杰伦能有今天的成就，出众的\n天赋只是原因之一，认真和勤奋才是关\n键。周杰伦的好友刘畊宏说：“杰伦经常\n半夜下飞机，工作人员都催他赶紧休\n息，他却直奔家里编曲，或是到录音室\n讨论音乐。所以他取得的每一分荣耀都\n是努力换来的，绝无侥幸。”\n10 年是一个不长不短的时间段。能\n火10 年，证明了周杰伦的实力。但未来\n的10 年、20 年，他会怎样呢？“或许，对\n于这个问题，我们还是得让时间来回\n答。”著名乐评人李皖认为，“周杰伦在\n20 年后是否会被铭记？结果当然重要，\n但并非那么重要……我们希望的可不\n是20 年，而是更久。”\n吴亚明萧师言刘雅婷崔瑾月\n·名人\n16\n编辑：吴岱霞Email:jtdb1@yahoo.cn 美编：浩子\n透视光环背后的真实生活\nＦ\nGUIDE\nAMILY\n2010 年11 月30 日—12 月6 日\n周杰伦：为妈妈和外婆而歌唱\n周杰伦非常重视家庭和乐。\n廖先生在海尔专卖店购买1 台海\n尔冰箱和热水器给家里年迈的父母使\n用。当天海尔售后安装人员跟商场送货\n人员就一起到达廖先生家。海尔售后安\n装人员很有礼貌的及面带笑容向廖先\n生出示一张上岗证，穿上自备的鞋套，\n并从工作包中拿出一张服务卡温和的\n向廖先生讲解上面的内容，之后还请廖\n先生按上面讲的几项服务规范进行监\n督他安装的全过程。后因老人家对使用\n不太了解，师傅一遍一遍不耐其烦的讲\n指导直到廖先生父母对使用完全熟练\n止。更让廖先生感动的是师傅不但将自\n己该装的产品服务好后，还为廖先生家\n其他家电及插座全部检查一遍，通过通\n检，师傅发现廖先生家的微波炉会漏\n电，师傅不但没有拒绝维修二话不说，\n现场帮廖先生解决了漏电故障。廖先生\n购买了海尔产品真的很放心，买家电选\n海尔，果然值！\n海尔服务\n创造感动\n",
+              "extracted_text_sha256": "8f20fde6ce884a3d5fa8c701146da3091dbfe311afe6ba9ded2363a70a05af6a",
+              "offset_unit": "unicode_code_point_in_extracted_response_text"
+            }
+          },
+          "source_context_preparation_version": "worldline-verbatim-v4-20260926"
+        },
+        "source_locator": "未命名文档",
+        "source_content_sha256": "eb568a371d9c00d0adc0f728a249d5dc149a6ca53e2b14d37b55f739767bd568",
+        "parent_content_sha256": "468e3f8a956aa328ec86a3fcc91016b75555e8770e37f7b13da1d9f3356d59f0",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:2070676b7a45ec35d86eee2305cff161986714ed02874c1723d499b6580adc18",
+        "index_input_hash": "sha256:694852c52c95791ffea64be8f7f96213a49a0c7ede81d197e5c069449df8d4e2",
+        "source_response_sha256": "92322461616cb18750f3a4801a7d03efd53d11a520ba5aa0c7fb52a700fb4532",
+        "chunk_id": "child-c20c5223a0afa09c84356468",
+        "parent_id": "parent-0dc65cb1964f6289526a1cd8",
+        "doc_id": "doc-jc-v2-048-d0a320ed0eb9ab94ede2",
+        "matched_child_ids": [
+          "child-c20c5223a0afa09c84356468",
+          "child-a5bad13fb476c438d77f42e0"
+        ],
+        "entity_ids": [
+          "album:the_era",
+          "artist:jay_chou"
+        ],
+        "supported_claims": [
+          {
+            "claim_id": "claim:9b6a36ea033c15bdbf0a8782",
+            "statement": "周杰伦于2000年出道",
+            "subject_entity_id": "artist:jay_chou",
+            "predicate": "debuted",
+            "object_value": "出道",
+            "time": {
+              "year": 2000,
+              "date": null,
+              "start_year": null,
+              "end_year": null,
+              "raw": "2000 年"
+            },
+            "source_chunk_id": "child-c20c5223a0afa09c84356468",
+            "evidence_span": "自 2000 年出道以来 周杰伦保持着 年 张专辑的发片速度 2009 年由于忙于拍摄《刺陵》《苏乞儿》《熊猫人》等影视作品 他破天荒地在音乐领域交了白卷 在今年 5 月推出新专辑《跨时代》之后 他马上举办巡演 来巩固自己在歌坛的形象和地位 在接受台湾媒体的采访时 周杰伦表示 自己能够在歌坛继续走下去“会有第二个 10年 第三个10 年”",
+            "extraction_confidence": 0.98,
+            "verification_confidence": 0.98,
+            "extraction_source": "rule"
+          }
+        ],
+        "fusion_score": 0.038390062597809076,
+        "channel_evidence": [
+          {
+            "chunk_id": "child-c20c5223a0afa09c84356468",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 12,
+            "raw_score": 0.59665215,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-c20c5223a0afa09c84356468",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 11,
+            "raw_score": 20.883177,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-c20c5223a0afa09c84356468",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 12,
+            "raw_score": 0.61619866,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-a5bad13fb476c438d77f42e0",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 22,
+            "raw_score": 0.5544946,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-a5bad13fb476c438d77f42e0",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 31,
+            "raw_score": 0.55642056,
+            "weight": 0.75
+          }
+        ],
+        "retrieval_status": "success",
+        "retrieval_version": "v1",
+        "index_profile": {
+          "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+          "source_release_id": "knowledge-v2-aa5271a36860debb",
+          "index_schema_version": "v2",
+          "projection_version": "v4",
+          "registry_version": "v3"
+        },
+        "retrieval_warnings": [
+          "timeline_navigation_sections_removed:3"
+        ],
+        "context_version": "v1",
+        "context_warnings": [
+          "context_token_budget_applied",
+          "source_context_budget_omitted:child-47f20fb8758857fea2a887a0",
+          "source_context_budget_omitted:child-feeb73b0b5bc0c8c58a6db75",
+          "near_duplicate_evidence_removed:2"
+        ],
+        "context_pack_rank": 6,
+        "context_source_rank": 7,
+        "context_token_count": 295,
+        "context_token_budget": 3000,
+        "evidence_span": "周杰伦：为妈妈和外婆而歌唱\n\n![](images/88a9241398537bfd466a4ec5a8229dbe75379864c8a3df4751f5d03d00bafd40.jpg)\n\n今年是台湾歌手周杰伦进入乐坛的第十年 刚出道时 他是人们口中的“小天王” 如今 人们已自觉地把那个“小” 字去掉 没人怀疑他在华语乐坛“天王”的地位 从6 月 11 日起 周杰伦开始了他出道以来的第四轮巡回演出台北是首站 随后他还要在上海 北京等地举行41 场演唱会\n\n自 2000 年出道以来 周杰伦保持着 年 张专辑的发片速度 2009 年由于忙于拍摄《刺陵》《苏乞儿》《熊猫人》等影视作品 他破天荒地在音乐领域交了白卷 在今年 5 月推出新专辑《跨时代》之后 他马上举办巡演 来巩固自己在歌坛的形象和地位 在接受台湾媒体的采访时 周杰伦表示 自己能够在歌坛继续走下去“会有第二个 10年 第三个10 年”\n\n单亲家庭的音乐天才",
+        "subquery_ids": [
+          "q0:original",
+          "q2:semantic"
+        ],
+        "retrieval_legs": [
+          "q0:original:dense",
+          "q0:original:lexical",
+          "q2:semantic:dense"
+        ],
+        "sufficiency_status": "sufficient",
+        "source_evidence_content": "周杰伦：为妈妈和外婆而歌唱\n\n![](images/88a9241398537bfd466a4ec5a8229dbe75379864c8a3df4751f5d03d00bafd40.jpg)\n\n今年是台湾歌手周杰伦进入乐坛的第十年 刚出道时 他是人们口中的“小天王” 如今 人们已自觉地把那个“小” 字去掉 没人怀疑他在华语乐坛“天王”的地位 从6 月 11 日起 周杰伦开始了他出道以来的第四轮巡回演出台北是首站 随后他还要在上海 北京等地举行41 场演唱会\n\n自 2000 年出道以来 周杰伦保持着 年 张专辑的发片速度 2009 年由于忙于拍摄《刺陵》《苏乞儿》《熊猫人》等影视作品 他破天荒地在音乐领域交了白卷 在今年 5 月推出新专辑《跨时代》之后 他马上举办巡演 来巩固自己在歌坛的形象和地位 在接受台湾媒体的采访时 周杰伦表示 自己能够在歌坛继续走下去“会有第二个 10年 第三个10 年”\n\n单亲家庭的音乐天才",
+        "rerank_status": "off"
+      }
+    },
+    {
+      "id": "knowledge:era:2aae8efd0afc31eb2e84a72d",
+      "source_type": "knowledge",
+      "title": "周杰伦：为妈妈和外婆而歌唱",
+      "source": "湖南日报报业集团",
+      "url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+      "excerpt": "2000 年至 2002 年 周杰伦出道的前三年可以视为第一个阶段 他这个时期主要的特征是青涩和张狂 真正让周杰伦 炮而红的是第二张专辑《范特西》 主打歌曲《双截棍》中那句“快使用双截棍 哼哼哈嘿” 一下成了当时的“流行语” “那个时期 周杰伦的创作虽然给流行乐坛带来了 股另类之风 但还略显青涩和幼稚 他将更多的注意力放在‘炫耀’ 些音乐技巧上 只是以更多元的形式来吸引人们的目光 在歌词中 他想展示的是自己特立独行和天马行空的音乐想法 ”",
+      "metadata": {
+        "document_id": "parent-bc23e565000bbb36d4ec44e9",
+        "source_id": "jc-v2-048",
+        "source_locator": "未命名文档",
+        "source_content_sha256": "db5612077500cd6dec2a99e513a6911ba867c1561d5ab0ad7b14058c880b1d81",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:eb5da84c175c50c08d81b50181724a38175dea53ecf843bcbac46aa2ee446d43",
+        "index_input_hash": "sha256:14163399821a5cca21cd074ef48b304fdb5ee6f93206628670def687736df7f7",
+        "parent_id": "parent-bc23e565000bbb36d4ec44e9",
+        "child_id": "child-2c9c01d1c6765c3ca5271d72",
+        "claim_id": "claim:217c9e0609104466d789e270",
+        "source_chunk_id": "child-2c9c01d1c6765c3ca5271d72",
+        "context_version": "v1",
+        "retrieval_version": "v1",
+        "era_expansion_version": "v1",
+        "validator_version": "v1",
+        "relation_key": "netease:artist:6452|era:netease_artist_6452_early_career|career_phase",
+        "temporal_conflict": false
+      }
+    },
+    {
+      "id": "knowledge:era:05d36d32e12db7ef82f29652",
+      "source_type": "knowledge",
+      "title": "周杰伦：为妈妈和外婆而歌唱",
+      "source": "湖南日报报业集团",
+      "url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+      "excerpt": "自 2000 年出道以来 周杰伦保持着 年 张专辑的发片速度 2009 年由于忙于拍摄《刺陵》《苏乞儿》《熊猫人》等影视作品 他破天荒地在音乐领域交了白卷 在今年 5 月推出新专辑《跨时代》之后 他马上举办巡演 来巩固自己在歌坛的形象和地位 在接受台湾媒体的采访时 周杰伦表示 自己能够在歌坛继续走下去“会有第二个 10年 第三个10 年”",
+      "metadata": {
+        "document_id": "parent-0dc65cb1964f6289526a1cd8",
+        "source_id": "jc-v2-048",
+        "source_locator": "未命名文档",
+        "source_content_sha256": "eb568a371d9c00d0adc0f728a249d5dc149a6ca53e2b14d37b55f739767bd568",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:2070676b7a45ec35d86eee2305cff161986714ed02874c1723d499b6580adc18",
+        "index_input_hash": "sha256:694852c52c95791ffea64be8f7f96213a49a0c7ede81d197e5c069449df8d4e2",
+        "parent_id": "parent-0dc65cb1964f6289526a1cd8",
+        "child_id": "child-c20c5223a0afa09c84356468",
+        "claim_id": "claim:9b6a36ea033c15bdbf0a8782",
+        "source_chunk_id": "child-c20c5223a0afa09c84356468",
+        "context_version": "v1",
+        "retrieval_version": "v1",
+        "era_expansion_version": "v1",
+        "validator_version": "v1",
+        "relation_key": "netease:artist:6452|era:netease_artist_6452_early_career|career_phase",
+        "temporal_conflict": false
+      }
+    },
+    {
+      "id": "knowledge:era:2c1d65985d2f04c096688449",
+      "source_type": "knowledge",
+      "title": "周杰倫20年音樂軌跡：14張經典專輯變身黑膠唱片",
+      "source": "杰威爾音樂",
+      "url": "https://www.jvrmusic.com.tw/artist/news/detail/1275679152900542464?lang=zh_TW",
+      "excerpt": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！",
+      "metadata": {
+        "document_id": "parent-cca31e09c6d05f09267862a1",
+        "source_id": "jc-v1-002",
+        "source_locator": "藝人專區 > 周杰倫20年音樂軌跡 14張經典專輯變身黑膠唱片",
+        "source_content_sha256": "130e06a111a0fe6fe2d00adb5a474ba065fac437962f2ba0454191646881649d",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:389c2bf5da6dff81eb7e1df2be48ab61c5debdb944cd6ee2e4c6807a364ab7e1",
+        "index_input_hash": "sha256:5ad6210d59f6586513bd2c9141faef5edf92d70e6fca2cab8039c82f373c8990",
+        "parent_id": "parent-cca31e09c6d05f09267862a1",
+        "child_id": "child-47f20fb8758857fea2a887a0",
+        "claim_id": "claim:868e9742f0cc9053c1bfd602",
+        "source_chunk_id": "child-47f20fb8758857fea2a887a0",
+        "context_version": "v1",
+        "retrieval_version": "v1",
+        "era_expansion_version": "v1",
+        "validator_version": "v1",
+        "relation_key": "netease:artist:6452|era:2000s|belongs_to_era",
+        "temporal_conflict": false
+      }
+    }
+  ],
+  "citations": [
+    {
+      "id": "music-api:artist:6452",
+      "source_type": "music_api",
+      "title": "网易云音乐 artist entity 6452",
+      "source": "MoodFlow Java Music Service",
+      "url": null,
+      "excerpt": null,
+      "metadata": {
+        "provider": "netease",
+        "entity_type": "artist",
+        "entity_id": 6452
+      }
+    },
+    {
+      "id": "knowledge:era:2c1d65985d2f04c096688449",
+      "source_type": "knowledge",
+      "title": "周杰倫20年音樂軌跡：14張經典專輯變身黑膠唱片",
+      "source": "杰威爾音樂",
+      "url": "https://www.jvrmusic.com.tw/artist/news/detail/1275679152900542464?lang=zh_TW",
+      "excerpt": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！",
+      "metadata": {
+        "document_id": "parent-cca31e09c6d05f09267862a1",
+        "source_id": "jc-v1-002",
+        "source_locator": "藝人專區 > 周杰倫20年音樂軌跡 14張經典專輯變身黑膠唱片",
+        "source_content_sha256": "130e06a111a0fe6fe2d00adb5a474ba065fac437962f2ba0454191646881649d",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:389c2bf5da6dff81eb7e1df2be48ab61c5debdb944cd6ee2e4c6807a364ab7e1",
+        "index_input_hash": "sha256:5ad6210d59f6586513bd2c9141faef5edf92d70e6fca2cab8039c82f373c8990",
+        "parent_id": "parent-cca31e09c6d05f09267862a1",
+        "child_id": "child-47f20fb8758857fea2a887a0",
+        "claim_id": "claim:868e9742f0cc9053c1bfd602",
+        "source_chunk_id": "child-47f20fb8758857fea2a887a0",
+        "context_version": "v1",
+        "retrieval_version": "v1",
+        "era_expansion_version": "v1",
+        "validator_version": "v1",
+        "relation_key": "netease:artist:6452|era:2000s|belongs_to_era",
+        "temporal_conflict": false
+      }
+    },
+    {
+      "id": "knowledge:chunk:3e2a80ad90a91c6a4ce7ad18",
+      "source_type": "knowledge",
+      "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+      "source": "澎湃新闻",
+      "url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+      "excerpt": "原创 最人物出品 最人物\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n谁叫我是周杰伦。”\n\n——周杰伦\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n在这四年间，他发行了5首单曲，参演了2部电影，举办了138场演唱会，但每次出现在采访中时，总免不了被问到同一个问题：\n\n“下一张专辑什么时候出？”\n\n近些年，周杰伦放缓了发片速度，从过去的一年两张，到两年一张，再到如今的四年没推出新专辑。\n\n可是，纵使如此，每一次他推出新歌，都总能引起巨大讨论。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n今年，是周杰伦出道的第20年。\n\n时间回到20年前的11月7日，周杰伦推出第一张同名专辑《JAY》，在当天的发片记者会前，经纪人问他：“你害怕没有人来参加哦。”\n\n周杰伦摆弄着手中的手机，点了点头。\n\n那时他大概未曾想到，从这一天起，自己将成为一个时代的开启者。",
+      "metadata": {
+        "point_id": "99de6dee-3b09-51ea-8676-d946d9630d14",
+        "source_id": "jc-v2-007",
+        "document_metadata": {
+          "parser_metadata": {
+            "omitted_parser_tree": true,
+            "original_value_sha256": "714d72e26b81bd79146bc0dc1517b3490594bc8d564d4f4e303bb4e4527f2fdc"
+          },
+          "source_metadata": {
+            "source_id": "jc-v2-007",
+            "original_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+            "content_type": "text/html; charset=utf-8",
+            "content_hash": "sha256:77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+            "fetched_at": "2026-09-10T03:33:26.777463Z",
+            "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+            "http_status": 200,
+            "source_quality": "high",
+            "corpus_version": "jay-chou-corpus-v1",
+            "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+            "publisher": "澎湃新闻",
+            "author": null,
+            "file_type": "html",
+            "source_type": "media_article",
+            "source_tier": 2,
+            "artist": "周杰伦",
+            "album": "范特西",
+            "topics": [
+              "音乐史 / 时代背景",
+              "创作背景",
+              "作品影响"
+            ],
+            "replacement_of": "jc-v1-028"
+          },
+          "parse_fingerprint": "html:1.1.0:auto",
+          "source_context_captures": [
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[49]; decoded text [1856:1899]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "在第一张专辑之后，周杰伦保持着一年一张专辑的频率，先后发行了《范特西》与《八度空间》。",
+              "content_sha256": "dc821ccc9298697756b029fcd7fbc7cd9123a1d7fcf706984db5f36b8348dc7d",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "在第一张专辑之后，周杰伦保持着一年一张专辑的频率，先后发行了《范特西》与《八度空间》。",
+                  "start": 0,
+                  "end": 43
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[67]; decoded text [2664:2726]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "早在2001年，22岁的周杰伦在李玟演唱会上担任嘉宾，在后台接受采访时，他就说过：“要让人家知道中国人也可以写得这么流行。”",
+              "content_sha256": "d75eb0b850d5f1ecaf2acb4f1e15e6a9c7e23d8d936402933708201832acd444",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "早在2001年，22岁的周杰伦在李玟演唱会上担任嘉宾，在后台接受采访时，他就说过：“要让人家知道中国人也可以写得这么流行。”",
+                  "start": 0,
+                  "end": 62
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[68]; decoded text [2726:2772]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "如今看，周杰伦似乎始终都将向世界传播中国文化作为自己的使命，并开创了“中国风”这一流行曲风。",
+              "content_sha256": "159ad6eadeb8643eb547ecf17004948b7ac3339bf399c9c193d79e2b0968630f",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "如今看，周杰伦似乎始终都将向世界传播中国文化作为自己的使命，并开创了“中国风”这一流行曲风。",
+                  "start": 0,
+                  "end": 46
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[81]; decoded text [3168:3210]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "这一年，周杰伦离开了之前的公司，创办了自己的公司；这一年，他发行了新专辑《我很忙》；",
+              "content_sha256": "d3f59019677bd4bbd72361bc382bc77a87aebfe1a9b10e04227ff8a7a4d3233e",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "这一年，周杰伦离开了之前的公司，创办了自己的公司；这一年，他发行了新专辑《我很忙》；",
+                  "start": 0,
+                  "end": 42
+                }
+              ]
+            }
+          ],
+          "source_context_capture_provenance": [
+            {
+              "content_sha256": "dc821ccc9298697756b029fcd7fbc7cd9123a1d7fcf706984db5f36b8348dc7d",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 1856,
+              "source_text_end": 1899,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[49]; decoded text [1856:1899]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "d75eb0b850d5f1ecaf2acb4f1e15e6a9c7e23d8d936402933708201832acd444",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 2664,
+              "source_text_end": 2726,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[67]; decoded text [2664:2726]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "159ad6eadeb8643eb547ecf17004948b7ac3339bf399c9c193d79e2b0968630f",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 2726,
+              "source_text_end": 2772,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[68]; decoded text [2726:2772]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "d3f59019677bd4bbd72361bc382bc77a87aebfe1a9b10e04227ff8a7a4d3233e",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 3168,
+              "source_text_end": 3210,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[81]; decoded text [3168:3210]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            }
+          ],
+          "source_identity_proofs": {},
+          "source_context_preparation_version": "worldline-verbatim-v4-20260926"
+        },
+        "source_locator": "41岁周杰伦：时代变了，但我的时代不会过去",
+        "source_content_sha256": "2b1f10f2500941d3e477cedf35fd7d005b3329d050e38f766de4a2a84512eac5",
+        "parent_content_sha256": "4d75e7684f9af68c7c151ad81e8b1d00ddeebae435d75fabb2e57f5d179ee042",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:64c16d71fed8c2d1c4c93b7e9cffc5990b274db9c70f2246170a6e3b487760ba",
+        "index_input_hash": "sha256:8940a693a9a6b58a9a6c09be2aba9b4074e5aa620dee20363baa439b66e5e74f",
+        "source_response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+        "chunk_id": "child-128c22f7d442883f8ba8620f",
+        "parent_id": "parent-19653b37f18f4b5a753a5b6e",
+        "doc_id": "doc-jc-v2-007-d65a5eb1d97ff8ebd12b",
+        "matched_child_ids": [
+          "child-128c22f7d442883f8ba8620f",
+          "child-6ee20a8c6beb92512f33911d",
+          "child-b99acb049d36aa328fc92116"
+        ],
+        "entity_ids": [
+          "album:fantasy",
+          "album:jay_2000",
+          "artist:jay_chou"
+        ],
+        "supported_claims": [],
+        "fusion_score": 0.043106389578163776,
+        "channel_evidence": [
+          {
+            "chunk_id": "child-128c22f7d442883f8ba8620f",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 4,
+            "raw_score": 0.62930715,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-128c22f7d442883f8ba8620f",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 5,
+            "raw_score": 23.619211,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-128c22f7d442883f8ba8620f",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 2,
+            "raw_score": 0.6518543,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-6ee20a8c6beb92512f33911d",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 7,
+            "raw_score": 0.61708957,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-6ee20a8c6beb92512f33911d",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 26,
+            "raw_score": 17.626144,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-6ee20a8c6beb92512f33911d",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 4,
+            "raw_score": 0.6415889,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-b99acb049d36aa328fc92116",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 21,
+            "raw_score": 0.5588466,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-b99acb049d36aa328fc92116",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 29,
+            "raw_score": 16.874853,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-b99acb049d36aa328fc92116",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 20,
+            "raw_score": 0.5777445,
+            "weight": 0.75
+          }
+        ],
+        "retrieval_status": "success",
+        "retrieval_version": "v1",
+        "index_profile": {
+          "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+          "source_release_id": "knowledge-v2-aa5271a36860debb",
+          "index_schema_version": "v2",
+          "projection_version": "v4",
+          "registry_version": "v3"
+        },
+        "retrieval_warnings": [
+          "timeline_navigation_sections_removed:3"
+        ],
+        "context_version": "v1",
+        "context_warnings": [
+          "context_token_budget_applied",
+          "source_context_budget_omitted:child-47f20fb8758857fea2a887a0",
+          "source_context_budget_omitted:child-feeb73b0b5bc0c8c58a6db75",
+          "near_duplicate_evidence_removed:2"
+        ],
+        "context_pack_rank": 2,
+        "context_source_rank": 2,
+        "context_token_count": 385,
+        "context_token_budget": 3000,
+        "evidence_span": "原创 最人物出品 最人物\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n谁叫我是周杰伦。”\n\n——周杰伦\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n在这四年间，他发行了5首单曲，参演了2部电影，举办了138场演唱会，但每次出现在采访中时，总免不了被问到同一个问题：\n\n“下一张专辑什么时候出？”\n\n近些年，周杰伦放缓了发片速度，从过去的一年两张，到两年一张，再到如今的四年没推出新专辑。\n\n可是，纵使如此，每一次他推出新歌，都总能引起巨大讨论。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n今年，是周杰伦出道的第20年。\n\n时间回到20年前的11月7日，周杰伦推出第一张同名专辑《JAY》，在当天的发片记者会前，经纪人问他：“你害怕没有人来参加哦。”\n\n周杰伦摆弄着手中的手机，点了点头。\n\n那时他大概未曾想到，从这一天起，自己将成为一个时代的开启者。",
+        "subquery_ids": [
+          "q0:original",
+          "q2:semantic"
+        ],
+        "retrieval_legs": [
+          "q0:original:dense",
+          "q0:original:lexical",
+          "q2:semantic:dense"
+        ],
+        "sufficiency_status": "sufficient",
+        "source_evidence_content": "原创 最人物出品 最人物\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n谁叫我是周杰伦。”\n\n——周杰伦\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n在这四年间，他发行了5首单曲，参演了2部电影，举办了138场演唱会，但每次出现在采访中时，总免不了被问到同一个问题：\n\n“下一张专辑什么时候出？”\n\n近些年，周杰伦放缓了发片速度，从过去的一年两张，到两年一张，再到如今的四年没推出新专辑。\n\n可是，纵使如此，每一次他推出新歌，都总能引起巨大讨论。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n今年，是周杰伦出道的第20年。\n\n时间回到20年前的11月7日，周杰伦推出第一张同名专辑《JAY》，在当天的发片记者会前，经纪人问他：“你害怕没有人来参加哦。”\n\n周杰伦摆弄着手中的手机，点了点头。\n\n那时他大概未曾想到，从这一天起，自己将成为一个时代的开启者。",
+        "rerank_status": "off"
+      }
+    },
+    {
+      "id": "knowledge:chunk:178d28bd38cac5d826711d47",
+      "source_type": "knowledge",
+      "title": "周杰倫",
+      "source": "Wikipedia",
+      "url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+      "excerpt": "初期周杰伦雖寫過多首歌曲，但仍有不少曲目由於其超時代的獨特性未被他人採用而退稿，如刘德华〈眼泪知道〉和張惠妹〈忍者〉等。在此期間，吳宗憲對周杰倫大力支持，不僅在自己的唱片公司阿爾發音樂多數歌手的歌曲中采用他的創作歌曲，還讓他登上自己的節目，並在節目中大力推薦。公司總監楊俊榮在偶然聽到周杰倫〈可愛女人〉的旋律後大為讚賞，立馬致電吳宗憲，並且幫助周杰倫開始實施唱片推出計劃。而當專輯一經發出，周杰倫的歌曲很快變成當時非常流行且爆火的音樂，日後也成為了真正的亞洲巨星，他也曾在金曲獎頒獎典禮上說過：沒有吳宗憲就沒有周杰倫。1998年，周杰倫发表第一首創作歌曲〈三暝三日〉，由吳宗憲演唱。",
+      "metadata": {
+        "point_id": "175bbbde-af7e-5638-a7a0-d1ccee5f7e99",
+        "source_id": "jc-v1-030",
+        "document_metadata": {
+          "parser_metadata": {
+            "omitted_parser_tree": true,
+            "original_value_sha256": "255b0bc77f4263f30aa094f6eec0e7ea2c96d81e906f5a078d6f5f0da2d5ddbd"
+          },
+          "source_metadata": {
+            "source_id": "jc-v1-030",
+            "title": "周杰倫",
+            "url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+            "publisher": "Wikipedia",
+            "author": "Wikipedia contributors",
+            "published_at": null,
+            "source_type": "encyclopedia",
+            "file_type": "html",
+            "artist": "周杰伦",
+            "album": null,
+            "topics": [
+              "音乐风格演变",
+              "合作关系",
+              "作品影响"
+            ],
+            "source_tier": 3,
+            "source_quality": "medium",
+            "reason": "可追溯修订历史与参考文献的百科总览，适合作为导航和交叉核验来源而非唯一事实依据。",
+            "status": "approved",
+            "original_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+            "content_type": "text/html; charset=UTF-8",
+            "content_hash": "sha256:d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+            "fetched_at": "2026-09-10T01:02:37.995171Z",
+            "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+            "http_status": 200,
+            "corpus_version": "jay-chou-corpus-v1"
+          },
+          "parse_fingerprint": "html:1.2.0:auto",
+          "source_context_captures": [
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[2]; decoded text [4194:4404]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "自2000年发行首张专辑《杰倫》出道至今，周杰伦多次获得华语乐坛重要的音乐奖项[11]，包括15座臺灣金曲獎和2座MTV亞洲大獎[12]。2003年登上亞洲版《時代》雜誌的封面，其後至今開展了8次世界巡演。2009年獲美國CNN評選為亞洲最具影響力的25位人物之一[13]。2016年起，他曾擔任三季《中国好声音》系列導師。2022年推出的專輯《最偉大的作品》奪下了國際唱片協會IFPI認證全球最暢銷專輯冠軍[14]。\n",
+              "content_sha256": "e26bcf90a38c7306c44242f88b4767748ba614210366062d8b81d7a6d762ffa5",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "自2000年发行首张专辑《杰倫》出道至今，周杰伦多次获得华语乐坛重要的音乐奖项[11]，包括15座臺灣金曲獎和2座MTV亞洲大獎[12]。2003年登上亞洲版《時代》雜誌的封面，其後至今開展了8次世界巡演。2009年獲美國CNN評選為亞洲最具影響力的25位人物之一[13]。2016年起，他曾擔任三季《中国好声音》系列導師。2022年推出的專輯《最偉大的作品》奪下了國際唱片協會IFPI認證全球最暢銷專輯冠軍[14]。\n",
+                  "start": 0,
+                  "end": 210
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[9]; decoded text [5694:5779]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "1999年的〈落雨聲〉是周杰倫第一首賣出的歌，由江蕙演唱，也是第一次和方文山合作的知名作品。兩人的合作作品最受青睞，無形中兩人的合作形成一種絕佳的必勝“定律”[22]。\n",
+              "content_sha256": "6174107681949a24663be09f642d4d046c6d4c2b47090fa00c191dc3b3d368fd",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "1999年的〈落雨聲〉是周杰倫第一首賣出的歌，由江蕙演唱，也是第一次和方文山合作的知名作品。兩人的合作作品最受青睞，無形中兩人的合作形成一種絕佳的必勝“定律”[22]。\n",
+                  "start": 0,
+                  "end": 85
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[11]; decoded text [6005:6133]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2001年9月周杰倫發行個人第2張專輯《范特西》，專輯名稱來自英文“fantasy”的音譯[27]；憑藉這張專輯周杰倫在2002年度臺灣第13屆金曲獎頒獎典禮中斬獲“最佳作曲人獎”、“最佳專輯製作人獎”以及“最佳流行音樂演唱專輯獎”等五項大獎。[28]。\n",
+              "content_sha256": "3817cd05ddd3e5b9c431022be746ba4c45151a32143116752d8739750b3077b7",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2001年9月周杰倫發行個人第2張專輯《范特西》，專輯名稱來自英文“fantasy”的音譯[27]；憑藉這張專輯周杰倫在2002年度臺灣第13屆金曲獎頒獎典禮中斬獲“最佳作曲人獎”、“最佳專輯製作人獎”以及“最佳流行音樂演唱專輯獎”等五項大獎。[28]。\n",
+                  "start": 0,
+                  "end": 128
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[10]; decoded text [5815:6005]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2000年在獲得楊俊榮的推薦與推動下，阿爾發公司提供了新台幣四千萬元作為專輯籌備的部份資金，於當年11月發行周杰倫首張個人專輯《Jay》。此專輯有了別於市場的突破曲風，風格融合了R&B、Hip-Hop、古典和“中國風”[22]，初步建立了周杰倫「周式曲風」的歌手形象[22]。周杰倫除了為自己製作、輯印音樂專輯外，亦曾經替其它歌手作曲，如知名歌手S.H.E.、陳小春、劉德華等。\n",
+              "content_sha256": "7a303365e564de24e9c65b3f14c2cb9733e055ea253167d05c282d88248152d6",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2000年在獲得楊俊榮的推薦與推動下，阿爾發公司提供了新台幣四千萬元作為專輯籌備的部份資金，於當年11月發行周杰倫首張個人專輯《Jay》。此專輯有了別於市場的突破曲風，風格融合了R&B、Hip-Hop、古典和“中國風”[22]，初步建立了周杰倫「周式曲風」的歌手形象[22]。周杰倫除了為自己製作、輯印音樂專輯外，亦曾經替其它歌手作曲，如知名歌手S.H.E.、陳小春、劉德華等。\n",
+                  "start": 0,
+                  "end": 190
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[12]; decoded text [6133:6284]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2002年7月周杰倫發行個人第3張專輯《八度空間》；9月28日個人首次世界巡回演唱會“THE ONE”於臺北市立體育場拉開帷幕。2003年7月，全亞洲超過50家電台定7月16日為“周杰倫日”，並同步首播其第4張個人新專輯《葉惠美》中的主打歌曲〈以父之名〉[29]，此后每張專輯必定有一首中國風的歌曲。\n",
+              "content_sha256": "2abd6e901ec66b340fc0e81f8cc1f9c96126f438406ba3f186b2962c093e5208",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2002年7月周杰倫發行個人第3張專輯《八度空間》；9月28日個人首次世界巡回演唱會“THE ONE”於臺北市立體育場拉開帷幕。2003年7月，全亞洲超過50家電台定7月16日為“周杰倫日”，並同步首播其第4張個人新專輯《葉惠美》中的主打歌曲〈以父之名〉[29]，此后每張專輯必定有一首中國風的歌曲。\n",
+                  "start": 0,
+                  "end": 151
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[14]; decoded text [6469:6591]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2005年11月周杰倫發行個人第6張音樂專輯《11月的蕭邦》，自這張專輯周杰倫開始作為音樂總監，并嘗試執導一些自己歌曲的MV。2006年9月周杰倫發行個人第7張音樂專輯《依然范特西》，專輯中的中國風歌曲〈千里之外〉请来老牌歌手費玉清一起合唱。\n",
+              "content_sha256": "da5c1b5d4d59d4368962a3eaf5993f347850d8d980b7c741ff584deee4cc2c24",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2005年11月周杰倫發行個人第6張音樂專輯《11月的蕭邦》，自這張專輯周杰倫開始作為音樂總監，并嘗試執導一些自己歌曲的MV。2006年9月周杰倫發行個人第7張音樂專輯《依然范特西》，專輯中的中國風歌曲〈千里之外〉请来老牌歌手費玉清一起合唱。\n",
+                  "start": 0,
+                  "end": 122
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[13]; decoded text [6346:6469]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2004年7月周杰倫發行個人第5張專輯《七里香》，并憑藉該專輯首次獲得世界音樂大獎“大中華區最暢銷藝人”[30]；同時，根據國際唱片業協會IFPI的統計，專輯《七里香》銷量位居年度世界第42位，[31]；同年以歌曲〈龍拳〉首次亮相春節聯歡晚會。\n",
+              "content_sha256": "7c99a5611f19d2e419bd262951b155635a5d71c25f14e8d09ffb071fae164ca6",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2004年7月周杰倫發行個人第5張專輯《七里香》，并憑藉該專輯首次獲得世界音樂大獎“大中華區最暢銷藝人”[30]；同時，根據國際唱片業協會IFPI的統計，專輯《七里香》銷量位居年度世界第42位，[31]；同年以歌曲〈龍拳〉首次亮相春節聯歡晚會。\n",
+                  "start": 0,
+                  "end": 123
+                }
+              ]
+            },
+            {
+              "source_url": "https://zh.wikipedia.org/wiki/%E5%91%A8%E6%9D%B0%E5%80%AB",
+              "publisher": "Wikipedia",
+              "title": "周杰倫",
+              "locator": "DOM p[15]; decoded text [6591:6803]",
+              "captured_at": "2026-09-10T01:02:37.995171Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "content": "2007年4月，由周杰倫與多年合作夥伴方文山、楊峻榮三人共同創辦的杰威爾音樂成立；11月2日，發行個人第8張音樂專輯《我很忙》，11月24日周杰倫在中國大陸上海八萬人體育場開展《2007世界巡迴演唱會》，與此同時，周杰倫的《THE ONE》、《無與倫比》兩次世界巡迴演唱會已先後在美國康涅狄格州、洛杉磯、拉斯維加斯、加拿大、澳大利亞、日本東京、新加坡、馬來西亞吉隆坡、泰國曼谷、香港、臺灣、中國大陆等多個國家地區舉辦多場。\n",
+              "content_sha256": "ef215e27667de54fef5f9e3a12e4926331d924a58d46490cc3133aa27a80ab7c",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "2007年4月，由周杰倫與多年合作夥伴方文山、楊峻榮三人共同創辦的杰威爾音樂成立；11月2日，發行個人第8張音樂專輯《我很忙》，11月24日周杰倫在中國大陸上海八萬人體育場開展《2007世界巡迴演唱會》，與此同時，周杰倫的《THE ONE》、《無與倫比》兩次世界巡迴演唱會已先後在美國康涅狄格州、洛杉磯、拉斯維加斯、加拿大、澳大利亞、日本東京、新加坡、馬來西亞吉隆坡、泰國曼谷、香港、臺灣、中國大陆等多個國家地區舉辦多場。\n",
+                  "start": 0,
+                  "end": 212
+                }
+              ]
+            }
+          ],
+          "source_context_capture_provenance": [
+            {
+              "content_sha256": "e26bcf90a38c7306c44242f88b4767748ba614210366062d8b81d7a6d762ffa5",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 4194,
+              "source_text_end": 4404,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[2]; decoded text [4194:4404]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "6174107681949a24663be09f642d4d046c6d4c2b47090fa00c191dc3b3d368fd",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 5694,
+              "source_text_end": 5779,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[9]; decoded text [5694:5779]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "3817cd05ddd3e5b9c431022be746ba4c45151a32143116752d8739750b3077b7",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6005,
+              "source_text_end": 6133,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[11]; decoded text [6005:6133]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "7a303365e564de24e9c65b3f14c2cb9733e055ea253167d05c282d88248152d6",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 5815,
+              "source_text_end": 6005,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[10]; decoded text [5815:6005]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "2abd6e901ec66b340fc0e81f8cc1f9c96126f438406ba3f186b2962c093e5208",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6133,
+              "source_text_end": 6284,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[12]; decoded text [6133:6284]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "da5c1b5d4d59d4368962a3eaf5993f347850d8d980b7c741ff584deee4cc2c24",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6469,
+              "source_text_end": 6591,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[14]; decoded text [6469:6591]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "7c99a5611f19d2e419bd262951b155635a5d71c25f14e8d09ffb071fae164ca6",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6346,
+              "source_text_end": 6469,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[13]; decoded text [6346:6469]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "ef215e27667de54fef5f9e3a12e4926331d924a58d46490cc3133aa27a80ab7c",
+              "response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+              "raw_path": "data/raw/html/jc-v1-030--20260910T010237.995171Z--d26577c433b48b09.html",
+              "source_text_start": 6591,
+              "source_text_end": 6803,
+              "source_text_sha256": "ab82a66fa793b316f21b92ae0e192ab32b3425e241e9d2b6a4df87648bc79392",
+              "locator": "DOM p[15]; decoded text [6591:6803]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            }
+          ],
+          "source_identity_proofs": {},
+          "source_context_preparation_version": "worldline-verbatim-v4-20260926"
+        },
+        "source_locator": "周杰倫 > 音樂事業 > 1997年—2001年: 〈三暝三日〉〈落雨声〉",
+        "source_content_sha256": "d9d34b319f2191bfdbaef2bf6526983afe44ea24e9a8b2e4ede57623b3b6fa1d",
+        "parent_content_sha256": "853612f8c9fa84a191db5288db01e2a162555f1af34c9e50b0946fed7369b642",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:4fde589d9c24bdea9d2c53dcaf3a9e35e4b3ce39d4222ec86e8e85a5a9ea7ec6",
+        "index_input_hash": "sha256:399a2895aff96ce0e588f5d20a9fa8cf949ee13bb68d64e9922bf8701b5953ac",
+        "source_response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+        "chunk_id": "child-5f529ba523df4dc63765c6e2",
+        "parent_id": "parent-35487c91c9077427f4346634",
+        "doc_id": "doc-jc-v1-030-00f0479d20c219dffad5",
+        "matched_child_ids": [
+          "child-5f529ba523df4dc63765c6e2",
+          "child-b606cac246881f7ca972e157",
+          "child-a16687b2432310c69c80af50"
+        ],
+        "entity_ids": [
+          "artist:amei",
+          "artist:andy_lau",
+          "artist:jacky_wu",
+          "artist:jay_chou",
+          "award:golden_melody_awards"
+        ],
+        "supported_claims": [],
+        "fusion_score": 0.04703985346000787,
+        "channel_evidence": [
+          {
+            "chunk_id": "child-5f529ba523df4dc63765c6e2",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 9,
+            "raw_score": 0.6154804,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-5f529ba523df4dc63765c6e2",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 12,
+            "raw_score": 20.223335,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-5f529ba523df4dc63765c6e2",
+            "subquery_id": "q1:alias",
+            "retrieval_leg": "q1:alias:lexical",
+            "variant_index": 1,
+            "variant_kind": "alias",
+            "channel": "lexical",
+            "rank": 47,
+            "raw_score": 0.96269876,
+            "weight": 0.85
+          },
+          {
+            "chunk_id": "child-5f529ba523df4dc63765c6e2",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 10,
+            "raw_score": 0.62153816,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-b606cac246881f7ca972e157",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 2,
+            "raw_score": 0.6470119,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-b606cac246881f7ca972e157",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 74,
+            "raw_score": 13.2294,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-b606cac246881f7ca972e157",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 3,
+            "raw_score": 0.6509067,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-a16687b2432310c69c80af50",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 64,
+            "raw_score": 0.5135914,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-a16687b2432310c69c80af50",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 61,
+            "raw_score": 13.786364,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-a16687b2432310c69c80af50",
+            "subquery_id": "q1:alias",
+            "retrieval_leg": "q1:alias:lexical",
+            "variant_index": 1,
+            "variant_kind": "alias",
+            "channel": "lexical",
+            "rank": 38,
+            "raw_score": 0.97053003,
+            "weight": 0.85
+          },
+          {
+            "chunk_id": "child-a16687b2432310c69c80af50",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 74,
+            "raw_score": 0.5133363,
+            "weight": 0.75
+          }
+        ],
+        "retrieval_status": "success",
+        "retrieval_version": "v1",
+        "index_profile": {
+          "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+          "source_release_id": "knowledge-v2-aa5271a36860debb",
+          "index_schema_version": "v2",
+          "projection_version": "v4",
+          "registry_version": "v3"
+        },
+        "retrieval_warnings": [
+          "timeline_navigation_sections_removed:3"
+        ],
+        "context_version": "v1",
+        "context_warnings": [
+          "context_token_budget_applied",
+          "source_context_budget_omitted:child-47f20fb8758857fea2a887a0",
+          "source_context_budget_omitted:child-feeb73b0b5bc0c8c58a6db75",
+          "near_duplicate_evidence_removed:2"
+        ],
+        "context_pack_rank": 1,
+        "context_source_rank": 1,
+        "context_token_count": 318,
+        "context_token_budget": 3000,
+        "evidence_span": "初期周杰伦雖寫過多首歌曲，但仍有不少曲目由於其超時代的獨特性未被他人採用而退稿，如刘德华〈眼泪知道〉和張惠妹〈忍者〉等。在此期間，吳宗憲對周杰倫大力支持，不僅在自己的唱片公司阿爾發音樂多數歌手的歌曲中采用他的創作歌曲，還讓他登上自己的節目，並在節目中大力推薦。公司總監楊俊榮在偶然聽到周杰倫〈可愛女人〉的旋律後大為讚賞，立馬致電吳宗憲，並且幫助周杰倫開始實施唱片推出計劃。而當專輯一經發出，周杰倫的歌曲很快變成當時非常流行且爆火的音樂，日後也成為了真正的亞洲巨星，他也曾在金曲獎頒獎典禮上說過：沒有吳宗憲就沒有周杰倫。1998年，周杰倫发表第一首創作歌曲〈三暝三日〉，由吳宗憲演唱。",
+        "subquery_ids": [
+          "q0:original",
+          "q1:alias",
+          "q2:semantic"
+        ],
+        "retrieval_legs": [
+          "q0:original:dense",
+          "q0:original:lexical",
+          "q1:alias:lexical",
+          "q2:semantic:dense"
+        ],
+        "sufficiency_status": "sufficient",
+        "source_evidence_content": "初期周杰伦雖寫過多首歌曲，但仍有不少曲目由於其超時代的獨特性未被他人採用而退稿，如刘德华〈眼泪知道〉和張惠妹〈忍者〉等。在此期間，吳宗憲對周杰倫大力支持，不僅在自己的唱片公司阿爾發音樂多數歌手的歌曲中采用他的創作歌曲，還讓他登上自己的節目，並在節目中大力推薦。公司總監楊俊榮在偶然聽到周杰倫〈可愛女人〉的旋律後大為讚賞，立馬致電吳宗憲，並且幫助周杰倫開始實施唱片推出計劃。而當專輯一經發出，周杰倫的歌曲很快變成當時非常流行且爆火的音樂，日後也成為了真正的亞洲巨星，他也曾在金曲獎頒獎典禮上說過：沒有吳宗憲就沒有周杰倫。1998年，周杰倫发表第一首創作歌曲〈三暝三日〉，由吳宗憲演唱。",
+        "rerank_status": "off"
+      }
+    },
+    {
+      "id": "knowledge:chunk:927a46de9cf37335ddd01e53",
+      "source_type": "knowledge",
+      "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+      "source": "澎湃新闻",
+      "url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+      "excerpt": "也正是因为这种好胜，让他对自己的音乐格外认真，用制作人杨俊荣的话说就是：“他从来不是‘差不多先生’，而是‘差一点就很多先生’。”\n\n转机在这年7月到来。\n\n2000年7月，新来的音乐总监杨俊荣听到了周杰伦的《可爱女人》，听完之后，杨俊荣跑出录音室打电话给吴宗宪：\n\n“你居然把他摆在角落那么久？”\n\n“如果周杰伦做不起来，我就不干了，所以让我赌赌看。”\n\n就这样，公司最终决定替周杰伦推出一张专辑，在这一年11月，他的第一张同名专辑《JAY》，正式发行。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n专辑发行不久后，就是春节。\n\n周杰伦的好友刘畊宏后来回忆道：“春节一过，街上就开始在放他的歌。过完年，公司告诉我们，那张（周杰伦专辑）大卖。他们赶紧补货，临时还更换了封面。”",
+      "metadata": {
+        "point_id": "259d4848-e00f-5662-a769-9201d8307446",
+        "source_id": "jc-v2-007",
+        "document_metadata": {
+          "parser_metadata": {
+            "omitted_parser_tree": true,
+            "original_value_sha256": "714d72e26b81bd79146bc0dc1517b3490594bc8d564d4f4e303bb4e4527f2fdc"
+          },
+          "source_metadata": {
+            "source_id": "jc-v2-007",
+            "original_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+            "content_type": "text/html; charset=utf-8",
+            "content_hash": "sha256:77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+            "fetched_at": "2026-09-10T03:33:26.777463Z",
+            "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+            "http_status": 200,
+            "source_quality": "high",
+            "corpus_version": "jay-chou-corpus-v1",
+            "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+            "publisher": "澎湃新闻",
+            "author": null,
+            "file_type": "html",
+            "source_type": "media_article",
+            "source_tier": 2,
+            "artist": "周杰伦",
+            "album": "范特西",
+            "topics": [
+              "音乐史 / 时代背景",
+              "创作背景",
+              "作品影响"
+            ],
+            "replacement_of": "jc-v1-028"
+          },
+          "parse_fingerprint": "html:1.1.0:auto",
+          "source_context_captures": [
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[49]; decoded text [1856:1899]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "在第一张专辑之后，周杰伦保持着一年一张专辑的频率，先后发行了《范特西》与《八度空间》。",
+              "content_sha256": "dc821ccc9298697756b029fcd7fbc7cd9123a1d7fcf706984db5f36b8348dc7d",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "在第一张专辑之后，周杰伦保持着一年一张专辑的频率，先后发行了《范特西》与《八度空间》。",
+                  "start": 0,
+                  "end": 43
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[67]; decoded text [2664:2726]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "早在2001年，22岁的周杰伦在李玟演唱会上担任嘉宾，在后台接受采访时，他就说过：“要让人家知道中国人也可以写得这么流行。”",
+              "content_sha256": "d75eb0b850d5f1ecaf2acb4f1e15e6a9c7e23d8d936402933708201832acd444",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "早在2001年，22岁的周杰伦在李玟演唱会上担任嘉宾，在后台接受采访时，他就说过：“要让人家知道中国人也可以写得这么流行。”",
+                  "start": 0,
+                  "end": 62
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[68]; decoded text [2726:2772]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "如今看，周杰伦似乎始终都将向世界传播中国文化作为自己的使命，并开创了“中国风”这一流行曲风。",
+              "content_sha256": "159ad6eadeb8643eb547ecf17004948b7ac3339bf399c9c193d79e2b0968630f",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "如今看，周杰伦似乎始终都将向世界传播中国文化作为自己的使命，并开创了“中国风”这一流行曲风。",
+                  "start": 0,
+                  "end": 46
+                }
+              ]
+            },
+            {
+              "source_url": "https://www.thepaper.cn/newsDetail_forward_10549480",
+              "publisher": "澎湃新闻",
+              "title": "41岁周杰伦：时代变了，但我的时代不会过去",
+              "locator": "DOM p[81]; decoded text [3168:3210]",
+              "captured_at": "2026-09-10T03:33:26.777463Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "content": "这一年，周杰伦离开了之前的公司，创办了自己的公司；这一年，他发行了新专辑《我很忙》；",
+              "content_sha256": "d3f59019677bd4bbd72361bc382bc77a87aebfe1a9b10e04227ff8a7a4d3233e",
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "这一年，周杰伦离开了之前的公司，创办了自己的公司；这一年，他发行了新专辑《我很忙》；",
+                  "start": 0,
+                  "end": 42
+                }
+              ]
+            }
+          ],
+          "source_context_capture_provenance": [
+            {
+              "content_sha256": "dc821ccc9298697756b029fcd7fbc7cd9123a1d7fcf706984db5f36b8348dc7d",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 1856,
+              "source_text_end": 1899,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[49]; decoded text [1856:1899]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "d75eb0b850d5f1ecaf2acb4f1e15e6a9c7e23d8d936402933708201832acd444",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 2664,
+              "source_text_end": 2726,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[67]; decoded text [2664:2726]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "159ad6eadeb8643eb547ecf17004948b7ac3339bf399c9c193d79e2b0968630f",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 2726,
+              "source_text_end": 2772,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[68]; decoded text [2726:2772]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            },
+            {
+              "content_sha256": "d3f59019677bd4bbd72361bc382bc77a87aebfe1a9b10e04227ff8a7a4d3233e",
+              "response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+              "raw_path": "data/raw/html/jc-v2-007--20260910T033326.777463Z--77d363ea28bc2ab1.html",
+              "source_text_start": 3168,
+              "source_text_end": 3210,
+              "source_text_sha256": "3497d35f2f43e8e237553c5011cf3d272522f0d9a917031768bf6a4eb66e2a42",
+              "locator": "DOM p[81]; decoded text [3168:3210]",
+              "extraction_method": "BeautifulSoup HTML parser; remove script/style; get_text separator='' strip=False",
+              "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text"
+            }
+          ],
+          "source_identity_proofs": {},
+          "source_context_preparation_version": "worldline-verbatim-v4-20260926"
+        },
+        "source_locator": "41岁周杰伦：时代变了，但我的时代不会过去",
+        "source_content_sha256": "f2518b3472704dc9dfcac4febc1fe43e002cfaae80486f8950e803cc53d4d004",
+        "parent_content_sha256": "11bc9c42c6531436b18d8670cbef16e139bd4be5992da0dbc43396a57f5a6d09",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:8e468ae11993c9eeeb3089689c4327114a6fd2fcc6f2ca17fe68f1bfa5c4dfe2",
+        "index_input_hash": "sha256:134a1b78d2a96d40651052de898151c1a39e556f591605b78252ce91b0a98aff",
+        "source_response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+        "chunk_id": "child-31b28da1a05516dd05a86f7c",
+        "parent_id": "parent-5ba80a812804e7ee7f9c7008",
+        "doc_id": "doc-jc-v2-007-d65a5eb1d97ff8ebd12b",
+        "matched_child_ids": [
+          "child-31b28da1a05516dd05a86f7c",
+          "child-4d988d9eec2e3cf141acd436",
+          "child-f2438f02de4c6216f9d00a4b"
+        ],
+        "entity_ids": [
+          "album:fantasy",
+          "album:jay_2000",
+          "artist:jacky_wu",
+          "artist:jay_chou"
+        ],
+        "supported_claims": [],
+        "fusion_score": 0.04073709751459112,
+        "channel_evidence": [
+          {
+            "chunk_id": "child-31b28da1a05516dd05a86f7c",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 8,
+            "raw_score": 0.6162306,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-31b28da1a05516dd05a86f7c",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 9,
+            "raw_score": 21.940992,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-31b28da1a05516dd05a86f7c",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 5,
+            "raw_score": 0.6357051,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-4d988d9eec2e3cf141acd436",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 28,
+            "raw_score": 0.5458544,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-4d988d9eec2e3cf141acd436",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:lexical",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "lexical",
+            "rank": 16,
+            "raw_score": 19.429573,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-4d988d9eec2e3cf141acd436",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 21,
+            "raw_score": 0.57361704,
+            "weight": 0.75
+          },
+          {
+            "chunk_id": "child-f2438f02de4c6216f9d00a4b",
+            "subquery_id": "q0:original",
+            "retrieval_leg": "q0:original:dense",
+            "variant_index": 0,
+            "variant_kind": "original",
+            "channel": "dense",
+            "rank": 31,
+            "raw_score": 0.54175025,
+            "weight": 1
+          },
+          {
+            "chunk_id": "child-f2438f02de4c6216f9d00a4b",
+            "subquery_id": "q2:semantic",
+            "retrieval_leg": "q2:semantic:dense",
+            "variant_index": 2,
+            "variant_kind": "semantic",
+            "channel": "dense",
+            "rank": 30,
+            "raw_score": 0.55700755,
+            "weight": 0.75
+          }
+        ],
+        "retrieval_status": "success",
+        "retrieval_version": "v1",
+        "index_profile": {
+          "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+          "source_release_id": "knowledge-v2-aa5271a36860debb",
+          "index_schema_version": "v2",
+          "projection_version": "v4",
+          "registry_version": "v3"
+        },
+        "retrieval_warnings": [
+          "timeline_navigation_sections_removed:3"
+        ],
+        "context_version": "v1",
+        "context_warnings": [
+          "context_token_budget_applied",
+          "source_context_budget_omitted:child-47f20fb8758857fea2a887a0",
+          "source_context_budget_omitted:child-feeb73b0b5bc0c8c58a6db75",
+          "near_duplicate_evidence_removed:2"
+        ],
+        "context_pack_rank": 5,
+        "context_source_rank": 5,
+        "context_token_count": 357,
+        "context_token_budget": 3000,
+        "evidence_span": "也正是因为这种好胜，让他对自己的音乐格外认真，用制作人杨俊荣的话说就是：“他从来不是‘差不多先生’，而是‘差一点就很多先生’。”\n\n转机在这年7月到来。\n\n2000年7月，新来的音乐总监杨俊荣听到了周杰伦的《可爱女人》，听完之后，杨俊荣跑出录音室打电话给吴宗宪：\n\n“你居然把他摆在角落那么久？”\n\n“如果周杰伦做不起来，我就不干了，所以让我赌赌看。”\n\n就这样，公司最终决定替周杰伦推出一张专辑，在这一年11月，他的第一张同名专辑《JAY》，正式发行。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n专辑发行不久后，就是春节。\n\n周杰伦的好友刘畊宏后来回忆道：“春节一过，街上就开始在放他的歌。过完年，公司告诉我们，那张（周杰伦专辑）大卖。他们赶紧补货，临时还更换了封面。”",
+        "subquery_ids": [
+          "q0:original",
+          "q2:semantic"
+        ],
+        "retrieval_legs": [
+          "q0:original:dense",
+          "q0:original:lexical",
+          "q2:semantic:dense"
+        ],
+        "sufficiency_status": "sufficient",
+        "source_evidence_content": "也正是因为这种好胜，让他对自己的音乐格外认真，用制作人杨俊荣的话说就是：“他从来不是‘差不多先生’，而是‘差一点就很多先生’。”\n\n转机在这年7月到来。\n\n2000年7月，新来的音乐总监杨俊荣听到了周杰伦的《可爱女人》，听完之后，杨俊荣跑出录音室打电话给吴宗宪：\n\n“你居然把他摆在角落那么久？”\n\n“如果周杰伦做不起来，我就不干了，所以让我赌赌看。”\n\n就这样，公司最终决定替周杰伦推出一张专辑，在这一年11月，他的第一张同名专辑《JAY》，正式发行。\n\n![](data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)\n\n专辑发行不久后，就是春节。\n\n周杰伦的好友刘畊宏后来回忆道：“春节一过，街上就开始在放他的歌。过完年，公司告诉我们，那张（周杰伦专辑）大卖。他们赶紧补货，临时还更换了封面。”",
+        "rerank_status": "off"
+      }
+    },
+    {
+      "id": "knowledge:era:2aae8efd0afc31eb2e84a72d",
+      "source_type": "knowledge",
+      "title": "周杰伦：为妈妈和外婆而歌唱",
+      "source": "湖南日报报业集团",
+      "url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+      "excerpt": "2000 年至 2002 年 周杰伦出道的前三年可以视为第一个阶段 他这个时期主要的特征是青涩和张狂 真正让周杰伦 炮而红的是第二张专辑《范特西》 主打歌曲《双截棍》中那句“快使用双截棍 哼哼哈嘿” 一下成了当时的“流行语” “那个时期 周杰伦的创作虽然给流行乐坛带来了 股另类之风 但还略显青涩和幼稚 他将更多的注意力放在‘炫耀’ 些音乐技巧上 只是以更多元的形式来吸引人们的目光 在歌词中 他想展示的是自己特立独行和天马行空的音乐想法 ”",
+      "metadata": {
+        "document_id": "parent-bc23e565000bbb36d4ec44e9",
+        "source_id": "jc-v2-048",
+        "source_locator": "未命名文档",
+        "source_content_sha256": "db5612077500cd6dec2a99e513a6911ba867c1561d5ab0ad7b14058c880b1d81",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:eb5da84c175c50c08d81b50181724a38175dea53ecf843bcbac46aa2ee446d43",
+        "index_input_hash": "sha256:14163399821a5cca21cd074ef48b304fdb5ee6f93206628670def687736df7f7",
+        "parent_id": "parent-bc23e565000bbb36d4ec44e9",
+        "child_id": "child-2c9c01d1c6765c3ca5271d72",
+        "claim_id": "claim:217c9e0609104466d789e270",
+        "source_chunk_id": "child-2c9c01d1c6765c3ca5271d72",
+        "context_version": "v1",
+        "retrieval_version": "v1",
+        "era_expansion_version": "v1",
+        "validator_version": "v1",
+        "relation_key": "netease:artist:6452|era:netease_artist_6452_early_career|career_phase",
+        "temporal_conflict": false
+      }
+    },
+    {
+      "id": "knowledge:era:05d36d32e12db7ef82f29652",
+      "source_type": "knowledge",
+      "title": "周杰伦：为妈妈和外婆而歌唱",
+      "source": "湖南日报报业集团",
+      "url": "https://epaper.voc.com.cn/jtdb/page/60/2010-11/30/16/2010113016_pdf.pdf",
+      "excerpt": "自 2000 年出道以来 周杰伦保持着 年 张专辑的发片速度 2009 年由于忙于拍摄《刺陵》《苏乞儿》《熊猫人》等影视作品 他破天荒地在音乐领域交了白卷 在今年 5 月推出新专辑《跨时代》之后 他马上举办巡演 来巩固自己在歌坛的形象和地位 在接受台湾媒体的采访时 周杰伦表示 自己能够在歌坛继续走下去“会有第二个 10年 第三个10 年”",
+      "metadata": {
+        "document_id": "parent-0dc65cb1964f6289526a1cd8",
+        "source_id": "jc-v2-048",
+        "source_locator": "未命名文档",
+        "source_content_sha256": "eb568a371d9c00d0adc0f728a249d5dc149a6ca53e2b14d37b55f739767bd568",
+        "source_release_id": "knowledge-v2-aa5271a36860debb",
+        "knowledge_input_hash": "sha256:2070676b7a45ec35d86eee2305cff161986714ed02874c1723d499b6580adc18",
+        "index_input_hash": "sha256:694852c52c95791ffea64be8f7f96213a49a0c7ede81d197e5c069449df8d4e2",
+        "parent_id": "parent-0dc65cb1964f6289526a1cd8",
+        "child_id": "child-c20c5223a0afa09c84356468",
+        "claim_id": "claim:9b6a36ea033c15bdbf0a8782",
+        "source_chunk_id": "child-c20c5223a0afa09c84356468",
+        "context_version": "v1",
+        "retrieval_version": "v1",
+        "era_expansion_version": "v1",
+        "validator_version": "v1",
+        "relation_key": "netease:artist:6452|era:netease_artist_6452_early_career|career_phase",
+        "temporal_conflict": false
+      }
+    }
+  ],
+  "era_relations": [
+    {
+      "source_entity": {
+        "node_id": "netease:artist:6452",
+        "node_type": "artist",
+        "canonical_name": "周杰伦",
+        "knowledge_entity_id": "artist:jay_chou"
+      },
+      "target_entity": null,
+      "era": {
+        "node_id": "era:netease_artist_6452_early_career",
+        "canonical_name": "Early career"
+      },
+      "relation_type": "career_phase",
+      "start_year": 2000,
+      "end_year": 2000,
+      "temporal_precision": "exact",
+      "confidence": 0.98,
+      "evidence": [
+        {
+          "evidence_id": "knowledge:era:2aae8efd0afc31eb2e84a72d",
+          "source_id": "knowledge:era:2aae8efd0afc31eb2e84a72d",
+          "claim_id": "claim:217c9e0609104466d789e270",
+          "exact_span": "2000 年至 2002 年 周杰伦出道的前三年可以视为第一个阶段 他这个时期主要的特征是青涩和张狂 真正让周杰伦 炮而红的是第二张专辑《范特西》 主打歌曲《双截棍》中那句“快使用双截棍 哼哼哈嘿” 一下成了当时的“流行语” “那个时期 周杰伦的创作虽然给流行乐坛带来了 股另类之风 但还略显青涩和幼稚 他将更多的注意力放在‘炫耀’ 些音乐技巧上 只是以更多元的形式来吸引人们的目光 在歌词中 他想展示的是自己特立独行和天马行空的音乐想法 ”",
+          "start_year": 2000,
+          "end_year": 2000,
+          "raw_time": "2000 年",
+          "confidence": 0.98
+        },
+        {
+          "evidence_id": "knowledge:era:05d36d32e12db7ef82f29652",
+          "source_id": "knowledge:era:05d36d32e12db7ef82f29652",
+          "claim_id": "claim:9b6a36ea033c15bdbf0a8782",
+          "exact_span": "自 2000 年出道以来 周杰伦保持着 年 张专辑的发片速度 2009 年由于忙于拍摄《刺陵》《苏乞儿》《熊猫人》等影视作品 他破天荒地在音乐领域交了白卷 在今年 5 月推出新专辑《跨时代》之后 他马上举办巡演 来巩固自己在歌坛的形象和地位 在接受台湾媒体的采访时 周杰伦表示 自己能够在歌坛继续走下去“会有第二个 10年 第三个10 年”",
+          "start_year": 2000,
+          "end_year": 2000,
+          "raw_time": "2000 年",
+          "confidence": 0.98
+        }
+      ],
+      "metadata": {
+        "era_expansion_version": "v1",
+        "validator_version": "v1",
+        "temporal_conflict": false,
+        "conflict_flags": [],
+        "evidence_overflow_count": 0,
+        "temporal_assertions": [
+          {
+            "evidence_id": "knowledge:era:2aae8efd0afc31eb2e84a72d",
+            "start_year": 2000,
+            "end_year": 2000,
+            "raw_time": "2000 年",
+            "precision": "exact"
+          },
+          {
+            "evidence_id": "knowledge:era:05d36d32e12db7ef82f29652",
+            "start_year": 2000,
+            "end_year": 2000,
+            "raw_time": "2000 年",
+            "precision": "exact"
+          }
+        ],
+        "claim_predicates": [
+          "debuted"
+        ],
+        "derivation": "debut_activity"
+      }
+    },
+    {
+      "source_entity": {
+        "node_id": "netease:artist:6452",
+        "node_type": "artist",
+        "canonical_name": "周杰伦",
+        "knowledge_entity_id": "artist:jay_chou"
+      },
+      "target_entity": null,
+      "era": {
+        "node_id": "era:2000s",
+        "canonical_name": "2000s"
+      },
+      "relation_type": "belongs_to_era",
+      "start_year": 2000,
+      "end_year": 2000,
+      "temporal_precision": "exact",
+      "confidence": 0.96,
+      "evidence": [
+        {
+          "evidence_id": "knowledge:era:2c1d65985d2f04c096688449",
+          "source_id": "knowledge:era:2c1d65985d2f04c096688449",
+          "claim_id": "claim:868e9742f0cc9053c1bfd602",
+          "exact_span": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！",
+          "start_year": 2000,
+          "end_year": 2000,
+          "raw_time": "2000年",
+          "confidence": 0.96
+        }
+      ],
+      "metadata": {
+        "era_expansion_version": "v1",
+        "validator_version": "v1",
+        "temporal_conflict": false,
+        "conflict_flags": [],
+        "evidence_overflow_count": 0,
+        "temporal_assertions": [
+          {
+            "evidence_id": "knowledge:era:2c1d65985d2f04c096688449",
+            "start_year": 2000,
+            "end_year": 2000,
+            "raw_time": "2000年",
+            "precision": "exact"
+          }
+        ],
+        "claim_predicates": [
+          "released"
+        ],
+        "derivation": "release_activity"
+      }
+    }
+  ],
+  "scene_relations": [],
+  "influence_relations": [],
+  "session_id": "42c804ea5a774780a46539f6aaac0f6f",
+  "current_node": "netease:artist:6452",
+  "visited_nodes": [
+    "netease:artist:6452"
+  ],
+  "available_actions": [
+    {
+      "id": "wlb:1:300c8ddc42d34be9bfb14cb93587628d",
+      "target_node_id": "netease:song:210049",
+      "action_type": "explore_node",
+      "enabled": true,
+      "disabled_reason": null
+    },
+    {
+      "id": "wlb:1:11d8ee79427c46399c5ada76dc2638b4",
+      "target_node_id": "netease:song:5257138",
+      "action_type": "explore_node",
+      "enabled": true,
+      "disabled_reason": null
+    },
+    {
+      "id": "wlb:1:b30cff2e75cc47beb8924313ffaf9a94",
+      "target_node_id": "netease:song:255020",
+      "action_type": "explore_node",
+      "enabled": true,
+      "disabled_reason": null
+    }
+  ],
+  "exploration_depth": 0,
+  "revision": 1,
+  "outcome": null
+}

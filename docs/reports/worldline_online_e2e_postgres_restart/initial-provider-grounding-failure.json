@@ -1,0 +1,9 @@
+{
+  "http_status": 502,
+  "response": {
+    "detail": {
+      "code": "narrative_generation_failed",
+      "message": "音乐世界线叙事暂时无法生成，请稍后再试。"
+    }
+  }
+}

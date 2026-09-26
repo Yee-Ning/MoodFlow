@@ -1,0 +1,998 @@
+{
+  "basis": "offline assertions over unmodified real HTTP responses, PostgreSQL snapshots and passive runtime traces; no generated acceptance DTOs",
+  "session_id": "42c804ea5a774780a46539f6aaac0f6f",
+  "manifest_identity": {
+    "status": "approved",
+    "scope": "retrieval_build_integrity_only",
+    "semantic_source_context_readiness_approved": false,
+    "reviewer": "Codex environment preparation",
+    "manifest_sha256": "sha256:a74164c52346dd4050468d2e491dfe5993abec16cb70122d9df7d693769d2f17",
+    "source_release_id": "knowledge-v2-aa5271a36860debb",
+    "collection_name": "worldline_knowledge_v4_aa5271a36860debb_v1_v2_v4",
+    "projection_fingerprint": "sha256:28c2fa0b6efcac8cd45e65fed572c807d9a2f4ff4a7aeff88bc3336190d291ec",
+    "live_payloads_and_vectors_verified": 1270,
+    "eval_gold_or_review_pack_used_as_index_data": false,
+    "manifest_path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\data\\indexing\\worldline\\source-context-20260926\\v4\\index_build_manifest.json"
+  },
+  "native_claim_inventory": {
+    "predicates": {
+      "arranged": 1,
+      "born_on": 4,
+      "chart_position": 1,
+      "collaborated_with": 7,
+      "composed_for": 7,
+      "contains_music_element": 1,
+      "debuted": 4,
+      "has_genre": 7,
+      "includes_track": 2,
+      "performed_at": 3,
+      "produced": 4,
+      "released": 17,
+      "won_award": 11,
+      "wrote_lyrics_for": 9
+    },
+    "scene_supported_predicate_count": 0,
+    "influence_supported_predicate_count": 0,
+    "scene_recognized_predicates": [
+      "belongs_to_scene",
+      "representative_of_scene",
+      "scene_association",
+      "style_scene_association",
+      "emerged_from_scene"
+    ],
+    "influence_recognized_predicates": [
+      "influenced",
+      "influenced_by",
+      "inspired",
+      "inspired_by",
+      "shaped_style",
+      "cited_as_influence"
+    ],
+    "knowledge_release_unique_supported_claim_count": 79,
+    "knowledge_release_predicates": {
+      "debuted": 4,
+      "released": 17,
+      "collaborated_with": 7,
+      "includes_track": 2,
+      "born_on": 4,
+      "wrote_lyrics_for": 9,
+      "has_genre": 8,
+      "performed_at": 3,
+      "won_award": 11,
+      "chart_position": 1,
+      "produced": 4,
+      "composed_for": 7,
+      "arranged": 1,
+      "contains_music_element": 1
+    },
+    "claims_not_projected": [
+      {
+        "claim_id": "claim:e395f612ac8d9b15697a809b",
+        "predicate": "has_genre",
+        "source_chunk_id": "parent-0af0929bc767848193bfbc07",
+        "evidence_span": "在中国风市场上，周杰伦的地位是毋庸置疑的，大众耳熟能详的《青花瓷》、《霍元甲》、《本草纲目》等均属于中国风作品，而且深受大众喜爱 <sup>[5]</sup>。"
+      }
+    ],
+    "projected_unique_supported_claim_count": 78
+  },
+  "traces": [
+    {
+      "file": "initial-provider-grounding-failure-trace.jsonl",
+      "pid": 30628,
+      "stage_counts": {
+        "observer_started": 1,
+        "application_log": 21,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.prepare_query_context": 1,
+        "app.agent.foundation.subgraphs.worldline.music_service:JavaMusicEntityService.search_entities": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.resolve_entity": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.understand_query": 1,
+        "app.agent.foundation.subgraphs.worldline.music_service:JavaMusicEntityService.load_entity_facts": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.load_entity_facts": 1,
+        "app.rag.retrieval.service:HybridRetrievalService.retrieve": 1,
+        "app.agent.foundation.subgraphs.worldline.retrieval:_log_context_pack": 1,
+        "app.agent.foundation.subgraphs.worldline.retrieval:_pack_documents": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.retrieve_music_knowledge": 1,
+        "app.llm.client:_create_response": 2,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.generate_narrative": 1
+      },
+      "started_at": "2026-09-26T14:58:49.903709+00:00",
+      "last_event_at": "2026-09-26T14:59:41.043536+00:00",
+      "observer_error_count": 0
+    },
+    {
+      "file": "before-restart-trace.jsonl",
+      "pid": 16312,
+      "stage_counts": {
+        "observer_started": 1,
+        "application_log": 51,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.prepare_query_context": 2,
+        "app.agent.foundation.subgraphs.worldline.music_service:JavaMusicEntityService.search_entities": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.resolve_entity": 2,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.understand_query": 2,
+        "app.agent.foundation.subgraphs.worldline.music_service:JavaMusicEntityService.load_entity_facts": 2,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.load_entity_facts": 2,
+        "app.rag.retrieval.service:HybridRetrievalService.retrieve": 2,
+        "app.agent.foundation.subgraphs.worldline.retrieval:_log_context_pack": 2,
+        "app.agent.foundation.subgraphs.worldline.retrieval:_pack_documents": 2,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.retrieve_music_knowledge": 2,
+        "app.agent.foundation.subgraphs.worldline.era_expansion:EraExpansionService.expand": 2,
+        "app.agent.foundation.subgraphs.worldline.scene_expansion:SceneExpansionService.expand": 2,
+        "app.agent.foundation.subgraphs.worldline.influence_expansion:InfluenceExpansionService.expand": 2,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.build_graph": 2,
+        "app.llm.client:_create_response": 7,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.generate_narrative": 2,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.generate_branches": 2,
+        "app.agent.foundation.subgraphs.worldline.session:WorldLineSessionService._commit": 2,
+        "app.agent.foundation.subgraphs.worldline.session:WorldLineSessionService.create": 1,
+        "app.agent.foundation.subgraphs.worldline.session:WorldLineSessionService.explore": 1
+      },
+      "started_at": "2026-09-26T15:02:12.494569+00:00",
+      "last_event_at": "2026-09-26T15:06:08.316291+00:00",
+      "observer_error_count": 0
+    },
+    {
+      "file": "after-restart-trace.jsonl",
+      "pid": 34620,
+      "stage_counts": {
+        "observer_started": 1,
+        "app.agent.foundation.subgraphs.worldline.session:WorldLineSessionService.recover": 1,
+        "application_log": 7,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.prepare_query_context": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.resolve_entity": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.understand_query": 1,
+        "app.agent.foundation.subgraphs.worldline.music_service:JavaMusicEntityService.load_entity_facts": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.load_entity_facts": 1,
+        "app.rag.retrieval.service:HybridRetrievalService.retrieve": 1,
+        "app.agent.foundation.subgraphs.worldline.retrieval:_log_context_pack": 1,
+        "app.agent.foundation.subgraphs.worldline.retrieval:_pack_documents": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.retrieve_music_knowledge": 1,
+        "app.agent.foundation.subgraphs.worldline.era_expansion:EraExpansionService.expand": 1,
+        "app.agent.foundation.subgraphs.worldline.scene_expansion:SceneExpansionService.expand": 1,
+        "app.agent.foundation.subgraphs.worldline.influence_expansion:InfluenceExpansionService.expand": 1,
+        "app.agent.foundation.subgraphs.worldline.graph:build_worldline_subgraph.<locals>.build_graph": 1
+      },
+      "started_at": "2026-09-26T15:08:48.925780+00:00",
+      "last_event_at": "2026-09-26T15:11:29.690840+00:00",
+      "observer_error_count": 0
+    }
+  ],
+  "retrievals": [
+    {
+      "at": "2026-09-26T15:02:50.990760+00:00",
+      "pid": 16312,
+      "query": "歌手《周杰伦》的早期出道与专辑发行时间线、音乐场景和创作影响。请用一段简短文字说明图谱，资料缺失如实说明。",
+      "plan_id": "query-plan:2d9295a5744ecbb2bc73002a",
+      "manifest_path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\data\\indexing\\worldline\\source-context-20260926\\v4\\index_build_manifest.json",
+      "backend": "QdrantHybridSearchBackend",
+      "encoder": "QwenQueryEncoder",
+      "status": "success",
+      "candidate_count": 40,
+      "failed_channels": [],
+      "channels": [
+        "dense",
+        "lexical"
+      ],
+      "timings": {
+        "embedding_ms": 15193.644200000563,
+        "qdrant_ms": 711.9743000002927,
+        "processing_ms": 123.70930000179214,
+        "total_ms": 16577.48430000356
+      }
+    },
+    {
+      "at": "2026-09-26T15:05:49.396886+00:00",
+      "pid": 16312,
+      "query": "继续探索歌曲《屋顶》的音乐世界线",
+      "plan_id": "query-plan:0494a24420a3b747737bae86",
+      "manifest_path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\data\\indexing\\worldline\\source-context-20260926\\v4\\index_build_manifest.json",
+      "backend": "QdrantHybridSearchBackend",
+      "encoder": "QwenQueryEncoder",
+      "status": "success",
+      "candidate_count": 40,
+      "failed_channels": [],
+      "channels": [
+        "dense",
+        "lexical"
+      ],
+      "timings": {
+        "embedding_ms": 57.36610000167275,
+        "qdrant_ms": 3166.4388999997755,
+        "processing_ms": 1214.5386999982293,
+        "total_ms": 4438.545099998009
+      }
+    },
+    {
+      "at": "2026-09-26T15:11:29.559522+00:00",
+      "pid": 34620,
+      "query": "继续探索歌手《吴宗宪》的音乐世界线",
+      "plan_id": "query-plan:d86c2b37d845b8f7f20ba307",
+      "manifest_path": "D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\data\\indexing\\worldline\\source-context-20260926\\v4\\index_build_manifest.json",
+      "backend": "QdrantHybridSearchBackend",
+      "encoder": "QwenQueryEncoder",
+      "status": "success",
+      "candidate_count": 21,
+      "failed_channels": [],
+      "channels": [
+        "dense",
+        "lexical"
+      ],
+      "timings": {
+        "embedding_ms": 17780.049699998926,
+        "qdrant_ms": 349.78070000215666,
+        "processing_ms": 26.548499998170882,
+        "total_ms": 18728.841700001794
+      }
+    }
+  ],
+  "context_packs": [
+    {
+      "at": "2026-09-26T15:02:51.512688+00:00",
+      "pid": 16312,
+      "query": "歌手《周杰伦》的早期出道与专辑发行时间线、音乐场景和创作影响。请用一段简短文字说明图谱，资料缺失如实说明。",
+      "token_count": 2603,
+      "token_budget": 3000,
+      "items": [
+        {
+          "doc_id": "doc-jc-v1-030-00f0479d20c219dffad5",
+          "parent_id": "parent-35487c91c9077427f4346634",
+          "source_id": "jc-v1-030",
+          "chunk_id": "child-5f529ba523df4dc63765c6e2",
+          "provenance": {
+            "source_locator": "周杰倫 > 音樂事業 > 1997年—2001年: 〈三暝三日〉〈落雨声〉",
+            "source_content_sha256": "d9d34b319f2191bfdbaef2bf6526983afe44ea24e9a8b2e4ede57623b3b6fa1d",
+            "parent_content_sha256": "853612f8c9fa84a191db5288db01e2a162555f1af34c9e50b0946fed7369b642",
+            "source_response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:4fde589d9c24bdea9d2c53dcaf3a9e35e4b3ce39d4222ec86e8e85a5a9ea7ec6",
+            "index_input_hash": "sha256:399a2895aff96ce0e588f5d20a9fa8cf949ee13bb68d64e9922bf8701b5953ac"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v2-007-d65a5eb1d97ff8ebd12b",
+          "parent_id": "parent-19653b37f18f4b5a753a5b6e",
+          "source_id": "jc-v2-007",
+          "chunk_id": "child-128c22f7d442883f8ba8620f",
+          "provenance": {
+            "source_locator": "41岁周杰伦：时代变了，但我的时代不会过去",
+            "source_content_sha256": "2b1f10f2500941d3e477cedf35fd7d005b3329d050e38f766de4a2a84512eac5",
+            "parent_content_sha256": "4d75e7684f9af68c7c151ad81e8b1d00ddeebae435d75fabb2e57f5d179ee042",
+            "source_response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:64c16d71fed8c2d1c4c93b7e9cffc5990b274db9c70f2246170a6e3b487760ba",
+            "index_input_hash": "sha256:8940a693a9a6b58a9a6c09be2aba9b4074e5aa620dee20363baa439b66e5e74f"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v1-002-04f3fc502cebf6f24481",
+          "parent_id": "parent-cca31e09c6d05f09267862a1",
+          "source_id": "jc-v1-002",
+          "chunk_id": "child-47f20fb8758857fea2a887a0",
+          "provenance": {
+            "source_locator": "藝人專區 > 周杰倫20年音樂軌跡 14張經典專輯變身黑膠唱片",
+            "source_content_sha256": "130e06a111a0fe6fe2d00adb5a474ba065fac437962f2ba0454191646881649d",
+            "parent_content_sha256": "cf0efcadc4ccf244d4644ceafa9f3d3b3c19dc3dddacc24219a511cff6c775fa",
+            "source_response_sha256": "4ecac97530c36eaf72c4c1b7d4717647710b516840b8687d5cab38b3d73e269e",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:389c2bf5da6dff81eb7e1df2be48ab61c5debdb944cd6ee2e4c6807a364ab7e1",
+            "index_input_hash": "sha256:5ad6210d59f6586513bd2c9141faef5edf92d70e6fca2cab8039c82f373c8990"
+          },
+          "claim_ids": [
+            "claim:868e9742f0cc9053c1bfd602"
+          ],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v2-048-d0a320ed0eb9ab94ede2",
+          "parent_id": "parent-bc23e565000bbb36d4ec44e9",
+          "source_id": "jc-v2-048",
+          "chunk_id": "child-2c9c01d1c6765c3ca5271d72",
+          "provenance": {
+            "source_locator": "未命名文档",
+            "source_content_sha256": "db5612077500cd6dec2a99e513a6911ba867c1561d5ab0ad7b14058c880b1d81",
+            "parent_content_sha256": "26279986226faca41bc0416ee1ab24504001257ff055610e0c8229bec673c704",
+            "source_response_sha256": "92322461616cb18750f3a4801a7d03efd53d11a520ba5aa0c7fb52a700fb4532",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:eb5da84c175c50c08d81b50181724a38175dea53ecf843bcbac46aa2ee446d43",
+            "index_input_hash": "sha256:14163399821a5cca21cd074ef48b304fdb5ee6f93206628670def687736df7f7"
+          },
+          "claim_ids": [
+            "claim:217c9e0609104466d789e270"
+          ],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v2-007-d65a5eb1d97ff8ebd12b",
+          "parent_id": "parent-5ba80a812804e7ee7f9c7008",
+          "source_id": "jc-v2-007",
+          "chunk_id": "child-31b28da1a05516dd05a86f7c",
+          "provenance": {
+            "source_locator": "41岁周杰伦：时代变了，但我的时代不会过去",
+            "source_content_sha256": "f2518b3472704dc9dfcac4febc1fe43e002cfaae80486f8950e803cc53d4d004",
+            "parent_content_sha256": "11bc9c42c6531436b18d8670cbef16e139bd4be5992da0dbc43396a57f5a6d09",
+            "source_response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:8e468ae11993c9eeeb3089689c4327114a6fd2fcc6f2ca17fe68f1bfa5c4dfe2",
+            "index_input_hash": "sha256:134a1b78d2a96d40651052de898151c1a39e556f591605b78252ce91b0a98aff"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v2-048-d0a320ed0eb9ab94ede2",
+          "parent_id": "parent-0dc65cb1964f6289526a1cd8",
+          "source_id": "jc-v2-048",
+          "chunk_id": "child-c20c5223a0afa09c84356468",
+          "provenance": {
+            "source_locator": "未命名文档",
+            "source_content_sha256": "eb568a371d9c00d0adc0f728a249d5dc149a6ca53e2b14d37b55f739767bd568",
+            "parent_content_sha256": "468e3f8a956aa328ec86a3fcc91016b75555e8770e37f7b13da1d9f3356d59f0",
+            "source_response_sha256": "92322461616cb18750f3a4801a7d03efd53d11a520ba5aa0c7fb52a700fb4532",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:2070676b7a45ec35d86eee2305cff161986714ed02874c1723d499b6580adc18",
+            "index_input_hash": "sha256:694852c52c95791ffea64be8f7f96213a49a0c7ede81d197e5c069449df8d4e2"
+          },
+          "claim_ids": [
+            "claim:9b6a36ea033c15bdbf0a8782"
+          ],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        }
+      ]
+    },
+    {
+      "at": "2026-09-26T15:05:49.779863+00:00",
+      "pid": 16312,
+      "query": "继续探索歌曲《屋顶》的音乐世界线",
+      "token_count": 2732,
+      "token_budget": 3000,
+      "items": [
+        {
+          "doc_id": "doc-jc-v1-029-8227a1fb44efa927590e",
+          "parent_id": "parent-4652ddae40ed4f75e70e2c39",
+          "source_id": "jc-v1-029",
+          "chunk_id": "child-830805a40fda506c02b32cd7",
+          "provenance": {
+            "source_locator": "论当代“中国风”歌曲创作的艺术探索",
+            "source_content_sha256": "32cc6e057e3c619acbe26d0a4315e070ae62d92ee5dbb7991aa86c52145c0158",
+            "parent_content_sha256": "5a65175f487cc6a84035785dbda1d36234315b7d638523af875de3d3351f83f5",
+            "source_response_sha256": "70c54eedbebbc4ea26419a583f967ea0501ba376710b61b372858b1cd103fba5",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:42a64f176d0c23483ca4da9c3656672aa3394d6ecd5de52f066d800837dd9655",
+            "index_input_hash": "sha256:d07de6cd225c68b13df26b2a75a656bae772d7d62239588a9072270aedf68437"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v1-017-c26a58b5ea39e98dd100",
+          "parent_id": "parent-659d449391ffb5694ba9fdf0",
+          "source_id": "jc-v1-017",
+          "chunk_id": "child-57769f595edfaa38bc41f7d1",
+          "provenance": {
+            "source_locator": "大男孩要做NO.1——与周杰伦对话",
+            "source_content_sha256": "7ea3dd392564bce1ba9d9da2cc44fe4dad39961b2eadb15754cc9062ea2f2834",
+            "parent_content_sha256": "abd1cbcef6a924e4be0bda46206f1ca5be5b5591ed3d844411dc5e52a530d8e5",
+            "source_response_sha256": "c1dd344394afdf4b7d957bcdbec04cebe3ebbcfec252b1bd7ec88327b3436c44",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:d2933f0f79f221afad3ff534cb4284169f8484177377b11564d59f7a16f534a9",
+            "index_input_hash": "sha256:2f1bf9528c66f88a91103abf5f4a0c6b59bc04fad7241e23e9578acd74f642c3",
+            "source_published_at": "2004-10-24"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v1-021-e7b25a8a6bd4dec398db",
+          "parent_id": "parent-a6d0a9714c07f6e028d2425c",
+          "source_id": "jc-v1-021",
+          "chunk_id": "child-2497b21066f35261317b37d8",
+          "provenance": {
+            "source_locator": "媒体成电",
+            "source_content_sha256": "79c14e4239a64364316c71d2c7cd9f498b7be2ea2a94b822a64f8b1a86edfbaf",
+            "parent_content_sha256": "a605e0977d304063001b406959f3c8642d4e2754943ba4ad47efdf1fddd1d070",
+            "source_response_sha256": "d5211874f7ad6a923041a8debb6ecd4b3915d24c3040c5f5fa1176fdf75091f3",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:b558e9e1de48c8bb6be21d2a4fa6f3eb3504861017b1166825c50f8e60f239fc",
+            "index_input_hash": "sha256:705f3809f7d64afdecbbd030c036c75b09e42a1f34f91b22459fecae742f9d57",
+            "source_published_at": "2015-11-25"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v1-037-5b9c65da243bc2089467",
+          "parent_id": "parent-17747bf81bf90411ed3b8a4f",
+          "source_id": "jc-v1-037",
+          "chunk_id": "child-886936e400404269f9e2c52a",
+          "provenance": {
+            "source_locator": "東風破",
+            "source_content_sha256": "f8a9ebda6136f3a3e0c78fbdd9b23ebfb82b5a9161034870367dc5e4cd6b4365",
+            "parent_content_sha256": "f8a9ebda6136f3a3e0c78fbdd9b23ebfb82b5a9161034870367dc5e4cd6b4365",
+            "source_response_sha256": "a8da46e64f1f44176e7a2daabbb87447d1cf241ebf5740b666c9f3f3c58a21a6",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:0dab74844907f8cf5da9e5eb3a67f063a68beaa8855e9b07ede45c2dc84ead17",
+            "index_input_hash": "sha256:bfd758162bb22ae6c61bdbe41b3296b6512dc037df65dc1334f81fa6249c3da9"
+          },
+          "claim_ids": [
+            "claim:550e9bc3e3ee4ae4426ccdd5",
+            "claim:ae32871569e10a7fcffd3cf8"
+          ],
+          "packets": [
+            {
+              "schema_version": "relation-source-context-v1",
+              "context_id": "context:404f5c41f2b354e09e6a3aab",
+              "source_id": "jc-v1-037",
+              "document_id": "parent-17747bf81bf90411ed3b8a4f",
+              "chunk_id": "child-886936e400404269f9e2c52a",
+              "claim_id": "claim:550e9bc3e3ee4ae4426ccdd5",
+              "source_url": "https://zh.wikipedia.org/wiki/%E6%9D%B1%E9%A2%A8%E7%A0%B4",
+              "publisher": "Wikipedia",
+              "title": "東風破",
+              "locator": "DOM p[1]; decoded text [751:871]",
+              "captured_at": "2026-09-10T01:02:45.339830Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "a8da46e64f1f44176e7a2daabbb87447d1cf241ebf5740b666c9f3f3c58a21a6",
+              "source_content_sha256": "f8a9ebda6136f3a3e0c78fbdd9b23ebfb82b5a9161034870367dc5e4cd6b4365",
+              "content": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。歌曲的名字，来自古代民间一种曲的形式，叫做曲破[1]。著名跨栏运动员刘翔翻唱过这首歌[2][3]。\n",
+              "content_sha256": "c03c4eef20bc04f0716178e76833651b619a95da30fc008be1af546c75d16538",
+              "anchor": {
+                "role": "article_sentence",
+                "exact_span": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。",
+                "start": 0,
+                "end": 40
+              },
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。歌曲的名字，来自古代民间一种曲的形式，叫做曲破[1]。著名跨栏运动员刘翔翻唱过这首歌[2][3]。\n",
+                  "start": 0,
+                  "end": 120
+                }
+              ]
+            },
+            {
+              "schema_version": "relation-source-context-v1",
+              "context_id": "context:1fe7fa85419990031286e88a",
+              "source_id": "jc-v1-037",
+              "document_id": "parent-17747bf81bf90411ed3b8a4f",
+              "chunk_id": "child-886936e400404269f9e2c52a",
+              "claim_id": "claim:ae32871569e10a7fcffd3cf8",
+              "source_url": "https://zh.wikipedia.org/wiki/%E6%9D%B1%E9%A2%A8%E7%A0%B4",
+              "publisher": "Wikipedia",
+              "title": "東風破",
+              "locator": "DOM p[1]; decoded text [751:871]",
+              "captured_at": "2026-09-10T01:02:45.339830Z",
+              "capture_method": "verbatim_web_excerpt",
+              "response_sha256": "a8da46e64f1f44176e7a2daabbb87447d1cf241ebf5740b666c9f3f3c58a21a6",
+              "source_content_sha256": "f8a9ebda6136f3a3e0c78fbdd9b23ebfb82b5a9161034870367dc5e4cd6b4365",
+              "content": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。歌曲的名字，来自古代民间一种曲的形式，叫做曲破[1]。著名跨栏运动员刘翔翻唱过这首歌[2][3]。\n",
+              "content_sha256": "c03c4eef20bc04f0716178e76833651b619a95da30fc008be1af546c75d16538",
+              "anchor": {
+                "role": "article_sentence",
+                "exact_span": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。",
+                "start": 0,
+                "end": 40
+              },
+              "segments": [
+                {
+                  "role": "article_sentence",
+                  "exact_span": "〈东风破〉是一首由周杰伦演唱，方文山作词的歌曲，收录在周杰伦的专辑《叶惠美》中。这首歌运用了二胡和琵琶两种中国民族乐器，是中国风的代表之作。歌曲的名字，来自古代民间一种曲的形式，叫做曲破[1]。著名跨栏运动员刘翔翻唱过这首歌[2][3]。\n",
+                  "start": 0,
+                  "end": 120
+                }
+              ]
+            }
+          ],
+          "missing_context_remains_missing": false,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": true
+        },
+        {
+          "doc_id": "doc-jc-v2-046-5b5ab84f53d7a1c6cd89",
+          "parent_id": "parent-6a331e40f29ee8eefba08d2e",
+          "source_id": "jc-v2-046",
+          "chunk_id": "child-004037b17c7602c882968665",
+          "provenance": {
+            "source_locator": "未命名文档",
+            "source_content_sha256": "176dd2a3a159d7f6b0889850c4f4637b8c729f06a343685ec5394ad99ead4a57",
+            "parent_content_sha256": "cb6f6ff7ef1bee87a2c4955aff5e13b0a78514a82e2b0a64c93f3b1463dbfb19",
+            "source_response_sha256": "15bbd78ae16907cce369bfd1cc3d67059cc81d7bf31a1a14eae9183723e9e6bb",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:9c65de0f0404aa3e34e2f43d465beed8216033b4b56285d92fa72346445c5f26",
+            "index_input_hash": "sha256:a04ab3d97a0587cd8befe385a5cd9076ca894af5d310a632de01e2327e1abd05"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v2-045-9dd5c92d2bc2e22c6f17",
+          "parent_id": "parent-f519048960b66e67ed7ad8d8",
+          "source_id": "jc-v2-045",
+          "chunk_id": "child-99c5de9583361f86e2c69312",
+          "provenance": {
+            "source_locator": "未命名文档",
+            "source_content_sha256": "683f966eb562b0ee4641ba4420ea1d0e49e79c02ca6a509003e4e2bfab9b1a0e",
+            "parent_content_sha256": "0c3fbf8b686e3347ec3109ece7e18f9e22149cefc741faa42518dbdefab599ac",
+            "source_response_sha256": "3347faeb7b6651ae6533cab2e46fdb2ab47cf15c0e3ae9d85d627a03abf043e3",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:5469127c50d53127f2454963b3bba119162bdc446cc5b7bc4e995573c59f9fbc",
+            "index_input_hash": "sha256:64d207f28492075e45c1ee8427739c1204c25db7667365e308f48a8b71388220"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        }
+      ]
+    },
+    {
+      "at": "2026-09-26T15:11:29.666165+00:00",
+      "pid": 34620,
+      "query": "继续探索歌手《吴宗宪》的音乐世界线",
+      "token_count": 2618,
+      "token_budget": 3000,
+      "items": [
+        {
+          "doc_id": "doc-jc-v1-030-00f0479d20c219dffad5",
+          "parent_id": "parent-35487c91c9077427f4346634",
+          "source_id": "jc-v1-030",
+          "chunk_id": "child-5f529ba523df4dc63765c6e2",
+          "provenance": {
+            "source_locator": "周杰倫 > 音樂事業 > 1997年—2001年: 〈三暝三日〉〈落雨声〉",
+            "source_content_sha256": "d9d34b319f2191bfdbaef2bf6526983afe44ea24e9a8b2e4ede57623b3b6fa1d",
+            "parent_content_sha256": "853612f8c9fa84a191db5288db01e2a162555f1af34c9e50b0946fed7369b642",
+            "source_response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:4fde589d9c24bdea9d2c53dcaf3a9e35e4b3ce39d4222ec86e8e85a5a9ea7ec6",
+            "index_input_hash": "sha256:399a2895aff96ce0e588f5d20a9fa8cf949ee13bb68d64e9922bf8701b5953ac"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v1-017-c26a58b5ea39e98dd100",
+          "parent_id": "parent-659d449391ffb5694ba9fdf0",
+          "source_id": "jc-v1-017",
+          "chunk_id": "child-7831a26ae40e87a611c5a3f0",
+          "provenance": {
+            "source_locator": "大男孩要做NO.1——与周杰伦对话",
+            "source_content_sha256": "7c822503a66157c564d8ae6bebf4cb176dc90505f893a350eb25240eae21672a",
+            "parent_content_sha256": "abd1cbcef6a924e4be0bda46206f1ca5be5b5591ed3d844411dc5e52a530d8e5",
+            "source_response_sha256": "c1dd344394afdf4b7d957bcdbec04cebe3ebbcfec252b1bd7ec88327b3436c44",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:8eaaf62665871b0d167acd40930ef37e6de3bf1d5498438f6f049a560c6b401f",
+            "index_input_hash": "sha256:13b5de15480ef5cd92638d82365dfd53ed92cd4cfb66ac0497fbbc7cbce919a2",
+            "source_published_at": "2004-10-24"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v1-018-fd99b5179d0c3c56da1e",
+          "parent_id": "parent-460477fc7a03f1f4f1424549",
+          "source_id": "jc-v1-018",
+          "chunk_id": "child-2b1ec276ce0c2c8c5abf3fa0",
+          "provenance": {
+            "source_locator": "周杰伦御用作词人方文山作客新浪聊新书",
+            "source_content_sha256": "0a2e65781eaf66bc170bfb4d4d867d113c9e2f4cf9d529cde852ec2ca581b21e",
+            "parent_content_sha256": "8b2408426a0dad477784e35a84ea76f8b881f000d9ba8c843998c5ae1039f48d",
+            "source_response_sha256": "980e4b70f28911baa3320e416ad0d063bba6b1c3d589b87e995d20513def9182",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:befab181ccf52b9cf98aa1651ea83988658e7a96f61b462b42bce9b10185f8a1",
+            "index_input_hash": "sha256:ee8a85cc32a935ce465029ed1843b3fee7031f8dd468dc582c924d7bcebcd622",
+            "source_published_at": "2005-03-22"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v2-048-d0a320ed0eb9ab94ede2",
+          "parent_id": "parent-bc23e565000bbb36d4ec44e9",
+          "source_id": "jc-v2-048",
+          "chunk_id": "child-2ac486d0354617c432ad2929",
+          "provenance": {
+            "source_locator": "未命名文档",
+            "source_content_sha256": "4b518fb509a23e409f82effcebcf09d268248cef42b7bc9630ec21a4200abf85",
+            "parent_content_sha256": "26279986226faca41bc0416ee1ab24504001257ff055610e0c8229bec673c704",
+            "source_response_sha256": "92322461616cb18750f3a4801a7d03efd53d11a520ba5aa0c7fb52a700fb4532",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:ab8a95be2deb371070397c8f8db4932367614a8c1d14913f9e4d222cb2d89766",
+            "index_input_hash": "sha256:2ab92dd231deefbe1c068bae65f676d54440a7aa0a2b9deb4293346309eeb47b"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v1-031-b7229a6a50592923915e",
+          "parent_id": "parent-25f62cb39db0360a8916783d",
+          "source_id": "jc-v1-031",
+          "chunk_id": "child-b31e973f9cde83522b519d83",
+          "provenance": {
+            "source_locator": "方文山 > 填詞作品 > 1999年",
+            "source_content_sha256": "fba9e9f2d2b8b70cc876420211306542d5dc5d3fef968b3fb25ca7fb6e33bc1e",
+            "parent_content_sha256": "fba9e9f2d2b8b70cc876420211306542d5dc5d3fef968b3fb25ca7fb6e33bc1e",
+            "source_response_sha256": "b3afa2fb1ffbc55df4c115f1b78438bc11d5e92f322838247d1f23847776a7a5",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:addcb58e6f651da1cfa3b1927d52a1264021f65e5b4230a70651f8de09c04fbf",
+            "index_input_hash": "sha256:80f7f989a898f9af482df78390c5806541925860b2ddfc8cea8bef66d8e28f30"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        },
+        {
+          "doc_id": "doc-jc-v2-007-d65a5eb1d97ff8ebd12b",
+          "parent_id": "parent-19653b37f18f4b5a753a5b6e",
+          "source_id": "jc-v2-007",
+          "chunk_id": "child-b99acb049d36aa328fc92116",
+          "provenance": {
+            "source_locator": "41岁周杰伦：时代变了，但我的时代不会过去",
+            "source_content_sha256": "bc307e33c4dd6adf43d550d587c10b9e4e32e329ad01ac8264cb311a5f119d68",
+            "parent_content_sha256": "4d75e7684f9af68c7c151ad81e8b1d00ddeebae435d75fabb2e57f5d179ee042",
+            "source_response_sha256": "77d363ea28bc2ab1d345107e791c52e518e18298967f37214e99a165526ebaf0",
+            "source_release_id": "knowledge-v2-aa5271a36860debb",
+            "knowledge_input_hash": "sha256:785d93c7349f7e30021dcc7505318dd40cfe095a997c2b0b1bfb7635a48df0f2",
+            "index_input_hash": "sha256:1f4ecdacb2d1b6101e71aec090422cb94242f4643f74e16e39e63375b99783fd"
+          },
+          "claim_ids": [],
+          "packets": [],
+          "missing_context_remains_missing": true,
+          "packet_identical_in_projection_retrieval_pack_adapter": true,
+          "raw_response_hash_and_absolute_offsets_verified": false
+        }
+      ]
+    }
+  ],
+  "provider_responses": [
+    {
+      "trace": "initial-provider-grounding-failure-trace.jsonl",
+      "at": "2026-09-26T14:59:35.078672+00:00",
+      "latency_ms": 9164.87,
+      "model": "deepseek-flash",
+      "schema_name": "worldline_narrative",
+      "response_id": "9ec849b7-c017-49e7-b3aa-0bc28f4a8b72",
+      "status": "incomplete",
+      "provider_reported_model": "deepseek-flash",
+      "incomplete_details": {
+        "reason": "max_output_tokens"
+      }
+    },
+    {
+      "trace": "initial-provider-grounding-failure-trace.jsonl",
+      "at": "2026-09-26T14:59:41.042535+00:00",
+      "latency_ms": 4624.64,
+      "model": "deepseek-flash",
+      "schema_name": "worldline_narrative",
+      "response_id": "11790d1b-bf49-4658-87c5-d5933f188d23",
+      "status": "completed",
+      "provider_reported_model": "deepseek-flash",
+      "incomplete_details": null
+    },
+    {
+      "trace": "before-restart-trace.jsonl",
+      "at": "2026-09-26T15:03:02.717298+00:00",
+      "latency_ms": 7793.24,
+      "model": "deepseek-flash",
+      "schema_name": "worldline_narrative",
+      "response_id": "d47eb5a1-bbda-44c4-871e-daf933176571",
+      "status": "completed",
+      "provider_reported_model": "deepseek-flash",
+      "incomplete_details": null
+    },
+    {
+      "trace": "before-restart-trace.jsonl",
+      "at": "2026-09-26T15:03:08.596016+00:00",
+      "latency_ms": 5219.22,
+      "model": "deepseek-flash",
+      "schema_name": "worldline_narrative",
+      "response_id": "761e4259-501a-458d-8985-2b383916d702",
+      "status": "completed",
+      "provider_reported_model": "deepseek-flash",
+      "incomplete_details": null
+    },
+    {
+      "trace": "before-restart-trace.jsonl",
+      "at": "2026-09-26T15:03:11.384498+00:00",
+      "latency_ms": 2221.23,
+      "model": "deepseek-flash",
+      "schema_name": "worldline_branches",
+      "response_id": "bfe5b183-7516-40ff-bdba-2dbe22115540",
+      "status": "completed",
+      "provider_reported_model": "deepseek-flash",
+      "incomplete_details": null
+    },
+    {
+      "trace": "before-restart-trace.jsonl",
+      "at": "2026-09-26T15:03:14.115228+00:00",
+      "latency_ms": 2141.04,
+      "model": "deepseek-flash",
+      "schema_name": "worldline_branches",
+      "response_id": "50e823b7-12f0-4f05-9e88-6f2457814791",
+      "status": "completed",
+      "provider_reported_model": "deepseek-flash",
+      "incomplete_details": null
+    },
+    {
+      "trace": "before-restart-trace.jsonl",
+      "at": "2026-09-26T15:05:56.877484+00:00",
+      "latency_ms": 6033.54,
+      "model": "deepseek-flash",
+      "schema_name": "worldline_narrative",
+      "response_id": "370317a2-7d97-4381-a999-ac40570f6583",
+      "status": "completed",
+      "provider_reported_model": "deepseek-flash",
+      "incomplete_details": null
+    },
+    {
+      "trace": "before-restart-trace.jsonl",
+      "at": "2026-09-26T15:06:03.769592+00:00",
+      "latency_ms": 6237.38,
+      "model": "deepseek-flash",
+      "schema_name": "worldline_narrative",
+      "response_id": "e9486332-a98c-499e-9d4b-39af0420a64a",
+      "status": "completed",
+      "provider_reported_model": "deepseek-flash",
+      "incomplete_details": null
+    },
+    {
+      "trace": "before-restart-trace.jsonl",
+      "at": "2026-09-26T15:06:07.318697+00:00",
+      "latency_ms": 2988.54,
+      "model": "deepseek-flash",
+      "schema_name": "worldline_branches",
+      "response_id": "6b107759-e073-4d40-830b-054033ccf9ee",
+      "status": "completed",
+      "provider_reported_model": "deepseek-flash",
+      "incomplete_details": null
+    }
+  ],
+  "response_contract_schema_validation": {
+    "create": true,
+    "explore_before_restart": true,
+    "recover_after_restart": true,
+    "entire_pre_restart_response_equals_recovered_response": true
+  },
+  "checkpoint_comparison": {
+    "actual_committed_checkpointer_classes": [
+      "AsyncCompatiblePostgresSaver"
+    ],
+    "all_four_storage_hashes_identical": true,
+    "all_four_state_hashes_identical": true,
+    "all_four_pg_start_times_identical": true,
+    "postgres_session_storage_sha256": "ff17193fdb70eebabe0778ff8786c62e43910f148f3624d3e74cd2ae184af7ad",
+    "session_state_sha256": "4f8ac7d3010b7cad0e7feb51a2cfd1575dd3d4b693e69357abf2c93b27ca1432",
+    "postgres_started_at": "2026-09-26T13:19:39.325252+00:00",
+    "checkpoint_count": 6,
+    "blob_count": 6,
+    "write_count": 6,
+    "revision_sequence": [
+      1,
+      2,
+      2,
+      2
+    ],
+    "graph_node_count": 14,
+    "graph_edge_count": 13,
+    "source_count": 17,
+    "visited_nodes": [
+      "netease:artist:6452",
+      "netease:song:5257138"
+    ],
+    "consumed_branch_ids": [
+      "wlb:1:11d8ee79427c46399c5ada76dc2638b4"
+    ],
+    "era_relations": [
+      {
+        "source_entity": {
+          "node_id": "netease:artist:6452",
+          "node_type": "artist",
+          "canonical_name": "周杰伦",
+          "knowledge_entity_id": "artist:jay_chou"
+        },
+        "target_entity": null,
+        "era": {
+          "node_id": "era:netease_artist_6452_early_career",
+          "canonical_name": "Early career"
+        },
+        "relation_type": "career_phase",
+        "start_year": 2000,
+        "end_year": 2000,
+        "temporal_precision": "exact",
+        "confidence": 0.98,
+        "evidence": [
+          {
+            "evidence_id": "knowledge:era:2aae8efd0afc31eb2e84a72d",
+            "source_id": "knowledge:era:2aae8efd0afc31eb2e84a72d",
+            "claim_id": "claim:217c9e0609104466d789e270",
+            "exact_span": "2000 年至 2002 年 周杰伦出道的前三年可以视为第一个阶段 他这个时期主要的特征是青涩和张狂 真正让周杰伦 炮而红的是第二张专辑《范特西》 主打歌曲《双截棍》中那句“快使用双截棍 哼哼哈嘿” 一下成了当时的“流行语” “那个时期 周杰伦的创作虽然给流行乐坛带来了 股另类之风 但还略显青涩和幼稚 他将更多的注意力放在‘炫耀’ 些音乐技巧上 只是以更多元的形式来吸引人们的目光 在歌词中 他想展示的是自己特立独行和天马行空的音乐想法 ”",
+            "start_year": 2000,
+            "end_year": 2000,
+            "raw_time": "2000 年",
+            "confidence": 0.98
+          },
+          {
+            "evidence_id": "knowledge:era:05d36d32e12db7ef82f29652",
+            "source_id": "knowledge:era:05d36d32e12db7ef82f29652",
+            "claim_id": "claim:9b6a36ea033c15bdbf0a8782",
+            "exact_span": "自 2000 年出道以来 周杰伦保持着 年 张专辑的发片速度 2009 年由于忙于拍摄《刺陵》《苏乞儿》《熊猫人》等影视作品 他破天荒地在音乐领域交了白卷 在今年 5 月推出新专辑《跨时代》之后 他马上举办巡演 来巩固自己在歌坛的形象和地位 在接受台湾媒体的采访时 周杰伦表示 自己能够在歌坛继续走下去“会有第二个 10年 第三个10 年”",
+            "start_year": 2000,
+            "end_year": 2000,
+            "raw_time": "2000 年",
+            "confidence": 0.98
+          }
+        ],
+        "metadata": {
+          "era_expansion_version": "v1",
+          "validator_version": "v1",
+          "temporal_conflict": false,
+          "conflict_flags": [],
+          "evidence_overflow_count": 0,
+          "temporal_assertions": [
+            {
+              "evidence_id": "knowledge:era:2aae8efd0afc31eb2e84a72d",
+              "start_year": 2000,
+              "end_year": 2000,
+              "raw_time": "2000 年",
+              "precision": "exact"
+            },
+            {
+              "evidence_id": "knowledge:era:05d36d32e12db7ef82f29652",
+              "start_year": 2000,
+              "end_year": 2000,
+              "raw_time": "2000 年",
+              "precision": "exact"
+            }
+          ],
+          "claim_predicates": [
+            "debuted"
+          ],
+          "derivation": "debut_activity"
+        }
+      },
+      {
+        "source_entity": {
+          "node_id": "netease:artist:6452",
+          "node_type": "artist",
+          "canonical_name": "周杰伦",
+          "knowledge_entity_id": "artist:jay_chou"
+        },
+        "target_entity": null,
+        "era": {
+          "node_id": "era:2000s",
+          "canonical_name": "2000s"
+        },
+        "relation_type": "belongs_to_era",
+        "start_year": 2000,
+        "end_year": 2000,
+        "temporal_precision": "exact",
+        "confidence": 0.96,
+        "evidence": [
+          {
+            "evidence_id": "knowledge:era:2c1d65985d2f04c096688449",
+            "source_id": "knowledge:era:2c1d65985d2f04c096688449",
+            "claim_id": "claim:868e9742f0cc9053c1bfd602",
+            "exact_span": "2000年11月6日，周杰倫首張個人創作專輯「Jay」發行，融合多元曲風的音樂風格為流行樂壇帶來嶄新革命，從此也開啟了華語樂壇新紀元！",
+            "start_year": 2000,
+            "end_year": 2000,
+            "raw_time": "2000年",
+            "confidence": 0.96
+          }
+        ],
+        "metadata": {
+          "era_expansion_version": "v1",
+          "validator_version": "v1",
+          "temporal_conflict": false,
+          "conflict_flags": [],
+          "evidence_overflow_count": 0,
+          "temporal_assertions": [
+            {
+              "evidence_id": "knowledge:era:2c1d65985d2f04c096688449",
+              "start_year": 2000,
+              "end_year": 2000,
+              "raw_time": "2000年",
+              "precision": "exact"
+            }
+          ],
+          "claim_predicates": [
+            "released"
+          ],
+          "derivation": "release_activity"
+        }
+      }
+    ],
+    "scene_relations": [],
+    "influence_relations": [],
+    "graph_and_evidence_history_equal_to_api_response": true
+  },
+  "source_conflict_analysis": [
+    {
+      "evidence_id": "knowledge:chunk:178d28bd38cac5d826711d47",
+      "protected_top_level_differences": [],
+      "protected_metadata_differences": [
+        "matched_child_ids"
+      ],
+      "before_matched_child_ids": [
+        "child-5f529ba523df4dc63765c6e2",
+        "child-b606cac246881f7ca972e157",
+        "child-a16687b2432310c69c80af50"
+      ],
+      "continuation_matched_child_ids": [
+        "child-5f529ba523df4dc63765c6e2",
+        "child-b606cac246881f7ca972e157"
+      ],
+      "immutable_provenance": {
+        "point_id": "175bbbde-af7e-5638-a7a0-d1ccee5f7e99",
+        "source_id": "jc-v1-030",
+        "doc_id": "doc-jc-v1-030-00f0479d20c219dffad5",
+        "parent_id": "parent-35487c91c9077427f4346634",
+        "chunk_id": "child-5f529ba523df4dc63765c6e2",
+        "source_content_sha256": "d9d34b319f2191bfdbaef2bf6526983afe44ea24e9a8b2e4ede57623b3b6fa1d",
+        "source_response_sha256": "d26577c433b48b093c311cc059bcc121cfdbf75e07c2822c5eca0daf0022198f",
+        "parent_content_sha256": "853612f8c9fa84a191db5288db01e2a162555f1af34c9e50b0946fed7369b642",
+        "source_locator": "周杰倫 > 音樂事業 > 1997年—2001年: 〈三暝三日〉〈落雨声〉",
+        "knowledge_input_hash": "sha256:4fde589d9c24bdea9d2c53dcaf3a9e35e4b3ce39d4222ec86e8e85a5a9ea7ec6",
+        "index_input_hash": "sha256:399a2895aff96ce0e588f5d20a9fa8cf949ee13bb68d64e9922bf8701b5953ac",
+        "source_release_id": "knowledge-v2-aa5271a36860debb"
+      }
+    }
+  ],
+  "result": {
+    "online_e2e_pass": false,
+    "postgres_restart_acceptance": false,
+    "session_recovery_pass": true,
+    "postgres_restart_mechanics_pass": true,
+    "retrieval_runtime_pass": true,
+    "provider_generation_pass": true,
+    "frontend_happy_path_contract_pass": true,
+    "frontend_contract_pass": false,
+    "worldline_v1_freeze_ready": false
+  }
+}
