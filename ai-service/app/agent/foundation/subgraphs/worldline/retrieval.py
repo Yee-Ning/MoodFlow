@@ -221,9 +221,11 @@ def _pack_documents(
         metadata: dict[str, object] = {
             "point_id": candidate.point_id,
             "source_id": item.source_id,
+            "document_metadata": item.document_metadata,
             **{key: candidate.metadata[key] for key in (
                 "source_locator", "source_content_sha256", "parent_content_sha256",
                 "source_release_id", "knowledge_input_hash", "index_input_hash", "source_published_at",
+                "source_response_sha256",
             ) if key in candidate.metadata},
             "chunk_id": item.child_id,
             "parent_id": item.parent_id,

@@ -1,6 +1,8 @@
 """Bind captured source metadata to native indexed claims; no semantic inference."""
 
+from copy import deepcopy
 from hashlib import sha256
+import re
 from types import SimpleNamespace
 
 from app.rag.source_context import DocumentContextCapture, RelationSourceContext
@@ -89,9 +91,19 @@ def project_source_contexts(chunk, parent, claims: list[dict]) -> list[dict]:
 
 
 def source_payload_provenance(chunk, parent) -> dict:
-    return {
+    metadata = chunk.metadata.get("document_metadata", {})
+    if not isinstance(metadata, dict):
+        raise ValueError("index_document_metadata_invalid")
+    provenance = {
         "source_content_sha256": sha256(chunk.content.encode()).hexdigest(),
         "parent_content_sha256": sha256(parent.content.encode()).hexdigest(),
         "source_locator": " > ".join(chunk.section_path) or chunk.breadcrumb,
         "source_title": chunk.metadata.get("title") or chunk.breadcrumb,
+        "document_metadata": deepcopy(metadata),
     }
+    source_metadata = metadata.get("source_metadata", {})
+    if isinstance(source_metadata, dict):
+        response_hash = source_metadata.get("content_hash")
+        if isinstance(response_hash, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", response_hash):
+            provenance["source_response_sha256"] = response_hash.removeprefix("sha256:")
+    return provenance

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, JsonValue, model_validator
 from app.rag.source_context import RelationSourceContext
 
 
@@ -74,6 +74,8 @@ class ContextEvidence(BaseModel):
     rerank_score: float | None = Field(default=None, ge=0, le=1)
     source_evidence_content: str | None = Field(default=None, min_length=1, max_length=8_000)
     relation_source_contexts: list[RelationSourceContext] = Field(default_factory=list, max_length=8)
+    document_metadata: dict[str, JsonValue] = Field(default_factory=dict)
+    source_provenance: dict[str, JsonValue] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_evidence(self) -> "ContextEvidence":

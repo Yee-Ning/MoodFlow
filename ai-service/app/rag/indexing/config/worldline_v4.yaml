@@ -1,0 +1,71 @@
+indexing_version: v1
+schema_version: v2
+projection_version: v4
+embedding_batch_size: 8
+retry_count: 2
+index_partial_knowledge: true
+dense:
+  vector_name: dense
+  model_name: Qwen/Qwen3-Embedding-0.6B
+  model_revision: 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3
+  dimension: 1024
+  distance: cosine
+  max_length: 8192
+  normalize: true
+  device: auto
+  local_files_only: true
+bm25:
+  vector_name: bm25
+  model_name: qdrant/bm25
+  tokenizer: multilingual
+  k: 1.2
+  b: 0.75
+  average_length: 256.0
+  lowercase: true
+  disable_stemming: true
+  disable_stopwords: true
+  idf_modifier: true
+qdrant:
+  url: http://localhost:6333
+  api_key_env: QDRANT_API_KEY
+  collection_name: worldline_knowledge_v4
+  append_release_hash: true
+  minimum_server_version: 1.19.0
+  timeout_seconds: 60
+  prefer_grpc: false
+  trust_env: false
+  hnsw_m: 16
+  hnsw_ef_construct: 200
+  upsert_batch_size: 64
+  prune_stale: false
+  payload_indexes:
+  - field: doc_id
+    schema: keyword
+  - field: parent_id
+    schema: keyword
+  - field: source_id
+    schema: keyword
+  - field: chunk_type
+    schema: keyword
+  - field: content_type
+    schema: keyword
+  - field: language
+    schema: keyword
+  - field: year
+    schema: integer
+  - field: start_year
+    schema: integer
+  - field: end_year
+    schema: integer
+  - field: min_mentioned_year
+    schema: integer
+  - field: max_mentioned_year
+    schema: integer
+  - field: entity_ids
+    schema: keyword
+  - field: entity_types
+    schema: keyword
+  - field: verification_statuses
+    schema: keyword
+  - field: knowledge_status
+    schema: keyword

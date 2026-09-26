@@ -124,19 +124,21 @@ def _candidate_from_hit(hit: FusedSearchHit) -> RetrievalCandidate:
     chunk_id = _string(payload, "chunk_id")
     parent_id = _string(payload, "parent_id")
     doc_id = _string(payload, "doc_id")
-    child_content = _string(payload, "content")
+    child_content = _string(payload, "content", strip=False)
     breadcrumb = _optional_string(payload.get("breadcrumb")) or ""
     parent = payload.get("parent_context")
     if not isinstance(parent, dict):
         raise ValueError("parent context missing")
     if _string(parent, "chunk_id") != parent_id:
         raise ValueError("parent identity mismatch")
-    parent_content = _string(parent, "content")
+    parent_content = _string(parent, "content", strip=False)
     for field, content in (("source_content_sha256", child_content), ("parent_content_sha256", parent_content)):
         expected = payload.get(field)
         if expected is not None and expected != sha256(content.encode()).hexdigest():
             raise ValueError("retrieval_source_content_hash_mismatch")
     source_id = _string(payload, "source_id")
+    if not isinstance(payload.get("document_metadata", {}), dict):
+        raise ValueError("retrieval_document_metadata_invalid")
     source_name = _optional_string(payload.get("source_name")) or source_id
     entity_ids = _string_list(payload.get("entity_ids"))
     supported_claims = payload.get("supported_claims") or []
@@ -158,6 +160,7 @@ def _candidate_from_hit(hit: FusedSearchHit) -> RetrievalCandidate:
             "source_locator", "source_content_sha256", "parent_content_sha256",
             "source_release_id", "knowledge_input_hash", "index_input_hash",
             "source_published_at", "relation_source_contexts",
+            "document_metadata", "source_response_sha256",
         )
         if (value := payload.get(key)) is not None
     }
@@ -210,11 +213,13 @@ def _merge_parent(
     return RetrievalCandidate.model_validate(payload)
 
 
-def _string(payload: dict[str, Any], field: str) -> str:
+def _string(payload: dict[str, Any], field: str, *, strip: bool = True) -> str:
     value = payload.get(field)
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"payload field missing: {field}")
-    return value.strip()
+    # Immutable source bytes include whitespace; normalizing them invalidates
+    # native hashes and the source-context offsets. IDs still use stripped text.
+    return value.strip() if strip else value
 
 
 def _optional_string(value: Any) -> str | None:

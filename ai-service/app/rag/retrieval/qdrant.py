@@ -32,6 +32,8 @@ PAYLOAD_FIELDS = [
     "source_title",
     "source_locator",
     "source_content_sha256",
+    "source_response_sha256",
+    "document_metadata",
     "parent_content_sha256",
     "source_published_at",
     "source_release_id",

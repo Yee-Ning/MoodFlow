@@ -390,6 +390,16 @@ class ContextPackBuilder:
             rerank_score=item.rerank_score,
             source_evidence_content=candidate.primary_child_content if len(candidate.primary_child_content) <= 8_000 else None,
             relation_source_contexts=list(item.relation_source_contexts),
+            document_metadata=candidate.metadata.get("document_metadata", {}),
+            source_provenance={
+                key: candidate.metadata[key]
+                for key in (
+                    "source_locator", "source_content_sha256", "parent_content_sha256",
+                    "source_response_sha256", "source_release_id", "knowledge_input_hash",
+                    "index_input_hash", "source_published_at",
+                )
+                if key in candidate.metadata
+            },
         )
 
 
