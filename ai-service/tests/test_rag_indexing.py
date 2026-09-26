@@ -370,7 +370,7 @@ class ProjectionTests(unittest.TestCase):
         self.assertNotIn("year", document.payload)
         self.assertEqual(document.payload["min_mentioned_year"], 2007)
         self.assertEqual(document.payload["max_mentioned_year"], 2020)
-        self.assertEqual(document.payload["projection_version"], "v3")
+        self.assertEqual(document.payload["projection_version"], "v4")
 
     def test_no_year_mentions_do_not_invent_event_time(self) -> None:
         chunk = _child()
@@ -529,7 +529,7 @@ class KnowledgeReleaseTests(unittest.TestCase):
 
         self.assertEqual(
             resolved.qdrant.collection_name,
-            "music_knowledge_v2_aaaaaaaaaaaaaaaa_v1_v2_v3",
+            "music_knowledge_v2_aaaaaaaaaaaaaaaa_v1_v2_v4",
         )
         self.assertFalse(resolved.qdrant.append_release_hash)
 
@@ -550,7 +550,7 @@ class OfflineIndexingServiceTests(unittest.TestCase):
 
             self.assertEqual(
                 outcome.manifest_path,
-                root / "data" / "indexing" / "v1" / RELEASE_ID / "v3" / "index_build_manifest.json",
+                root / "data" / "indexing" / "v1" / RELEASE_ID / "v4" / "index_build_manifest.json",
             )
 
     def test_rerun_skips_unchanged_points_before_embedding(self) -> None:

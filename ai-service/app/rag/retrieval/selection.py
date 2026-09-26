@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from hashlib import sha256
 from typing import Any
 
 from pydantic import ValidationError
@@ -131,6 +132,10 @@ def _candidate_from_hit(hit: FusedSearchHit) -> RetrievalCandidate:
     if _string(parent, "chunk_id") != parent_id:
         raise ValueError("parent identity mismatch")
     parent_content = _string(parent, "content")
+    for field, content in (("source_content_sha256", child_content), ("parent_content_sha256", parent_content)):
+        expected = payload.get(field)
+        if expected is not None and expected != sha256(content.encode()).hexdigest():
+            raise ValueError("retrieval_source_content_hash_mismatch")
     source_id = _string(payload, "source_id")
     source_name = _optional_string(payload.get("source_name")) or source_id
     entity_ids = _string_list(payload.get("entity_ids"))
@@ -150,6 +155,9 @@ def _candidate_from_hit(hit: FusedSearchHit) -> RetrievalCandidate:
             "language",
             "knowledge_status",
             "entity_types",
+            "source_locator", "source_content_sha256", "parent_content_sha256",
+            "source_release_id", "knowledge_input_hash", "index_input_hash",
+            "source_published_at", "relation_source_contexts",
         )
         if (value := payload.get(key)) is not None
     }
@@ -157,7 +165,7 @@ def _candidate_from_hit(hit: FusedSearchHit) -> RetrievalCandidate:
         point_id=hit.point_id,
         parent_id=parent_id,
         doc_id=doc_id,
-        title=breadcrumb or source_name,
+        title=_optional_string(payload.get("source_title")) or breadcrumb or source_name,
         primary_child_id=chunk_id,
         primary_child_content=child_content,
         primary_child_breadcrumb=breadcrumb,

@@ -13,6 +13,24 @@ class WorldLineMergeError(ValueError):
         self.code = code
 
 
+def _source_identity(source: EvidenceSource) -> EvidenceSource:
+    # Retrieval observations vary per query; claim/span/context/URL/hash remain
+    # immutable and are deliberately NOT removed from this comparison.
+    observations = {
+        "fusion_score", "channel_evidence", "retrieval_warnings", "rerank_warnings", "context_warnings",
+        "context_pack_rank", "context_source_rank", "context_token_count", "context_token_budget",
+        "retrieval_rank", "rerank_rank", "rerank_score", "rerank_status", "rerank_fallback_used",
+        "subquery_ids", "retrieval_legs", "sufficiency_status",
+    }
+    if source.metadata.get("index_input_hash") and source.metadata.get("source_content_sha256"):
+        # Hash of the compressed query view is not the immutable indexed Child
+        # hash. The latter and every bound capture/hash remain protected.
+        observations.add("context_document_sha256")
+    return source.model_copy(update={"metadata": {
+        k: v for k, v in source.metadata.items() if k not in observations
+    }})
+
+
 def merge_worldline_graph(
     old: WorldLineGraph,
     increment: WorldLineGraph,
@@ -34,7 +52,7 @@ def merge_worldline_graph(
     sources = {source.id: source for source in old_sources}
     for source in new_sources:
         previous = sources.get(source.id)
-        if previous is not None and previous != source:
+        if previous is not None and _source_identity(previous) != _source_identity(source):
             raise WorldLineMergeError("source_conflict")
         sources.setdefault(source.id, source)
 

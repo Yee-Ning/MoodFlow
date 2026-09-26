@@ -15,6 +15,7 @@ from app.rag.enrichment.temporal import mentioned_year_bounds
 
 from .config import IndexingConfig
 from .models import PreparedIndexDocument
+from .source_context import project_source_contexts, source_payload_provenance
 
 
 POINT_NAMESPACE = uuid.UUID("725862e5-c12a-52e4-82d7-3abf42188867")
@@ -104,7 +105,9 @@ class IndexDocumentProjector:
         temporal = chunk.enrichment.temporal
         year_bounds = mentioned_year_bounds(temporal.raw_mentions)
         source = chunk.enrichment.source
+        source_contexts = project_source_contexts(chunk, parent, supported_claims)
         payload: dict[str, object] = {
+            **source_payload_provenance(chunk, parent),
             "point_id": point_id,
             "record_type": "child",
             "chunk_id": chunk.chunk_id,
@@ -146,6 +149,7 @@ class IndexDocumentProjector:
             "entities": linked_entities,
             "supported_claim_ids": supported_claim_ids,
             "supported_claims": supported_claims,
+            "relation_source_contexts": source_contexts,
             "verification_statuses": verification_statuses,
             "knowledge_status": chunk.knowledge.quality.status.value,
             "knowledge_input_hash": chunk.knowledge.provenance.knowledge_input_hash,
@@ -155,6 +159,8 @@ class IndexDocumentProjector:
             "projection_version": self.config.projection_version,
             "dense_model_revision": self.config.dense.model_revision,
         }
+        if source_contexts:
+            payload["source_title"] = source_contexts[0]["title"]
         return {key: value for key, value in payload.items() if value is not None}
 
     @staticmethod

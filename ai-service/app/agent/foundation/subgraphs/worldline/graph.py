@@ -9,7 +9,9 @@ from langgraph.graph.state import CompiledStateGraph
 from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.routing import RouteKey
 from app.agent.foundation.subgraphs.base import SubGraphOutput
-from app.agent.foundation.subgraphs.worldline.builder import build_worldline_graph
+from app.agent.foundation.subgraphs.worldline.builder import MAX_WORLDLINE_NODES, build_worldline_graph
+from app.agent.foundation.subgraphs.worldline.conflict_semantics import preserve_conflict_descriptions
+from app.rag.query_understanding.planner import build_search_plan
 from app.agent.foundation.subgraphs.worldline.entity_resolver import (
     resolve_music_entity,
 )
@@ -436,11 +438,35 @@ def build_worldline_subgraph(
             entity_id=facts.entity.entity_id,
             entity_type=facts.entity.entity_type.value,
         )
-        return {
+        update = {
             "resolved_entity": facts.entity,
             "entity_facts": facts,
             "sources": facts.sources,
         }
+        plan, analysis = state.get("search_plan"), state.get("query_analysis")
+        if plan is not None and analysis is not None:
+            # Related Java catalog records do not carry knowledge IDs. Reuse
+            # the registry resolver instead of assuming test-only node metadata.
+            references = []
+            for related in facts.related_entities[:MAX_WORLDLINE_NODES - 1]:
+                parts = related.entity_id.split(":", 2)
+                if len(parts) == 3 and parts[:2] == [related.source, related.entity_type.value]:
+                    references.append(CatalogReference(
+                        provider=related.source, entity_id=parts[2],
+                        entity_type=KnowledgeEntityType(related.entity_type.value), name=related.name,
+                    ))
+            entities = query_service.entity_resolver.resolve(
+                "", context_entities=plan.entities, catalog_references=references,
+            )[:20]
+            analysis = analysis.model_copy(update={"entities": entities})
+            update["query_analysis"] = analysis
+            # Preserve the original query/filter scope; only add executable
+            # entity bindings and recompute the reproducible plan identity.
+            update["search_plan"] = build_search_plan(
+                analysis, query_service.config, index_profile=plan.index_profile,
+                queries=plan.queries, metadata_filter=plan.metadata_filter,
+            )
+        return update
 
     async def retrieve_music_knowledge(
         state: WorldLineState,
@@ -544,6 +570,13 @@ def build_worldline_subgraph(
                 sources = influence_result.sources
                 influence_relations = influence_result.relations
             if state.get("session_mode") and state.get("prior_graph") is not None:
+                increment = graph
+                conflict_keys = set()
+                for relation in [*era_relations, *scene_relations, *influence_relations]:
+                    if relation.metadata.get("conflict_flags"):
+                        target = (relation.target_entity or getattr(relation, "era", None)
+                                  or getattr(relation, "scene", None))
+                        conflict_keys.add((relation.source_entity.node_id, target.node_id, relation.relation_type.value))
                 graph, sources = merge_worldline_graph(
                     state["prior_graph"], graph,
                     state.get("prior_sources", []), sources,
@@ -561,6 +594,7 @@ def build_worldline_subgraph(
                     state.get("prior_influence_relations", []),
                     influence_relations,
                 )
+                graph = preserve_conflict_descriptions(graph, increment, conflict_keys)
         except WorldLineMergeError as exc:
             return _failed_result(state, "世界线扩展无法合并。", exc.code)
         except Exception:

@@ -1,0 +1,30 @@
+{
+  "schema_version": "worldline-runtime-integration-artifacts-v1",
+  "parent_commit": "a22da57d96bfe707e9c39880c9105ed39d1a34c4",
+  "formal_gold_evaluation_run": false,
+  "gold_modified": false,
+  "repair_debt_modified": false,
+  "frozen_artifact_count": 399,
+  "source_changes": "source_changes.json",
+  "artifact_hash_encoding": "raw bytes; authored text files use LF",
+  "files": {
+    "docs/reports/worldline_runtime_integration_report.md": "1dfff846e13b90c5e09fc6b820290dbf71cce48d7520d0d0adaa9ea51cbf59a1",
+    "docs/reports/worldline_runtime_integration/deferred_eval_debt.json": "9f01f2a43393d10486490f851062a647c56a734fa813923b8f5a1820c8a90ad6",
+    "docs/reports/worldline_runtime_integration/deferred_eval_debt.md": "f2411edcc0a4e3a8219991ed34514e049f418f89bac5c287e9535f2929676c82",
+    "docs/reports/worldline_runtime_integration/document_context_capture.schema.json": "fc880bbbd151f49bebb1d689b9c870c0a77606f9d508ed60b8ce4247d0a0dc96",
+    "docs/reports/worldline_runtime_integration/engineering_readiness.json": "0de84d598fd35eb0839f588e4277c5ba1c458f9c7951c00331d6a6ea88236bf2",
+    "docs/reports/worldline_runtime_integration/engineering_tests.log": "56d6228d2fb0191730b04b95a23e5c4ed890c1954e4ab18f2a797f2ecabb5be2",
+    "docs/reports/worldline_runtime_integration/engineering_tests.xml": "6f330176cd943c34476ef6080228ecef7aa3207f3bd35b78f9c14390c05f43a2",
+    "docs/reports/worldline_runtime_integration/engineering_tests_initial.log": "81fd78353250ac638d842dfef0691bf4381b1bb15d0aa261ef37220adc7db308",
+    "docs/reports/worldline_runtime_integration/engineering_tests_initial.xml": "4681205b10a67577623db4ae8be6f399631e4eecf61ca8d5926b4093c13044cb",
+    "docs/reports/worldline_runtime_integration/freeze_verification.json": "d5afa6df347cec917034db1453675e2bba58bedb414267031af4a6904c859bbc",
+    "docs/reports/worldline_runtime_integration/protected_artifacts.json": "740198d704f507c2991a50b83683c516dd92afbe9ca0f21155d1e641314bdfb2",
+    "docs/reports/worldline_runtime_integration/relation_source_context.schema.json": "c793713bc3a7de1a1dbf345ba465618780e40c56acc5e8143b032a5936a8e687",
+    "docs/reports/worldline_runtime_integration/runtime_environment.json": "af63abf4948c3f9d57e5318bc88e7c4c22e0de426e8f52060984ae37f8fc5363",
+    "docs/reports/worldline_runtime_integration/runtime_smoke_trace.json": "d26afb1c52245bd80e3df53eb99803986414c099f66d28c482c37029c4945711",
+    "docs/reports/worldline_runtime_integration/source_changes.json": "409f13c7833266603025b7f83e3ff67519c750ce66a9810546e2f23ffb9f34ec",
+    "docs/reports/worldline_runtime_integration/source_context_runtime_contract.md": "b514b80ae8d2081b0a7e5f7174d0cdc9dab88c83bf9b864e88ba47184a3ec992",
+    "docs/reports/worldline_runtime_integration/test_command.json": "318b88020696bed8a09402bab1b98c5827c7718de36d4ba9968c0f69a6465c14",
+    "docs/reports/worldline_runtime_integration/validation.json": "043305227b101ac5c2e3f20be4bef4def2cd026d9957d7f852ea120ac10f5bda"
+  }
+}

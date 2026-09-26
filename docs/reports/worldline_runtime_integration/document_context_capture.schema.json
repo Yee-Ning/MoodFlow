@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "ContextSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "article_sentence",
+            "interview_question",
+            "interview_answer",
+            "speaker_binding"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "exact_span": {
+          "minLength": 1,
+          "title": "Exact Span",
+          "type": "string"
+        },
+        "start": {
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "exclusiveMinimum": 0,
+          "title": "End",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "role",
+        "exact_span",
+        "start",
+        "end"
+      ],
+      "title": "ContextSegment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Verbatim document metadata before native chunk/claim IDs exist.\n\nIngestion supplies offsets and roles from the original source. Indexing\nbinds them to verified claims; it never infers a speaker or direction.",
+  "properties": {
+    "source_url": {
+      "pattern": "^https?://",
+      "title": "Source Url",
+      "type": "string"
+    },
+    "publisher": {
+      "minLength": 1,
+      "title": "Publisher",
+      "type": "string"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "locator": {
+      "minLength": 1,
+      "title": "Locator",
+      "type": "string"
+    },
+    "captured_at": {
+      "minLength": 1,
+      "title": "Captured At",
+      "type": "string"
+    },
+    "capture_method": {
+      "const": "verbatim_web_excerpt",
+      "default": "verbatim_web_excerpt",
+      "title": "Capture Method",
+      "type": "string"
+    },
+    "response_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Response Sha256",
+      "type": "string"
+    },
+    "content": {
+      "maxLength": 6000,
+      "minLength": 1,
+      "title": "Content",
+      "type": "string"
+    },
+    "content_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Content Sha256",
+      "type": "string"
+    },
+    "segments": {
+      "items": {
+        "$ref": "#/$defs/ContextSegment"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Segments",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source_url",
+    "publisher",
+    "title",
+    "locator",
+    "captured_at",
+    "response_sha256",
+    "content",
+    "content_sha256",
+    "segments"
+  ],
+  "title": "DocumentContextCapture",
+  "type": "object"
+}

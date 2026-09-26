@@ -1,0 +1,59 @@
+{
+  "parent_commit": "a22da57d96bfe707e9c39880c9105ed39d1a34c4",
+  "engineering_tests": {
+    "passed": 419,
+    "skipped": 5,
+    "subtests_passed": 2,
+    "failures": 0,
+    "errors": 0,
+    "junit_entries": 426,
+    "command_file": "test_command.json",
+    "log": "engineering_tests.log",
+    "junit": "engineering_tests.xml"
+  },
+  "new_integration_scenarios": 16,
+  "initial_encoding_failure": {
+    "failure": "LongHorizonContextTests.test_history_and_lineage_survive_store_reopen",
+    "initial_passed": 416,
+    "initial_failed": 1,
+    "fixed_by_environment_only": {
+      "PYTHONUTF8": "1",
+      "PYTHONIOENCODING": "utf-8"
+    },
+    "test_changed_or_skipped": false,
+    "log": "engineering_tests_initial.log"
+  },
+  "other_checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check app/rag/source_context.py app/rag/indexing/source_context.py app/rag/context_packing app/rag/indexing/projection.py app/rag/indexing/config.py app/rag/retrieval/qdrant.py app/rag/retrieval/selection.py app/agent/foundation/subgraphs/worldline tests/test_worldline_runtime_integration.py tests/test_rag_indexing.py",
+      "cwd": "ai-service",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m compileall -q app/agent/foundation/subgraphs/worldline app/rag/source_context.py app/rag/indexing/source_context.py app/rag/context_packing app/rag/retrieval app/rag/indexing tests/test_worldline_runtime_integration.py",
+      "cwd": "ai-service",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run test:worldline",
+      "cwd": "soul-music-room",
+      "exit_code": 0
+    },
+    {
+      "command": "npx eslint src/types/worldline.ts",
+      "cwd": "soul-music-room",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run build",
+      "cwd": "soul-music-room",
+      "exit_code": 0,
+      "warnings": [
+        "existing bundle size warning above 500 kB"
+      ]
+    }
+  ],
+  "external_acceptance_executed": false,
+  "gold_baseline_executed": false,
+  "deployment_performed": false
+}

@@ -1,4 +1,5 @@
 import logging
+from hashlib import sha256
 from typing import Any
 
 from pydantic import ValidationError
@@ -77,6 +78,19 @@ def build_worldline_graph(
     remaining_source_slots = max(0, 30 - len(sources))
     for document in retrieved_docs[:remaining_source_slots]:
         evidence_id = f"knowledge:{document.id}"
+        if document.metadata.get("index_input_hash") and document.metadata.get("chunk_id"):
+            # Parent collapse may select another Child on the next query.
+            # Generic provenance is a native indexed snapshot, not a Parent ID.
+            identity = "\n".join(str(document.metadata.get(key, "")) for key in (
+                "source_id", "chunk_id", "index_input_hash",
+            ))
+            evidence_id = "knowledge:chunk:" + sha256((document.id + "\n" + identity).encode()).hexdigest()[:24]
+        original = document.metadata.get("source_evidence_content")
+        stable_excerpt = (
+            original if isinstance(original, str)
+            and sha256(original.encode()).hexdigest() == document.metadata.get("source_content_sha256")
+            else document.content
+        )
         if evidence_id not in source_ids:
             sources.append(
                 EvidenceSource(
@@ -85,7 +99,7 @@ def build_worldline_graph(
                     title=document.title,
                     source=document.source,
                     url=document.url,
-                    excerpt=document.content[:2_000],
+                    excerpt=stable_excerpt[:2_000],
                     metadata=document.metadata,
                 )
             )

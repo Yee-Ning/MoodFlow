@@ -1,0 +1,21 @@
+..............................................F....................... [ 16%]
+..................................................s...............s..... [ 33%]
+........................................................................ [ 50%]
+........................................................................ [ 67%]
+......................................................................ss [ 84%]
+s...............................................................         [100%]
+================================== FAILURES ===================================
+____ LongHorizonContextTests.test_history_and_lineage_survive_store_reopen ____
+tests\test_long_horizon_context.py:348: in test_history_and_lineage_survive_store_reopen
+    self.assertEqual(state["history_text"], "持久消息")
+E   AssertionError: '鎸佷箙娑堟伅' != '持久消息'
+E   - 鎸佷箙娑堟伅
+E   + 持久消息
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_rag_indexing.py:758: set QDRANT_INTEGRATION_URL to run against a real Qdrant server
+SKIPPED [1] tests\test_retrieval_fusion_qdrant.py:223: set QDRANT_INTEGRATION_URL to run against a real Qdrant server
+SKIPPED [1] tests\test_worldline_postgres_restart.py:18: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance
+SKIPPED [1] tests\test_worldline_postgres_restart.py:77: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance
+SKIPPED [1] tests\test_worldline_postgres_restart.py:52: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance
+FAILED tests/test_long_horizon_context.py::LongHorizonContextTests::test_history_and_lineage_survive_store_reopen
+1 failed, 416 passed, 5 skipped, 2 subtests passed in 48.94s

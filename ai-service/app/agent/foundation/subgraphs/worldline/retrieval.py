@@ -220,6 +220,11 @@ def _pack_documents(
         candidate, reranked = ranked[item.parent_id]
         metadata: dict[str, object] = {
             "point_id": candidate.point_id,
+            "source_id": item.source_id,
+            **{key: candidate.metadata[key] for key in (
+                "source_locator", "source_content_sha256", "parent_content_sha256",
+                "source_release_id", "knowledge_input_hash", "index_input_hash", "source_published_at",
+            ) if key in candidate.metadata},
             "chunk_id": item.child_id,
             "parent_id": item.parent_id,
             "doc_id": item.doc_id,
@@ -236,6 +241,7 @@ def _pack_documents(
             "index_profile": result.index_profile.model_dump(mode="json"),
             "retrieval_warnings": _retrieval_warnings(result),
             "context_version": pack.context_version,
+            "context_warnings": pack.warnings,
             "context_pack_rank": item.pack_rank,
             "context_source_rank": item.source_rank,
             "context_token_count": item.token_count,
@@ -245,6 +251,10 @@ def _pack_documents(
             "retrieval_legs": item.retrieval_legs,
             "sufficiency_status": pack.sufficiency.status.value,
         }
+        if item.relation_source_contexts:
+            metadata["relation_source_contexts"] = [c.model_dump(mode="json") for c in item.relation_source_contexts]
+        if item.source_evidence_content is not None:
+            metadata["source_evidence_content"] = item.source_evidence_content
         if reranked is None:
             metadata["rerank_status"] = "off"
         else:

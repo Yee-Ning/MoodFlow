@@ -12,6 +12,7 @@ import re
 import unicodedata
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from app.rag.source_context import relation_provenance
 
 from app.agent.foundation.subgraphs.worldline.conflict_semantics import (
     aggregation_trace,
@@ -339,6 +340,7 @@ class SceneRelationCandidateExtractor:
             excerpt=claim.evidence_span[:2_000],
             metadata={
                 "document_id": document.id,
+                **relation_provenance(document, claim.claim_id, claim.evidence_span),
                 "parent_id": parent_id,
                 "child_id": child_id,
                 "claim_id": claim.claim_id,

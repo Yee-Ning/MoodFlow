@@ -6,6 +6,11 @@ import re
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
+from types import SimpleNamespace
+
+from pydantic import ValidationError
+
+from app.rag.source_context import RelationSourceContext
 
 from app.rag.chunk.token_counter import TokenCounter, UnicodeHeuristicTokenCounter
 from app.rag.context_packing.config import (
@@ -132,6 +137,8 @@ class _EvidenceDraft:
     subquery_ids: tuple[str, ...]
     retrieval_legs: tuple[str, ...]
     rerank_score: float | None
+    relation_source_contexts: tuple[RelationSourceContext, ...] = ()
+    context_warnings: tuple[str, ...] = ()
 
 
 class ContextPackBuilder:
@@ -157,8 +164,12 @@ class ContextPackBuilder:
         drafts = self._extract_drafts(plan.standalone_query, result)
         drafts, duplicate_count = self._deduplicate(drafts)
         selected, warnings = self._select(drafts, sufficiency)
+        warnings.extend(dict.fromkeys(warning for item in drafts for warning in item.context_warnings))
         if duplicate_count:
             warnings.append(f"near_duplicate_evidence_removed:{duplicate_count}")
+        warnings = list(dict.fromkeys(warnings))
+        if len(warnings) > 30:
+            warnings = [*warnings[:29], f"context_warnings_truncated:{len(warnings) - 29}"]
         selected_coverage = self._selected_coverage(selected)
         missing_subqueries = [
             item
@@ -229,6 +240,11 @@ class ContextPackBuilder:
         )
         drafts = []
         for source_rank, candidate in enumerate(_ranked_candidates(result), start=1):
+            contexts = _source_contexts(candidate)
+            context_warnings = []
+            raw_contexts = candidate.metadata.get("relation_source_contexts", [])
+            if not isinstance(raw_contexts, list) or len(raw_contexts) != len(contexts):
+                context_warnings.append(f"source_context_invalid:{candidate.primary_child_id}")
             exact_text = _truncate_tokens(
                 candidate.primary_child_content.strip(),
                 self.config.compression.max_evidence_tokens,
@@ -246,15 +262,29 @@ class ContextPackBuilder:
                 self.token_counter,
                 required_prefix=exact_text,
             )
+            if contexts and (len(candidate.primary_child_content) > 8_000 or any(
+                context.count(item.anchor.exact_span) != 1 for item in contexts
+            )):
+                contexts = ()
+                context_warnings.append(f"source_context_anchor_omitted:{candidate.primary_child_id}")
             evidence = candidate.channel_evidence
             reranked = rerank_by_parent.get(candidate.parent_id)
+            # Supplement text is budgeted. Never truncate its offsets or omit
+            # the question/speaker while keeping only a convenient answer.
+            supplement_tokens = sum(self.token_counter.count(text) for text in {
+                item.content for item in contexts if item.content not in context
+            })
+            if self.token_counter.count(context) + supplement_tokens > self.config.compression.max_item_tokens:
+                contexts = ()
+                supplement_tokens = 0
+                context_warnings.append(f"source_context_budget_omitted:{candidate.primary_child_id}")
             drafts.append(
                 _EvidenceDraft(
                     source_rank=source_rank,
                     candidate=candidate,
                     exact_text=exact_text,
                     context=context,
-                    token_count=max(self.token_counter.count(context), 1),
+                    token_count=max(self.token_counter.count(context), 1) + supplement_tokens,
                     subquery_ids=tuple(
                         dict.fromkeys(item.subquery_id for item in evidence)
                     ),
@@ -262,6 +292,8 @@ class ContextPackBuilder:
                         dict.fromkeys(item.retrieval_leg for item in evidence)
                     ),
                     rerank_score=(reranked.rerank_score if reranked else None),
+                    relation_source_contexts=contexts,
+                    context_warnings=tuple(context_warnings),
                 )
             )
         return drafts
@@ -356,6 +388,8 @@ class ContextPackBuilder:
             retrieval_legs=list(item.retrieval_legs),
             entity_ids=candidate.entity_ids,
             rerank_score=item.rerank_score,
+            source_evidence_content=candidate.primary_child_content if len(candidate.primary_child_content) <= 8_000 else None,
+            relation_source_contexts=list(item.relation_source_contexts),
         )
 
 
@@ -399,10 +433,38 @@ def _compressed_parent(
     parts = [
         candidate.parent_context.breadcrumb.strip(),
         candidate.primary_child_breadcrumb.strip(),
-        exact_text,
         *paragraphs[start:end],
     ]
+    if exact_text not in "\n\n".join(parts):
+        parts.insert(2, exact_text)
     return "\n\n".join(dict.fromkeys(item for item in parts if item))
+
+
+def _source_contexts(candidate: RetrievalCandidate) -> tuple[RelationSourceContext, ...]:
+    payloads = candidate.metadata.get("relation_source_contexts", [])
+    if not isinstance(payloads, list) or len(payloads) > 8:
+        return ()
+    document = SimpleNamespace(
+        id=candidate.parent_id, title=candidate.title, content=candidate.primary_child_content,
+        source=candidate.source_name, url=candidate.source_url,
+        metadata={"source_id": candidate.source_id, "chunk_id": candidate.primary_child_id},
+    )
+    claims = {item.get("claim_id"): item for item in candidate.supported_claims}
+    result, seen = [], set()
+    for payload in payloads:
+        try:
+            context = RelationSourceContext.model_validate(payload)
+        except ValidationError:
+            continue
+        claim = claims.get(context.claim_id)
+        if context.claim_id in seen:
+            return ()
+        if (claim is None
+                or not context.bound_to(document, context.claim_id, claim.get("evidence_span", ""))):
+            continue
+        seen.add(context.claim_id)
+        result.append(context)
+    return tuple(result)
 
 
 def _truncate_tokens(

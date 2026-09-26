@@ -5,6 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
+from app.rag.source_context import RelationSourceContext
 
 
 class EvidenceSufficiencyStatus(StrEnum):
@@ -71,6 +72,8 @@ class ContextEvidence(BaseModel):
     retrieval_legs: list[str] = Field(min_length=1, max_length=20)
     entity_ids: list[str] = Field(default_factory=list, max_length=50)
     rerank_score: float | None = Field(default=None, ge=0, le=1)
+    source_evidence_content: str | None = Field(default=None, min_length=1, max_length=8_000)
+    relation_source_contexts: list[RelationSourceContext] = Field(default_factory=list, max_length=8)
 
     @model_validator(mode="after")
     def validate_evidence(self) -> "ContextEvidence":

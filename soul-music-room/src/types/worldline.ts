@@ -41,7 +41,54 @@ export interface WorldLineSource {
   source: string
   url: string | null
   excerpt: string | null
-  metadata: Record<string, unknown>
+  metadata: WorldLineSourceMetadata
+}
+
+export interface ContextSegment {
+  role: 'article_sentence' | 'interview_question' | 'interview_answer' | 'speaker_binding'
+  exact_span: string
+  // Half-open Unicode code-point offsets into the captured content.
+  start: number
+  end: number
+}
+
+export interface RelationSourceContext {
+  schema_version: 'relation-source-context-v1'
+  context_id: string
+  source_id: string
+  document_id: string
+  chunk_id: string
+  claim_id: string
+  source_url: string
+  publisher: string
+  title: string
+  locator: string
+  captured_at: string
+  capture_method: 'verbatim_web_excerpt'
+  response_sha256: string
+  source_content_sha256: string
+  content: string
+  content_sha256: string
+  anchor: ContextSegment
+  segments: ContextSegment[]
+}
+
+export interface WorldLineSourceMetadata extends Record<string, unknown> {
+  source_id?: string
+  source_locator?: string
+  source_content_sha256?: string
+  claim_id?: string
+  source_chunk_id?: string
+  relation_source_context?: RelationSourceContext
+  relation_source_contexts?: RelationSourceContext[]
+}
+
+export interface RelationMetadata extends Record<string, unknown> {
+  conflict_flags?: string[]
+  temporal_conflict?: boolean
+  attribution_conflict?: boolean
+  direction_conflict?: boolean
+  scope_conflict?: boolean
 }
 
 export type EraRelationType =
@@ -79,7 +126,7 @@ export interface EraRelation {
   temporal_precision: 'exact' | 'approximate' | 'unknown'
   confidence: number
   evidence: EraRelationEvidence[]
-  metadata: Record<string, unknown>
+  metadata: RelationMetadata
 }
 
 export type SceneRelationType =
@@ -101,7 +148,7 @@ export interface SceneRelation {
   temporal_precision: 'exact' | 'approximate' | 'unknown'
   confidence: number
   evidence: EraRelationEvidence[]
-  metadata: Record<string, unknown>
+  metadata: RelationMetadata
 }
 
 export type InfluenceRelationType = 'influenced' | 'inspired' | 'shaped_style' | 'cited_as_influence'
@@ -124,7 +171,7 @@ export interface InfluenceRelation {
   influence_scope: 'sound' | 'style' | 'songwriting' | 'production' | 'career' | null
   confidence: number
   evidence: InfluenceRelationEvidence[]
-  metadata: Record<string, unknown>
+  metadata: RelationMetadata
 }
 
 export interface WorldLineBranch {
