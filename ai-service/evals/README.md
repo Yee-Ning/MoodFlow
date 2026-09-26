@@ -68,6 +68,14 @@ Influence 冻结 replay 缺少完整报道主语和采访提问，仍保守拒�
 原 baseline gate 仍 true/true，但 P0 尚未达到 3/3，不能无条件进入 P1；依赖与完整 trace 见报告。
 重新执行须另选 output，报告组装入口为 `python -m evals.conflict_handling_targeted_repair_report`。
 
+P0 剩余 Influence 上下文依赖已在独立 [context-input v1](semantic_relations_context_inputs_v1/manifest.json) 完成。
+该版本沿用 r6 Gold/source/receipts 的 hash，仅给两个 runtime document 添加原 URL 的可追溯 article / question-answer / speaker context。
+统一评测真实 conflict 为 3/3、synthetic conflict 仍 3/3，weak / negation / isolation / reverse negative 均未下降，无新增 regression。
+`p0_conflict_target_met=true`、`can_enter_p1_direction_repair=true`；P1 尚未执行，剩余 5 个真实失败与 Final Regression blocker 保留。
+报告与完整 trace 见 [p0_influence_context_repair_report.md](reports/semantic_relations_v1_influence_context_repair/p0_influence_context_repair_report.md)。
+复现请使用新输出目录：`python run_semantic_relations_eval.py --suite evals/semantic_relations_context_inputs_v1 --output <new-output-dir>`。
+不要覆盖旧 r6 freeze 或已登记报告。context 输入加载器强制除 supplement 外的所有 input/claims 与 r6 相同；评分、gate 和 projector 不变。
+
 ## WorldLine Evaluation V0
 
 WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用

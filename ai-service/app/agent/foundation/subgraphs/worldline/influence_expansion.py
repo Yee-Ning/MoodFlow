@@ -23,6 +23,7 @@ from app.agent.foundation.subgraphs.worldline.era_expansion import (
     _knowledge_entity_map,
     _metadata_string,
 )
+from app.agent.foundation.subgraphs.worldline.source_context import source_context
 from app.agent.foundation.subgraphs.worldline.merge import (
     WorldLineMergeError,
     merge_worldline_graph,
@@ -282,6 +283,25 @@ def _context_direction(
         return False
     offset = document.content.index(exact)
     context = _normalized_span(document.content[max(0, offset - 800):offset + len(exact)])
+    supplement = source_context(document, candidate.evidence.claim_id, exact)
+    question_context = context
+    if supplement is not None:
+        segments = {segment.role: segment for segment in supplement.segments}
+        if candidate.evidence.stance is InfluenceEvidenceStance.SUPPORT:
+            sentence = segments.get("article_sentence")
+            if sentence is None or exact not in sentence.exact_span:
+                return False
+            context = _normalized_span(sentence.exact_span)
+        else:
+            question, answer = segments.get("interview_question"), segments.get("interview_answer")
+            binding = segments.get("speaker_binding")
+            if (question is None or answer is None or binding is None
+                    or answer.exact_span != exact or binding.exact_span != document.title
+                    or binding.end > question.start or question.end > answer.start
+                    or supplement.content[question.end:answer.start].strip()):
+                return False
+            question_context = _normalized_span(question.exact_span)
+            context = _normalized_span(supplement.content[:answer.end])
     # A surname alias is admissible only when unique among runtime entities.
     aliases = [candidate.source_entity.canonical_name]
     surname = candidate.source_entity.canonical_name.split()[-1]
@@ -290,13 +310,14 @@ def _context_direction(
     ) == 1:
         aliases.append(surname)
     target = re.escape(_normalized_span(candidate.target_entity.canonical_name))
+    actor_limit = 220 if supplement is not None else 100
     for alias in aliases:
         source = re.escape(_normalized_span(alias))
         if candidate.evidence.stance is InfluenceEvidenceStance.SUPPORT:
             # The target performs the borrowing/translation; the source is
             # inside its list of inputs, not merely adjacent in prose.
             attribution = re.search(
-                rf"(?<!\w){target}(?!\w)(?P<actor_context>[^.!?\n]{{0,100}}"
+                rf"(?<!\w){target}(?!\w)(?P<actor_context>[^.!?\n]{{0,{actor_limit}}}"
                 r"(?:[.]\s*(?:they|the\s+band)\s+)?)(?:tried\s+to\s+)?translate[^.!?\n]{0,220}"
                 rf"(?<!\w){source}(?!\w)[^.!?\n]{{0,100}}"
                 r"into[^.!?\n]{0,100}(?:music|electronica|sound)", context,
@@ -322,8 +343,17 @@ def _context_direction(
             question = re.search(
                 rf"(?<!\w){source}(?!\w)[^.?!]{{0,100}}"
                 r"(?:influence|influenz)[^.?!]{0,100}(?:your|voi|vi|vostra)[^.?!]{0,100}\?",
-                context,
+                question_context,
             )
+            # Passive attribution followed by an elliptical follow-up question:
+            # "influenced by X. Is that true for you?" Same adjacent Q/A only.
+            if supplement is not None and question is None:
+                question = re.search(
+                    r"(?:influenced\s+by\s+|influenzati\s+dall['’](?:opera\s+di\s+)?)"
+                    rf"{source}(?!\w)\s*[.]\s*"
+                    r"(?:is\s+that\s+(?:also\s+)?true\s+for\s+you|è\s+così\s+anche\s+per\s+voi)\s*\?",
+                    question_context,
+                )
             if respondent_bound and question and _NEGATION_RE.search(exact):
                 return True
     return False
@@ -491,6 +521,14 @@ class InfluenceValidator:
                         },
                     }),
                 })
+                supplement = source_context(document, candidate.evidence.claim_id, candidate.evidence.exact_span)
+                if supplement is not None:
+                    candidate = candidate.model_copy(update={
+                        "evidence_source": candidate.evidence_source.model_copy(update={
+                            "metadata": {**candidate.evidence_source.metadata,
+                                         "relation_source_context": supplement.model_dump(mode="json")},
+                        }),
+                    })
             status = (
                 InfluenceCandidateStatus.REJECTED if reasons
                 else InfluenceCandidateStatus.ACCEPTED

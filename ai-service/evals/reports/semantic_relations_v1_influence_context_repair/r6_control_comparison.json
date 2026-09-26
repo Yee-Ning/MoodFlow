@@ -1,0 +1,14 @@
+{
+  "suite": "evals/semantic_relations_v1_review_r6",
+  "new_runtime_old_inputs_identical_to_previous": true,
+  "case_count": 53,
+  "metrics_identical": true,
+  "actual_results_identical": true,
+  "control_metrics_sha256": "772149874ab40be2b23e50a3ccae1ea0dd5526c1c64b063884ac672ab050eb5c",
+  "control_results_sha256": "467541ddf05a5656e4e1732068b559b004f3081fcbf5357d9e4172cc5e4437d8",
+  "real_conflict_handling": {
+    "numerator": 2,
+    "denominator": 3,
+    "value": 0.6666666666666666
+  }
+}

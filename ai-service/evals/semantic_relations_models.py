@@ -156,6 +156,9 @@ def load_suite(directory: Path):
     """Verify freeze, review receipts, provenance and input/label separation."""
 
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+    if manifest.get("kind") == "relation_context_input":
+        from evals.semantic_relations_context_inputs import load_context_inputs
+        return load_context_inputs(directory, manifest)
     required = {"gold.jsonl", "inputs.jsonl", "sources.jsonl", "schema.json"}
     if set(manifest["files"]) != required:
         raise ValueError("freeze_files_mismatch")

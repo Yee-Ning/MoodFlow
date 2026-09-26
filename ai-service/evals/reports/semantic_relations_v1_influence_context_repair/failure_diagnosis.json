@@ -1,0 +1,1715 @@
+{
+  "reviewed_real_failure_count": 5,
+  "p0_remaining_dependency": null,
+  "failure_category_counts_by_relation_type": {
+    "era": {},
+    "scene": {
+      "evidence mismatch": 1
+    },
+    "influence": {
+      "direction error": 4
+    }
+  },
+  "cases": [
+    {
+      "case_id": "real-scene-1-positive",
+      "relation_type": "scene",
+      "failure_reasons": [
+        "evidence mismatch"
+      ],
+      "diagnosis": "原文使用 Case、Vancouver 与 the city's indie scene；validator 要求 canonical entity 与完整 scene_name 同时在 exact span。证据已检索，候选已提取，失败位于 scene 语义验证。",
+      "trace": {
+        "candidate_relations": {
+          "era": [],
+          "influence": [],
+          "scene": [
+            {
+              "claim_object_entity_id": null,
+              "claim_object_value": "Vancouver indie scene",
+              "claim_predicate": "belongs_to_scene",
+              "claim_subject_entity_id": "artist:neko_case",
+              "claim_time": null,
+              "confidence": 0.96,
+              "end_year": null,
+              "evidence": {
+                "claim_id": "claim:real-scene-1-positive",
+                "confidence": 0.96,
+                "end_year": null,
+                "evidence_id": "knowledge:scene:749cc958f632e01998f23032",
+                "exact_span": "Case moved to Vancouver, where she became part of the city's vibrant indie scene",
+                "raw_time": null,
+                "source_id": "knowledge:scene:749cc958f632e01998f23032",
+                "start_year": null
+              },
+              "evidence_source": {
+                "excerpt": "Case moved to Vancouver, where she became part of the city's vibrant indie scene",
+                "id": "knowledge:scene:749cc958f632e01998f23032",
+                "metadata": {
+                  "child_id": "chunk:real-scene-1-positive",
+                  "claim_id": "claim:real-scene-1-positive",
+                  "context_version": "context-v1",
+                  "document_id": "real-scene-1-positive",
+                  "parent_id": "real-scene-1-positive",
+                  "retrieval_version": "evaluation-frozen-v1",
+                  "scene_expansion_version": "v1",
+                  "source_chunk_id": "chunk:real-scene-1-positive",
+                  "validator_version": "v1"
+                },
+                "source": "Museum of Pop Culture",
+                "source_type": "knowledge",
+                "title": "Puget Sound Stories - Neko Case",
+                "url": "https://www.mopop.org/experience/puget-sound-stories"
+              },
+              "location": null,
+              "relation_type": "belongs_to_scene",
+              "scene": {
+                "canonical_name": "Vancouver indie scene",
+                "node_id": "scene:vancouver_indie_scene"
+              },
+              "scene_name": "Vancouver indie scene",
+              "source_entity": {
+                "canonical_name": "Neko Case",
+                "knowledge_entity_id": "artist:neko_case",
+                "node_id": "eval:artist:neko_case",
+                "node_type": "artist"
+              },
+              "start_year": null,
+              "target_entity": null,
+              "temporal_precision": "unknown"
+            }
+          ]
+        },
+        "expected_gold": {
+          "case_id": "real-scene-1-positive",
+          "categories": [
+            "positive",
+            "isolation"
+          ],
+          "dataset_kind": "real_source",
+          "expected_relations": [
+            {
+              "conflict_flags": [],
+              "evidence_claim_ids": [
+                "claim:real-scene-1-positive"
+              ],
+              "fields": {},
+              "predicate": "belongs_to_scene",
+              "source_entity": "eval:artist:neko_case",
+              "target_entity": "scene:vancouver_indie_scene"
+            }
+          ],
+          "label": "positive",
+          "query": "Neko Case 的音乐场景归属",
+          "rationale": "Provisional source-grounded annotation; human must verify full URL context, identity, direction and scope. Gold positive describes the stated relation; weak/confusable query tests a stronger or different unsupported relation. Input claims are evaluation-only annotations, not production extractions. Rejection is evidence-relative, not a global claim of nonexistence.",
+          "relation_type": "scene",
+          "review": {
+            "method": "human",
+            "notes": "MoPOP 原文明确表述 Neko Case moved to Vancouver and became part of the city's vibrant indie scene，可直接支持 belongs_to_scene → Vancouver indie scene。",
+            "record_path": "receipts/real-scene-1-positive.json",
+            "record_sha256": "0299a8f696ac6a11a8eed4c5a91e693856ce22f9521d359db472ee820788b0ac",
+            "reviewed_at": "2026-09-26",
+            "reviewer": "human-review-WT",
+            "status": "approved"
+          },
+          "schema_version": "semantic-relations-evaluation-v1",
+          "source_entity": "eval:artist:neko_case",
+          "supporting_evidence": [
+            {
+              "chunk_id": "chunk:real-scene-1-positive",
+              "claim_id": "claim:real-scene-1-positive",
+              "document_id": "real-scene-1-positive",
+              "exact_span": "Case moved to Vancouver, where she became part of the city's vibrant indie scene",
+              "source_id": "source:mopop-neko-case",
+              "span_end": 80,
+              "span_start": 0,
+              "stance": "support"
+            }
+          ],
+          "target_entity": "scene:vancouver_indie_scene"
+        },
+        "failure_reasons": [
+          "evidence mismatch"
+        ],
+        "filtering_scoring": {
+          "era": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "candidate_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "influence": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "attribution_conflict_count": 0,
+              "candidate_count": 0,
+              "direction_conflict_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "scope_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "scene": {
+            "decisions": [
+              {
+                "candidate": {
+                  "claim_object_entity_id": null,
+                  "claim_object_value": "Vancouver indie scene",
+                  "claim_predicate": "belongs_to_scene",
+                  "claim_subject_entity_id": "artist:neko_case",
+                  "claim_time": null,
+                  "confidence": 0.96,
+                  "end_year": null,
+                  "evidence": {
+                    "claim_id": "claim:real-scene-1-positive",
+                    "confidence": 0.96,
+                    "end_year": null,
+                    "evidence_id": "knowledge:scene:749cc958f632e01998f23032",
+                    "exact_span": "Case moved to Vancouver, where she became part of the city's vibrant indie scene",
+                    "raw_time": null,
+                    "source_id": "knowledge:scene:749cc958f632e01998f23032",
+                    "start_year": null
+                  },
+                  "evidence_source": {
+                    "excerpt": "Case moved to Vancouver, where she became part of the city's vibrant indie scene",
+                    "id": "knowledge:scene:749cc958f632e01998f23032",
+                    "metadata": {
+                      "child_id": "chunk:real-scene-1-positive",
+                      "claim_id": "claim:real-scene-1-positive",
+                      "context_version": "context-v1",
+                      "document_id": "real-scene-1-positive",
+                      "parent_id": "real-scene-1-positive",
+                      "retrieval_version": "evaluation-frozen-v1",
+                      "scene_expansion_version": "v1",
+                      "source_chunk_id": "chunk:real-scene-1-positive",
+                      "validator_version": "v1"
+                    },
+                    "source": "Museum of Pop Culture",
+                    "source_type": "knowledge",
+                    "title": "Puget Sound Stories - Neko Case",
+                    "url": "https://www.mopop.org/experience/puget-sound-stories"
+                  },
+                  "location": null,
+                  "relation_type": "belongs_to_scene",
+                  "scene": {
+                    "canonical_name": "Vancouver indie scene",
+                    "node_id": "scene:vancouver_indie_scene"
+                  },
+                  "scene_name": "Vancouver indie scene",
+                  "source_entity": {
+                    "canonical_name": "Neko Case",
+                    "knowledge_entity_id": "artist:neko_case",
+                    "node_id": "eval:artist:neko_case",
+                    "node_type": "artist"
+                  },
+                  "start_year": null,
+                  "target_entity": null,
+                  "temporal_precision": "unknown"
+                },
+                "rejection_reasons": [
+                  "scene_not_in_evidence_span"
+                ],
+                "status": "rejected"
+              }
+            ],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [
+                {
+                  "inputs": [
+                    {
+                      "aggregation_role": "excluded",
+                      "claim_id": "claim:real-scene-1-positive",
+                      "evidence_id": "knowledge:scene:749cc958f632e01998f23032",
+                      "rejection_reasons": [
+                        "scene_not_in_evidence_span"
+                      ],
+                      "validation_status": "rejected"
+                    }
+                  ],
+                  "outputs": [],
+                  "stage": "validation_normalization_then_conflict_aggregation"
+                }
+              ],
+              "attribution_conflict_count": 0,
+              "candidate_count": 1,
+              "evidence_count": 0,
+              "location_conflict_count": 0,
+              "rejected_count": 1,
+              "rejection_reasons": {
+                "scene_not_in_evidence_span": 1
+              },
+              "requested": true,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          }
+        },
+        "final_relations": [],
+        "query": "Neko Case 的音乐场景归属",
+        "retrieval_mode": "frozen_context_replay",
+        "retrieved_evidence": [
+          {
+            "content": "Case moved to Vancouver, where she became part of the city's vibrant indie scene",
+            "id": "real-scene-1-positive",
+            "metadata": {
+              "chunk_id": "chunk:real-scene-1-positive",
+              "context_version": "context-v1",
+              "parent_id": "real-scene-1-positive",
+              "retrieval_version": "evaluation-frozen-v1",
+              "snapshot_source_id": "source:mopop-neko-case",
+              "sufficiency_status": "sufficient",
+              "supported_claims": [
+                {
+                  "claim_id": "claim:real-scene-1-positive",
+                  "evidence_span": "Case moved to Vancouver, where she became part of the city's vibrant indie scene",
+                  "extraction_confidence": 0.96,
+                  "object_entity_id": null,
+                  "object_value": "Vancouver indie scene",
+                  "predicate": "belongs_to_scene",
+                  "source_chunk_id": "chunk:real-scene-1-positive",
+                  "subject_entity_id": "artist:neko_case",
+                  "time": null,
+                  "verification_confidence": 0.96
+                }
+              ]
+            },
+            "source": "Museum of Pop Culture",
+            "title": "Puget Sound Stories - Neko Case",
+            "url": "https://www.mopop.org/experience/puget-sound-stories"
+          }
+        ],
+        "search_plan": {
+          "analysis_version": "v1",
+          "candidate_top_k": 40,
+          "entities": [
+            {
+              "aliases": [],
+              "candidate_knowledge_ids": [],
+              "canonical_name": "Neko Case",
+              "catalog_reference": {
+                "entity_id": "neko_case",
+                "entity_type": "artist",
+                "name": "Neko Case",
+                "provider": "eval"
+              },
+              "confidence": 1.0,
+              "entity_type": "artist",
+              "knowledge_entity_id": "artist:neko_case",
+              "status": "resolved",
+              "surface": "Neko Case"
+            }
+          ],
+          "final_top_k": 10,
+          "index_profile": null,
+          "metadata_filter": {
+            "root": null
+          },
+          "needs_rerank": true,
+          "original_query": "Neko Case 的音乐场景归属",
+          "plan_id": "query-plan:0123456789abcdef01234567",
+          "post_exclusions": [],
+          "prompt_version": "v1",
+          "queries": [
+            {
+              "channel": "both",
+              "kind": "original",
+              "text": "Neko Case 的音乐场景归属",
+              "weight": 1.0
+            }
+          ],
+          "query_types": [
+            "timeline",
+            "relationship",
+            "influence_style"
+          ],
+          "standalone_query": "Neko Case 的音乐场景归属",
+          "strategy": "hybrid",
+          "warnings": []
+        }
+      }
+    },
+    {
+      "case_id": "real-influence-2-positive",
+      "relation_type": "influence",
+      "failure_reasons": [
+        "direction error"
+      ],
+      "diagnosis": "机构页面以 Nirvana 为中心，Influences 下列出 The Pixies；方向正则要求双实体和句式 cue，不能从列表结构恢复归因。",
+      "trace": {
+        "candidate_relations": {
+          "era": [],
+          "influence": [
+            {
+              "claim_confidence": 0.96,
+              "claim_object_entity_id": "artist:nirvana",
+              "claim_predicate": "influenced",
+              "claim_subject_entity_id": "artist:pixies",
+              "confidence": 0.96,
+              "direction": "influencer_to_influenced",
+              "evidence": {
+                "claim_id": "claim:real-influence-2-positive",
+                "confidence": 0.96,
+                "evidence_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                "exact_span": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                "source_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                "stance": "support",
+                "strength": "historical_attribution"
+              },
+              "evidence_source": {
+                "excerpt": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                "id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                "metadata": {
+                  "child_id": "chunk:real-influence-2-positive",
+                  "claim_id": "claim:real-influence-2-positive",
+                  "context_version": "context-v1",
+                  "document_id": "real-influence-2-positive",
+                  "influence_expansion_version": "v1",
+                  "parent_id": "real-influence-2-positive",
+                  "retrieval_version": "evaluation-frozen-v1",
+                  "source_chunk_id": "chunk:real-influence-2-positive",
+                  "validator_version": "v1"
+                },
+                "source": "Rock & Roll Hall of Fame",
+                "source_type": "knowledge",
+                "title": "Nirvana",
+                "url": "https://rockhall.com/inductees/nirvana/"
+              },
+              "influence_scope": null,
+              "relation_type": "influenced",
+              "scope_mentions": [],
+              "source_entity": {
+                "canonical_name": "The Pixies",
+                "knowledge_entity_id": "artist:pixies",
+                "node_id": "eval:artist:pixies",
+                "node_type": "artist"
+              },
+              "target_entity": {
+                "canonical_name": "Nirvana",
+                "knowledge_entity_id": "artist:nirvana",
+                "node_id": "eval:artist:nirvana",
+                "node_type": "artist"
+              },
+              "uncertain": false
+            }
+          ],
+          "scene": []
+        },
+        "expected_gold": {
+          "case_id": "real-influence-2-positive",
+          "categories": [
+            "positive",
+            "isolation",
+            "direction_sensitive"
+          ],
+          "dataset_kind": "real_source",
+          "expected_relations": [
+            {
+              "conflict_flags": [],
+              "evidence_claim_ids": [
+                "claim:real-influence-2-positive"
+              ],
+              "fields": {},
+              "predicate": "influenced",
+              "source_entity": "eval:artist:pixies",
+              "target_entity": "eval:artist:nirvana"
+            }
+          ],
+          "label": "positive",
+          "query": "The Pixies 对 Nirvana 的音乐影响",
+          "rationale": "Provisional source-grounded annotation; human must verify full URL context, identity, direction and scope. Gold positive describes the stated relation; weak/confusable query tests a stronger or different unsupported relation. Input claims are evaluation-only annotations, not production extractions. Rejection is evidence-relative, not a global claim of nonexistence.",
+          "relation_type": "influence",
+          "review": {
+            "method": "human",
+            "notes": "Rock & Roll Hall of Fame 的 Nirvana 页面将 The Pixies 明确列于 Influences，而 Nirvana 为中心实体，因此方向 Pixies → Nirvana 合理。",
+            "record_path": "receipts/real-influence-2-positive.json",
+            "record_sha256": "a859cf6befb425222f3113a09d04e1619dabb7906ee32e6ef39414e96ece389e",
+            "reviewed_at": "2026-09-26",
+            "reviewer": "human-review-WT",
+            "status": "approved"
+          },
+          "schema_version": "semantic-relations-evaluation-v1",
+          "source_entity": "eval:artist:pixies",
+          "supporting_evidence": [
+            {
+              "chunk_id": "chunk:real-influence-2-positive",
+              "claim_id": "claim:real-influence-2-positive",
+              "document_id": "real-influence-2-positive",
+              "exact_span": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+              "source_id": "source:rockhall-nirvana-influences",
+              "span_end": 111,
+              "span_start": 0,
+              "stance": "support"
+            }
+          ],
+          "target_entity": "eval:artist:nirvana"
+        },
+        "failure_reasons": [
+          "direction error"
+        ],
+        "filtering_scoring": {
+          "era": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "candidate_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "influence": {
+            "decisions": [
+              {
+                "candidate": {
+                  "claim_confidence": 0.96,
+                  "claim_object_entity_id": "artist:nirvana",
+                  "claim_predicate": "influenced",
+                  "claim_subject_entity_id": "artist:pixies",
+                  "confidence": 0.96,
+                  "direction": "influencer_to_influenced",
+                  "evidence": {
+                    "claim_id": "claim:real-influence-2-positive",
+                    "confidence": 0.96,
+                    "evidence_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                    "exact_span": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                    "source_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                    "stance": "support",
+                    "strength": "historical_attribution"
+                  },
+                  "evidence_source": {
+                    "excerpt": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                    "id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                    "metadata": {
+                      "child_id": "chunk:real-influence-2-positive",
+                      "claim_id": "claim:real-influence-2-positive",
+                      "context_version": "context-v1",
+                      "document_id": "real-influence-2-positive",
+                      "influence_expansion_version": "v1",
+                      "parent_id": "real-influence-2-positive",
+                      "retrieval_version": "evaluation-frozen-v1",
+                      "source_chunk_id": "chunk:real-influence-2-positive",
+                      "validator_version": "v1"
+                    },
+                    "source": "Rock & Roll Hall of Fame",
+                    "source_type": "knowledge",
+                    "title": "Nirvana",
+                    "url": "https://rockhall.com/inductees/nirvana/"
+                  },
+                  "influence_scope": null,
+                  "relation_type": "influenced",
+                  "scope_mentions": [],
+                  "source_entity": {
+                    "canonical_name": "The Pixies",
+                    "knowledge_entity_id": "artist:pixies",
+                    "node_id": "eval:artist:pixies",
+                    "node_type": "artist"
+                  },
+                  "target_entity": {
+                    "canonical_name": "Nirvana",
+                    "knowledge_entity_id": "artist:nirvana",
+                    "node_id": "eval:artist:nirvana",
+                    "node_type": "artist"
+                  },
+                  "uncertain": false
+                },
+                "rejection_reasons": [
+                  "direction_missing"
+                ],
+                "status": "rejected"
+              }
+            ],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [
+                {
+                  "inputs": [
+                    {
+                      "aggregation_role": "excluded",
+                      "claim_id": "claim:real-influence-2-positive",
+                      "evidence_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                      "rejection_reasons": [
+                        "direction_missing"
+                      ],
+                      "validation_status": "rejected"
+                    }
+                  ],
+                  "outputs": [],
+                  "stage": "validation_normalization_then_conflict_aggregation"
+                }
+              ],
+              "attribution_conflict_count": 0,
+              "candidate_count": 1,
+              "direction_conflict_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 1,
+              "rejection_reasons": {
+                "direction_missing": 1
+              },
+              "requested": true,
+              "scope_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "scene": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "attribution_conflict_count": 0,
+              "candidate_count": 0,
+              "evidence_count": 0,
+              "location_conflict_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          }
+        },
+        "final_relations": [],
+        "query": "The Pixies 对 Nirvana 的音乐影响",
+        "retrieval_mode": "frozen_context_replay",
+        "retrieved_evidence": [
+          {
+            "content": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+            "id": "real-influence-2-positive",
+            "metadata": {
+              "chunk_id": "chunk:real-influence-2-positive",
+              "context_version": "context-v1",
+              "parent_id": "real-influence-2-positive",
+              "retrieval_version": "evaluation-frozen-v1",
+              "snapshot_source_id": "source:rockhall-nirvana-influences",
+              "sufficiency_status": "sufficient",
+              "supported_claims": [
+                {
+                  "claim_id": "claim:real-influence-2-positive",
+                  "evidence_span": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                  "extraction_confidence": 0.96,
+                  "object_entity_id": "artist:nirvana",
+                  "object_value": null,
+                  "predicate": "influenced",
+                  "source_chunk_id": "chunk:real-influence-2-positive",
+                  "subject_entity_id": "artist:pixies",
+                  "time": null,
+                  "verification_confidence": 0.96
+                }
+              ]
+            },
+            "source": "Rock & Roll Hall of Fame",
+            "title": "Nirvana",
+            "url": "https://rockhall.com/inductees/nirvana/"
+          }
+        ],
+        "search_plan": {
+          "analysis_version": "v1",
+          "candidate_top_k": 40,
+          "entities": [
+            {
+              "aliases": [],
+              "candidate_knowledge_ids": [],
+              "canonical_name": "Nirvana",
+              "catalog_reference": {
+                "entity_id": "nirvana",
+                "entity_type": "artist",
+                "name": "Nirvana",
+                "provider": "eval"
+              },
+              "confidence": 1.0,
+              "entity_type": "artist",
+              "knowledge_entity_id": "artist:nirvana",
+              "status": "resolved",
+              "surface": "Nirvana"
+            },
+            {
+              "aliases": [],
+              "candidate_knowledge_ids": [],
+              "canonical_name": "The Pixies",
+              "catalog_reference": {
+                "entity_id": "pixies",
+                "entity_type": "artist",
+                "name": "The Pixies",
+                "provider": "eval"
+              },
+              "confidence": 1.0,
+              "entity_type": "artist",
+              "knowledge_entity_id": "artist:pixies",
+              "status": "resolved",
+              "surface": "The Pixies"
+            }
+          ],
+          "final_top_k": 10,
+          "index_profile": null,
+          "metadata_filter": {
+            "root": null
+          },
+          "needs_rerank": true,
+          "original_query": "The Pixies 对 Nirvana 的音乐影响",
+          "plan_id": "query-plan:0123456789abcdef01234567",
+          "post_exclusions": [],
+          "prompt_version": "v1",
+          "queries": [
+            {
+              "channel": "both",
+              "kind": "original",
+              "text": "The Pixies 对 Nirvana 的音乐影响",
+              "weight": 1.0
+            }
+          ],
+          "query_types": [
+            "timeline",
+            "relationship",
+            "influence_style"
+          ],
+          "standalone_query": "The Pixies 对 Nirvana 的音乐影响",
+          "strategy": "hybrid",
+          "warnings": []
+        }
+      }
+    },
+    {
+      "case_id": "real-influence-3-positive",
+      "relation_type": "influence",
+      "failure_reasons": [
+        "direction error"
+      ],
+      "diagnosis": "采访的第一人称 I 和 trying to rip off 表达需要说话人归属与语义归因；span 中没有 Kurt Cobain 的完整名称，direction_missing 导致拒绝。",
+      "trace": {
+        "candidate_relations": {
+          "era": [],
+          "influence": [
+            {
+              "claim_confidence": 0.96,
+              "claim_object_entity_id": "artist:kurt_cobain",
+              "claim_predicate": "inspired",
+              "claim_subject_entity_id": "artist:pixies",
+              "confidence": 0.96,
+              "direction": "influencer_to_influenced",
+              "evidence": {
+                "claim_id": "claim:real-influence-3-positive",
+                "confidence": 0.96,
+                "evidence_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                "exact_span": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                "source_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                "stance": "support",
+                "strength": "historical_attribution"
+              },
+              "evidence_source": {
+                "excerpt": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                "id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                "metadata": {
+                  "child_id": "chunk:real-influence-3-positive",
+                  "claim_id": "claim:real-influence-3-positive",
+                  "context_version": "context-v1",
+                  "document_id": "real-influence-3-positive",
+                  "influence_expansion_version": "v1",
+                  "parent_id": "real-influence-3-positive",
+                  "retrieval_version": "evaluation-frozen-v1",
+                  "source_chunk_id": "chunk:real-influence-3-positive",
+                  "validator_version": "v1"
+                },
+                "source": "Rolling Stone UK / David Fricke",
+                "source_type": "knowledge",
+                "title": "Kurt Cobain, the Rolling Stone interview: Success doesn't suck",
+                "url": "https://www.rollingstone.co.uk/music/kurt-cobain-the-rolling-stone-interview-anniversary-death-38446/"
+              },
+              "influence_scope": null,
+              "relation_type": "inspired",
+              "scope_mentions": [],
+              "source_entity": {
+                "canonical_name": "Pixies",
+                "knowledge_entity_id": "artist:pixies",
+                "node_id": "eval:artist:pixies",
+                "node_type": "artist"
+              },
+              "target_entity": {
+                "canonical_name": "Kurt Cobain",
+                "knowledge_entity_id": "artist:kurt_cobain",
+                "node_id": "eval:artist:kurt_cobain",
+                "node_type": "artist"
+              },
+              "uncertain": false
+            }
+          ],
+          "scene": []
+        },
+        "expected_gold": {
+          "case_id": "real-influence-3-positive",
+          "categories": [
+            "positive",
+            "isolation",
+            "direction_sensitive"
+          ],
+          "dataset_kind": "real_source",
+          "expected_relations": [
+            {
+              "conflict_flags": [],
+              "evidence_claim_ids": [
+                "claim:real-influence-3-positive"
+              ],
+              "fields": {},
+              "predicate": "inspired",
+              "source_entity": "eval:artist:pixies",
+              "target_entity": "eval:artist:kurt_cobain"
+            }
+          ],
+          "label": "positive",
+          "query": "Pixies 对 Kurt Cobain 的创作启发",
+          "rationale": "Provisional source-grounded annotation; human must verify full URL context, identity, direction and scope. Gold positive describes the stated relation; weak/confusable query tests a stronger or different unsupported relation. Input claims are evaluation-only annotations, not production extractions. Rejection is evidence-relative, not a global claim of nonexistence.",
+          "relation_type": "influence",
+          "review": {
+            "method": "human",
+            "notes": "Kurt Cobain 明确表示创作 Smells Like Teen Spirit 时在尝试模仿 Pixies，并进一步说明使用了 Pixies 的 dynamics，可支持 Pixies → Kurt Cobain 的 inspired/influence 方向。",
+            "record_path": "receipts/real-influence-3-positive.json",
+            "record_sha256": "bb25b98f1a69acab0922360a338ed54982d32dbfa2300b177db1f7650a5a39fb",
+            "reviewed_at": "2026-09-26",
+            "reviewer": "human-review-WT",
+            "status": "approved"
+          },
+          "schema_version": "semantic-relations-evaluation-v1",
+          "source_entity": "eval:artist:pixies",
+          "supporting_evidence": [
+            {
+              "chunk_id": "chunk:real-influence-3-positive",
+              "claim_id": "claim:real-influence-3-positive",
+              "document_id": "real-influence-3-positive",
+              "exact_span": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+              "source_id": "source:rollingstone-cobain-pixies",
+              "span_end": 74,
+              "span_start": 0,
+              "stance": "support"
+            }
+          ],
+          "target_entity": "eval:artist:kurt_cobain"
+        },
+        "failure_reasons": [
+          "direction error"
+        ],
+        "filtering_scoring": {
+          "era": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "candidate_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "influence": {
+            "decisions": [
+              {
+                "candidate": {
+                  "claim_confidence": 0.96,
+                  "claim_object_entity_id": "artist:kurt_cobain",
+                  "claim_predicate": "inspired",
+                  "claim_subject_entity_id": "artist:pixies",
+                  "confidence": 0.96,
+                  "direction": "influencer_to_influenced",
+                  "evidence": {
+                    "claim_id": "claim:real-influence-3-positive",
+                    "confidence": 0.96,
+                    "evidence_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                    "exact_span": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                    "source_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                    "stance": "support",
+                    "strength": "historical_attribution"
+                  },
+                  "evidence_source": {
+                    "excerpt": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                    "id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                    "metadata": {
+                      "child_id": "chunk:real-influence-3-positive",
+                      "claim_id": "claim:real-influence-3-positive",
+                      "context_version": "context-v1",
+                      "document_id": "real-influence-3-positive",
+                      "influence_expansion_version": "v1",
+                      "parent_id": "real-influence-3-positive",
+                      "retrieval_version": "evaluation-frozen-v1",
+                      "source_chunk_id": "chunk:real-influence-3-positive",
+                      "validator_version": "v1"
+                    },
+                    "source": "Rolling Stone UK / David Fricke",
+                    "source_type": "knowledge",
+                    "title": "Kurt Cobain, the Rolling Stone interview: Success doesn't suck",
+                    "url": "https://www.rollingstone.co.uk/music/kurt-cobain-the-rolling-stone-interview-anniversary-death-38446/"
+                  },
+                  "influence_scope": null,
+                  "relation_type": "inspired",
+                  "scope_mentions": [],
+                  "source_entity": {
+                    "canonical_name": "Pixies",
+                    "knowledge_entity_id": "artist:pixies",
+                    "node_id": "eval:artist:pixies",
+                    "node_type": "artist"
+                  },
+                  "target_entity": {
+                    "canonical_name": "Kurt Cobain",
+                    "knowledge_entity_id": "artist:kurt_cobain",
+                    "node_id": "eval:artist:kurt_cobain",
+                    "node_type": "artist"
+                  },
+                  "uncertain": false
+                },
+                "rejection_reasons": [
+                  "direction_missing"
+                ],
+                "status": "rejected"
+              }
+            ],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [
+                {
+                  "inputs": [
+                    {
+                      "aggregation_role": "excluded",
+                      "claim_id": "claim:real-influence-3-positive",
+                      "evidence_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                      "rejection_reasons": [
+                        "direction_missing"
+                      ],
+                      "validation_status": "rejected"
+                    }
+                  ],
+                  "outputs": [],
+                  "stage": "validation_normalization_then_conflict_aggregation"
+                }
+              ],
+              "attribution_conflict_count": 0,
+              "candidate_count": 1,
+              "direction_conflict_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 1,
+              "rejection_reasons": {
+                "direction_missing": 1
+              },
+              "requested": true,
+              "scope_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "scene": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "attribution_conflict_count": 0,
+              "candidate_count": 0,
+              "evidence_count": 0,
+              "location_conflict_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          }
+        },
+        "final_relations": [],
+        "query": "Pixies 对 Kurt Cobain 的创作启发",
+        "retrieval_mode": "frozen_context_replay",
+        "retrieved_evidence": [
+          {
+            "content": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+            "id": "real-influence-3-positive",
+            "metadata": {
+              "chunk_id": "chunk:real-influence-3-positive",
+              "context_version": "context-v1",
+              "parent_id": "real-influence-3-positive",
+              "retrieval_version": "evaluation-frozen-v1",
+              "snapshot_source_id": "source:rollingstone-cobain-pixies",
+              "sufficiency_status": "sufficient",
+              "supported_claims": [
+                {
+                  "claim_id": "claim:real-influence-3-positive",
+                  "evidence_span": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                  "extraction_confidence": 0.96,
+                  "object_entity_id": "artist:kurt_cobain",
+                  "object_value": null,
+                  "predicate": "inspired",
+                  "source_chunk_id": "chunk:real-influence-3-positive",
+                  "subject_entity_id": "artist:pixies",
+                  "time": null,
+                  "verification_confidence": 0.96
+                }
+              ]
+            },
+            "source": "Rolling Stone UK / David Fricke",
+            "title": "Kurt Cobain, the Rolling Stone interview: Success doesn't suck",
+            "url": "https://www.rollingstone.co.uk/music/kurt-cobain-the-rolling-stone-interview-anniversary-death-38446/"
+          }
+        ],
+        "search_plan": {
+          "analysis_version": "v1",
+          "candidate_top_k": 40,
+          "entities": [
+            {
+              "aliases": [],
+              "candidate_knowledge_ids": [],
+              "canonical_name": "Kurt Cobain",
+              "catalog_reference": {
+                "entity_id": "kurt_cobain",
+                "entity_type": "artist",
+                "name": "Kurt Cobain",
+                "provider": "eval"
+              },
+              "confidence": 1.0,
+              "entity_type": "artist",
+              "knowledge_entity_id": "artist:kurt_cobain",
+              "status": "resolved",
+              "surface": "Kurt Cobain"
+            },
+            {
+              "aliases": [],
+              "candidate_knowledge_ids": [],
+              "canonical_name": "Pixies",
+              "catalog_reference": {
+                "entity_id": "pixies",
+                "entity_type": "artist",
+                "name": "Pixies",
+                "provider": "eval"
+              },
+              "confidence": 1.0,
+              "entity_type": "artist",
+              "knowledge_entity_id": "artist:pixies",
+              "status": "resolved",
+              "surface": "Pixies"
+            }
+          ],
+          "final_top_k": 10,
+          "index_profile": null,
+          "metadata_filter": {
+            "root": null
+          },
+          "needs_rerank": true,
+          "original_query": "Pixies 对 Kurt Cobain 的创作启发",
+          "plan_id": "query-plan:0123456789abcdef01234567",
+          "post_exclusions": [],
+          "prompt_version": "v1",
+          "queries": [
+            {
+              "channel": "both",
+              "kind": "original",
+              "text": "Pixies 对 Kurt Cobain 的创作启发",
+              "weight": 1.0
+            }
+          ],
+          "query_types": [
+            "timeline",
+            "relationship",
+            "influence_style"
+          ],
+          "standalone_query": "Pixies 对 Kurt Cobain 的创作启发",
+          "strategy": "hybrid",
+          "warnings": []
+        }
+      }
+    },
+    {
+      "case_id": "real-influence-r3-pixies-nirvana-forward",
+      "relation_type": "influence",
+      "failure_reasons": [
+        "direction error"
+      ],
+      "diagnosis": "与已审核旧 Nirvana positive 使用同一冻结来源与 claim；重现列表上下文归因失败，不是独立新事实。",
+      "trace": {
+        "candidate_relations": {
+          "era": [],
+          "influence": [
+            {
+              "claim_confidence": 0.96,
+              "claim_object_entity_id": "artist:nirvana",
+              "claim_predicate": "influenced",
+              "claim_subject_entity_id": "artist:pixies",
+              "confidence": 0.96,
+              "direction": "influencer_to_influenced",
+              "evidence": {
+                "claim_id": "claim:real-influence-2-positive",
+                "confidence": 0.96,
+                "evidence_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                "exact_span": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                "source_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                "stance": "support",
+                "strength": "historical_attribution"
+              },
+              "evidence_source": {
+                "excerpt": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                "id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                "metadata": {
+                  "child_id": "chunk:real-influence-2-positive",
+                  "claim_id": "claim:real-influence-2-positive",
+                  "context_version": "context-v1",
+                  "document_id": "real-influence-2-positive",
+                  "influence_expansion_version": "v1",
+                  "parent_id": "real-influence-2-positive",
+                  "retrieval_version": "evaluation-frozen-v1",
+                  "source_chunk_id": "chunk:real-influence-2-positive",
+                  "validator_version": "v1"
+                },
+                "source": "Rock & Roll Hall of Fame",
+                "source_type": "knowledge",
+                "title": "Nirvana",
+                "url": "https://rockhall.com/inductees/nirvana/"
+              },
+              "influence_scope": null,
+              "relation_type": "influenced",
+              "scope_mentions": [],
+              "source_entity": {
+                "canonical_name": "Pixies",
+                "knowledge_entity_id": "artist:pixies",
+                "node_id": "eval:artist:pixies",
+                "node_type": "artist"
+              },
+              "target_entity": {
+                "canonical_name": "Nirvana",
+                "knowledge_entity_id": "artist:nirvana",
+                "node_id": "eval:artist:nirvana",
+                "node_type": "artist"
+              },
+              "uncertain": false
+            }
+          ],
+          "scene": []
+        },
+        "expected_gold": {
+          "case_id": "real-influence-r3-pixies-nirvana-forward",
+          "categories": [
+            "positive",
+            "direction_sensitive"
+          ],
+          "dataset_kind": "real_source",
+          "expected_relations": [
+            {
+              "conflict_flags": [],
+              "evidence_claim_ids": [
+                "claim:real-influence-2-positive"
+              ],
+              "fields": {},
+              "predicate": "influenced",
+              "source_entity": "eval:artist:pixies",
+              "target_entity": "eval:artist:nirvana"
+            }
+          ],
+          "label": "positive",
+          "query": "Pixies → Nirvana 的 influenced 音乐关系是否被所给证据支持？只返回该实体对。",
+          "rationale": "同一冻结证据与 claim ID 成对复用，不因 query 反向而翻转 replay claim。正向支持 Pixies → Nirvana；反向负例仅表示该证据不支持 Nirvana → Pixies，不主张现实中绝无反向影响。正向控制与既有 approved 样本关联，不是独立随机样本；新 query 的标签仍待人工审核。",
+          "relation_type": "influence",
+          "review": {
+            "method": "human",
+            "notes": "Rock & Roll Hall of Fame 的 Nirvana Influence 页面将 The Pixies 明确列在 Nirvana 的 Influences 下，因此证据支持规范方向 Pixies → Nirvana influenced。source、target、predicate 和方向均正确。",
+            "record_path": "receipts/real-influence-r3-pixies-nirvana-forward.json",
+            "record_sha256": "a3411b4b2944c710a0f068df4a869d44515899198f203fc4a75e8f0e7dcd5169",
+            "reviewed_at": "2026-09-26",
+            "reviewer": "human-review-WT",
+            "status": "approved"
+          },
+          "schema_version": "semantic-relations-evaluation-v1",
+          "source_entity": "eval:artist:pixies",
+          "supporting_evidence": [
+            {
+              "chunk_id": "chunk:real-influence-2-positive",
+              "claim_id": "claim:real-influence-2-positive",
+              "document_id": "real-influence-2-positive",
+              "exact_span": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+              "source_id": "source:rockhall-nirvana-influences",
+              "span_end": 111,
+              "span_start": 0,
+              "stance": "support"
+            }
+          ],
+          "target_entity": "eval:artist:nirvana"
+        },
+        "failure_reasons": [
+          "direction error"
+        ],
+        "filtering_scoring": {
+          "era": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "candidate_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "influence": {
+            "decisions": [
+              {
+                "candidate": {
+                  "claim_confidence": 0.96,
+                  "claim_object_entity_id": "artist:nirvana",
+                  "claim_predicate": "influenced",
+                  "claim_subject_entity_id": "artist:pixies",
+                  "confidence": 0.96,
+                  "direction": "influencer_to_influenced",
+                  "evidence": {
+                    "claim_id": "claim:real-influence-2-positive",
+                    "confidence": 0.96,
+                    "evidence_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                    "exact_span": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                    "source_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                    "stance": "support",
+                    "strength": "historical_attribution"
+                  },
+                  "evidence_source": {
+                    "excerpt": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                    "id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                    "metadata": {
+                      "child_id": "chunk:real-influence-2-positive",
+                      "claim_id": "claim:real-influence-2-positive",
+                      "context_version": "context-v1",
+                      "document_id": "real-influence-2-positive",
+                      "influence_expansion_version": "v1",
+                      "parent_id": "real-influence-2-positive",
+                      "retrieval_version": "evaluation-frozen-v1",
+                      "source_chunk_id": "chunk:real-influence-2-positive",
+                      "validator_version": "v1"
+                    },
+                    "source": "Rock & Roll Hall of Fame",
+                    "source_type": "knowledge",
+                    "title": "Nirvana",
+                    "url": "https://rockhall.com/inductees/nirvana/"
+                  },
+                  "influence_scope": null,
+                  "relation_type": "influenced",
+                  "scope_mentions": [],
+                  "source_entity": {
+                    "canonical_name": "Pixies",
+                    "knowledge_entity_id": "artist:pixies",
+                    "node_id": "eval:artist:pixies",
+                    "node_type": "artist"
+                  },
+                  "target_entity": {
+                    "canonical_name": "Nirvana",
+                    "knowledge_entity_id": "artist:nirvana",
+                    "node_id": "eval:artist:nirvana",
+                    "node_type": "artist"
+                  },
+                  "uncertain": false
+                },
+                "rejection_reasons": [
+                  "direction_missing"
+                ],
+                "status": "rejected"
+              }
+            ],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [
+                {
+                  "inputs": [
+                    {
+                      "aggregation_role": "excluded",
+                      "claim_id": "claim:real-influence-2-positive",
+                      "evidence_id": "knowledge:influence:a84efbbebae1bb7d858f5d6b",
+                      "rejection_reasons": [
+                        "direction_missing"
+                      ],
+                      "validation_status": "rejected"
+                    }
+                  ],
+                  "outputs": [],
+                  "stage": "validation_normalization_then_conflict_aggregation"
+                }
+              ],
+              "attribution_conflict_count": 0,
+              "candidate_count": 1,
+              "direction_conflict_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 1,
+              "rejection_reasons": {
+                "direction_missing": 1
+              },
+              "requested": true,
+              "scope_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "scene": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "attribution_conflict_count": 0,
+              "candidate_count": 0,
+              "evidence_count": 0,
+              "location_conflict_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          }
+        },
+        "final_relations": [],
+        "query": "Pixies → Nirvana 的 influenced 音乐关系是否被所给证据支持？只返回该实体对。",
+        "retrieval_mode": "frozen_context_replay",
+        "retrieved_evidence": [
+          {
+            "content": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+            "id": "real-influence-2-positive",
+            "metadata": {
+              "chunk_id": "chunk:real-influence-2-positive",
+              "context_version": "context-v1",
+              "parent_id": "real-influence-2-positive",
+              "retrieval_version": "evaluation-frozen-v1",
+              "snapshot_source_id": "source:rockhall-nirvana-influences",
+              "sufficiency_status": "sufficient",
+              "supported_claims": [
+                {
+                  "claim_id": "claim:real-influence-2-positive",
+                  "evidence_span": "Influences\n\nR.E.M.\n\nThe Pixies\n\nThe Melvins\n\nThe Raincoats\n\nBam Bam\n\nSonic Youth\n\nFugazi\n\nThe Gap Band\n\nNirvana",
+                  "extraction_confidence": 0.96,
+                  "object_entity_id": "artist:nirvana",
+                  "object_value": null,
+                  "predicate": "influenced",
+                  "source_chunk_id": "chunk:real-influence-2-positive",
+                  "subject_entity_id": "artist:pixies",
+                  "time": null,
+                  "verification_confidence": 0.96
+                }
+              ]
+            },
+            "source": "Rock & Roll Hall of Fame",
+            "title": "Nirvana",
+            "url": "https://rockhall.com/inductees/nirvana/"
+          }
+        ],
+        "search_plan": {
+          "analysis_version": "v1",
+          "candidate_top_k": 40,
+          "entities": [
+            {
+              "aliases": [],
+              "candidate_knowledge_ids": [],
+              "canonical_name": "Pixies",
+              "catalog_reference": {
+                "entity_id": "pixies",
+                "entity_type": "artist",
+                "name": "Pixies",
+                "provider": "eval"
+              },
+              "confidence": 1.0,
+              "entity_type": "artist",
+              "knowledge_entity_id": "artist:pixies",
+              "status": "resolved",
+              "surface": "Pixies"
+            },
+            {
+              "aliases": [],
+              "candidate_knowledge_ids": [],
+              "canonical_name": "Nirvana",
+              "catalog_reference": {
+                "entity_id": "nirvana",
+                "entity_type": "artist",
+                "name": "Nirvana",
+                "provider": "eval"
+              },
+              "confidence": 1.0,
+              "entity_type": "artist",
+              "knowledge_entity_id": "artist:nirvana",
+              "status": "resolved",
+              "surface": "Nirvana"
+            }
+          ],
+          "final_top_k": 10,
+          "index_profile": null,
+          "metadata_filter": {
+            "root": null
+          },
+          "needs_rerank": true,
+          "original_query": "Pixies → Nirvana 的 influenced 音乐关系是否被所给证据支持？只返回该实体对。",
+          "plan_id": "query-plan:0123456789abcdef01234567",
+          "post_exclusions": [],
+          "prompt_version": "v1",
+          "queries": [
+            {
+              "channel": "both",
+              "kind": "original",
+              "text": "Pixies → Nirvana 的 influenced 音乐关系是否被所给证据支持？只返回该实体对。",
+              "weight": 1.0
+            }
+          ],
+          "query_types": [
+            "timeline",
+            "relationship",
+            "influence_style"
+          ],
+          "standalone_query": "Pixies → Nirvana 的 influenced 音乐关系是否被所给证据支持？只返回该实体对。",
+          "strategy": "hybrid",
+          "warnings": []
+        }
+      }
+    },
+    {
+      "case_id": "real-influence-r3-pixies-cobain-forward",
+      "relation_type": "influence",
+      "failure_reasons": [
+        "direction error"
+      ],
+      "diagnosis": "与已审核旧 Cobain positive 使用同一冻结来源与 claim；重现第一人称采访归因失败，不是独立新事实。",
+      "trace": {
+        "candidate_relations": {
+          "era": [],
+          "influence": [
+            {
+              "claim_confidence": 0.96,
+              "claim_object_entity_id": "artist:kurt_cobain",
+              "claim_predicate": "inspired",
+              "claim_subject_entity_id": "artist:pixies",
+              "confidence": 0.96,
+              "direction": "influencer_to_influenced",
+              "evidence": {
+                "claim_id": "claim:real-influence-3-positive",
+                "confidence": 0.96,
+                "evidence_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                "exact_span": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                "source_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                "stance": "support",
+                "strength": "historical_attribution"
+              },
+              "evidence_source": {
+                "excerpt": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                "id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                "metadata": {
+                  "child_id": "chunk:real-influence-3-positive",
+                  "claim_id": "claim:real-influence-3-positive",
+                  "context_version": "context-v1",
+                  "document_id": "real-influence-3-positive",
+                  "influence_expansion_version": "v1",
+                  "parent_id": "real-influence-3-positive",
+                  "retrieval_version": "evaluation-frozen-v1",
+                  "source_chunk_id": "chunk:real-influence-3-positive",
+                  "validator_version": "v1"
+                },
+                "source": "Rolling Stone UK / David Fricke",
+                "source_type": "knowledge",
+                "title": "Kurt Cobain, the Rolling Stone interview: Success doesn't suck",
+                "url": "https://www.rollingstone.co.uk/music/kurt-cobain-the-rolling-stone-interview-anniversary-death-38446/"
+              },
+              "influence_scope": null,
+              "relation_type": "inspired",
+              "scope_mentions": [],
+              "source_entity": {
+                "canonical_name": "Pixies",
+                "knowledge_entity_id": "artist:pixies",
+                "node_id": "eval:artist:pixies",
+                "node_type": "artist"
+              },
+              "target_entity": {
+                "canonical_name": "Kurt Cobain",
+                "knowledge_entity_id": "artist:kurt_cobain",
+                "node_id": "eval:artist:kurt_cobain",
+                "node_type": "artist"
+              },
+              "uncertain": false
+            }
+          ],
+          "scene": []
+        },
+        "expected_gold": {
+          "case_id": "real-influence-r3-pixies-cobain-forward",
+          "categories": [
+            "positive",
+            "direction_sensitive"
+          ],
+          "dataset_kind": "real_source",
+          "expected_relations": [
+            {
+              "conflict_flags": [],
+              "evidence_claim_ids": [
+                "claim:real-influence-3-positive"
+              ],
+              "fields": {},
+              "predicate": "inspired",
+              "source_entity": "eval:artist:pixies",
+              "target_entity": "eval:artist:kurt_cobain"
+            }
+          ],
+          "label": "positive",
+          "query": "Pixies → Kurt Cobain 的 inspired 音乐关系是否被所给证据支持？只返回该实体对。",
+          "rationale": "同一冻结证据与 claim ID 成对复用，不因 query 反向而翻转 replay claim。正向支持 Pixies → Kurt Cobain；反向负例仅表示该证据不支持 Kurt Cobain → Pixies，不主张现实中绝无反向影响。正向控制与既有 approved 样本关联，不是独立随机样本；新 query 的标签仍待人工审核。",
+          "relation_type": "influence",
+          "review": {
+            "method": "human",
+            "notes": "Kurt Cobain 明确表示自己创作时“trying to rip off the Pixies”，完整上下文还说明使用了 Pixies 的 dynamics，因此证据明确支持 Pixies → Kurt Cobain 的 inspired/influence 方向。实体、predicate 和方向正确。",
+            "record_path": "receipts/real-influence-r3-pixies-cobain-forward.json",
+            "record_sha256": "676d367ded433d8a143541b4412dfe9102c77dc3909f7c846693d97a2276a1ad",
+            "reviewed_at": "2026-09-26",
+            "reviewer": "human-review-WT",
+            "status": "approved"
+          },
+          "schema_version": "semantic-relations-evaluation-v1",
+          "source_entity": "eval:artist:pixies",
+          "supporting_evidence": [
+            {
+              "chunk_id": "chunk:real-influence-3-positive",
+              "claim_id": "claim:real-influence-3-positive",
+              "document_id": "real-influence-3-positive",
+              "exact_span": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+              "source_id": "source:rollingstone-cobain-pixies",
+              "span_end": 74,
+              "span_start": 0,
+              "stance": "support"
+            }
+          ],
+          "target_entity": "eval:artist:kurt_cobain"
+        },
+        "failure_reasons": [
+          "direction error"
+        ],
+        "filtering_scoring": {
+          "era": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "candidate_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "influence": {
+            "decisions": [
+              {
+                "candidate": {
+                  "claim_confidence": 0.96,
+                  "claim_object_entity_id": "artist:kurt_cobain",
+                  "claim_predicate": "inspired",
+                  "claim_subject_entity_id": "artist:pixies",
+                  "confidence": 0.96,
+                  "direction": "influencer_to_influenced",
+                  "evidence": {
+                    "claim_id": "claim:real-influence-3-positive",
+                    "confidence": 0.96,
+                    "evidence_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                    "exact_span": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                    "source_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                    "stance": "support",
+                    "strength": "historical_attribution"
+                  },
+                  "evidence_source": {
+                    "excerpt": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                    "id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                    "metadata": {
+                      "child_id": "chunk:real-influence-3-positive",
+                      "claim_id": "claim:real-influence-3-positive",
+                      "context_version": "context-v1",
+                      "document_id": "real-influence-3-positive",
+                      "influence_expansion_version": "v1",
+                      "parent_id": "real-influence-3-positive",
+                      "retrieval_version": "evaluation-frozen-v1",
+                      "source_chunk_id": "chunk:real-influence-3-positive",
+                      "validator_version": "v1"
+                    },
+                    "source": "Rolling Stone UK / David Fricke",
+                    "source_type": "knowledge",
+                    "title": "Kurt Cobain, the Rolling Stone interview: Success doesn't suck",
+                    "url": "https://www.rollingstone.co.uk/music/kurt-cobain-the-rolling-stone-interview-anniversary-death-38446/"
+                  },
+                  "influence_scope": null,
+                  "relation_type": "inspired",
+                  "scope_mentions": [],
+                  "source_entity": {
+                    "canonical_name": "Pixies",
+                    "knowledge_entity_id": "artist:pixies",
+                    "node_id": "eval:artist:pixies",
+                    "node_type": "artist"
+                  },
+                  "target_entity": {
+                    "canonical_name": "Kurt Cobain",
+                    "knowledge_entity_id": "artist:kurt_cobain",
+                    "node_id": "eval:artist:kurt_cobain",
+                    "node_type": "artist"
+                  },
+                  "uncertain": false
+                },
+                "rejection_reasons": [
+                  "direction_missing"
+                ],
+                "status": "rejected"
+              }
+            ],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [
+                {
+                  "inputs": [
+                    {
+                      "aggregation_role": "excluded",
+                      "claim_id": "claim:real-influence-3-positive",
+                      "evidence_id": "knowledge:influence:ff909858e711f05085a6f6b2",
+                      "rejection_reasons": [
+                        "direction_missing"
+                      ],
+                      "validation_status": "rejected"
+                    }
+                  ],
+                  "outputs": [],
+                  "stage": "validation_normalization_then_conflict_aggregation"
+                }
+              ],
+              "attribution_conflict_count": 0,
+              "candidate_count": 1,
+              "direction_conflict_count": 0,
+              "evidence_count": 0,
+              "rejected_count": 1,
+              "rejection_reasons": {
+                "direction_missing": 1
+              },
+              "requested": true,
+              "scope_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          },
+          "scene": {
+            "decisions": [],
+            "trace": {
+              "accepted_count": 0,
+              "aggregation_trace": [],
+              "attribution_conflict_count": 0,
+              "candidate_count": 0,
+              "evidence_count": 0,
+              "location_conflict_count": 0,
+              "rejected_count": 0,
+              "rejection_reasons": {},
+              "requested": false,
+              "temporal_conflict_count": 0,
+              "validator_version": "v1"
+            }
+          }
+        },
+        "final_relations": [],
+        "query": "Pixies → Kurt Cobain 的 inspired 音乐关系是否被所给证据支持？只返回该实体对。",
+        "retrieval_mode": "frozen_context_replay",
+        "retrieved_evidence": [
+          {
+            "content": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+            "id": "real-influence-3-positive",
+            "metadata": {
+              "chunk_id": "chunk:real-influence-3-positive",
+              "context_version": "context-v1",
+              "parent_id": "real-influence-3-positive",
+              "retrieval_version": "evaluation-frozen-v1",
+              "snapshot_source_id": "source:rollingstone-cobain-pixies",
+              "sufficiency_status": "sufficient",
+              "supported_claims": [
+                {
+                  "claim_id": "claim:real-influence-3-positive",
+                  "evidence_span": "I was basically trying to rip off the Pixies. I have to admit it [smiles].",
+                  "extraction_confidence": 0.96,
+                  "object_entity_id": "artist:kurt_cobain",
+                  "object_value": null,
+                  "predicate": "inspired",
+                  "source_chunk_id": "chunk:real-influence-3-positive",
+                  "subject_entity_id": "artist:pixies",
+                  "time": null,
+                  "verification_confidence": 0.96
+                }
+              ]
+            },
+            "source": "Rolling Stone UK / David Fricke",
+            "title": "Kurt Cobain, the Rolling Stone interview: Success doesn't suck",
+            "url": "https://www.rollingstone.co.uk/music/kurt-cobain-the-rolling-stone-interview-anniversary-death-38446/"
+          }
+        ],
+        "search_plan": {
+          "analysis_version": "v1",
+          "candidate_top_k": 40,
+          "entities": [
+            {
+              "aliases": [],
+              "candidate_knowledge_ids": [],
+              "canonical_name": "Pixies",
+              "catalog_reference": {
+                "entity_id": "pixies",
+                "entity_type": "artist",
+                "name": "Pixies",
+                "provider": "eval"
+              },
+              "confidence": 1.0,
+              "entity_type": "artist",
+              "knowledge_entity_id": "artist:pixies",
+              "status": "resolved",
+              "surface": "Pixies"
+            },
+            {
+              "aliases": [],
+              "candidate_knowledge_ids": [],
+              "canonical_name": "Kurt Cobain",
+              "catalog_reference": {
+                "entity_id": "kurt_cobain",
+                "entity_type": "artist",
+                "name": "Kurt Cobain",
+                "provider": "eval"
+              },
+              "confidence": 1.0,
+              "entity_type": "artist",
+              "knowledge_entity_id": "artist:kurt_cobain",
+              "status": "resolved",
+              "surface": "Kurt Cobain"
+            }
+          ],
+          "final_top_k": 10,
+          "index_profile": null,
+          "metadata_filter": {
+            "root": null
+          },
+          "needs_rerank": true,
+          "original_query": "Pixies → Kurt Cobain 的 inspired 音乐关系是否被所给证据支持？只返回该实体对。",
+          "plan_id": "query-plan:0123456789abcdef01234567",
+          "post_exclusions": [],
+          "prompt_version": "v1",
+          "queries": [
+            {
+              "channel": "both",
+              "kind": "original",
+              "text": "Pixies → Kurt Cobain 的 inspired 音乐关系是否被所给证据支持？只返回该实体对。",
+              "weight": 1.0
+            }
+          ],
+          "query_types": [
+            "timeline",
+            "relationship",
+            "influence_style"
+          ],
+          "standalone_query": "Pixies → Kurt Cobain 的 inspired 音乐关系是否被所给证据支持？只返回该实体对。",
+          "strategy": "hybrid",
+          "warnings": []
+        }
+      }
+    }
+  ]
+}
