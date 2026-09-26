@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-r1-bowie-eno-cowrite-weak",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "“WARSZAWA written by DAVID BOWIE and BRIAN ENO”明确支持共同创作关系，但共同署名是对称合作事实，不能推出 David Bowie → Brian Eno 的定向 influenced 关系。当前 evidence 不支持目标 predicate 及方向，因此作为 weak-evidence negative 合理。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "2489abcc55ccbac39da9650ed4552ea764f34be1fc4851350bcae3892ff7e22d",
+  "parent_manifest_sha256": "ce6d5c2ca9397665a80f6fad0a83a739fa942ed74efc21bb34b2396d15811ae1",
+  "parent_case_line_sha256": "55cfcf246c6ac7a831d671c059f18b2d7b4a9fc3a067f454854b55a3616951c0",
+  "replay_input_line_sha256": "8c5fb41123435ad59d4f74c126d382634c9145d21ed26e40d03df5c05365a641"
+}

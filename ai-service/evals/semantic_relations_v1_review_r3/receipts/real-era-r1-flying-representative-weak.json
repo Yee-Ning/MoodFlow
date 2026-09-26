@@ -1,0 +1,12 @@
+{
+  "case_id": "real-era-r1-flying-representative-weak",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "来源明确支持 Flying 于 1967 年发行，因此可支持 belongs_to_era → 1960s；但发行于某年代本身不足以证明 representative_of_era。当前 evidence 未明确陈述其为 1960s 代表作品，因此作为 weak-evidence negative 合理。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "24acf822f2eaf6d535da459f9b2d060a2a7beb52139968a5fe2f1a7e5a875cd1",
+  "parent_manifest_sha256": "ce6d5c2ca9397665a80f6fad0a83a739fa942ed74efc21bb34b2396d15811ae1",
+  "parent_case_line_sha256": "5dc8879869dd8d722a9be5cd214757dc96231e346bc43187d0e706e6a17b9e7b",
+  "replay_input_line_sha256": "5f7a17a8e66cb22dec0261f5e8e5d1b0dff28073658f060b69b492b2886919ef"
+}
