@@ -1,0 +1,178 @@
+{
+  "inspection_is_human_review": false,
+  "entries": [
+    {
+      "key": "brits",
+      "requested_url": "https://www.brits.co.uk/news/2012/blur-at-the-brits-1995-2012/",
+      "resolved_url": "https://www.brits.co.uk/news/2012/blur-at-the-brits-1995-2012/",
+      "http_status": 200,
+      "retrieved_at": "2026-09-26T07:10:22.267912+00:00",
+      "response_sha256": "cd1dcd0e09f01026bbb691d4affc23e46869e0f18925b1e88f10c65b94561090",
+      "page_title": "Blur at the BRITs: 1995 - 2012",
+      "fragments": [
+        {
+          "text": "Blur at the BRIT Awards. The indie boys took home an impressive four awards at the show, triumphing over Britpop rivals Oasis",
+          "representation": "original_html_text",
+          "observed_start": 13591,
+          "observed_end": 13716,
+          "fragment_sha256": "70547a89adcf1b244d65eb057e9bd0cff93ff8e7418a6d45cf4a74ebace40161",
+          "snapshot_start": 0,
+          "snapshot_end": 125
+        }
+      ],
+      "source_id": "source:r5:brits-blur-oasis-britpop",
+      "publisher": "BRIT Awards / BPI",
+      "locator": "Body paragraph describing 1995 awards; continuous excerpt begins Blur at the BRIT Awards and ends at Britpop rivals Oasis.",
+      "language": "en",
+      "publication_date": null,
+      "publication_date_basis": "Unavailable; event/release year is not publication date.",
+      "speaker_or_author": null,
+      "claim_scope": "External Britpop grouping and award rivalry, not musical influence from Oasis to Blur.",
+      "review_caution": "1995 is an event year, not an influence time or page publication date.",
+      "source_content_sha256": "70547a89adcf1b244d65eb057e9bd0cff93ff8e7418a6d45cf4a74ebace40161",
+      "capture_method": "verbatim_web_excerpt",
+      "verification": "agent_verified_original_public_HTTP_response_and_DOM_or_embedded_JSON",
+      "human_review_status": "pending",
+      "context_is_gold_evidence": false,
+      "original_response_retained": false,
+      "response_hash_scope": "Capture provenance only; exact offsets refer to retained excerpt, not unarchived whole HTML."
+    },
+    {
+      "key": "mopop",
+      "requested_url": "https://www.mopop.org/experience/puget-sound-stories",
+      "resolved_url": "https://www.mopop.org/experience/puget-sound-stories",
+      "http_status": 200,
+      "retrieved_at": "2026-09-26T07:10:23.894417+00:00",
+      "response_sha256": "73c0cad704dca061c78e3113f8a3cd31b0b653290e7fbfcd70e9b082b1f78333",
+      "page_title": "Puget Sound Stories",
+      "fragments": [
+        {
+          "text": "Through artists including Nirvana, Mudhoney, Soundgarden, and TAD, Sub Pop helped define grunge while introducing Seattle to audiences around the world.",
+          "representation": "original_html_text",
+          "observed_start": 54201,
+          "observed_end": 54353,
+          "fragment_sha256": "c70ef361c017712f3a36ac7f519597ce057c6b67dc03601f059a1f61ffed6f31",
+          "snapshot_start": 0,
+          "snapshot_end": 152
+        }
+      ],
+      "source_id": "source:r5:mopop-subpop-grunge-artists",
+      "publisher": "Museum of Pop Culture",
+      "locator": "Sub Pop Records section; first sentence beginning Through artists including Nirvana, Mudhoney, Soundgarden, and TAD.",
+      "language": "en",
+      "publication_date": null,
+      "publication_date_basis": "Unavailable; event/release year is not publication date.",
+      "speaker_or_author": null,
+      "claim_scope": "Shared Seattle/grunge label-scene association. The subject of helped define is Sub Pop, not Soundgarden acting on Nirvana.",
+      "review_caution": "Collective label/scene contribution is not pairwise directional shaped_style attribution.",
+      "source_content_sha256": "c70ef361c017712f3a36ac7f519597ce057c6b67dc03601f059a1f61ffed6f31",
+      "capture_method": "verbatim_web_excerpt",
+      "verification": "agent_verified_original_public_HTTP_response_and_DOM_or_embedded_JSON",
+      "human_review_status": "pending",
+      "context_is_gold_evidence": false,
+      "original_response_retained": false,
+      "response_hash_scope": "Capture provenance only; exact offsets refer to retained excerpt, not unarchived whole HTML."
+    },
+    {
+      "key": "nirvana",
+      "requested_url": "https://www.nirvana.com/releases-archive/nevermind/",
+      "resolved_url": "https://www.nirvana.com/releases-archive/nevermind/",
+      "http_status": 200,
+      "retrieved_at": "2026-09-26T07:10:25.510770+00:00",
+      "response_sha256": "2bb3cf2e258e7636e2577a67d319b7e3dedd4691bb31204356a1d5f3abb698c2",
+      "page_title": "Nevermind - Nirvana",
+      "fragments": [
+        {
+          "text": "Released: 1991",
+          "representation": "visible_dom_text",
+          "observed_start": 88,
+          "observed_end": 102,
+          "fragment_sha256": "5af19aaca45ee3c14f0e4ee5ad27acb0b0a63c077fe146597a03f3753fc8ec67",
+          "snapshot_start": 0,
+          "snapshot_end": 14
+        }
+      ],
+      "source_id": "source:r5:nirvana-nevermind-release",
+      "publisher": "Nirvana official website / UME",
+      "locator": "Nevermind release archive, heading Nevermind and adjacent visible Released: 1991 field.",
+      "language": "en",
+      "publication_date": null,
+      "publication_date_basis": "Unavailable; event/release year is not publication date.",
+      "speaker_or_author": null,
+      "claim_scope": "Original Nevermind album release year; belongs_to_era 1990s, not creation influence.",
+      "review_caution": "1991 is an album release year, not publication/composition/recording date or proof of causality.",
+      "source_content_sha256": "5af19aaca45ee3c14f0e4ee5ad27acb0b0a63c077fe146597a03f3753fc8ec67",
+      "capture_method": "verbatim_web_excerpt",
+      "verification": "agent_verified_original_public_HTTP_response_and_DOM_or_embedded_JSON",
+      "human_review_status": "pending",
+      "context_is_gold_evidence": false,
+      "original_response_retained": false,
+      "response_hash_scope": "Capture provenance only; exact offsets refer to retained excerpt, not unarchived whole HTML."
+    },
+    {
+      "key": "pearljam",
+      "requested_url": "https://pearljam.com/music/album/ten",
+      "resolved_url": "https://pearljam.com/music/album/ten",
+      "http_status": 200,
+      "retrieved_at": "2026-09-26T07:10:26.780622+00:00",
+      "response_sha256": "41b77b74b5a4879da210d6a679862315b2432c8164be21a42398ac308c05f907",
+      "page_title": "Pearl Jam - Ten",
+      "fragments": [
+        {
+          "text": "\"name\": \"Ten\"",
+          "representation": "original_html_text",
+          "observed_start": 25335,
+          "observed_end": 25348,
+          "fragment_sha256": "1d28ad62360c66d8ecadf226e137c7b6f186de62803b9a264372587002d90d01",
+          "snapshot_start": 0,
+          "snapshot_end": 13
+        },
+        {
+          "text": "\"released\": \"Aug. 27, 1991\"",
+          "representation": "original_html_text",
+          "observed_start": 25589,
+          "observed_end": 25616,
+          "fragment_sha256": "88a6d1b4c11390838f31f831bf647f998cee9cdc1f2e4efc7da5f9e079359710",
+          "snapshot_start": 15,
+          "snapshot_end": 42
+        }
+      ],
+      "verified_album_identity": {
+        "id": "18592",
+        "name": "Ten",
+        "slug": "ten",
+        "released": "Aug. 27, 1991"
+      },
+      "source_id": "source:r5:pearljam-ten-release",
+      "publisher": "Pearl Jam official website",
+      "locator": "HTML script[type=application/json]#data, album object id 18592 / name Ten / slug ten; verbatim name and released fields.",
+      "language": "en",
+      "publication_date": null,
+      "publication_date_basis": "Unavailable; event/release year is not publication date.",
+      "speaker_or_author": null,
+      "claim_scope": "Original Ten release field; belongs_to_era 1990s. Two non-contiguous raw JSON fields joined by two LF.",
+      "review_caution": "Body is dynamically rendered. Inspect View Source / script#data; original website fields, not generated UI text.",
+      "source_content_sha256": "868b0dc2b1b07d2f49680ed8446ba48ef389d025b2cf150b3ea01948a53c8238",
+      "capture_method": "verbatim_web_excerpt",
+      "verification": "agent_verified_original_public_HTTP_response_and_DOM_or_embedded_JSON",
+      "human_review_status": "pending",
+      "context_is_gold_evidence": false,
+      "original_response_retained": false,
+      "response_hash_scope": "Capture provenance only; exact offsets refer to retained excerpt, not unarchived whole HTML."
+    }
+  ],
+  "runtime_claim_annotation_policy": "non_influence_fact_claims describe source facts; influence_candidate_hypotheses are requested safety probes, not source-verified assertions. 0.96 is a controlled prior replay convention, not evidence strength or estimated probability.",
+  "publication_context_is_gold_evidence": false,
+  "case_source_keys": {
+    "real-influence-r5-oasis-blur-britpop-confusable": [
+      "brits"
+    ],
+    "real-influence-r5-soundgarden-nirvana-grunge-confusable": [
+      "mopop"
+    ],
+    "real-influence-r5-ten-nevermind-era-confusable": [
+      "pearljam",
+      "nirvana"
+    ]
+  }
+}

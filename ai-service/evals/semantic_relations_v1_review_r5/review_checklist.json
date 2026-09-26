@@ -1,0 +1,304 @@
+{
+  "version": "semantic-relations-v1-review-r5",
+  "evaluation_run": false,
+  "reviewer": null,
+  "reviewed_at": null,
+  "items": [
+    {
+      "case_id": "real-influence-r5-oasis-blur-britpop-confusable",
+      "status": "pending",
+      "query": "现有证据是否支持 Oasis → Blur 的 influenced 音乐影响关系？只返回该实体对。",
+      "relation_type": "influence",
+      "source_entity": "eval:artist:oasis",
+      "target_entity": "eval:artist:blur",
+      "candidate_predicate": "influenced",
+      "proposed_label": "negative",
+      "expected_relations": [],
+      "negative_scope": "evidence-relative only; no global absence claim",
+      "label_sha256": "588e02a26a9264082262b2318af2e3b789a26fa553d25ab6abaadd47e303c69d",
+      "replay_input_line_sha256": "a12a4de2f87b608392fb8b4e0d54305b9b3325dd1704147c49d6025894314d5d",
+      "non_influence_evidence_family": "scene",
+      "non_influence_fact_claims": [
+        {
+          "claim_id": "claim:real-influence-r5-oasis-blur-britpop-confusable:britpop-association",
+          "subject_entity_id": "artist:blur",
+          "predicate": "scene_association",
+          "object_entity_id": "artist:oasis",
+          "object_value": null,
+          "time": null,
+          "source_chunk_id": "chunk:real-influence-r5-oasis-blur-britpop-confusable:brits",
+          "evidence_span": "Blur at the BRIT Awards. The indie boys took home an impressive four awards at the show, triumphing over Britpop rivals Oasis",
+          "extraction_confidence": 0.96,
+          "verification_confidence": 0.96,
+          "scene_name": "Britpop"
+        }
+      ],
+      "influence_candidate_hypotheses": [
+        {
+          "claim_id": "claim:real-influence-r5-oasis-blur-britpop-confusable:influence-hypothesis",
+          "subject_entity_id": "artist:oasis",
+          "predicate": "influenced",
+          "object_entity_id": "artist:blur",
+          "object_value": null,
+          "time": null,
+          "source_chunk_id": "chunk:real-influence-r5-oasis-blur-britpop-confusable:brits",
+          "evidence_span": "Blur at the BRIT Awards. The indie boys took home an impressive four awards at the show, triumphing over Britpop rivals Oasis",
+          "extraction_confidence": 0.96,
+          "verification_confidence": 0.96
+        }
+      ],
+      "supporting_evidence": [
+        {
+          "span": {
+            "source_id": "source:r5:brits-blur-oasis-britpop",
+            "document_id": "real-influence-r5-oasis-blur-britpop-confusable:brits",
+            "chunk_id": "chunk:real-influence-r5-oasis-blur-britpop-confusable:brits",
+            "claim_id": "claim:real-influence-r5-oasis-blur-britpop-confusable:britpop-association",
+            "exact_span": "Blur at the BRIT Awards. The indie boys took home an impressive four awards at the show, triumphing over Britpop rivals Oasis",
+            "span_start": 0,
+            "span_end": 125,
+            "stance": "context"
+          },
+          "source_metadata": {
+            "source_id": "source:r5:brits-blur-oasis-britpop",
+            "fixture_source_id": "fixture:source:r5:brits-blur-oasis-britpop",
+            "title": "Blur at the BRITs: 1995 - 2012",
+            "publisher": "BRIT Awards / BPI",
+            "url": "https://www.brits.co.uk/news/2012/blur-at-the-brits-1995-2012/",
+            "provenance": "Evaluation-only verbatim original source. Two LF separate captured fields. Chinese interpretation is not Gold evidence.",
+            "language": "en",
+            "source_type": "primary_web_excerpt",
+            "content": "Blur at the BRIT Awards. The indie boys took home an impressive four awards at the show, triumphing over Britpop rivals Oasis",
+            "content_hash": "70547a89adcf1b244d65eb057e9bd0cff93ff8e7418a6d45cf4a74ebace40161",
+            "origin": "real_source",
+            "retrieved_at": "2026-09-26T07:10:22.267912+00:00",
+            "locator": "Body paragraph describing 1995 awards; continuous excerpt begins Blur at the BRIT Awards and ends at Britpop rivals Oasis.",
+            "capture_method": "verbatim_web_excerpt"
+          },
+          "exact_span_sha256": "70547a89adcf1b244d65eb057e9bd0cff93ff8e7418a6d45cf4a74ebace40161"
+        }
+      ],
+      "human_decision": null,
+      "human_reason": null,
+      "review_questions": [
+        "完整原始网页是否支持实体身份与非 Influence 事实？",
+        "predicate、source→target 与 influence query family 是否明确？",
+        "同场景/同年代事实有真实混淆风险，但是否缺少该方向 Influence 归因？",
+        "negative 是否仅限当前 evidence，而非现实影响不存在？",
+        "原文 span/offset/locator/hash 是否可核对？若不支持标签，请 REJECT 冻结候选，不修改本版本。"
+      ]
+    },
+    {
+      "case_id": "real-influence-r5-soundgarden-nirvana-grunge-confusable",
+      "status": "pending",
+      "query": "现有证据是否支持 Soundgarden → Nirvana 的 shaped_style 风格塑造关系？只返回该实体对。",
+      "relation_type": "influence",
+      "source_entity": "eval:artist:soundgarden",
+      "target_entity": "eval:artist:nirvana",
+      "candidate_predicate": "shaped_style",
+      "proposed_label": "negative",
+      "expected_relations": [],
+      "negative_scope": "evidence-relative only; no global absence claim",
+      "label_sha256": "635d6d7ee1a38c54d8941419df8366560e42e298ccdf8ca2a8203d6070852d28",
+      "replay_input_line_sha256": "1901029b46412aeeda17f037a655cd580e5a8dc518865e6acba0fb6cc330bd56",
+      "non_influence_evidence_family": "scene",
+      "non_influence_fact_claims": [
+        {
+          "claim_id": "claim:real-influence-r5-soundgarden-nirvana-grunge-confusable:grunge-association",
+          "subject_entity_id": "artist:soundgarden",
+          "predicate": "scene_association",
+          "object_entity_id": "artist:nirvana",
+          "object_value": null,
+          "time": null,
+          "source_chunk_id": "chunk:real-influence-r5-soundgarden-nirvana-grunge-confusable:mopop",
+          "evidence_span": "Through artists including Nirvana, Mudhoney, Soundgarden, and TAD, Sub Pop helped define grunge while introducing Seattle to audiences around the world.",
+          "extraction_confidence": 0.96,
+          "verification_confidence": 0.96,
+          "scene_name": "Seattle grunge"
+        }
+      ],
+      "influence_candidate_hypotheses": [
+        {
+          "claim_id": "claim:real-influence-r5-soundgarden-nirvana-grunge-confusable:influence-hypothesis",
+          "subject_entity_id": "artist:soundgarden",
+          "predicate": "shaped_style",
+          "object_entity_id": "artist:nirvana",
+          "object_value": null,
+          "time": null,
+          "source_chunk_id": "chunk:real-influence-r5-soundgarden-nirvana-grunge-confusable:mopop",
+          "evidence_span": "Through artists including Nirvana, Mudhoney, Soundgarden, and TAD, Sub Pop helped define grunge while introducing Seattle to audiences around the world.",
+          "extraction_confidence": 0.96,
+          "verification_confidence": 0.96
+        }
+      ],
+      "supporting_evidence": [
+        {
+          "span": {
+            "source_id": "source:r5:mopop-subpop-grunge-artists",
+            "document_id": "real-influence-r5-soundgarden-nirvana-grunge-confusable:mopop",
+            "chunk_id": "chunk:real-influence-r5-soundgarden-nirvana-grunge-confusable:mopop",
+            "claim_id": "claim:real-influence-r5-soundgarden-nirvana-grunge-confusable:grunge-association",
+            "exact_span": "Through artists including Nirvana, Mudhoney, Soundgarden, and TAD, Sub Pop helped define grunge while introducing Seattle to audiences around the world.",
+            "span_start": 0,
+            "span_end": 152,
+            "stance": "context"
+          },
+          "source_metadata": {
+            "source_id": "source:r5:mopop-subpop-grunge-artists",
+            "fixture_source_id": "fixture:source:r5:mopop-subpop-grunge-artists",
+            "title": "Puget Sound Stories",
+            "publisher": "Museum of Pop Culture",
+            "url": "https://www.mopop.org/experience/puget-sound-stories",
+            "provenance": "Evaluation-only verbatim original source. Two LF separate captured fields. Chinese interpretation is not Gold evidence.",
+            "language": "en",
+            "source_type": "primary_web_excerpt",
+            "content": "Through artists including Nirvana, Mudhoney, Soundgarden, and TAD, Sub Pop helped define grunge while introducing Seattle to audiences around the world.",
+            "content_hash": "c70ef361c017712f3a36ac7f519597ce057c6b67dc03601f059a1f61ffed6f31",
+            "origin": "real_source",
+            "retrieved_at": "2026-09-26T07:10:23.894417+00:00",
+            "locator": "Sub Pop Records section; first sentence beginning Through artists including Nirvana, Mudhoney, Soundgarden, and TAD.",
+            "capture_method": "verbatim_web_excerpt"
+          },
+          "exact_span_sha256": "c70ef361c017712f3a36ac7f519597ce057c6b67dc03601f059a1f61ffed6f31"
+        }
+      ],
+      "human_decision": null,
+      "human_reason": null,
+      "review_questions": [
+        "完整原始网页是否支持实体身份与非 Influence 事实？",
+        "predicate、source→target 与 influence query family 是否明确？",
+        "同场景/同年代事实有真实混淆风险，但是否缺少该方向 Influence 归因？",
+        "negative 是否仅限当前 evidence，而非现实影响不存在？",
+        "原文 span/offset/locator/hash 是否可核对？若不支持标签，请 REJECT 冻结候选，不修改本版本。"
+      ]
+    },
+    {
+      "case_id": "real-influence-r5-ten-nevermind-era-confusable",
+      "status": "pending",
+      "query": "现有证据是否支持 Pearl Jam 的 Ten → Nirvana 的 Nevermind 的 inspired 创作启发关系？只返回该专辑对。",
+      "relation_type": "influence",
+      "source_entity": "eval:album:ten",
+      "target_entity": "eval:album:nevermind",
+      "candidate_predicate": "inspired",
+      "proposed_label": "negative",
+      "expected_relations": [],
+      "negative_scope": "evidence-relative only; no global absence claim",
+      "label_sha256": "a2d57b9a859369a18148a33ed6f7015abda56b36f519588c96c448d7a6260ad6",
+      "replay_input_line_sha256": "5f28952e5db3cfe925fb4f46998a57ed96ed04deecd1649da5fd44ea3b65b439",
+      "non_influence_evidence_family": "era",
+      "non_influence_fact_claims": [
+        {
+          "claim_id": "claim:real-influence-r5-ten-nevermind-era-confusable:pearljam-release",
+          "subject_entity_id": "album:ten",
+          "predicate": "released",
+          "object_entity_id": null,
+          "object_value": null,
+          "time": {
+            "year": 1991
+          },
+          "source_chunk_id": "chunk:real-influence-r5-ten-nevermind-era-confusable:pearljam",
+          "evidence_span": "\"released\": \"Aug. 27, 1991\"",
+          "extraction_confidence": 0.96,
+          "verification_confidence": 0.96
+        },
+        {
+          "claim_id": "claim:real-influence-r5-ten-nevermind-era-confusable:nirvana-release",
+          "subject_entity_id": "album:nevermind",
+          "predicate": "released",
+          "object_entity_id": null,
+          "object_value": null,
+          "time": {
+            "year": 1991
+          },
+          "source_chunk_id": "chunk:real-influence-r5-ten-nevermind-era-confusable:nirvana",
+          "evidence_span": "Released: 1991",
+          "extraction_confidence": 0.96,
+          "verification_confidence": 0.96
+        }
+      ],
+      "influence_candidate_hypotheses": [
+        {
+          "claim_id": "claim:real-influence-r5-ten-nevermind-era-confusable:influence-hypothesis",
+          "subject_entity_id": "album:ten",
+          "predicate": "inspired",
+          "object_entity_id": "album:nevermind",
+          "object_value": null,
+          "time": null,
+          "source_chunk_id": "chunk:real-influence-r5-ten-nevermind-era-confusable:pearljam",
+          "evidence_span": "\"released\": \"Aug. 27, 1991\"",
+          "extraction_confidence": 0.96,
+          "verification_confidence": 0.96
+        }
+      ],
+      "supporting_evidence": [
+        {
+          "span": {
+            "source_id": "source:r5:pearljam-ten-release",
+            "document_id": "real-influence-r5-ten-nevermind-era-confusable:pearljam",
+            "chunk_id": "chunk:real-influence-r5-ten-nevermind-era-confusable:pearljam",
+            "claim_id": "claim:real-influence-r5-ten-nevermind-era-confusable:pearljam-release",
+            "exact_span": "\"released\": \"Aug. 27, 1991\"",
+            "span_start": 15,
+            "span_end": 42,
+            "stance": "context"
+          },
+          "source_metadata": {
+            "source_id": "source:r5:pearljam-ten-release",
+            "fixture_source_id": "fixture:source:r5:pearljam-ten-release",
+            "title": "Pearl Jam - Ten",
+            "publisher": "Pearl Jam official website",
+            "url": "https://pearljam.com/music/album/ten",
+            "provenance": "Evaluation-only verbatim original source. Two LF separate captured fields. Chinese interpretation is not Gold evidence.",
+            "language": "en",
+            "source_type": "primary_web_excerpt",
+            "content": "\"name\": \"Ten\"\n\n\"released\": \"Aug. 27, 1991\"",
+            "content_hash": "868b0dc2b1b07d2f49680ed8446ba48ef389d025b2cf150b3ea01948a53c8238",
+            "origin": "real_source",
+            "retrieved_at": "2026-09-26T07:10:26.780622+00:00",
+            "locator": "HTML script[type=application/json]#data, album object id 18592 / name Ten / slug ten; verbatim name and released fields.",
+            "capture_method": "verbatim_web_excerpt"
+          },
+          "exact_span_sha256": "88a6d1b4c11390838f31f831bf647f998cee9cdc1f2e4efc7da5f9e079359710"
+        },
+        {
+          "span": {
+            "source_id": "source:r5:nirvana-nevermind-release",
+            "document_id": "real-influence-r5-ten-nevermind-era-confusable:nirvana",
+            "chunk_id": "chunk:real-influence-r5-ten-nevermind-era-confusable:nirvana",
+            "claim_id": "claim:real-influence-r5-ten-nevermind-era-confusable:nirvana-release",
+            "exact_span": "Released: 1991",
+            "span_start": 0,
+            "span_end": 14,
+            "stance": "context"
+          },
+          "source_metadata": {
+            "source_id": "source:r5:nirvana-nevermind-release",
+            "fixture_source_id": "fixture:source:r5:nirvana-nevermind-release",
+            "title": "Nevermind - Nirvana",
+            "publisher": "Nirvana official website / UME",
+            "url": "https://www.nirvana.com/releases-archive/nevermind/",
+            "provenance": "Evaluation-only verbatim original source. Two LF separate captured fields. Chinese interpretation is not Gold evidence.",
+            "language": "en",
+            "source_type": "primary_web_excerpt",
+            "content": "Released: 1991",
+            "content_hash": "5af19aaca45ee3c14f0e4ee5ad27acb0b0a63c077fe146597a03f3753fc8ec67",
+            "origin": "real_source",
+            "retrieved_at": "2026-09-26T07:10:25.510770+00:00",
+            "locator": "Nevermind release archive, heading Nevermind and adjacent visible Released: 1991 field.",
+            "capture_method": "verbatim_web_excerpt"
+          },
+          "exact_span_sha256": "5af19aaca45ee3c14f0e4ee5ad27acb0b0a63c077fe146597a03f3753fc8ec67"
+        }
+      ],
+      "human_decision": null,
+      "human_reason": null,
+      "review_questions": [
+        "完整原始网页是否支持实体身份与非 Influence 事实？",
+        "predicate、source→target 与 influence query family 是否明确？",
+        "同场景/同年代事实有真实混淆风险，但是否缺少该方向 Influence 归因？",
+        "negative 是否仅限当前 evidence，而非现实影响不存在？",
+        "原文 span/offset/locator/hash 是否可核对？若不支持标签，请 REJECT 冻结候选，不修改本版本。"
+      ]
+    }
+  ]
+}

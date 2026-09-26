@@ -40,6 +40,13 @@ $env:OPENBLAS_NUM_THREADS='1'
 
 质量门禁返回 2；机器结果、完整 trace 与按影响排序的真实失败建议均在上述报告目录。当前不进入 Final Worldline Regression。
 
+2026-09-26 独立 [r5 pending 数据版本](semantic_relations_v1_review_r5/README.md) 新增 3 条真实 Influence query-family confusable 候选：
+两条以 Scene 事实测试定向 Influence 混淆，一条以两张专辑的 Era 发行资料测试 Influence 混淆。来源为 BRIT Awards、MoPOP、Pearl Jam 与 Nirvana 官网。
+新 [human_review_pack.md](semantic_relations_v1_review_r5/human_review_pack.md) 包含原文、offset、完整 metadata、IDs、候选方向与 hashes；全部保持 pending，正式 Gold 仍为 22 条。
+静态 category 清点确认至少 1 条获明确人工批准并后续登记 receipt 后足以补齐 Influence confusable coverage；当前 gate 仍未通过。
+r4 数据与报告完全保留，算法、validator、projector、评分和 gate 未改；本轮未运行新的 baseline / targeted repairs。
+数据准备与检查记录见 [pending_coverage_report.md](reports/semantic_relations_v1_review_r5/pending_coverage_report.md)。
+
 ## WorldLine Evaluation V0
 
 WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用

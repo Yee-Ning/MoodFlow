@@ -1,0 +1,46 @@
+{
+  "version": "semantic-relations-v1-review-r1",
+  "evaluation_run": false,
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "approved_real_gold": 8,
+  "excluded_rejected": 4,
+  "pending_weak_evidence": 4,
+  "synthetic_regression": 28,
+  "approved_by_relation_type": {
+    "era": 3,
+    "scene": 3,
+    "influence": 2
+  },
+  "pending_by_relation_type": {
+    "era": 1,
+    "scene": 1,
+    "influence": 2
+  },
+  "approved_case_ids": [
+    "real-era-0-positive",
+    "real-era-0-confusable",
+    "real-scene-1-positive",
+    "real-scene-1-confusable",
+    "real-influence-2-positive",
+    "real-influence-2-confusable",
+    "real-influence-3-positive",
+    "real-influence-3-confusable"
+  ],
+  "excluded_case_ids": [
+    "real-era-0-weak_evidence",
+    "real-scene-1-weak_evidence",
+    "real-influence-2-weak_evidence",
+    "real-influence-3-weak_evidence"
+  ],
+  "pending_case_ids": [
+    "real-era-r1-flying-representative-weak",
+    "real-scene-r1-dylan-venue-weak",
+    "real-influence-r1-bowie-eno-cowrite-weak",
+    "real-influence-r1-baez-dylan-guest-weak"
+  ],
+  "parent_manifest_sha256": "18b81b8989db0a8316bcffbbf592ca81c0caf876bf50a8b921443c55367706a9",
+  "approved_label_payloads_unchanged": true,
+  "retained_replay_lines_unchanged": true,
+  "scope": "review_preparation_only; no scoring, runtime, index or deployment"
+}

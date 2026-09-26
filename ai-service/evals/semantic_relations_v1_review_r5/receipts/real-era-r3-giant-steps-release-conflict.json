@@ -1,0 +1,12 @@
+{
+  "case_id": "real-era-r3-giant-steps-release-conflict",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "两个来源对同一 Giant Steps 原专辑 release predicate 给出互斥年份：Rhino 明确写 released in early 1960，另一教育文章写 released in 1959。Gold 不应自行裁定真实性，也不能把两个年代作为两个确定事实；保留 1950s/1960s 两个候选、双方 evidence、temporal_conflict=true，并将年份置空和 precision=unknown，符合 conflict case 设计。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "4af0c20000bbaf8678de3ea4e6840f1ce0519de5c50c0ea6a6d90d2d8bba83fe",
+  "parent_manifest_sha256": "0ff9fe7918238a0199ec81cc76f065986be31ddbdff263f3632ff745171151ea",
+  "parent_case_line_sha256": "7c66b738f94f135e619b25110b08dd5dc5afa4381d915872bbc5f4b0d7cfb3c4",
+  "replay_input_line_sha256": "87b8243a07b9e81245954ba458ff4f3b56cb595e04761230d6d0504d65a8051d"
+}

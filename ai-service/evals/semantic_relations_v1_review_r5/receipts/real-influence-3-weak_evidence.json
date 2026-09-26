@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-3-weak_evidence",
+  "status": "rejected",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "与 positive 使用相同 query 和直接支持性的 evidence，不能作为 weak-evidence negative；同时 Source → target 被错误写成 Kurt Cobain → Kurt Cobain，需要重建。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "8769ad4cabfac14da5a49d892da74b0499b76e0d233f9b5078bfd5d393fda78c",
+  "parent_manifest_sha256": "18b81b8989db0a8316bcffbbf592ca81c0caf876bf50a8b921443c55367706a9",
+  "parent_case_line_sha256": "1e2d9ce47137755c6f221dfb8409411d0c4ada194109e77fe7f87301ace67924",
+  "replay_input_line_sha256": "8fe8360b80554abf0f0716b8fe5ec86a6b2fd21e84cccb1312b946cdd1797429"
+}
