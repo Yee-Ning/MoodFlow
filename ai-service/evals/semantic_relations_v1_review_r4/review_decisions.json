@@ -1,0 +1,57 @@
+{
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "provenance": "explicit_user_review",
+  "decisions": [
+    {
+      "case_id": "real-era-r3-let-it-be-negation",
+      "status": "approved",
+      "reason": "The Beatles 官方来源明确说明 Get Back/Let It Be “was not released until May 1970”。实体为原 Let It Be 专辑，predicate 为首次正式发行年代；该证据明确排除 belongs_to_era → 1960s。1969 录制时间不能替代发行时间，因此 negative 标注正确。"
+    },
+    {
+      "case_id": "real-scene-r3-alice-punk-negation",
+      "status": "approved",
+      "reason": "Steve Turner 的完整上下文明确讨论 Seattle music scene，并指出除 Alice in Chains 外其他 grunge bands 来自 Punk Rock，随后明确说明 Alice in Chains “were not part of the punk scene”且青少年时期并不参与 punk shows。该否定限定于早期 Seattle punk scene，不否定其 Seattle/grunge 身份，因此 negative scope 正确。"
+    },
+    {
+      "case_id": "real-influence-r3-paik-migung-negation",
+      "status": "approved",
+      "reason": "Hwang Byungki 在被问及创作 Migung 时与 Nam June Paik 的交流后明确表示“Migung is not influenced by Nam June Paik”。作品身份和 influence scope 明确，规范化方向为 Nam June Paik → Migung；该方向被直接否定，因此 negative 标注正确。"
+    },
+    {
+      "case_id": "real-era-r3-giant-steps-release-conflict",
+      "status": "approved",
+      "reason": "两个来源对同一 Giant Steps 原专辑 release predicate 给出互斥年份：Rhino 明确写 released in early 1960，另一教育文章写 released in 1959。Gold 不应自行裁定真实性，也不能把两个年代作为两个确定事实；保留 1950s/1960s 两个候选、双方 evidence、temporal_conflict=true，并将年份置空和 precision=unknown，符合 conflict case 设计。"
+    },
+    {
+      "case_id": "real-scene-r3-blur-britpop-conflict",
+      "status": "approved",
+      "reason": "BRIT Awards 明确将 Blur 描述为 Britpop frontrunner 并称其 survived the scene；Blur 成员在后来的直接访谈中则表示“We never really did ‘Britpop.’ We’re not part of that.” 两者均针对 Blur 与历史 Britpop 的归属/认同，虽自述带有政治文化品牌语境，但足以形成外部归类与成员自我认同之间的 attribution conflict。应保留双方 evidence，不裁定单一事实。"
+    },
+    {
+      "case_id": "real-influence-r3-stockhausen-cluster-conflict",
+      "status": "approved",
+      "reason": "Guardian 完整句的主语明确为 Cluster，并将 Stockhausen 与其他来源一起描述为其转化进电子音乐的参考/影响来源；Dieter Moebius 在被直接问及 Stockhausen 是否影响他们时回答“direi di no”，构成对同一历史音乐影响归因的限定否定。因此应保留双方 attribution，并标记 attribution_conflict，而不是静默选择其中一方。"
+    },
+    {
+      "case_id": "real-influence-r3-pixies-nirvana-forward",
+      "status": "approved",
+      "reason": "Rock & Roll Hall of Fame 的 Nirvana Influence 页面将 The Pixies 明确列在 Nirvana 的 Influences 下，因此证据支持规范方向 Pixies → Nirvana influenced。source、target、predicate 和方向均正确。"
+    },
+    {
+      "case_id": "real-influence-r3-pixies-nirvana-reverse",
+      "status": "approved",
+      "reason": "与正向 case 使用同一冻结 evidence，但该 evidence 只支持 Pixies → Nirvana，不支持查询中的 Nirvana → Pixies。该 negative 为 evidence-relative，不断言现实中绝无反向影响，因此反方向控制样本设计正确。"
+    },
+    {
+      "case_id": "real-influence-r3-pixies-cobain-forward",
+      "status": "approved",
+      "reason": "Kurt Cobain 明确表示自己创作时“trying to rip off the Pixies”，完整上下文还说明使用了 Pixies 的 dynamics，因此证据明确支持 Pixies → Kurt Cobain 的 inspired/influence 方向。实体、predicate 和方向正确。"
+    },
+    {
+      "case_id": "real-influence-r3-pixies-cobain-reverse",
+      "status": "approved",
+      "reason": "同一证据明确表达 Cobain 从 Pixies 获取创作启发，只支持 Pixies → Kurt Cobain，不支持 Kurt Cobain → Pixies。作为与 forward case 配对的 evidence-relative reverse negative 合理，不应输出反向 inspired relation。"
+    }
+  ]
+}

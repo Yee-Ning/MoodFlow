@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-r3-pixies-cobain-forward",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "Kurt Cobain 明确表示自己创作时“trying to rip off the Pixies”，完整上下文还说明使用了 Pixies 的 dynamics，因此证据明确支持 Pixies → Kurt Cobain 的 inspired/influence 方向。实体、predicate 和方向正确。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "56722573eff250d241dbe7824f630acd971eb56027f6fd9d120233830618e1a2",
+  "parent_manifest_sha256": "0ff9fe7918238a0199ec81cc76f065986be31ddbdff263f3632ff745171151ea",
+  "parent_case_line_sha256": "b7f1489943985af7708d931404f0855d9ed1a74963077d73de4f957e3fe87455",
+  "replay_input_line_sha256": "bc8816a1f6f110393c0efb99f0ab49300fb78585be336c524db010986c6963b3"
+}

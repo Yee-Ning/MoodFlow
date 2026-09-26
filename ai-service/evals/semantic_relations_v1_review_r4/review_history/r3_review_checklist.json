@@ -1,0 +1,166 @@
+{
+  "version": "semantic-relations-review-r3",
+  "reviewer": null,
+  "reviewed_at": null,
+  "evaluation_run": false,
+  "promotion_requires": "explicit_human_decision_bound_to_frozen_label_sha256",
+  "items": [
+    {
+      "case_id": "real-era-r3-let-it-be-negation",
+      "status": "pending",
+      "proposed_label": "negative",
+      "label_sha256": "e6d960827bc40e44479801eed5a106f2c8084d193a6865ab6b8698f5207d6c7c",
+      "query_scope": "Let It Be 专辑的首次正式发行是否 belongs_to_era → 1960s？只返回该实体对。",
+      "predicate": "belongs_to_era",
+      "pair_id": null,
+      "review_questions": [
+        "是否确为原专辑而非同名单曲、录制事件或重版？",
+        "not until May 1970 是否足以否定所询 1960s 发行归属？"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    },
+    {
+      "case_id": "real-scene-r3-alice-punk-negation",
+      "status": "pending",
+      "proposed_label": "negative",
+      "label_sha256": "03ca4d5f94fd9034998bd909acd661bec0dfe12b976c7c3da897b260e52a256b",
+      "query_scope": "Alice in Chains 在早期 Seattle punk scene 中是否 belongs_to_scene？只返回该实体对。",
+      "predicate": "belongs_to_scene",
+      "pair_id": null,
+      "review_questions": [
+        "they 指代 Alice in Chains、punk scene 范围为 Seattle 是否明确？",
+        "是否同意将这段参与者回忆作为所询场景关系的否定证据？"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    },
+    {
+      "case_id": "real-influence-r3-paik-migung-negation",
+      "status": "pending",
+      "proposed_label": "negative",
+      "label_sha256": "d4dd4a1a9788dd5cc35e60160292be453c5fe126d24d80a486f5477acd94ac56",
+      "query_scope": "Nam June Paik → Migung 的 influenced 创作关系是否成立？只返回该实体对。",
+      "predicate": "influenced",
+      "pair_id": null,
+      "review_questions": [
+        "是否认可 Migung 的作品身份及现有 song 节点映射？",
+        "否定是否仅限此作品的创作影响，且规范方向为 Paik → Migung？"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    },
+    {
+      "case_id": "real-era-r3-giant-steps-release-conflict",
+      "status": "pending",
+      "proposed_label": "positive",
+      "label_sha256": "4af0c20000bbaf8678de3ea4e6840f1ce0519de5c50c0ea6a6d90d2d8bba83fe",
+      "query_scope": "Giant Steps 原专辑首次发行的年代归属（1950s / 1960s）有什么来源冲突？保留双方，不作确定裁决。",
+      "predicate": "belongs_to_era",
+      "pair_id": null,
+      "review_questions": [
+        "两处 released 是否指同一原专辑首发及地域/版本范围？",
+        "是否认可用两个标记 temporal_conflict 的互斥年代候选表达争议，而非两个确定事实？",
+        "若认为两来源不构成同范围冲突或现有表示不合适，请 REJECT；不可删掉较弱来源以迎合分数。"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    },
+    {
+      "case_id": "real-scene-r3-blur-britpop-conflict",
+      "status": "pending",
+      "proposed_label": "positive",
+      "label_sha256": "37965125710d230cf198665d316fd46d17aca3a530972df9dbb151ba60c05a50",
+      "query_scope": "Blur 的历史 Britpop 场景归属是否存在外部归类与成员自述的分歧？保留双方，不作确定裁决。",
+      "predicate": "belongs_to_scene",
+      "pair_id": null,
+      "review_questions": [
+        "Britpop 在两来源中是同一历史音乐 scene/movement 吗？",
+        "Coxon 的话是在否定 scene membership，还是只在拒绝政治/文化品牌？",
+        "是否认可 attribution_conflict 表示外部归类与自我认同的争议？现有 Scene 未专门建模此旗标，不能因此降低 Gold 标准。"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    },
+    {
+      "case_id": "real-influence-r3-stockhausen-cluster-conflict",
+      "status": "pending",
+      "proposed_label": "positive",
+      "label_sha256": "74550d6859572fa98c1a8949d3cf1bd812e5209a86522e9d5b1feecc00b0afe8",
+      "query_scope": "Karlheinz Stockhausen → Cluster 的早期音乐 influenced 归因是否有争议？保留作者判断与成员否定。",
+      "predicate": "influenced",
+      "pair_id": null,
+      "review_questions": [
+        "Guardian 摘录的主语是否为 Cluster，是否明确构成 influence 而非仅相似性？",
+        "Italian 回答是否是对同一早期音乐影响归因的限定否定？",
+        "是否认可作者解释与成员自述构成 attribution_conflict，且不是时期不同或只否定某个子风格？"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    },
+    {
+      "case_id": "real-influence-r3-pixies-nirvana-forward",
+      "status": "pending",
+      "proposed_label": "positive",
+      "label_sha256": "b054981d582ce133f3cacef46ff4ae6e922df3160db10d8fcae0d511415a513a",
+      "query_scope": "Pixies → Nirvana 的 influenced 音乐关系是否被所给证据支持？只返回该实体对。",
+      "predicate": "influenced",
+      "pair_id": "pixies-nirvana",
+      "review_questions": [
+        "来源给出的 influencer / influenced 是否明确？",
+        "反向 negative 是否仅限给定证据，并且 source/target 与 query 一致？",
+        "是否认可两条 query 的 predicate、作品/乐队/个人 scope 与方向配对？"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    },
+    {
+      "case_id": "real-influence-r3-pixies-nirvana-reverse",
+      "status": "pending",
+      "proposed_label": "negative",
+      "label_sha256": "c68ab1af3715433976e4566509715bae9ebaaab6b81194673cf91f2175a4f487",
+      "query_scope": "Nirvana → Pixies 的 influenced 音乐关系是否被所给证据支持？只返回该实体对。",
+      "predicate": "influenced",
+      "pair_id": "pixies-nirvana",
+      "review_questions": [
+        "来源给出的 influencer / influenced 是否明确？",
+        "反向 negative 是否仅限给定证据，并且 source/target 与 query 一致？",
+        "是否认可两条 query 的 predicate、作品/乐队/个人 scope 与方向配对？"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    },
+    {
+      "case_id": "real-influence-r3-pixies-cobain-forward",
+      "status": "pending",
+      "proposed_label": "positive",
+      "label_sha256": "56722573eff250d241dbe7824f630acd971eb56027f6fd9d120233830618e1a2",
+      "query_scope": "Pixies → Kurt Cobain 的 inspired 音乐关系是否被所给证据支持？只返回该实体对。",
+      "predicate": "inspired",
+      "pair_id": "pixies-cobain",
+      "review_questions": [
+        "来源给出的 influencer / influenced 是否明确？",
+        "反向 negative 是否仅限给定证据，并且 source/target 与 query 一致？",
+        "是否认可两条 query 的 predicate、作品/乐队/个人 scope 与方向配对？"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    },
+    {
+      "case_id": "real-influence-r3-pixies-cobain-reverse",
+      "status": "pending",
+      "proposed_label": "negative",
+      "label_sha256": "ff3879dea3a2d196413b6262f800cd69ee5ad6173283d3d3879501acb1e695b0",
+      "query_scope": "Kurt Cobain → Pixies 的 inspired 音乐关系是否被所给证据支持？只返回该实体对。",
+      "predicate": "inspired",
+      "pair_id": "pixies-cobain",
+      "review_questions": [
+        "来源给出的 influencer / influenced 是否明确？",
+        "反向 negative 是否仅限给定证据，并且 source/target 与 query 一致？",
+        "是否认可两条 query 的 predicate、作品/乐队/个人 scope 与方向配对？"
+      ],
+      "human_decision": null,
+      "human_reason": null
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-r3-stockhausen-cluster-conflict",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "Guardian 完整句的主语明确为 Cluster，并将 Stockhausen 与其他来源一起描述为其转化进电子音乐的参考/影响来源；Dieter Moebius 在被直接问及 Stockhausen 是否影响他们时回答“direi di no”，构成对同一历史音乐影响归因的限定否定。因此应保留双方 attribution，并标记 attribution_conflict，而不是静默选择其中一方。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "74550d6859572fa98c1a8949d3cf1bd812e5209a86522e9d5b1feecc00b0afe8",
+  "parent_manifest_sha256": "0ff9fe7918238a0199ec81cc76f065986be31ddbdff263f3632ff745171151ea",
+  "parent_case_line_sha256": "ab63e470b8407ac642884959d015888ba02f6ba1f278325d55fcdbcf1f82d606",
+  "replay_input_line_sha256": "f0b8c61027191e1c8887b58509954d8f4717915bd0e75d264f59388ca4933d90"
+}

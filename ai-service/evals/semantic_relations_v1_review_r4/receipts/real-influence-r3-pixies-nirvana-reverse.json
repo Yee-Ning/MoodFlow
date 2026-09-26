@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-r3-pixies-nirvana-reverse",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "与正向 case 使用同一冻结 evidence，但该 evidence 只支持 Pixies → Nirvana，不支持查询中的 Nirvana → Pixies。该 negative 为 evidence-relative，不断言现实中绝无反向影响，因此反方向控制样本设计正确。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "c68ab1af3715433976e4566509715bae9ebaaab6b81194673cf91f2175a4f487",
+  "parent_manifest_sha256": "0ff9fe7918238a0199ec81cc76f065986be31ddbdff263f3632ff745171151ea",
+  "parent_case_line_sha256": "28651b27dae5d48a9dab27518c99c2d0833ead6a11919a5422463b2edb549949",
+  "replay_input_line_sha256": "5751ee4a1373889aebe391e89eda1d59573b31eb7e8b89b842f446e85a5b4334"
+}

@@ -20,6 +20,12 @@ Era + Scene + Influence 使用同一评测入口：`.\.venv\Scripts\python.exe r
 10 条全部 pending，人工审核包见 [`human_review_pack.md`](semantic_relations_v1_review_r3/human_review_pack.md)。
 既有 12 条 approved Gold、旧 freeze 和 failure 报告未变；只验证数据完整性与既有功能回归，暂不运行最终 Evaluation。
 
+r3 的 10 条候选已全部获得明确人工 APPROVE，登记于独立
+[`semantic_relations_v1_review_r4/README.md`](semantic_relations_v1_review_r4/README.md)。
+正式 Gold 为 22 条（Era 6、Scene 6、Influence 10），pending 为 0；原 4 条 REJECT 仍排除。
+新增 receipts 绑定原冻结标签和 replay 行，审核登记见
+[`human_review_registration.md`](semantic_relations_v1_review_r4/human_review_registration.md)。r4 尚未运行 Evaluation。
+
 ## WorldLine Evaluation V0
 
 WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用
