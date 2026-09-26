@@ -52,6 +52,13 @@ r5 三条 confusable 候选已全部获得 `human-review-WT` 于 2026-09-26 的�
 [静态覆盖清点](semantic_relations_v1_review_r6/coverage_inventory.json) 确认 Influence query-family confusable coverage blocker 已补齐，三类必需 categories 均已覆盖；这不是新 baseline 或新的 machine gate 结果。
 审核登记见 [human_review_registration.md](semantic_relations_v1_review_r6/human_review_registration.md)。r4/r5 与旧报告保持冻结，本轮未运行新 baseline 或 targeted repairs。
 
+已基于 r6 重新运行现有统一 evaluator，新正式结果见 [r6 baseline 报告](reports/semantic_relations_v1_baseline_r6/semantic_relations_evaluation_v1_report.md)。
+machine gate 更新为 `baseline_ready=true`、`can_enter_targeted_repairs=true`：Influence confusable 真实覆盖已补齐，新增三条均拒绝通过。
+真实 Gold 17/25 通过，仍有 8 条失败；原 r4 的 50 条结果/trace 全部相同，新增 negative 通过不代表算法改善。
+Evidence Coverage 仍为 1/12、Influence Direction Accuracy 0/5、Conflict Handling 0/3。
+CLI 返回 2 是现有规则对真实失败仍阻止 Final Regression 的提示；没有 coverage blocker，也不是 evaluator crash。
+本轮只记录新 metrics、real_failures、failure_diagnosis 和 machine_gate，所有 Gold、评分和运行时模块未改，未实施 targeted repairs。
+
 ## WorldLine Evaluation V0
 
 WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用

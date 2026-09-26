@@ -1,0 +1,24 @@
+{
+  "schema_version": "semantic-relations-baseline-artifacts-v1",
+  "suite": "evals/semantic_relations_v1_review_r6",
+  "suite_manifest_sha256": "7c35d9528478d95ccdfebec61accafdec2408a55f53665c5da5c06260edf4eac",
+  "code_revision": "7a1169d4a7a34e46a4c6a8d5f7f69f6e795c214d",
+  "excluded_files": [
+    "artifact_manifest.json",
+    "validation.json"
+  ],
+  "files": {
+    ".gitattributes": "3403d916a50c3ed022ccf9d48c596695792a0f68da89915294b66ad9292e7bbb",
+    "coverage_inventory.json": "fd43ca48d4f8f5c3103af4b8b4515a2116a548f50a12616c07045a7063be175f",
+    "failure_diagnosis.json": "4c1607d8fb0bfd5937b490f72c13981b6ffce1b06b772175d07a08bc8cf9af19",
+    "failures.jsonl": "63f6cc78a608e24bc982fdd189257423797a8fe43cfc7ce3d9f5bafcfe211be5",
+    "human_review_pack.md": "44c3c88d462ba971e60cf85d64175ab9bd74d85badfd0eb807baf2130318de4e",
+    "machine_gate.json": "797dc48ac0f139002d830c5f62df58a85eac95b9998583d51b420f07c1efd0c9",
+    "metrics.json": "54eb8d76cb3d587061cd244f4486bd9583dc1c6e2e2ea260ae38769aeffad17a",
+    "protected_artifacts.json": "7f2c1b641b12f355a2849242864140fe474f415e3682b07ec965704980f972dc",
+    "real_failures.jsonl": "d383f2735055c46750b2851825d48b9d7b36e154438e6ffe9153f261aff2e968",
+    "results.jsonl": "a4872d5e4841980f3ad2af30109f9793c41b6ee8cdae756b784e25750038dca4",
+    "runner_report.md": "69f8de9b8147db4d820dd0c59c19fdbb7f6f4274f86552821e27ed01484a5ad9",
+    "semantic_relations_evaluation_v1_report.md": "ee801860b312c341099e5ca931096f19678a63e1ff31fce8cdbb50ff75af3944"
+  }
+}
