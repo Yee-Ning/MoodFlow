@@ -1,0 +1,62 @@
+{
+  "operation": "human_review_preparation_only",
+  "recorded_at": "2026-09-26T04:12:59.973658+00:00",
+  "evaluation_run": false,
+  "integrity": {
+    "integrity": "passed",
+    "evaluation_run": false,
+    "approved": 8,
+    "excluded": 4,
+    "pending": 4
+  },
+  "new_manifest_sha256": "ce6d5c2ca9397665a80f6fad0a83a739fa942ed74efc21bb34b2396d15811ae1",
+  "original_data_manifest_sha256": "18b81b8989db0a8316bcffbbf592ca81c0caf876bf50a8b921443c55367706a9",
+  "original_report_files": {
+    "coverage_inventory.json": "ad872d63552ce5a4c87eefda8c7f9253fc16d8484a5b5576cf2baf6fb93563e5",
+    "failures.jsonl": "4e2ef1d91bc58ad15e61e41891c85224b95f41571f0c6807586c3abc9f3fdd22",
+    "human_review_pack.md": "8295f8d86d64bb6f4310399887ffc2cb7fd7630609d80d26da278b9ac9309497",
+    "metrics.json": "31ab4cdc0f0f0109f9ace7d919cb54b0df8d2e50f9a6d788a4de147ce6fd0225",
+    "results.jsonl": "d65e25fe8a45ef010d0936e973785b79ac9b52cbbd3f139cb1055b184b0bd3dd",
+    "semantic_relations_evaluation_v1_report.md": "2d605412c6aa65d90ad9c796a37f59c5e1c8cefae069112e1423bd86383483c9",
+    "validation.json": "925e4ddd93b92460c218f6e17964a494e2a86164cfea25da76880706596f8741"
+  },
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest evals/tests/test_semantic_relations_review.py -q",
+      "status": "passed",
+      "passed": 15
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_worldline_era_expansion.py tests/test_worldline_scene_expansion.py tests/test_worldline_influence_expansion.py tests/test_worldline_session.py -q",
+      "status": "passed",
+      "passed": 74
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check evals/semantic_relations_review.py evals/tests/test_semantic_relations_review.py",
+      "status": "passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m compileall -q evals/semantic_relations_review.py evals/tests/test_semantic_relations_review.py",
+      "status": "passed"
+    },
+    {
+      "command": "git diff --exit-code -- ai-service/evals/semantic_relations_v1 ai-service/evals/reports/semantic_relations_v1",
+      "status": "passed"
+    }
+  ],
+  "environment": {
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "known_previous_failures_preserved": [
+    "real-scene-1-positive",
+    "real-influence-2-positive",
+    "real-influence-3-positive"
+  ],
+  "limitations": [
+    "4 new weak negatives remain pending human review",
+    "No new evaluation metrics computed",
+    "No final evaluation or Final Worldline Regression run",
+    "Frozen-context safety probes do not measure online retrieval or claim extraction",
+    "Real negation/conflict/reverse-direction coverage remains incomplete"
+  ]
+}

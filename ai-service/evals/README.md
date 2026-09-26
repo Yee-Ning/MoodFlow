@@ -8,6 +8,10 @@ Era + Scene + Influence 使用同一评测入口：`.\.venv\Scripts\python.exe r
 正式人工 Gold、待审核真实诊断和 synthetic 回归分别计分；正式 Gold 覆盖不足时退出码为 2，
 不将待审核样本或 synthetic 通过率报告为真实 baseline。结果位于 `reports/semantic_relations_v1/`。
 
+2026-09-26 人工审核新增独立版本 [`semantic_relations_v1_review_r1/README.md`](semantic_relations_v1_review_r1/README.md)：
+8 条 APPROVE 晋升，4 条 REJECT 排除，4 条新 weak negative 保持 pending；
+复审包见 [`human_review_pack.md`](semantic_relations_v1_review_r1/human_review_pack.md)。该版本尚未运行 Evaluation，旧 freeze 与报告未改动。
+
 ## WorldLine Evaluation V0
 
 WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用

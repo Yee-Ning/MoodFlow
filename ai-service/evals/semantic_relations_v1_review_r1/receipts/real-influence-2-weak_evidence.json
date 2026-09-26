@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-2-weak_evidence",
+  "status": "rejected",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "evidence 与 positive 相同，本身明确支持 Pixies → Nirvana；同时当前 Source → target 被写成 Nirvana → Nirvana，与 query/entity pair 不一致。需要重新构造。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "7ecacb9f5559770d102967e9ffe6dde6c8cf90e0f5a0c378fc891b4fc10f2e85",
+  "parent_manifest_sha256": "18b81b8989db0a8316bcffbbf592ca81c0caf876bf50a8b921443c55367706a9",
+  "parent_case_line_sha256": "0470e1654dd836bb2c1cf93af6a54f89d96449f9958f4d7ae167f453e7e37ddb",
+  "replay_input_line_sha256": "7f7e6208ba4f30ec4291018b8af7fa1402cee2ff5c2a258a76a15b3c7d55fd92"
+}

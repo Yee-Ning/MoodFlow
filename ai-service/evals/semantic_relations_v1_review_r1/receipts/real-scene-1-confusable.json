@@ -1,0 +1,12 @@
+{
+  "case_id": "real-scene-1-confusable",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "当前 evidence 支持 Vancouver indie scene，但不能据此推出所询“活跃年代”，作为 Era/Scene query isolation negative 合理。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "2263e2264164a8b6b1203be72719cfba6029c91a3a82f48d7d306bc9a687707f",
+  "parent_manifest_sha256": "18b81b8989db0a8316bcffbbf592ca81c0caf876bf50a8b921443c55367706a9",
+  "parent_case_line_sha256": "380719ffcb120cb94b2723d00164517f8be4d5db5b6077fff8a58e84b2c2198a",
+  "replay_input_line_sha256": "360d1bdb36a9739d7d02498d1cbb712df5b24eb6cef38633b4eee1025c115863"
+}
