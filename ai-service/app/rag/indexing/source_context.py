@@ -94,14 +94,15 @@ def source_payload_provenance(chunk, parent) -> dict:
     metadata = chunk.metadata.get("document_metadata", {})
     if not isinstance(metadata, dict):
         raise ValueError("index_document_metadata_invalid")
+    source_metadata = metadata.get("source_metadata", {})
+    explicit_title = source_metadata.get("title") if isinstance(source_metadata, dict) else None
     provenance = {
         "source_content_sha256": sha256(chunk.content.encode()).hexdigest(),
         "parent_content_sha256": sha256(parent.content.encode()).hexdigest(),
         "source_locator": " > ".join(chunk.section_path) or chunk.breadcrumb,
-        "source_title": chunk.metadata.get("title") or chunk.breadcrumb,
+        "source_title": explicit_title or metadata.get("title") or chunk.metadata.get("title") or chunk.breadcrumb,
         "document_metadata": deepcopy(metadata),
     }
-    source_metadata = metadata.get("source_metadata", {})
     if isinstance(source_metadata, dict):
         response_hash = source_metadata.get("content_hash")
         if isinstance(response_hash, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", response_hash):

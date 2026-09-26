@@ -267,6 +267,16 @@ class ContextPackBuilder:
             )):
                 contexts = ()
                 context_warnings.append(f"source_context_anchor_omitted:{candidate.primary_child_id}")
+            # Reserve room inside the existing limit for whole verbatim packets.
+            # Trim the ordinary Parent view first; never trim Q/A or its offsets.
+            packet_budget = sum(self.token_counter.count(text) for text in {
+                item.content for item in contexts
+            })
+            view_budget = self.config.compression.max_item_tokens - packet_budget
+            if contexts and view_budget >= self.token_counter.count(exact_text):
+                context = _truncate_tokens(
+                    context, view_budget, self.token_counter, required_prefix=exact_text,
+                )
             evidence = candidate.channel_evidence
             reranked = rerank_by_parent.get(candidate.parent_id)
             # Supplement text is budgeted. Never truncate its offsets or omit
@@ -446,7 +456,9 @@ def _compressed_parent(
         *paragraphs[start:end],
     ]
     if exact_text not in "\n\n".join(parts):
-        parts.insert(2, exact_text)
+        # A Child may span several Parent paragraphs. Adding it beside a
+        # paragraph already contained in that Child duplicates native anchors.
+        parts = [*parts[:2], exact_text, *(p for p in parts[2:] if p not in exact_text)]
     return "\n\n".join(dict.fromkeys(item for item in parts if item))
 
 
