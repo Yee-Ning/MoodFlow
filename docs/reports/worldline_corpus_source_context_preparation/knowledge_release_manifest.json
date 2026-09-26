@@ -1,0 +1,88 @@
+{
+  "release_manifest_version": "v1",
+  "dataset_version": "v4",
+  "release_id": "knowledge-v2-aa5271a36860debb",
+  "immutability_policy": "create_once_or_verify_identical",
+  "source": {
+    "working_dataset_root": "data/source_context/worldline/20260926-v4/working-knowledge",
+    "enriched_chunks_path": "data/source_context/worldline/20260926-v4/enriched_chunks.jsonl",
+    "enriched_chunks_sha256": "sha256:1fb4fdc1b5eabdfd31d04a442fba8d9dce358e11ded042167a80b39ce211a7a8",
+    "knowledge_config_path": "app/rag/knowledge/config/v13.yaml",
+    "knowledge_config_sha256": "sha256:e20c43a378fb0277952f85a1150fc6aa3cd0499fd1815d3000263a4ba2687700",
+    "entity_registry_files": [
+      {
+        "path": "app/rag/knowledge/entity_linking/registry/v2.yaml",
+        "sha256": "sha256:a65114cd2e26bf77feb628f2debeb9299252cba24977817b9081985a20f8d789"
+      },
+      {
+        "path": "app/rag/knowledge/entity_linking/registry/v3.yaml",
+        "sha256": "sha256:cd6f513ef90f07024cdc9fa6f534237199fa61f1806058a4c5dbc5fe4ca08686"
+      }
+    ]
+  },
+  "component_versions": {
+    "entity_linking": "v4",
+    "claim_extraction": "v10",
+    "claim_verification": "v3",
+    "entity_registry": "v3",
+    "prompt": "v1"
+  },
+  "artifacts": {
+    "entity_registry_candidates.jsonl": "sha256:6eabf027515540661b0ce23d79d90d4ee231e0c7b4d8393a2eba813e2c57a9f3",
+    "knowledge_corpus_manifest.jsonl": "sha256:9413b7995f7dfa45e7c5ca51adfa89fe6df3b9e0f93c8f91a8b08a7f8cb5b10c",
+    "knowledge_enriched_chunks.jsonl": "sha256:8c72f8d90e361cdaeb3e2ed35b3e25d34beba646d992a4c1d3c2756acf7db8fd",
+    "knowledge_quality_report.json": "sha256:946a7bb74119acbf4d7642543f619f5527f30ec7f401f5cfa7664b8962cf9bcd",
+    "qa/claim_review_sample.jsonl": "sha256:717dafd933b6e943c3c9d8f68eec01ac5a3282aea2efe40b3a9fe54918c65e77",
+    "qa/entity_link_review_sample.jsonl": "sha256:ab959286112057d4f9962479ddd1334cc8543a3b6321c4601f2f27b2fa4f2d89",
+    "qa/qa_review_attestation.json": "sha256:025dc05844f0b4ebfc77a26c76e38ef405e99b032bb8284391252a66adc1ea47",
+    "qa/qa_sampling_manifest.json": "sha256:35809342f5d8f84072b39bfc1cd355e56535982bf3f9804fa69640b363d74a8e"
+  },
+  "quality": {
+    "chunk_count": 1947,
+    "linked_entity_occurrences": 6929,
+    "claim_count": 79,
+    "all_claims_supported": true,
+    "pipeline_quality_gates": {
+      "all_chunks_processed": true,
+      "zero_failed_chunks": true,
+      "claim_ids_unique": true,
+      "claim_evidence_validated": true,
+      "core_entity_resolution_target_met": true,
+      "pre_embedding_ready": true
+    },
+    "qa_sampling": {
+      "qa_sampling_version": "v1",
+      "selection": "deterministic_stratified_then_content_hash",
+      "claim_population": 79,
+      "claim_sample_count": 79,
+      "claim_sample_sha256": "sha256:717dafd933b6e943c3c9d8f68eec01ac5a3282aea2efe40b3a9fe54918c65e77",
+      "entity_link_population": 6929,
+      "entity_link_sample_count": 100,
+      "entity_link_sample_sha256": "sha256:ab959286112057d4f9962479ddd1334cc8543a3b6321c4601f2f27b2fa4f2d89",
+      "review_status": "pending"
+    },
+    "qa_attestation": {
+      "attestation_version": "v1",
+      "reviewer": "Codex",
+      "review_status": "approved",
+      "review_method": "manual_source_grounding_review",
+      "claim_sample_sha256": "sha256:717dafd933b6e943c3c9d8f68eec01ac5a3282aea2efe40b3a9fe54918c65e77",
+      "entity_link_sample_sha256": "sha256:ab959286112057d4f9962479ddd1334cc8543a3b6321c4601f2f27b2fa4f2d89",
+      "claim_reviewed_count": 79,
+      "entity_link_reviewed_count": 100,
+      "generation_mode": "rule_only",
+      "rejected_sample_ids": [],
+      "notes": "Reviewed all 79 claim rows against their persisted evidence spans and reviewed the 100 stratified entity-link rows against source content and metadata. Four metadata/context-only links were accepted as contextual links and are not used as claim evidence; ambiguous aliases remain excluded from claim grounding. No rejected sample remains."
+    },
+    "generation_mode": "rule_only",
+    "pre_embedding_release_ready": true
+  },
+  "excluded_stages": [
+    "embedding",
+    "qdrant_indexing",
+    "bm25_indexing",
+    "online_retrieval",
+    "rrf",
+    "rerank"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "engineering_tests": {
+    "passed": 110,
+    "skipped": 1,
+    "failures": 0,
+    "errors": 0
+  },
+  "qdrant_opt_in_supplement": {
+    "passed": 1,
+    "skipped": 0,
+    "failures": 0
+  },
+  "ruff": "passed",
+  "compileall": "passed",
+  "real_source_context_smoke": "passed",
+  "environment_preparation_smoke": "passed",
+  "context_pack_max_item_tokens_unchanged": 900,
+  "context_pack_total_token_budget_unchanged": 3000,
+  "validator_or_scoring_modified": false,
+  "new_dependencies": false,
+  "final_online_e2e_performed": false,
+  "postgres_restart_acceptance_performed": false,
+  "semantic_relations_evaluation_performed": false,
+  "deferred_eval_debt_fixed": false,
+  "eval_gold_or_review_pack_used_as_source_data": false,
+  "server_deployment_performed": false
+}

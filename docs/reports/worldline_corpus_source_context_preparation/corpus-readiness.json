@@ -1,0 +1,673 @@
+{
+  "ready": true,
+  "document_count": 56,
+  "parent_count": 677,
+  "child_count": 1270,
+  "claim_predicates": {
+    "debuted": 4,
+    "released": 17,
+    "collaborated_with": 7,
+    "includes_track": 2,
+    "born_on": 4,
+    "wrote_lyrics_for": 9,
+    "has_genre": 7,
+    "performed_at": 3,
+    "won_award": 11,
+    "chart_position": 1,
+    "produced": 4,
+    "composed_for": 7,
+    "arranged": 1,
+    "contains_music_element": 1
+  },
+  "children_with_capture_count": 510,
+  "gaps": [],
+  "documents": [
+    {
+      "doc_id": "doc-jc-v1-001-388eaf30e4bd7d661366",
+      "source_id": "jc-v1-001",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 8,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v1-002-04f3fc502cebf6f24481",
+      "source_id": "jc-v1-002",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 12,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v1-003-f8b78501dc82306ce15e",
+      "source_id": "jc-v1-003",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-004-be76d8a073877a2334c2",
+      "source_id": "jc-v1-004",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-005-b862578d81b2a472a087",
+      "source_id": "jc-v1-005",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-006-695a95c1bd811f21670d",
+      "source_id": "jc-v1-006",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-007-ac10d36fc7fa8b8930b3",
+      "source_id": "jc-v1-007",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-008-f4bf7554543dfc770775",
+      "source_id": "jc-v1-008",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-009-7b288e682bbe2530617a",
+      "source_id": "jc-v1-009",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-010-69a72cc2cbac546c9911",
+      "source_id": "jc-v1-010",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-011-02dae6c248d53b82a543",
+      "source_id": "jc-v1-011",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-012-eb056d924495bfd09614",
+      "source_id": "jc-v1-012",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-013-72a286fd49869058a4ad",
+      "source_id": "jc-v1-013",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-016-1b39fa47ce590004bb24",
+      "source_id": "jc-v1-016",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-017-c26a58b5ea39e98dd100",
+      "source_id": "jc-v1-017",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-018-fd99b5179d0c3c56da1e",
+      "source_id": "jc-v1-018",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 60,
+      "roles": [
+        "interview_answer",
+        "interview_question",
+        "speaker_binding"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v1-020-a2c7351ff7b5e45024ae",
+      "source_id": "jc-v1-020",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 57,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v1-021-e7b25a8a6bd4dec398db",
+      "source_id": "jc-v1-021",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-023-1a6e850c86c323b07aff",
+      "source_id": "jc-v1-023",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-025-c9da4510ee57c431ccfe",
+      "source_id": "jc-v1-025",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-029-8227a1fb44efa927590e",
+      "source_id": "jc-v1-029",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-030-00f0479d20c219dffad5",
+      "source_id": "jc-v1-030",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 2920,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v1-031-b7229a6a50592923915e",
+      "source_id": "jc-v1-031",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 216,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v1-032-61a064fea9994b0bbc35",
+      "source_id": "jc-v1-032",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 36,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v1-033-afc3bdc485c426374ff9",
+      "source_id": "jc-v1-033",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-034-6c5fcbb5090ae4138248",
+      "source_id": "jc-v1-034",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 37,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v1-035-33ac74f389ffa5266db8",
+      "source_id": "jc-v1-035",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-036-c42f49ae2884735e8caa",
+      "source_id": "jc-v1-036",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-037-5b9c65da243bc2089467",
+      "source_id": "jc-v1-037",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 12,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v1-038-4626264e0173cda7798e",
+      "source_id": "jc-v1-038",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-039-5974dfdc87392ae27ef2",
+      "source_id": "jc-v1-039",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-040-7d6c21c3ed4e474320df",
+      "source_id": "jc-v1-040",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-041-f87c9c090728a8f7f284",
+      "source_id": "jc-v1-041",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-042-05e0d6f949f6a7fa9340",
+      "source_id": "jc-v1-042",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-043-fe033397a5bc6f659d01",
+      "source_id": "jc-v1-043",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v1-044-215b0775e96c61c50819",
+      "source_id": "jc-v1-044",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-001-e509e7f506365370f96a",
+      "source_id": "jc-v2-001",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-002-bf6b9b8f971d2138cd49",
+      "source_id": "jc-v2-002",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-003-2216748c61f093e9678d",
+      "source_id": "jc-v2-003",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-004-4858b42760dacc5aa673",
+      "source_id": "jc-v2-004",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 21,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v2-006-f9be4acea0ccd20aea46",
+      "source_id": "jc-v2-006",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-007-d65a5eb1d97ff8ebd12b",
+      "source_id": "jc-v2-007",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 76,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v2-008-689bb7ef89ebf256cba4",
+      "source_id": "jc-v2-008",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 8,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v2-009-4351b2333a7defad3ab5",
+      "source_id": "jc-v2-009",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-011-9eb8f5bf16866c190a45",
+      "source_id": "jc-v2-011",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-012-733cd8c065810bf15a98",
+      "source_id": "jc-v2-012",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-016-f8224bf635a097715588",
+      "source_id": "jc-v2-016",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-020-bf7754a3dee3f601168e",
+      "source_id": "jc-v2-020",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-022-d7e74191d743dcf6661c",
+      "source_id": "jc-v2-022",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-025-75c3007ae96d0fa9858f",
+      "source_id": "jc-v2-025",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-026-ab3e9caca94892ec4686",
+      "source_id": "jc-v2-026",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 25,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v2-029-375736a7823fb48edd5d",
+      "source_id": "jc-v2-029",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-033-c772735503f2a9a39fdd",
+      "source_id": "jc-v2-033",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 51,
+      "roles": [
+        "article_sentence"
+      ]
+    },
+    {
+      "doc_id": "doc-jc-v2-045-9dd5c92d2bc2e22c6f17",
+      "source_id": "jc-v2-045",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-046-5b5ab84f53d7a1c6cd89",
+      "source_id": "jc-v2-046",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    },
+    {
+      "doc_id": "doc-jc-v2-048-d0a320ed0eb9ab94ede2",
+      "source_id": "jc-v2-048",
+      "url_present": true,
+      "publisher_present": true,
+      "publisher_label_present": true,
+      "title_present": true,
+      "response_body_sha_verified": true,
+      "source_context_count": 0,
+      "roles": []
+    }
+  ],
+  "note": "Roles are counted from existing captures only; no subject or speaker is inferred."
+}
