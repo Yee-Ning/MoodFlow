@@ -1,0 +1,26 @@
+{
+  "schema_version": "conflict-handling-targeted-repair-artifacts-v1",
+  "suite_manifest_sha256": "7c35d9528478d95ccdfebec61accafdec2408a55f53665c5da5c06260edf4eac",
+  "baseline_manifest_sha256": "57d078e81f04f9cfe4a649d033d1b6328c1263e2f78a6789198e2e18f23d8903",
+  "execution_code_revision": "07e0263ce30b486ef6af7b22a5f90c0dd1bdb1eb",
+  "execution_code_dirty": true,
+  "files": {
+    ".gitattributes": "3403d916a50c3ed022ccf9d48c596695792a0f68da89915294b66ad9292e7bbb",
+    "conflict_case_traces.jsonl": "bef5cc9308f91b103b2eca529e47f02163143ea483d11883b42b34bcc09b91c8",
+    "conflict_handling_targeted_repair_report.md": "7537c7004bbf782de25e7be0fcf05233eeec86ea958a458b37fdd51a85f52c2c",
+    "coverage_inventory.json": "fd43ca48d4f8f5c3103af4b8b4515a2116a548f50a12616c07045a7063be175f",
+    "failure_diagnosis.json": "c0f1656bcf19b5e238d63b7b541f079e2b842f3a8275620d69beb4787505c6a2",
+    "failures.jsonl": "ce33402142b092020f4771883e49a82b582daf987df381ad276a12f7ac7f5efe",
+    "human_review_pack.md": "44c3c88d462ba971e60cf85d64175ab9bd74d85badfd0eb807baf2130318de4e",
+    "machine_gate.json": "b4fe92418dd57a4fe72206f59f58c7601cbdbdf696278dc68a5a508cb74825c4",
+    "metrics.json": "140459520854a9be89db54d99f79f6cc3211615580b644e5571d14fae56de4df",
+    "metrics_comparison.json": "3e415b18ca1c5d1ac4a8f06f60542ca31a8d6343b7603d8a9a2faff8c4232386",
+    "protected_artifacts.json": "6ad550bcd496e04cda2a2330c78f15c4cda32a3c255cb3333edf65e9f2f60cef",
+    "real_failures.jsonl": "9d33f356aafa3b8daecf545f4be320338d46f51612c3cafe73734153d659fbf7",
+    "results.jsonl": "c939716d5254df89fee374c722a70f5debd4f9e3c0fce058c8dd991758382e01",
+    "runner_report.md": "b31501fca9969eb7127d8784df8e422dba276c38393879d52589d9ac99a4ec56",
+    "scope_validation.json": "6031763eee011738a83240aeabc5726b29e2cba8c74f0ac730ef9cc4e061be28",
+    "semantic_relations_evaluation_v1_report.md": "7537c7004bbf782de25e7be0fcf05233eeec86ea958a458b37fdd51a85f52c2c",
+    "validation.json": "859c976078c161a93b9b664a66c8b45c064654bc1f39a6fe6951645da77bbed2"
+  }
+}

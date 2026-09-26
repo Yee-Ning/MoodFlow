@@ -12,6 +12,13 @@ import unicodedata
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from app.agent.foundation.subgraphs.worldline.conflict_semantics import (
+    aggregation_trace,
+    balanced_evidence,
+    named_in_text,
+    preserve_conflict_descriptions,
+    stable_projected_source,
+)
 from app.agent.foundation.subgraphs.worldline.merge import (
     WorldLineMergeError,
     merge_worldline_graph,
@@ -168,6 +175,7 @@ class EraExpansionTrace(BaseModel):
     rejection_reasons: dict[str, int] = Field(default_factory=dict)
     evidence_count: int = Field(ge=0)
     temporal_conflict_count: int = Field(ge=0)
+    aggregation_trace: list[dict] = Field(default_factory=list)
     validator_version: str = ERA_VALIDATOR_VERSION
 
 
@@ -295,6 +303,8 @@ def _relation_is_supported_by_span(candidate: EraRelationCandidate) -> bool:
         return bool({candidate.start_year, candidate.end_year} - {None}) and (
             _RELEASE_CUE_RE.search(span) is not None
         )
+    if _release_event_key(candidate) is not None:
+        return True
     if not era_name or era_name.casefold() not in span:
         return False
     if candidate.relation_type is EraRelationType.REPRESENTATIVE_OF_ERA:
@@ -310,6 +320,31 @@ def _decade_descriptor(start_year: int | None, end_year: int | None) -> EraDescr
         return None
     decade = year // 10 * 10
     return EraDescriptor(node_id=f"era:{decade}s", canonical_name=f"{decade}s")
+
+
+def _release_event_key(candidate: EraRelationCandidate) -> tuple[str, str] | None:
+    """Normalize a dated release of one work, never an artist's entire career."""
+    if (
+        candidate.relation_type is not EraRelationType.BELONGS_TO_ERA
+        or candidate.claim_predicate not in {"released", "belongs_to_era"}
+        or candidate.source_entity.node_type not in {WorldLineNodeType.ALBUM, WorldLineNodeType.SONG}
+        or candidate.era != _decade_descriptor(candidate.start_year, candidate.end_year)
+        or candidate.start_year is None
+    ):
+        return None
+    span = " ".join(candidate.evidence.exact_span.split()).casefold()
+    # Editions and recordings are distinct events and must not be collapsed.
+    if re.search(r"re[- ]?(?:release|issue)|remaster|edition|再版|重发|重發", span):
+        return None
+    if re.search(r"\b(?:not|never)\s+released?\b|未发行|未發行", span):
+        return None
+    if not named_in_text(candidate.source_entity.canonical_name, span):
+        return None
+    year = candidate.start_year
+    release_date = re.search(
+        rf"\breleased?\s+(?:(?:in|on|early|late|mid)\s+){{0,3}}{year}\b", span,
+    ) or re.search(rf"发行于?\s*{year}|發行於?\s*{year}", span)
+    return (candidate.source_entity.node_id, "release") if release_date else None
 
 
 def _reference(node: WorldLineNode, knowledge_id: str | None = None) -> EraEntityReference:
@@ -688,6 +723,11 @@ class EraRelationValidator:
     @staticmethod
     def _aggregate(candidates: list[EraRelationCandidate]) -> list[EraRelation]:
         grouped: dict[tuple[str, str, EraRelationType], list[EraRelationCandidate]] = {}
+        release_events: dict[tuple[str, str], list[EraRelationCandidate]] = {}
+        for candidate in candidates:
+            event = _release_event_key(candidate)
+            if event is not None:
+                release_events.setdefault(event, []).append(candidate)
         for candidate in candidates:
             target_id = (
                 candidate.target_entity.node_id
@@ -703,10 +743,21 @@ class EraRelationValidator:
         output: list[EraRelation] = []
         for items in grouped.values():
             first = items[0]
+            event = _release_event_key(first)
+            event_items = release_events.get(event, [])
+            if len({item.start_year for item in event_items}) > 1:
+                # Preserve each mutually exclusive decade target, but attach
+                # the same opposing assertions to every alternative.
+                items = list({item.evidence.evidence_id: item for item in [
+                    *items, *event_items,
+                ]}.values())
             evidence_by_id = {item.evidence.evidence_id: item.evidence for item in items}
             evidence_overflow = max(0, len(evidence_by_id) - MAX_ERA_EVIDENCE)
             if evidence_overflow:
-                retained_ids = set(list(evidence_by_id)[:MAX_ERA_EVIDENCE])
+                retained_ids = {item.evidence.evidence_id for item in balanced_evidence(
+                    items, limit=MAX_ERA_EVIDENCE,
+                    stance=lambda item: (item.start_year, item.end_year),
+                )}
                 evidence_by_id = {
                     evidence_id: evidence
                     for evidence_id, evidence in evidence_by_id.items()
@@ -770,6 +821,7 @@ class EraRelationValidator:
                         "era_expansion_version": ERA_EXPANSION_VERSION,
                         "validator_version": ERA_VALIDATOR_VERSION,
                         "temporal_conflict": temporal_conflict,
+                        "conflict_flags": ["temporal_conflict"] if temporal_conflict else [],
                         "evidence_overflow_count": evidence_overflow,
                         "temporal_assertions": assertions,
                         "claim_predicates": sorted({item.claim_predicate for item in items}),
@@ -803,6 +855,7 @@ class EraGraphProjector:
             item.evidence.evidence_id: item.evidence_source for item in candidates
         }
         delta_sources: dict[str, EvidenceSource] = {}
+        existing_sources = {source.id: source for source in sources}
         for relation in relations:
             endpoints = [relation.source_entity]
             if relation.target_entity is not None:
@@ -864,6 +917,9 @@ class EraGraphProjector:
                         }
                     }
                 )
+                delta_sources[evidence_id] = stable_projected_source(
+                    delta_sources[evidence_id], existing_sources.get(evidence_id),
+                )
             delta_edges.append(
                 WorldLineEdge(
                     source=relation.source_entity.node_id,
@@ -878,13 +934,17 @@ class EraGraphProjector:
             nodes=list(delta_nodes.values()),
             edges=delta_edges,
         )
-        return merge_worldline_graph(
+        merged_graph, merged_sources = merge_worldline_graph(
             graph,
             delta,
             sources,
             list(delta_sources.values()),
             target_node_id=graph.root,
         )
+        keys = {(item.source_entity.node_id, (item.target_entity or item.era).node_id,
+                 _RELATION_TO_GRAPH[item.relation_type]) for item in relations
+                if item.metadata.get("temporal_conflict")}
+        return preserve_conflict_descriptions(merged_graph, delta, keys), merged_sources
 
     @staticmethod
     def _description(relation: EraRelation) -> str:
@@ -893,6 +953,8 @@ class EraGraphProjector:
             if relation.target_entity is not None
             else relation.era.canonical_name if relation.era is not None else "时代"
         )
+        if relation.metadata.get("temporal_conflict"):
+            return f"{relation.source_entity.canonical_name} 与 {target} 的年代归属存在来源冲突；保留互斥候选"
         if relation.metadata.get("derivation") == "release_activity":
             return f"{relation.source_entity.canonical_name} 在 {target} 有已验证发行活动"
         if relation.metadata.get("derivation") == "debut_activity":
@@ -920,6 +982,8 @@ def merge_era_relations(
         previous = merged.get(key)
         if previous is None:
             merged[key] = relation
+            continue
+        if previous == relation:
             continue
         evidence = {item.evidence_id: item for item in previous.evidence}
         evidence.update({item.evidence_id: item for item in relation.evidence})
@@ -959,6 +1023,10 @@ def merge_era_relations(
                         or bool(previous.metadata.get("temporal_conflict"))
                         or bool(relation.metadata.get("temporal_conflict"))
                     ),
+                    "conflict_flags": ["temporal_conflict"] if (
+                        conflict or previous.metadata.get("temporal_conflict")
+                        or relation.metadata.get("temporal_conflict")
+                    ) else [],
                     "temporal_assertions": [
                         *previous.metadata.get("temporal_assertions", []),
                         *relation.metadata.get("temporal_assertions", []),
@@ -1088,6 +1156,7 @@ class EraExpansionService:
             temporal_conflict_count=sum(
                 bool(item.metadata.get("temporal_conflict")) for item in relations
             ),
+            aggregation_trace=aggregation_trace(decisions, relations),
         )
         LOGGER.info(
             "worldline.era_expansion",

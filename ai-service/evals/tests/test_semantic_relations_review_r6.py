@@ -12,6 +12,7 @@ import pytest
 
 from evals.semantic_relations_models import SemanticGoldCase, file_hash, load_suite, read_jsonl
 from evals.semantic_relations_review import HumanReviewBatch, label_hash
+from evals.tests.historical_scope import assert_historical_runtime_scope
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -212,8 +213,7 @@ def test_prior_259_freezes_reports_and_28_runtime_files_are_protected():
     assert scope["parent_directory"] == PARENT.name
     assert scope["runtime_and_evaluation_file_sha256"] == read_json(PARENT / "scope_lock.json")["runtime_and_evaluation_file_sha256"]
     assert len(scope["runtime_and_evaluation_file_sha256"]) == 28
-    for name, digest in scope["runtime_and_evaluation_file_sha256"].items():
-        assert file_hash(ROOT.parent / name) == digest
+    assert_historical_runtime_scope(REVISION / "scope_lock.json", scope)
     assert scope["evaluation_run"] is scope["targeted_repairs_run"] is scope["production_data_written"] is False
 
 

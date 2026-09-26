@@ -1,0 +1,829 @@
+{
+  "schema_version": "semantic-relations-evaluation-v1",
+  "created_at": "2026-09-26T09:04:41.363697+00:00",
+  "manifest": {
+    "version": "semantic-relations-v1-review-r6",
+    "schema_version": "semantic-relations-evaluation-v1",
+    "created_at": "2026-09-26T07:54:34.138515+00:00",
+    "evaluation_run": false,
+    "parent_directory": "semantic_relations_v1_review_r5",
+    "parent_manifest_sha256": "3fa02d3c1111cdf9ddf9c98849619b7703ffe0c1331749da6f56cb77ebe08d11",
+    "parent_files": {
+      "gold.jsonl": "705482a905c3434f7c7708bf5e2d9d53956ed69bac47e63ff498fb452978795b",
+      "inputs.jsonl": "9a63528cb305b6fed5e8dc44f290e0709899e261bab81239ba5a81c641fd0237",
+      "schema.json": "019033ce34e5ad97bb6c2f1703dd97f4b300ba871bda46d8ad23b0dfa66fb193",
+      "sources.jsonl": "ac4eca0d1db532c23916b337c5cc6622528d18635a0bcc5f97167718b8849f76"
+    },
+    "parent_baseline_artifact_manifest_sha256": "90c5b828c68120f16e24380c1730c33df8322ecdf614689559dd844152da2d6b",
+    "files": {
+      "gold.jsonl": "2b796b9023969dd6ea8e199002d63cedbb72c1b4a148d445ee3add84e21c144c",
+      "inputs.jsonl": "9a63528cb305b6fed5e8dc44f290e0709899e261bab81239ba5a81c641fd0237",
+      "schema.json": "019033ce34e5ad97bb6c2f1703dd97f4b300ba871bda46d8ad23b0dfa66fb193",
+      "sources.jsonl": "ac4eca0d1db532c23916b337c5cc6622528d18635a0bcc5f97167718b8849f76"
+    },
+    "review_files": {
+      ".gitattributes": "3403d916a50c3ed022ccf9d48c596695792a0f68da89915294b66ad9292e7bbb",
+      "approved_gold.jsonl": "73cd59b9649007213667116273d57d7815c3f8fc24c3534701111c536e28db45",
+      "coverage_inventory.json": "ab58fb09e152a7203b76baddec72036fc9fa23b40b5bf56295cadd354e200f9b",
+      "excluded_cases.jsonl": "8b7bba673b902ad1c400ed13894b7e81f5aad01327b477180f768e1933727f6b",
+      "human_review_registration.md": "70c26b7a8c3aef33c481f366de10aeae76cd521e9b4b3eb21f964be55eea780d",
+      "new_review_receipts.jsonl": "6094f8b7d28b1b235b8ad6a360e348bcae74c9070bb82cd61acc085d7c85be8b",
+      "pending_cases.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "protected_artifacts.json": "4d6cf445a5c38c71a8c414edc0d3a9ed963c3b2be297c281f74d2fb4f77317e8",
+      "receipts/real-era-0-confusable.json": "22137defe685be7f28609cd3560af507017d2fca99a22429b23b23c32f9a8bba",
+      "receipts/real-era-0-positive.json": "ef9d26aa3f215c61ca1125beb32994b0637479dbf637d940109084c32edaad39",
+      "receipts/real-era-0-weak_evidence.json": "f31ae8a483f9932e532279b580104d0a7d51a4de4558fac1991f7e341c83f312",
+      "receipts/real-era-r1-flying-representative-weak.json": "abebcccc8fccec49274d12aea5bf711e4e704217eac2bfb784de7f0fa0269dc7",
+      "receipts/real-era-r3-giant-steps-release-conflict.json": "df721ba5aff4028fc95e28b85da5ef97aa36ebdb9057b751f3d8f9a7f35a22ff",
+      "receipts/real-era-r3-let-it-be-negation.json": "9b1e5404e9ed278a4b89eea10953c63ff3659cc97af8d9f2b6c903b2fb2cd0a2",
+      "receipts/real-influence-2-confusable.json": "12054464c4a2c8b19e1322ae7fd945387b6b214675e7b825de054a5a00a9438a",
+      "receipts/real-influence-2-positive.json": "a859cf6befb425222f3113a09d04e1619dabb7906ee32e6ef39414e96ece389e",
+      "receipts/real-influence-2-weak_evidence.json": "1df60a10d4c7dd1072f715914f2bb406c23047c2428b231d8e160535d6c93554",
+      "receipts/real-influence-3-confusable.json": "7acde547fe9d04b2be720fbfa71bc31abf9db2a7e54531842609578cfcbed365",
+      "receipts/real-influence-3-positive.json": "bb25b98f1a69acab0922360a338ed54982d32dbfa2300b177db1f7650a5a39fb",
+      "receipts/real-influence-3-weak_evidence.json": "aa6d06299c329bf3b89c5d0fa25a6937fa5b42e59a19082ddc463accf7d8f813",
+      "receipts/real-influence-r1-baez-dylan-guest-weak.json": "ff613cb0eb7e51849f02dea3f484866aabb3477425bffd5a6f2047d796e489f2",
+      "receipts/real-influence-r1-bowie-eno-cowrite-weak.json": "edc6517dce232e7a9c6dbb06b115634aa2974a0771e862c6e4805a7a7a58a97c",
+      "receipts/real-influence-r3-paik-migung-negation.json": "026bc35746e2b9044e7aebc80d6c2f5b5bcec37ea657d47d1cdab25bbe7174f5",
+      "receipts/real-influence-r3-pixies-cobain-forward.json": "676d367ded433d8a143541b4412dfe9102c77dc3909f7c846693d97a2276a1ad",
+      "receipts/real-influence-r3-pixies-cobain-reverse.json": "d42fa00e04f9a4e82295c9e371f00c94b54092fb40d2efcb1493f0b55df88fa6",
+      "receipts/real-influence-r3-pixies-nirvana-forward.json": "a3411b4b2944c710a0f068df4a869d44515899198f203fc4a75e8f0e7dcd5169",
+      "receipts/real-influence-r3-pixies-nirvana-reverse.json": "7213e4788bc77b6d0b258376d418f7efb086be5fb21df0a40273683f7a92314e",
+      "receipts/real-influence-r3-stockhausen-cluster-conflict.json": "a3633d3d38606c8528fec189fd34ba449f65d84a8e0db19fb1adb3d7fd16cd6f",
+      "receipts/real-influence-r5-oasis-blur-britpop-confusable.json": "bd0d9906ed94536f4a6beda2cf8869400aabb93e929edbe0d79d32ceeab2ca75",
+      "receipts/real-influence-r5-soundgarden-nirvana-grunge-confusable.json": "646c6325205d806105cb07b6007d17de43d24cc015bd15a5d8e2a89a1af0226e",
+      "receipts/real-influence-r5-ten-nevermind-era-confusable.json": "8ff8cf9fcb6e5b309b656dc7c766ec386a99e4cc0acbbd3329e7463b60350301",
+      "receipts/real-scene-1-confusable.json": "bb77f7919bf6ddffea6214c54bc89be407521aff1cb9e3fabdf50c11bdd378c3",
+      "receipts/real-scene-1-positive.json": "0299a8f696ac6a11a8eed4c5a91e693856ce22f9521d359db472ee820788b0ac",
+      "receipts/real-scene-1-weak_evidence.json": "2ea9450ba8d289c4583ec37ccfbec08ecc1a5fe304545188c37fc07a6c84e213",
+      "receipts/real-scene-r1-dylan-venue-weak.json": "6b1f3655905e9c34f468fbeff4188d9901132d8695221be61c207179d323a51d",
+      "receipts/real-scene-r3-alice-punk-negation.json": "a527b14365570218981debfb98f7307c9bb98338481ef7ea6156e56a30ccce12",
+      "receipts/real-scene-r3-blur-britpop-conflict.json": "800e5e112fdecd146f3f68dc4e5c8e44e20b8b3eb90e89e73a25a4023df79f4c",
+      "review_decisions.json": "323eb5d8710b6f7f0bcd9ac2fb52cb4f6cdeb2ee3dd5d90b78eda5b1cd6ab875",
+      "review_decisions.schema.json": "94d3ed37932bfbca3ab301fa1704927812ba837adb238f3d58257e5aa2861575",
+      "review_history/r1_human_review_pack.md": "d8009d5666ceba456309c74a43c05a9f43361a00bbbc2c06d942914ca801a353",
+      "review_history/r1_review_decisions.json": "c3e1d3ffb7177872ee96542be77860dbf409b8d2b1bec856a4a0a486d2d7998b",
+      "review_history/r1_review_summary.json": "24353e40dcc6111f0c187a8adfd591f69c704c7b6893513572ec5c5362710f15",
+      "review_history/r2_review_decisions.json": "f28b76a3021b51c52f6a910da847ac4d0c0e08ead47abae2fea4d3c172caf90d",
+      "review_history/r2_review_decisions.schema.json": "94d3ed37932bfbca3ab301fa1704927812ba837adb238f3d58257e5aa2861575",
+      "review_history/r2_review_summary.json": "ee2a17a391fcb0a48c951d26541e1488bb6e4f5cdcacd1470ee0925a544461bd",
+      "review_history/r3_human_review_pack.md": "9634f3ecdd6eb24fe4178466e6af6771c9167e7bfa6271f3065a93f9d5ef1692",
+      "review_history/r3_pending_cases.jsonl": "a122369ca2b6c4352c682b754fc1859c4c77f18b39b9ebef6e4730bdd74141b2",
+      "review_history/r3_protected_artifacts.json": "d0ed3e968e26d912af9fced898375a967193cd98a178757f6db5148d309465c7",
+      "review_history/r3_review_checklist.json": "da5a23a1a3e81f110deca14c3603b142e0d91e97cb5586fb826ee34a2bc469fe",
+      "review_history/r3_review_summary.json": "3f533eb4194daf5c8214bf5236afed053d6cd3058db260be814b28d8fc19f093",
+      "review_history/r4_human_review_registration.md": "3de38d6ef366b2d22d1454ac48fe107adda555fc3348760d96a01371dd03a1ed",
+      "review_history/r4_manifest.json": "38ff5d30a5c4a2b346ac1103c617af657146d783975b08b2604b86a1a8d1fc84",
+      "review_history/r4_new_review_receipts.jsonl": "b8b13186b9602974a38eedb9c0909c6e972fe8019de9c5543d256c76209dac66",
+      "review_history/r4_pending_cases.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "review_history/r4_protected_artifacts.json": "7080936e8634335cee08e524c6727313872b44a72e9b913df1373c1497a83b2d",
+      "review_history/r4_README.md": "8266fe0001881567d89767c87be3ee70885a4589b7226c8771498d229eba2bb5",
+      "review_history/r4_research_exclusions.json": "9b8d88972c42bf6267068b94a0dd61e61aaf82e3b17d9c9674072d04fa4068ca",
+      "review_history/r4_review_decisions.json": "b52cd019e12a654a12b6e879b88b57bc243b39652d5fe4be19c74ad4f589e03e",
+      "review_history/r4_review_summary.json": "158de63b3a88c84b873c43ebd6eccf483746bd70b35a1eae1b07d30809224a18",
+      "review_history/r4_source_audit.json": "4e7883953bdee8cef980d89685342c440f47055463a7a6e31f9c5c2cff7deb2f",
+      "review_history/r5_coverage_projection.json": "74e86df254790b85911d765ea4d3bbc2975b59019b22488a3efffb82298e16bd",
+      "review_history/r5_human_review_pack.md": "4387664f33e33e3f55d030e9bc2dad0011bd1d65c2e7401d44c4866c1e4e97df",
+      "review_history/r5_manifest.json": "3fa02d3c1111cdf9ddf9c98849619b7703ffe0c1331749da6f56cb77ebe08d11",
+      "review_history/r5_pending_cases.jsonl": "ace8d94d1dfe68d1c30b316c072550e8d0610d336c7c36b5d8435604f419c6fb",
+      "review_history/r5_pending_review_items.jsonl": "49dfca463cd60150d7d51db02b3e899db5a8effe1806f215af9e533b65eab30c",
+      "review_history/r5_protected_artifacts.json": "b1b0bc8cbb11e8dbbdabbb530810266844dbfbeda667b0665ce1d9ce576573f3",
+      "review_history/r5_README.md": "bfc279cbaea81d73f68a83853b8557a51dec6a0044fd5ac1c014b16965ad9c76",
+      "review_history/r5_review_checklist.json": "6421fc24c01add4bd767286b7c75cfc83ec6859840c139e31dcb7448ca6633c0",
+      "review_history/r5_review_summary.json": "bdc5354e2fd679039f62213d041fe9f9a7680fa9498765d42379cf922bc758c1",
+      "review_history/r5_scope_lock.json": "bdca953d6fa758f283575632d34eb6315d77a40f43634725e215fed488736272",
+      "review_summary.json": "f31288533e52699f84e4cdbdf51c6a37f2f48d33c90c8a08929a7fa2e9e59f02",
+      "scope_lock.json": "a1bf609aeb7bbb5e74ad6a47d017c679b6fd1007f07c0b736b2d8d4119ac2002",
+      "source_audit.json": "b97174f9e50b9f5e3336ca08111941f8f3dc11f67d346c7b01112826c9ab095f"
+    },
+    "rule": "Only explicit review metadata promotion; immutable labels, inputs, sources and prior freezes."
+  },
+  "metrics": {
+    "approved_real_baseline": {
+      "overall": {
+        "case_count": 25,
+        "passed": 19,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          },
+          "evidence_coverage": {
+            "numerator": 5,
+            "denominator": 12,
+            "value": 0.4166666666666667
+          },
+          "evidence_traceability": {
+            "numerator": 7,
+            "denominator": 7,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 4,
+            "value": 0.0
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 5,
+            "value": 0.0
+          },
+          "weak_evidence_rejection": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 3,
+            "denominator": 3,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 2,
+            "denominator": 3,
+            "value": 0.6666666666666666
+          },
+          "query_isolation": {
+            "numerator": 25,
+            "denominator": 25,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 25,
+            "denominator": 25,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "evidence mismatch": 1,
+          "direction error": 5,
+          "conflict failure": 1
+        }
+      },
+      "era": {
+        "case_count": 6,
+        "passed": 6,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 3,
+            "denominator": 3,
+            "value": 1.0
+          },
+          "evidence_coverage": {
+            "numerator": 3,
+            "denominator": 3,
+            "value": 1.0
+          },
+          "evidence_traceability": {
+            "numerator": 5,
+            "denominator": 5,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 3,
+            "value": 0.0
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 6,
+            "denominator": 6,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 6,
+            "denominator": 6,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {}
+      },
+      "scene": {
+        "case_count": 6,
+        "passed": 5,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "evidence_coverage": {
+            "numerator": 2,
+            "denominator": 3,
+            "value": 0.6666666666666666
+          },
+          "evidence_traceability": {
+            "numerator": 2,
+            "denominator": 2,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 6,
+            "denominator": 6,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 6,
+            "denominator": 6,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "evidence mismatch": 1
+        }
+      },
+      "influence": {
+        "case_count": 13,
+        "passed": 8,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 6,
+            "value": 0.0
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 5,
+            "value": 0.0
+          },
+          "weak_evidence_rejection": {
+            "numerator": 2,
+            "denominator": 2,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "query_isolation": {
+            "numerator": 13,
+            "denominator": 13,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 13,
+            "denominator": 13,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "direction error": 5,
+          "conflict failure": 1
+        }
+      }
+    },
+    "pending_real_diagnostic": {
+      "overall": {
+        "case_count": 0,
+        "passed": 0,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "checkpoint_continuity": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          }
+        },
+        "failure_categories": {}
+      },
+      "era": {
+        "case_count": 0,
+        "passed": 0,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "checkpoint_continuity": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          }
+        },
+        "failure_categories": {}
+      },
+      "scene": {
+        "case_count": 0,
+        "passed": 0,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "checkpoint_continuity": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          }
+        },
+        "failure_categories": {}
+      },
+      "influence": {
+        "case_count": 0,
+        "passed": 0,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_coverage": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "evidence_traceability": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "negation_rejection": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "conflict_handling": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "query_isolation": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "checkpoint_continuity": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          }
+        },
+        "failure_categories": {}
+      }
+    },
+    "synthetic_regression": {
+      "overall": {
+        "case_count": 28,
+        "passed": 20,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 10,
+            "denominator": 12,
+            "value": 0.8333333333333334
+          },
+          "evidence_coverage": {
+            "numerator": 13,
+            "denominator": 19,
+            "value": 0.6842105263157895
+          },
+          "evidence_traceability": {
+            "numerator": 15,
+            "denominator": 15,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 2,
+            "denominator": 12,
+            "value": 0.16666666666666666
+          },
+          "influence_direction_accuracy": {
+            "numerator": 4,
+            "denominator": 6,
+            "value": 0.6666666666666666
+          },
+          "weak_evidence_rejection": {
+            "numerator": 1,
+            "denominator": 3,
+            "value": 0.3333333333333333
+          },
+          "negation_rejection": {
+            "numerator": 3,
+            "denominator": 3,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 3,
+            "denominator": 3,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 28,
+            "denominator": 28,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 28,
+            "denominator": 28,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "unsupported relation": 2,
+          "weak evidence accepted": 2,
+          "retrieval failure": 3,
+          "evidence mismatch": 2,
+          "direction error": 1
+        }
+      },
+      "era": {
+        "case_count": 9,
+        "passed": 6,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 3,
+            "denominator": 4,
+            "value": 0.75
+          },
+          "evidence_coverage": {
+            "numerator": 4,
+            "denominator": 6,
+            "value": 0.6666666666666666
+          },
+          "evidence_traceability": {
+            "numerator": 5,
+            "denominator": 5,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 1,
+            "denominator": 4,
+            "value": 0.25
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "negation_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 9,
+            "denominator": 9,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 9,
+            "denominator": 9,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "unsupported relation": 1,
+          "weak evidence accepted": 1,
+          "retrieval failure": 1,
+          "evidence mismatch": 1
+        }
+      },
+      "scene": {
+        "case_count": 9,
+        "passed": 6,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 3,
+            "denominator": 4,
+            "value": 0.75
+          },
+          "evidence_coverage": {
+            "numerator": 4,
+            "denominator": 6,
+            "value": 0.6666666666666666
+          },
+          "evidence_traceability": {
+            "numerator": 5,
+            "denominator": 5,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 1,
+            "denominator": 4,
+            "value": 0.25
+          },
+          "influence_direction_accuracy": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "weak_evidence_rejection": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "negation_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 9,
+            "denominator": 9,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 9,
+            "denominator": 9,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "unsupported relation": 1,
+          "weak evidence accepted": 1,
+          "retrieval failure": 1,
+          "evidence mismatch": 1
+        }
+      },
+      "influence": {
+        "case_count": 10,
+        "passed": 8,
+        "metrics": {
+          "relation_precision": {
+            "numerator": 4,
+            "denominator": 4,
+            "value": 1.0
+          },
+          "evidence_coverage": {
+            "numerator": 5,
+            "denominator": 7,
+            "value": 0.7142857142857143
+          },
+          "evidence_traceability": {
+            "numerator": 5,
+            "denominator": 5,
+            "value": 1.0
+          },
+          "unsupported_hallucination_rate": {
+            "numerator": 0,
+            "denominator": 4,
+            "value": 0.0
+          },
+          "influence_direction_accuracy": {
+            "numerator": 4,
+            "denominator": 6,
+            "value": 0.6666666666666666
+          },
+          "weak_evidence_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "negation_rejection": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "conflict_handling": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "query_isolation": {
+            "numerator": 10,
+            "denominator": 10,
+            "value": 1.0
+          },
+          "checkpoint_continuity": {
+            "numerator": 10,
+            "denominator": 10,
+            "value": 1.0
+          }
+        },
+        "failure_categories": {
+          "retrieval failure": 1,
+          "direction error": 1
+        }
+      }
+    }
+  },
+  "blockers": [
+    "reviewed real failures require diagnosis before Final Worldline Regression"
+  ],
+  "baseline_ready": true,
+  "can_enter_targeted_repairs": true,
+  "code_revision": "07e0263ce30b486ef6af7b22a5f90c0dd1bdb1eb",
+  "code_dirty": true,
+  "scope": "frozen_context_replay_with_annotated_claims"
+}

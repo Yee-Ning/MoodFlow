@@ -1,0 +1,94 @@
+{
+  "schema_version": "conflict-handling-targeted-repair-validation-v1",
+  "commands": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest <all tests/test_worldline*.py> -q",
+      "exit_code": 0,
+      "passed": 218,
+      "skipped": 3,
+      "scope": "all Era/Scene/Influence, graph, API, session, genre and conflict tests",
+      "phase": "intermediate_verification"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_worldline_conflict_handling.py -q",
+      "exit_code": 0,
+      "passed": 31,
+      "skipped": 0,
+      "phase": "intermediate_verification"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest <all evals/tests/test_semantic_relations*.py> evals/tests/test_conflict_handling_targeted_repair_report.py -q",
+      "exit_code": 0,
+      "passed": 131,
+      "skipped": 0,
+      "phase": "intermediate_verification"
+    },
+    {
+      "command": ".venv/Scripts/python.exe run_semantic_relations_eval.py --suite evals/semantic_relations_v1_review_r6 --output evals/reports/semantic_relations_v1_conflict_repair_r6",
+      "exit_code": 2,
+      "interpretation": "completed; unchanged evaluator reports reviewed real quality failures, not a crash",
+      "phase": "intermediate_verification"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check <11 task Python files>",
+      "exit_code": 0,
+      "phase": "intermediate_verification"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m compileall -q <4 runtime modules and report assembler>",
+      "exit_code": 0,
+      "phase": "intermediate_verification"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest <all tests/test_worldline*.py> <all evals/tests/test_semantic_relations*.py> evals/tests/test_conflict_handling_targeted_repair_report.py -q",
+      "exit_code": 0,
+      "passed": 351,
+      "skipped": 3,
+      "phase": "final_runtime_verification",
+      "coverage": {
+        "worldline": 220,
+        "semantic_and_export_audits": 131,
+        "included_conflict_special_cases": 33
+      }
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check <11 task Python files>",
+      "exit_code": 0,
+      "phase": "final_static_verification"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m compileall -q <4 runtime modules and report assembler>",
+      "exit_code": 0,
+      "phase": "final_static_verification"
+    },
+    {
+      "command": "git diff --check -- <task paths>; git diff --cached --check",
+      "exit_code": 0,
+      "phase": "final_staging_verification"
+    },
+    {
+      "command": ".venv/Scripts/python.exe evals/local/conflict_repair/verify_index.py",
+      "exit_code": 0,
+      "phase": "final_staging_verification",
+      "staged_task_files": 30,
+      "protected_files_unchanged": 355,
+      "all_index_blobs_match_workspace_and_manifest": true,
+      "unrelated_changes_staged": false
+    }
+  ],
+  "known_quality_failures": {
+    "approved_real_cases": 6,
+    "synthetic_cases": 8,
+    "p0_conflict_passes": 2,
+    "p0_conflict_required": 3
+  },
+  "limits": [
+    "3 opt-in PostgreSQL restart tests skipped because RUN_WORLDLINE_POSTGRES_RESTART is not 1; no production restart acceptance claimed",
+    "offline frozen_context_replay_with_annotated_claims; no live retrieval/LLM/Online E2E/Final Regression/deployment",
+    "r6 Influence conflict runtime snippets lack full subject/interview question/speaker context; retained as a blocker"
+  ],
+  "frontend_build_required": false,
+  "new_dependencies": false,
+  "p1_standalone_direction_or_evidence_mismatch_repaired": false,
+  "gold_scoring_gates_old_freezes_modified": false
+}

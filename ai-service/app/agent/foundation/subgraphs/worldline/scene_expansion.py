@@ -13,6 +13,15 @@ import unicodedata
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from app.agent.foundation.subgraphs.worldline.conflict_semantics import (
+    aggregation_trace,
+    balanced_evidence,
+    named_in_text,
+    normalized_text,
+    quoted_first_person_subject,
+    scene_aliases,
+    preserve_conflict_descriptions,
+)
 from app.agent.foundation.subgraphs.worldline.era_expansion import (
     _SupportedClaim,
     _knowledge_entity_map,
@@ -145,6 +154,8 @@ class SceneExpansionTrace(BaseModel):
     evidence_count: int = Field(ge=0)
     temporal_conflict_count: int = Field(ge=0)
     location_conflict_count: int = Field(ge=0)
+    attribution_conflict_count: int = Field(default=0, ge=0)
+    aggregation_trace: list[dict] = Field(default_factory=list)
     validator_version: str = SCENE_VALIDATOR_VERSION
 
 
@@ -178,6 +189,33 @@ def _scene_descriptor(value: object) -> SceneDescriptor | None:
     if not slug:
         slug = sha256(name.casefold().encode("utf-8")).hexdigest()[:16]
     return SceneDescriptor(node_id=f"scene:{slug[:120]}", canonical_name=name)
+
+
+def _normalize_membership_scenes(
+    candidates: list[SceneRelationCandidate], graph_nodes: dict[str, WorldLineNode],
+) -> list[SceneRelationCandidate]:
+    """Unify validated aliases using an existing identity or the fuller name."""
+    groups: dict[str, list[SceneDescriptor]] = {}
+    for candidate in candidates:
+        if candidate.relation_type is SceneRelationType.BELONGS_TO_SCENE and candidate.scene:
+            base = min(scene_aliases(candidate.scene_name), key=len)
+            groups.setdefault(base, []).append(candidate.scene)
+    canonical = {}
+    for base, descriptors in groups.items():
+        existing = [node for node in graph_nodes.values() if node.type is WorldLineNodeType.SCENE
+                    and base == min(scene_aliases(node.name), key=len)]
+        # Multiple existing identities need an explicit resolver, not guessing.
+        if len(existing) > 1:
+            continue
+        canonical[base] = (
+            SceneDescriptor(node_id=existing[0].id, canonical_name=existing[0].name)
+            if existing else max(descriptors, key=lambda d: (len(d.canonical_name), d.node_id))
+        )
+    return [candidate.model_copy(update={
+        "scene": descriptor, "scene_name": descriptor.canonical_name,
+    }) if candidate.relation_type is SceneRelationType.BELONGS_TO_SCENE and (
+        descriptor := canonical.get(min(scene_aliases(candidate.scene_name), key=len))
+    ) is not None else candidate for candidate in candidates]
 
 
 def _scene_target_id(relation: SceneRelation) -> str:
@@ -346,6 +384,7 @@ class SceneRelationValidator:
         document_by_id = {document.id: document for document in documents}
         graph_nodes = {node.id: node for node in graph.nodes}
         accepted: list[SceneRelationCandidate] = []
+        contradictions: list[SceneRelationCandidate] = []
         decisions: list[SceneRelationDecision] = []
         for candidate in candidates:
             reasons = self._rejection_reasons(
@@ -360,6 +399,10 @@ class SceneRelationValidator:
             ))
             if not reasons:
                 accepted.append(candidate)
+            elif reasons == ["negated_scene_membership"]:
+                contradictions.append(candidate)
+        normalized = _normalize_membership_scenes([*accepted, *contradictions], graph_nodes)
+        accepted, contradictions = normalized[:len(accepted)], normalized[len(accepted):]
         pair_scenes: dict[tuple[str, str], set[str]] = {}
         for candidate in accepted:
             if candidate.relation_type is SceneRelationType.SCENE_ASSOCIATION:
@@ -392,7 +435,7 @@ class SceneRelationValidator:
                 else decision
                 for decision in decisions
             ]
-        return self._aggregate(accepted), decisions
+        return self._aggregate(accepted, contradictions), decisions
 
     def _rejection_reasons(
         self,
@@ -459,7 +502,10 @@ class SceneRelationValidator:
             reasons.append("evidence_span_too_long")
         if not self._time_is_supported(candidate):
             reasons.append("time_not_in_evidence_span")
-        if not self._scene_is_supported(candidate):
+        membership_stance = self._membership_stance(candidate, document)
+        if membership_stance == "contradiction":
+            reasons.append("negated_scene_membership")
+        elif not self._scene_is_supported(candidate) and membership_stance != "support":
             reasons.append("scene_not_in_evidence_span")
         if candidate.location is not None and (
             candidate.location.casefold()
@@ -467,6 +513,54 @@ class SceneRelationValidator:
         ):
             reasons.append("location_not_in_evidence_span")
         return list(dict.fromkeys(reasons))
+
+    @staticmethod
+    def _membership_stance(
+        candidate: SceneRelationCandidate, document: MusicKnowledgeDocument | None,
+    ) -> str | None:
+        """Normalize scene aliases and bind narrowly scoped membership assertions."""
+        if candidate.relation_type is not SceneRelationType.BELONGS_TO_SCENE:
+            return None
+        span = normalized_text(candidate.evidence.exact_span)
+        aliases = scene_aliases(candidate.scene_name)
+        if not any(named_in_text(alias, span) for alias in aliases):
+            return None
+        named = named_in_text(candidate.source_entity.canonical_name, span)
+        quoted_subject = bool(document and quoted_first_person_subject(
+            candidate.source_entity.canonical_name, document.title, span,
+        ))
+        if not named and not quoted_subject:
+            return None
+        entity = rf"(?<!\w){re.escape(normalized_text(candidate.source_entity.canonical_name))}(?!\w)"
+        actor = rf"(?:{entity}|\b(?:we|i)\b)" if quoted_subject else entity
+        copula = r"\s+(?:(?:was|is|are|were|became|remained)\s+|[’'](?:re|m)\s+)?"
+        for alias in aliases:
+            scene = rf"(?<!\w){re.escape(alias)}(?!\w)"
+            if re.search(
+                rf"{actor}{copula}not\s+(?:part\s+of|associated\s+with|from|a\s+member\s+of)"
+                rf"\s+(?:the\s+)?{scene}", span,
+            ) or (quoted_subject and re.search(
+                rf"{scene}[’'\".\s]{{0,8}}\s*(?:we|i)[’']?(?:re|m|\s+are|\s+am)"
+                r"\s+not\s+part\s+of\s+that\b", span,
+            )):
+                return "contradiction"
+        # "Frontrunner of X" is a membership attribution, not mere venue or
+        # era co-occurrence. X must be the normalized scene in the claim.
+        if not _NEGATION_RE.search(span) and (
+            _SCENE_CUE_RE.search(span) or _SCENE_CUE_RE.search(candidate.scene_name)
+        ):
+            for alias in aliases:
+                scene = rf"(?<!\w){re.escape(alias)}(?!\w)"
+                if re.search(rf"{actor}{copula}(?:part|a\s+member)\s+of\s+(?:the\s+)?{scene}", span):
+                    return "support"
+                if named and (re.search(
+                    rf"{entity}{copula}(?:(?:one\s+of\s+the|a)\s+)?"
+                    rf"(?:frontrunners?|leading\s+members?)\s+of\s+{scene}", span,
+                ) or re.search(
+                    rf"(?:frontrunners?|leading\s+members?)\s+of\s+{scene}\s*,\s*{entity}", span,
+                )):
+                    return "support"
+        return None
 
     @staticmethod
     def _claim_is_present(
@@ -552,7 +646,10 @@ class SceneRelationValidator:
         )
 
     @staticmethod
-    def _aggregate(candidates: list[SceneRelationCandidate]) -> list[SceneRelation]:
+    def _aggregate(
+        candidates: list[SceneRelationCandidate],
+        contradictions: list[SceneRelationCandidate] | None = None,
+    ) -> list[SceneRelation]:
         grouped: dict[tuple[str, str, SceneRelationType], list[SceneRelationCandidate]] = {}
         for candidate in candidates:
             target_id = (
@@ -565,13 +662,24 @@ class SceneRelationValidator:
                 candidate.relation_type,
             ), []).append(candidate)
         output: list[SceneRelation] = []
-        for items in grouped.values():
+        for key, items in grouped.items():
             first = items[0]
+            opposing = [item for item in contradictions or [] if (
+                item.source_entity.node_id,
+                item.scene.node_id if item.scene else item.target_entity.node_id,
+                item.relation_type,
+            ) == key]
+            positive_ids = {item.evidence.evidence_id for item in items}
+            items = [*items, *opposing]
             evidence = {item.evidence.evidence_id: item.evidence for item in items}
             overflow = max(0, len(evidence) - MAX_SCENE_EVIDENCE)
-            retained = set(list(evidence)[:MAX_SCENE_EVIDENCE])
+            retained = {item.evidence.evidence_id for item in balanced_evidence(
+                items, limit=MAX_SCENE_EVIDENCE,
+                stance=lambda item: item.evidence.evidence_id in positive_ids,
+            )}
             items = [item for item in items if item.evidence.evidence_id in retained]
             evidence = {key: item for key, item in evidence.items() if key in retained}
+            attribution_conflict = bool(opposing)
             ranges = {
                 (item.start_year, item.end_year) for item in items
                 if item.start_year is not None or item.end_year is not None
@@ -608,6 +716,17 @@ class SceneRelationValidator:
                     "validator_version": SCENE_VALIDATOR_VERSION,
                     "temporal_conflict": time_conflict,
                     "location_conflict": location_conflict,
+                    "attribution_conflict": attribution_conflict,
+                    "conflict_flags": [key for key, active in (
+                        ("temporal_conflict", time_conflict),
+                        ("location_conflict", location_conflict),
+                        ("attribution_conflict", attribution_conflict),
+                    ) if active],
+                    "provenance": [{
+                        "evidence_id": item.evidence.evidence_id,
+                        "claim_id": item.evidence.claim_id,
+                        "stance": "support" if item.evidence.evidence_id in positive_ids else "contradiction",
+                    } for item in items],
                     "temporal_assertions": [
                         {"evidence_id": item.evidence.evidence_id,
                          "start_year": item.start_year,
@@ -635,6 +754,7 @@ def _derive_artist_associations(relations: list[SceneRelation]) -> list[SceneRel
             relation.relation_type is SceneRelationType.BELONGS_TO_SCENE
             and relation.source_entity.node_type is WorldLineNodeType.ARTIST
             and relation.scene is not None
+            and not relation.metadata.get("attribution_conflict")
         ):
             by_scene.setdefault(relation.scene.node_id, []).append(relation)
     pair_memberships: dict[tuple[str, str], list[tuple[SceneRelation, SceneRelation]]] = {}
@@ -758,6 +878,9 @@ class SceneGraphProjector:
                 source=key[0], target=key[1], relation=key[2],
                 description=(
                     f"{relation.source_entity.canonical_name} 与 "
+                    f"{relation.scene_name} 的归属存在来源分歧；保留双方证据"
+                    if relation.metadata.get("attribution_conflict") else
+                    f"{relation.source_entity.canonical_name} 与 "
                     f"{relation.scene_name} 的已验证 {relation.relation_type.value} 关系"
                 ),
                 evidence_ids=merged_ids,
@@ -767,10 +890,13 @@ class SceneGraphProjector:
             nodes=list(delta_nodes.values()),
             edges=list(delta_edges.values()),
         )
-        return merge_worldline_graph(
+        merged_graph, merged_sources = merge_worldline_graph(
             graph, delta, sources, list(delta_sources.values()),
             target_node_id=graph.root,
         )
+        keys = {(item.source_entity.node_id, _scene_target_id(item), WorldLineRelation(item.relation_type.value))
+                for item in relations if item.metadata.get("attribution_conflict")}
+        return preserve_conflict_descriptions(merged_graph, delta, keys), merged_sources
 
 
 def merge_scene_relations(
@@ -788,6 +914,8 @@ def merge_scene_relations(
         previous = merged.get(key)
         if previous is None:
             merged[key] = relation
+            continue
+        if previous == relation:
             continue
         evidence = {item.evidence_id: item for item in previous.evidence}
         evidence.update({item.evidence_id: item for item in relation.evidence})
@@ -812,6 +940,16 @@ def merge_scene_relations(
             "evidence": list(evidence.values()),
             "metadata": {
                 **previous.metadata,
+                "conflict_flags": sorted(set(previous.metadata.get("conflict_flags", []))
+                                         | set(relation.metadata.get("conflict_flags", []))
+                                         | ({"temporal_conflict"} if time_conflict else set())
+                                         | ({"location_conflict"} if location_conflict else set())),
+                "attribution_conflict": bool(previous.metadata.get("attribution_conflict"))
+                or bool(relation.metadata.get("attribution_conflict")),
+                "provenance": list({item["evidence_id"]: item for item in [
+                    *previous.metadata.get("provenance", []),
+                    *relation.metadata.get("provenance", []),
+                ]}.values()),
                 "temporal_conflict": time_conflict
                 or bool(previous.metadata.get("temporal_conflict"))
                 or bool(relation.metadata.get("temporal_conflict")),
@@ -952,6 +1090,10 @@ class SceneExpansionService:
             location_conflict_count=sum(
                 bool(relation.metadata.get("location_conflict")) for relation in relations
             ),
+            attribution_conflict_count=sum(
+                bool(relation.metadata.get("attribution_conflict")) for relation in relations
+            ),
+            aggregation_trace=aggregation_trace(decisions, relations),
         )
         LOGGER.info(
             "worldline.scene_expansion",

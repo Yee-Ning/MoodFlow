@@ -12,6 +12,12 @@ import unicodedata
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from app.agent.foundation.subgraphs.worldline.conflict_semantics import (
+    aggregation_trace,
+    balanced_evidence,
+    named_in_text,
+    preserve_conflict_descriptions,
+)
 from app.agent.foundation.subgraphs.worldline.era_expansion import (
     _SupportedClaim,
     _knowledge_entity_map,
@@ -58,6 +64,7 @@ _INFLUENCE_QUERY_RE = re.compile(
 _QUOTED_ENTITY_RE = re.compile(r"[《\"“'](?:[^》\"”']{1,300})[》\"”']")
 _NEGATION_RE = re.compile(
     r"\b(?:not|never|denied|deny|didn't|wasn't|isn't)\b|"
+    r"\bdirei\s+di\s+no\b|"
     r"没有|沒有|并未|並未|并不|並不|否认|否認|未受|不受|不是",
     re.IGNORECASE,
 )
@@ -143,6 +150,7 @@ class InfluenceExpansionTrace(BaseModel):
     direction_conflict_count: int = Field(ge=0)
     scope_conflict_count: int = Field(ge=0)
     attribution_conflict_count: int = Field(ge=0)
+    aggregation_trace: list[dict] = Field(default_factory=list)
     validator_version: str = INFLUENCE_VALIDATOR_VERSION
 
 
@@ -256,6 +264,69 @@ def _relation_key(candidate: InfluenceCandidate | InfluenceRelation) -> tuple[st
         candidate.target_entity.node_id,
         candidate.relation_type,
     )
+
+
+def _context_direction(
+    candidate: InfluenceCandidate, document: MusicKnowledgeDocument,
+    graph_nodes: dict[str, WorldLineNode],
+) -> bool:
+    """Resolve list/quotation roles only in available source context.
+
+    A verified claim alone cannot supply a missing grammatical subject or an
+    omitted interview question. Context is bounded and must contain the span.
+    """
+    if candidate.relation_type is not InfluenceRelationType.INFLUENCED:
+        return False
+    exact = candidate.evidence.exact_span
+    if document.content.count(exact) != 1:
+        return False
+    offset = document.content.index(exact)
+    context = _normalized_span(document.content[max(0, offset - 800):offset + len(exact)])
+    # A surname alias is admissible only when unique among runtime entities.
+    aliases = [candidate.source_entity.canonical_name]
+    surname = candidate.source_entity.canonical_name.split()[-1]
+    if len(surname) >= 4 and sum(
+        named_in_text(surname, node.name) for node in graph_nodes.values()
+    ) == 1:
+        aliases.append(surname)
+    target = re.escape(_normalized_span(candidate.target_entity.canonical_name))
+    for alias in aliases:
+        source = re.escape(_normalized_span(alias))
+        if candidate.evidence.stance is InfluenceEvidenceStance.SUPPORT:
+            # The target performs the borrowing/translation; the source is
+            # inside its list of inputs, not merely adjacent in prose.
+            attribution = re.search(
+                rf"(?<!\w){target}(?!\w)(?P<actor_context>[^.!?\n]{{0,100}}"
+                r"(?:[.]\s*(?:they|the\s+band)\s+)?)(?:tried\s+to\s+)?translate[^.!?\n]{0,220}"
+                rf"(?<!\w){source}(?!\w)[^.!?\n]{{0,100}}"
+                r"into[^.!?\n]{0,100}(?:music|electronica|sound)", context,
+            )
+            actor_unambiguous = bool(attribution) and not any(
+                named_in_text(node.name, attribution.group("actor_context"))
+                for node in graph_nodes.values() if node.id != candidate.target_entity.node_id
+            ) and not named_in_text(alias, attribution.group("actor_context"))
+            if actor_unambiguous and not _NEGATION_RE.search(context) and not _SPECULATION_RE.search(context):
+                return True
+        else:
+            # Bind the respondent to the named interview subject, then require
+            # an actual question about that subject's music before a denial.
+            heading = _normalized_span(document.title)
+            speaker = exact.split(":", 1)[0].strip()
+            respondent_bound = bool(
+                ":" in exact and re.match(rf"^{target}\s*:\s*.*(?:interview|intervista)", heading)
+                and named_in_text(speaker, heading)
+            ) or bool(re.search(
+                rf"{re.escape(_normalized_span(speaker))}[^.!?\n]{{0,60}}"
+                rf"(?:member\s+of|of\s+the\s+band)\s+{target}(?!\w)", context,
+            ))
+            question = re.search(
+                rf"(?<!\w){source}(?!\w)[^.?!]{{0,100}}"
+                r"(?:influence|influenz)[^.?!]{0,100}(?:your|voi|vi|vostra)[^.?!]{0,100}\?",
+                context,
+            )
+            if respondent_bound and question and _NEGATION_RE.search(exact):
+                return True
+    return False
 
 
 class InfluenceCandidateExtractor:
@@ -390,10 +461,36 @@ class InfluenceValidator:
         decisions: list[InfluenceDecision] = []
         supporting: list[InfluenceCandidate] = []
         contradictions: list[InfluenceCandidate] = []
+        potential_conflicts = {
+            _relation_key(item) for item in candidates
+            if item.evidence.stance is InfluenceEvidenceStance.CONTRADICTION
+        } & {
+            _relation_key(item) for item in candidates
+            if item.evidence.stance is InfluenceEvidenceStance.SUPPORT
+        }
         for candidate in candidates:
             reasons = self._rejection_reasons(
                 candidate, graph_nodes, document_counts, document_by_id,
             )
+            document = document_by_id.get(candidate.evidence_source.metadata.get("document_id"))
+            if (
+                _relation_key(candidate) in potential_conflicts
+                and reasons in (["direction_missing"], ["direction_missing", "negated_influence"])
+                and document is not None and _context_direction(candidate, document, graph_nodes)
+            ):
+                reasons = [reason for reason in reasons if reason != "direction_missing"]
+                candidate = candidate.model_copy(update={
+                    "evidence_source": candidate.evidence_source.model_copy(update={
+                        "metadata": {
+                            **candidate.evidence_source.metadata,
+                            "context_direction_basis": "paired_attribution_source_context",
+                            "context_document_sha256": sha256(document.content.encode("utf-8")).hexdigest(),
+                            "exact_span_start": document.content.index(candidate.evidence.exact_span),
+                            "exact_span_end": document.content.index(candidate.evidence.exact_span)
+                            + len(candidate.evidence.exact_span),
+                        },
+                    }),
+                })
             status = (
                 InfluenceCandidateStatus.REJECTED if reasons
                 else InfluenceCandidateStatus.ACCEPTED
@@ -512,7 +609,10 @@ class InfluenceValidator:
                 for candidate in [*items, *negative_by_key.get(key, [])]
             }
             overflow = max(0, len(evidence_by_id) - MAX_INFLUENCE_EVIDENCE)
-            kept_ids = set(list(evidence_by_id)[:MAX_INFLUENCE_EVIDENCE])
+            kept_ids = {item.evidence.evidence_id for item in balanced_evidence(
+                [*items, *negative_by_key.get(key, [])], limit=MAX_INFLUENCE_EVIDENCE,
+                stance=lambda item: item.evidence.stance,
+            )}
             evidence = [
                 item for evidence_id, item in evidence_by_id.items()
                 if evidence_id in kept_ids
@@ -545,6 +645,7 @@ class InfluenceValidator:
                     "direction_conflict": False,
                     "scope_conflict": scope_conflict,
                     "attribution_conflict": attribution_conflict,
+                    "conflict_flags": ["attribution_conflict"] if attribution_conflict else [],
                     "evidence_overflow_count": overflow,
                     "scope_assertions": [
                         {"evidence_id": item.evidence.evidence_id,
@@ -624,6 +725,10 @@ class InfluenceGraphProjector:
                 description=(
                     f"{relation.source_entity.canonical_name} → "
                     f"{relation.target_entity.canonical_name}："
+                    f"{relation.relation_type.value}（影响归因存在分歧；保留双方证据）"
+                    if relation.metadata.get("attribution_conflict") else
+                    f"{relation.source_entity.canonical_name} → "
+                    f"{relation.target_entity.canonical_name}："
                     f"{relation.relation_type.value}（已验证方向与证据）"
                 ),
                 evidence_ids=evidence_ids,
@@ -633,10 +738,13 @@ class InfluenceGraphProjector:
             nodes=list(delta_nodes.values()),
             edges=delta_edges,
         )
-        return merge_worldline_graph(
+        merged_graph, merged_sources = merge_worldline_graph(
             graph, delta, sources, list(delta_sources.values()),
             target_node_id=graph.root,
         )
+        keys = {(item.source_entity.node_id, item.target_entity.node_id, WorldLineRelation(item.relation_type.value))
+                for item in relations if item.metadata.get("attribution_conflict")}
+        return preserve_conflict_descriptions(merged_graph, delta, keys), merged_sources
 
 
 def merge_influence_relations(
@@ -679,6 +787,9 @@ def merge_influence_relations(
                 or bool(previous.metadata.get("scope_conflict"))
                 or bool(relation.metadata.get("scope_conflict")),
                 "attribution_conflict": attribution_conflict,
+                "conflict_flags": sorted(set(previous.metadata.get("conflict_flags", []))
+                                         | set(relation.metadata.get("conflict_flags", []))
+                                         | ({"attribution_conflict"} if attribution_conflict else set())),
                 "scope_assertions": [
                     *{item["evidence_id"]: item for item in [
                         *previous.metadata.get("scope_assertions", []),
@@ -778,8 +889,8 @@ class InfluenceExpansionService:
             for relation in relations for evidence in relation.evidence
         }
         selected_candidates = [
-            candidate for candidate in candidates
-            if candidate.evidence.evidence_id in selected_ids
+            decision.candidate for decision in decisions
+            if decision.candidate.evidence.evidence_id in selected_ids
         ]
         projected_graph, projected_sources = self.projector.project(
             graph, sources, relations, selected_candidates,
@@ -814,6 +925,7 @@ class InfluenceExpansionService:
             attribution_conflict_count=sum(
                 bool(relation.metadata.get("attribution_conflict")) for relation in relations
             ),
+            aggregation_trace=aggregation_trace(decisions, relations),
         )
         LOGGER.info(
             "worldline.influence_expansion",

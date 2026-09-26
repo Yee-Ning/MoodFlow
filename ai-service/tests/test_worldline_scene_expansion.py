@@ -339,7 +339,14 @@ def test_location_genre_year_co_mention_and_negation_do_not_make_scene(span: str
     result = expand([document(11, span=span, time={"year": 1992})])
     assert result.relations == []
     assert result.graph == graph()
-    assert "scene_not_in_evidence_span" in result.rejected[0].rejection_reasons
+    expected_reason = (
+        "negated_scene_membership" if "not part of" in span
+        else "scene_not_in_evidence_span"
+    )
+    expected_reasons = {expected_reason}
+    if "1992" not in span:
+        expected_reasons.add("time_not_in_evidence_span")
+    assert set(result.rejected[0].rejection_reasons) == expected_reasons
 
 
 def test_missing_or_insufficient_evidence_and_ordinary_query_do_not_expand() -> None:

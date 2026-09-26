@@ -15,6 +15,7 @@ from evals.semantic_relations_models import (
     PREDICATES, SemanticGoldCase, file_hash, load_suite, read_jsonl,
 )
 from evals.semantic_relations_review import label_hash
+from evals.tests.historical_scope import assert_historical_runtime_scope
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -237,8 +238,7 @@ def test_old_freezes_baseline_and_runtime_are_protected():
         assert file_hash(ROOT / name) in allowed
     scope = read_json(REVISION / "scope_lock.json")
     assert scope["evaluation_run"] is scope["targeted_repairs_run"] is False
-    for name, digest in scope["runtime_and_evaluation_file_sha256"].items():
-        assert file_hash(ROOT.parent / name) == digest
+    assert_historical_runtime_scope(REVISION / "scope_lock.json", scope)
 
 
 def test_preparation_does_not_import_or_run_evaluation(monkeypatch):

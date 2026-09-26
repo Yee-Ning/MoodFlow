@@ -59,6 +59,15 @@ Evidence Coverage 仍为 1/12、Influence Direction Accuracy 0/5、Conflict Hand
 CLI 返回 2 是现有规则对真实失败仍阻止 Final Regression 的提示；没有 coverage blocker，也不是 evaluator crash。
 本轮只记录新 metrics、real_failures、failure_diagnosis 和 machine_gate，所有 Gold、评分和运行时模块未改，未实施 targeted repairs。
 
+P0 Conflict Handling 的独立修复结果见
+[targeted repair 报告](reports/semantic_relations_v1_conflict_repair_r6/conflict_handling_targeted_repair_report.md)。
+真实 conflict 从 0/3 提升到 2/3（Era/Scene 各 1/1，Influence 0/1），真实 case 从 17/25 到 19/25；
+weak/negation/isolation/reverse negative 未退化，synthetic 指标不变，无新增 regression。
+r6 与旧报告完全冻结；仅对 conflict 增加验证后规范化与聚合、双方证据及多轮冲突语义保留。
+Influence 冻结 replay 缺少完整报道主语和采访提问，仍保守拒绝，不从 Gold 审核说明补证据。
+原 baseline gate 仍 true/true，但 P0 尚未达到 3/3，不能无条件进入 P1；依赖与完整 trace 见报告。
+重新执行须另选 output，报告组装入口为 `python -m evals.conflict_handling_targeted_repair_report`。
+
 ## WorldLine Evaluation V0
 
 WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用
