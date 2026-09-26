@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-2-positive",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "Rock & Roll Hall of Fame 的 Nirvana 页面将 The Pixies 明确列于 Influences，而 Nirvana 为中心实体，因此方向 Pixies → Nirvana 合理。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "26cbb19ef01bdd323f80773f629c0f70a5498adc61fdb8ec7b678658fc277124",
+  "parent_manifest_sha256": "18b81b8989db0a8316bcffbbf592ca81c0caf876bf50a8b921443c55367706a9",
+  "parent_case_line_sha256": "b437dc9aabb00b9bea08b45aa522cbb09642074e8d27bba3d55388f16f8bf56b",
+  "replay_input_line_sha256": "652051995ac824b9cc83df5e40e4ccd892480c7d47f50462269157d545103448"
+}

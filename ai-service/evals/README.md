@@ -12,6 +12,9 @@ Era + Scene + Influence 使用同一评测入口：`.\.venv\Scripts\python.exe r
 8 条 APPROVE 晋升，4 条 REJECT 排除，4 条新 weak negative 保持 pending；
 复审包见 [`human_review_pack.md`](semantic_relations_v1_review_r1/human_review_pack.md)。该版本尚未运行 Evaluation，旧 freeze 与报告未改动。
 
+第二轮 4 条 weak negative 均获人工 APPROVE，登记于 [`semantic_relations_v1_review_r2/README.md`](semantic_relations_v1_review_r2/README.md)。
+正式 Gold 现为 12 条（Era/Scene/Influence 各 4），本批 pending 为 0；原 4 条 REJECT 仍排除。r2 尚未运行 Evaluation。
+
 ## WorldLine Evaluation V0
 
 WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用

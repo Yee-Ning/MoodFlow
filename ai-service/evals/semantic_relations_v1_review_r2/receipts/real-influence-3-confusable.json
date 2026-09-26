@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-3-confusable",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "Pixies 创作影响证据不能支持 Kurt Cobain 的 scene membership，作为 Influence→Scene isolation negative 合理。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "966bd8ce372dcf52609454d56679f5d7faea0eef92cecfb7951cdbfa8743d984",
+  "parent_manifest_sha256": "18b81b8989db0a8316bcffbbf592ca81c0caf876bf50a8b921443c55367706a9",
+  "parent_case_line_sha256": "c211acc31bec5ce1edc4cf2656060ebed4bc5db581a7ea51cf2ae2d10d1fa6a0",
+  "replay_input_line_sha256": "fca95a484156c816ec7a3d03efd428afd6a6c09573460712f0092e4aeaf76b39"
+}
