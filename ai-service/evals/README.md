@@ -24,7 +24,21 @@ r3 的 10 条候选已全部获得明确人工 APPROVE，登记于独立
 [`semantic_relations_v1_review_r4/README.md`](semantic_relations_v1_review_r4/README.md)。
 正式 Gold 为 22 条（Era 6、Scene 6、Influence 10），pending 为 0；原 4 条 REJECT 仍排除。
 新增 receipts 绑定原冻结标签和 replay 行，审核登记见
-[`human_review_registration.md`](semantic_relations_v1_review_r4/human_review_registration.md)。r4 尚未运行 Evaluation。
+[`human_review_registration.md`](semantic_relations_v1_review_r4/human_review_registration.md)。r4 登记时未运行 Evaluation。
+
+2026-09-26 已基于 r4 运行统一 baseline，结果独立保存在
+[`reports/semantic_relations_v1_baseline_r4/semantic_relations_evaluation_v1_report.md`](reports/semantic_relations_v1_baseline_r4/semantic_relations_evaluation_v1_report.md)。
+真实 Gold 14/22 case 通过，Evidence Coverage 1/12、Influence Direction Accuracy 0/5、Conflict Handling 0/3；
+overall Precision 1/1 仅来自一条 Era 输出，Scene/Influence 零输出的 precision 为 N/A。
+Influence query-family confusable 真实覆盖仍缺失，baseline 门禁保持未通过；旧冻结数据与算法未改。
+复现必须显式指定 suite 与新 output，避免使用待审核的默认 v1 或覆盖旧报告：
+
+```powershell
+$env:OPENBLAS_NUM_THREADS='1'
+.\.venv\Scripts\python.exe run_semantic_relations_eval.py --suite evals/semantic_relations_v1_review_r4 --output evals/reports/semantic_relations_v1_baseline_r4_rerun
+```
+
+质量门禁返回 2；机器结果、完整 trace 与按影响排序的真实失败建议均在上述报告目录。当前不进入 Final Worldline Regression。
 
 ## WorldLine Evaluation V0
 
