@@ -1,0 +1,82 @@
+[
+  {
+    "source_id": "wl-positive-001",
+    "title": "周杰伦带头“清洁”音乐圈：请还音乐纯净空间",
+    "url": "https://ent.sina.com.cn/y/2009-01-09/09252334563.shtml",
+    "publisher": "新浪娱乐",
+    "author": null,
+    "published_at": null,
+    "source_type": "media_article",
+    "file_type": "html",
+    "artist": "周杰伦",
+    "album": null,
+    "topics": [
+      "音乐生涯",
+      "音乐社区"
+    ],
+    "source_tier": 2,
+    "source_quality": "medium",
+    "reason": "用户授权最小真实 production corpus 补充；仅真实公开来源，原文采集后审核可支持 claim，不预设关系标签。",
+    "status": "approved"
+  },
+  {
+    "source_id": "wl-positive-002",
+    "title": "温岚：周杰伦将光芒分给我",
+    "url": "https://ent.ifeng.com/music/hk/200709/0912_1839_222698.shtml",
+    "publisher": "凤凰网娱乐",
+    "author": null,
+    "published_at": null,
+    "source_type": "media_article",
+    "file_type": "html",
+    "artist": "温岚",
+    "album": null,
+    "topics": [
+      "音乐生涯",
+      "音乐社区"
+    ],
+    "source_tier": 2,
+    "source_quality": "medium",
+    "reason": "用户授权最小真实 production corpus 补充；仅真实公开来源，原文采集后审核可支持 claim，不预设关系标签。",
+    "status": "approved"
+  },
+  {
+    "source_id": "wl-positive-003",
+    "title": "周杰伦与台湾音乐界呼吁抵制买榜恶习(组图)",
+    "url": "https://ent.sina.com.cn/y/2009-01-08/17582334028.shtml",
+    "publisher": "新浪娱乐",
+    "author": null,
+    "published_at": null,
+    "source_type": "media_article",
+    "file_type": "html",
+    "artist": "周杰伦",
+    "album": null,
+    "topics": [
+      "台湾流行音乐界",
+      "音乐产业"
+    ],
+    "source_tier": 2,
+    "source_quality": "medium",
+    "reason": "用户授权最小 production corpus 真实来源获取与逐条原文审核，不预设 claim。",
+    "status": "approved"
+  },
+  {
+    "source_id": "wl-positive-004",
+    "title": "千禧年后的前两个十年间，周杰伦如何影响了华语流行音乐及潮流时尚领域？",
+    "url": "https://hypebeast.cn/2020/11/how-jay-chou-influenced-chinese-pop-music",
+    "publisher": "Hypebeast",
+    "author": "Freddie Tsang",
+    "published_at": null,
+    "source_type": "media_article",
+    "file_type": "html",
+    "artist": "周杰伦",
+    "album": null,
+    "topics": [
+      "音乐史",
+      "创作影响"
+    ],
+    "source_tier": 2,
+    "source_quality": "medium",
+    "reason": "重新获取真实公开原文，经正式 production ingestion 与 claim verification 判定；不预设 claim 标签。",
+    "status": "approved"
+  }
+]
