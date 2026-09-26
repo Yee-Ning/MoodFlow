@@ -13,15 +13,20 @@ class WorldLineMergeError(ValueError):
         self.code = code
 
 
+# Explicit query observations only: never exclude a provenance field by prefix.
+_QUERY_OBSERVATIONS = frozenset({
+    "fusion_score", "channel_evidence", "matched_child_ids",
+    "retrieval_warnings", "rerank_warnings", "context_warnings",
+    "context_pack_rank", "context_source_rank", "context_token_count", "context_token_budget",
+    "retrieval_rank", "rerank_rank", "rerank_score", "rerank_status", "rerank_fallback_used",
+    "subquery_ids", "retrieval_legs", "sufficiency_status",
+})
+
+
 def _source_identity(source: EvidenceSource) -> EvidenceSource:
     # Retrieval observations vary per query; claim/span/context/URL/hash remain
     # immutable and are deliberately NOT removed from this comparison.
-    observations = {
-        "fusion_score", "channel_evidence", "retrieval_warnings", "rerank_warnings", "context_warnings",
-        "context_pack_rank", "context_source_rank", "context_token_count", "context_token_budget",
-        "retrieval_rank", "rerank_rank", "rerank_score", "rerank_status", "rerank_fallback_used",
-        "subquery_ids", "retrieval_legs", "sufficiency_status",
-    }
+    observations = set(_QUERY_OBSERVATIONS)
     if source.metadata.get("index_input_hash") and source.metadata.get("source_content_sha256"):
         # Hash of the compressed query view is not the immutable indexed Child
         # hash. The latter and every bound capture/hash remain protected.
