@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-r5-oasis-blur-britpop-confusable",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "原始证据明确将 Blur 与 Oasis 置于同一 Britpop/BRIT Awards 竞争语境，并称 Oasis 为 Britpop rivals。该证据能够支持两者存在同一音乐场景/竞争语境关联，但没有提供 Oasis → Blur 的定向音乐影响归因，也没有 influenced 的因果或创作影响语义。因此 expected_relations=[] 合理。该 negative 仅表示当前 evidence 不支持所询 Influence，不否认现实世界可能存在其他影响关系。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "588e02a26a9264082262b2318af2e3b789a26fa553d25ab6abaadd47e303c69d",
+  "parent_manifest_sha256": "3fa02d3c1111cdf9ddf9c98849619b7703ffe0c1331749da6f56cb77ebe08d11",
+  "parent_case_line_sha256": "392ff554423320f809249d679031dca6a3370a57a88b1d8cb79e39f22c50b06b",
+  "replay_input_line_sha256": "a12a4de2f87b608392fb8b4e0d54305b9b3325dd1704147c49d6025894314d5d"
+}

@@ -1,0 +1,75 @@
+{
+  "version": "semantic-relations-v1-review-r6",
+  "evaluation_run": false,
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "provenance": "explicit_user_review",
+  "new_approved_real": 3,
+  "approved_real": 25,
+  "pending_real": 0,
+  "excluded_rejected": 4,
+  "synthetic_regression": 28,
+  "total_cases": 53,
+  "input_count": 53,
+  "source_count": 52,
+  "new_source_count": 0,
+  "new_receipt_count": 3,
+  "total_receipt_count": 29,
+  "approved_by_relation_type": {
+    "era": 6,
+    "scene": 6,
+    "influence": 13
+  },
+  "approved_label_counts": {
+    "positive": 9,
+    "negative": 16
+  },
+  "approved_category_counts": {
+    "positive": 9,
+    "isolation": 15,
+    "negative": 16,
+    "confusable": 7,
+    "direction_sensitive": 6,
+    "weak_evidence": 4,
+    "negation": 3,
+    "conflict": 3
+  },
+  "approved_category_counts_by_relation_type": {
+    "era": {
+      "positive": 2,
+      "isolation": 4,
+      "negative": 4,
+      "confusable": 2,
+      "weak_evidence": 1,
+      "negation": 1,
+      "conflict": 1
+    },
+    "scene": {
+      "negative": 4,
+      "confusable": 2,
+      "isolation": 4,
+      "positive": 2,
+      "weak_evidence": 1,
+      "negation": 1,
+      "conflict": 1
+    },
+    "influence": {
+      "positive": 5,
+      "isolation": 7,
+      "direction_sensitive": 6,
+      "negative": 8,
+      "weak_evidence": 2,
+      "negation": 1,
+      "conflict": 1,
+      "confusable": 3
+    }
+  },
+  "new_approved_case_ids": [
+    "real-influence-r5-oasis-blur-britpop-confusable",
+    "real-influence-r5-soundgarden-nirvana-grunge-confusable",
+    "real-influence-r5-ten-nevermind-era-confusable"
+  ],
+  "label_payloads_unchanged": true,
+  "inputs_sources_schema_unchanged": true,
+  "scope": "explicit review registration only; no scoring, algorithm repair, index or deployment"
+}

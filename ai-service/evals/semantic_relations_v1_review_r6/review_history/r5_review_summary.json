@@ -1,0 +1,28 @@
+{
+  "version": "semantic-relations-v1-review-r5",
+  "evaluation_run": false,
+  "new_pending_real": 3,
+  "approved_real": 22,
+  "pending_real": 3,
+  "excluded_rejected": 4,
+  "synthetic_regression": 28,
+  "total_cases": 53,
+  "input_count": 53,
+  "source_count": 52,
+  "new_source_count": 4,
+  "new_case_by_relation_type": {
+    "influence": 3
+  },
+  "approved_by_relation_type": {
+    "era": 6,
+    "scene": 6,
+    "influence": 10
+  },
+  "pending_category_counts": {
+    "negative": 3,
+    "confusable": 3,
+    "isolation": 3
+  },
+  "construction_blockers": [],
+  "human_approval_required": true
+}

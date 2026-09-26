@@ -1,0 +1,12 @@
+{
+  "case_id": "real-influence-r5-ten-nevermind-era-confusable",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "Pearl Jam 官方来源支持 Ten 于 1991 年发行，Nirvana 官方来源支持 Nevermind 于 1991 年发行，因此证据能够建立两张专辑的 Era/发行时间背景。共同或相近发行年代本身不构成 Ten → Nevermind 的 inspired 创作启发关系，而且发行时间也不能替代创作、录制或影响方向证据。因此当前 evidence 不支持所询 Influence，expected_relations=[] 合理。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "a2d57b9a859369a18148a33ed6f7015abda56b36f519588c96c448d7a6260ad6",
+  "parent_manifest_sha256": "3fa02d3c1111cdf9ddf9c98849619b7703ffe0c1331749da6f56cb77ebe08d11",
+  "parent_case_line_sha256": "6666d2143d76a93f00f21c33245e49335b6a9134bdb7eaeac440e2a0522a8cf1",
+  "replay_input_line_sha256": "5f28952e5db3cfe925fb4f46998a57ed96ed04deecd1649da5fd44ea3b65b439"
+}

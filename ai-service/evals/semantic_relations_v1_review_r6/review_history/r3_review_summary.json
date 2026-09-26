@@ -1,0 +1,36 @@
+{
+  "evaluation_run": false,
+  "approved_real": 12,
+  "synthetic_regression": 28,
+  "pending_real": 10,
+  "new_real_sources": 9,
+  "new_pending_by_relation_type": {
+    "era": 2,
+    "scene": 2,
+    "influence": 6
+  },
+  "new_pending_category_counts": {
+    "era": {
+      "negative": 1,
+      "negation": 1,
+      "positive": 1,
+      "conflict": 1
+    },
+    "scene": {
+      "negative": 1,
+      "negation": 1,
+      "positive": 1,
+      "conflict": 1
+    },
+    "influence": {
+      "negative": 3,
+      "negation": 1,
+      "positive": 3,
+      "conflict": 1,
+      "direction_sensitive": 4
+    }
+  },
+  "rejected_excluded": 4,
+  "conflicts_are_proposals_not_adjudicated_facts": true,
+  "paired_direction_cases_are_correlated": true
+}

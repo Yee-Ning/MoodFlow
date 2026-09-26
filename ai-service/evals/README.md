@@ -47,6 +47,11 @@ $env:OPENBLAS_NUM_THREADS='1'
 r4 数据与报告完全保留，算法、validator、projector、评分和 gate 未改；本轮未运行新的 baseline / targeted repairs。
 数据准备与检查记录见 [pending_coverage_report.md](reports/semantic_relations_v1_review_r5/pending_coverage_report.md)。
 
+r5 三条 confusable 候选已全部获得 `human-review-WT` 于 2026-09-26 的明确 APPROVE，登记于独立 [r6](semantic_relations_v1_review_r6/README.md)。
+正式真实 Gold 为 25 条（Era 6、Scene 6、Influence 13），pending 为 0；新增三份 receipt 绑定 r5 原冻结标签和 replay 输入，原标签、来源及输入不变。
+[静态覆盖清点](semantic_relations_v1_review_r6/coverage_inventory.json) 确认 Influence query-family confusable coverage blocker 已补齐，三类必需 categories 均已覆盖；这不是新 baseline 或新的 machine gate 结果。
+审核登记见 [human_review_registration.md](semantic_relations_v1_review_r6/human_review_registration.md)。r4/r5 与旧报告保持冻结，本轮未运行新 baseline 或 targeted repairs。
+
 ## WorldLine Evaluation V0
 
 WorldLine 的专项确定性评测使用独立数据集和报告，不调整 RAG 参数，也不使用

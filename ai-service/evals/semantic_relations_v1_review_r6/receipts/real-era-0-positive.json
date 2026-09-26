@@ -1,0 +1,12 @@
+{
+  "case_id": "real-era-0-positive",
+  "status": "approved",
+  "reviewer": "human-review-WT",
+  "reviewed_at": "2026-09-26",
+  "reason": "官方 Beatles 页面明确给出 Love Me Do 的 Release date = 05 October 1962，可直接支持 belongs_to_era → 1960s。",
+  "provenance": "explicit_user_review",
+  "label_sha256": "84f0517a3ddb28147ca18be8097c8d7433c9987164fdcbf1969520422df06b99",
+  "parent_manifest_sha256": "18b81b8989db0a8316bcffbbf592ca81c0caf876bf50a8b921443c55367706a9",
+  "parent_case_line_sha256": "57ef3c6bfc68a66a3bf1c5c796eac589e6eb277c709dfad5f9019f1076084411",
+  "replay_input_line_sha256": "b4d35b4c203ee2363bd9fd4103e4f659b919ad9e09c3750e55ceedb3917ad598"
+}
