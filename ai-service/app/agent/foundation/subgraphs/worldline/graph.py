@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from time import perf_counter
 from typing import Any
 
@@ -51,6 +52,7 @@ from app.agent.foundation.subgraphs.worldline.semantic_expansion import (
     SemanticExpansionService,
 )
 from app.agent.foundation.subgraphs.worldline.state import WorldLineState
+from app.agent.foundation.subgraphs.worldline.runtime_entity_binding import VerifiedEndpointMaterializer
 from app.rag.knowledge.entity_linking.models import EntityType as KnowledgeEntityType
 from app.rag.query_understanding.models import (
     CatalogReference,
@@ -183,6 +185,11 @@ def build_worldline_subgraph(
     era_service = era_expansion or EraExpansionService()
     scene_service = scene_expansion or SceneExpansionService()
     influence_service = influence_expansion or InfluenceExpansionService()
+    binding = getattr(getattr(knowledge_retriever, "candidate_provider", None), "binding", None)
+    endpoint_materializer = (
+        VerifiedEndpointMaterializer.from_binding(Path(__file__).resolve().parents[5], binding)
+        if retrieval_runtime is not None and binding is not None else None
+    )
     query_service = query_understanding or QueryUnderstandingService(
         index_profile=(
             retrieval_runtime.index_profile
@@ -525,6 +532,9 @@ def build_worldline_subgraph(
                 state.get("retrieved_docs", []),
             )
             plan = state.get("search_plan")
+            original_graph = graph
+            if plan is not None and endpoint_materializer is not None:
+                graph = endpoint_materializer.materialize(plan, graph, state.get("retrieved_docs", []))
             if entity.entity_type is EntityType.ARTIST and plan is not None:
                 semantic_result = semantic_service.expand_artist_genres(
                     entity,
@@ -569,6 +579,10 @@ def build_worldline_subgraph(
                 graph = influence_result.graph
                 sources = influence_result.sources
                 influence_relations = influence_result.relations
+            if endpoint_materializer is not None:
+                graph = endpoint_materializer.finalize(
+                    original_graph, graph, sources, scene_relations, influence_relations,
+                )
             if state.get("session_mode") and state.get("prior_graph") is not None:
                 increment = graph
                 conflict_keys = set()
