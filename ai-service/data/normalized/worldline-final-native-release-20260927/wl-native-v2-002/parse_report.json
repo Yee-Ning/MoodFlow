@@ -1,0 +1,25 @@
+{
+  "source_id": "wl-native-v2-002",
+  "parser_name": "html",
+  "selected_parser": null,
+  "parser_attempts": [],
+  "quality_score": 0.9478,
+  "status": "pass",
+  "warnings": [],
+  "metrics": {
+    "text_length": 20987,
+    "heading_count": 43,
+    "paragraph_count": 96,
+    "table_count": 0,
+    "empty_content": false,
+    "garbled_char_ratio": 0.0,
+    "duplicated_line_ratio": 0.0695970695970696,
+    "chars_per_page": 0.0,
+    "empty_page_ratio": 0.0,
+    "replacement_char_ratio": 0.0,
+    "suspicious_line_break_ratio": 0.0,
+    "image_count": 0,
+    "parser_error_count": 0
+  },
+  "elapsed_ms": 36.680999997770414
+}

@@ -1,0 +1,12 @@
+{
+  "attestation_version": "v1",
+  "review_status": "approved",
+  "claim_sample_sha256": "sha256:dd9db815c1463b97118c4648014388cd7ab651dcf5ffeb6c957d1cca240bfc80",
+  "entity_link_sample_sha256": "sha256:f8f63ebe0d9a0dd8669c0df32a1a71ca7e065a51178f5d582642fd718a777d8d",
+  "claim_reviewed_count": 21,
+  "entity_link_reviewed_count": 100,
+  "generation_mode": "rule_only",
+  "reviewer": "Codex production release QA; exact-span entity-role review",
+  "rejected_sample_ids": [],
+  "notes": "All 21 claims and 100 entity-link samples reviewed; actual claim generation uses real deepseek-flash, extraction v13/prompt v4. rule_only denotes the existing release QA artifact generation contract, not claim generation."
+}

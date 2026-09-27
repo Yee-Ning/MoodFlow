@@ -1,0 +1,37 @@
+{
+  "document_id": "doc-wl-native-v2-002-30b59e3ccae49aa32220",
+  "source_id": "wl-native-v2-002",
+  "capture": {
+    "source_url": "https://www.abc.net.au/news/2024-04-05/30-years-kurt-cobain-died-alternative-music-1994/103652402",
+    "publisher": "ABC News",
+    "title": "Kurt Cobain's legacy is evident in the music from the year he died",
+    "locator": "main#content p; decoded DOM text [15652:15815]",
+    "captured_at": "2026-09-27T03:18:14.989013Z",
+    "capture_method": "verbatim_web_excerpt",
+    "response_sha256": "c24ba194455764abd4da78284a7b102f8e30e2156ea5b145197146b40c8c2f25",
+    "content": "For example, American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+    "content_sha256": "464f7c72c464758dc23f75f55365c8035757bcebd7222705957d5357aa4e8e1e",
+    "segments": [
+      {
+        "role": "article_sentence",
+        "exact_span": "For example, American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+        "start": 0,
+        "end": 163
+      }
+    ]
+  },
+  "provenance": {
+    "raw_path": "data/raw/html/wl-native-v2-002--20260927T031814.989013Z--c24ba194455764ab.html",
+    "response_sha256": "c24ba194455764abd4da78284a7b102f8e30e2156ea5b145197146b40c8c2f25",
+    "content_sha256": "464f7c72c464758dc23f75f55365c8035757bcebd7222705957d5357aa4e8e1e",
+    "source_text_start": 15652,
+    "source_text_end": 15815,
+    "source_text_sha256": "f2b64551072bdd3866c413c727a3c8057b70509540f0d7047b789bf9a22fc709",
+    "locator": "main#content p; decoded DOM text [15652:15815]",
+    "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text",
+    "extraction_method": "BeautifulSoup; remove script/style; separator='' strip=False"
+  },
+  "interview_question": null,
+  "interview_answer": null,
+  "speaker_binding": null
+}

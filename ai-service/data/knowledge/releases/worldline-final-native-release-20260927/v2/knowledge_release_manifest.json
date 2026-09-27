@@ -1,0 +1,83 @@
+{
+  "release_manifest_version": "v1",
+  "dataset_version": "v2",
+  "release_id": "knowledge-v2-daa965c10984eefa",
+  "immutability_policy": "create_once_or_verify_identical",
+  "source": {
+    "working_dataset_root": "data/knowledge/worldline-final-native-release-20260927",
+    "enriched_chunks_path": "data/enriched/worldline-final-native-release-20260927/enriched_chunks.jsonl",
+    "enriched_chunks_sha256": "sha256:2a35a2afbf9f763934bc895076a2958150d19fbab503243c943d43848422dc96",
+    "knowledge_config_path": "app/rag/knowledge/config/v18.yaml",
+    "knowledge_config_sha256": "sha256:6396f65803b1f642d1812bb54b09275e58d36fe6dfb14aeea6ebfff32888c84e",
+    "entity_registry_files": [
+      {
+        "path": "app/rag/knowledge/entity_linking/registry/v5.yaml",
+        "sha256": "sha256:f7b5122b462eb54f2ac90290a3837a2b01fab233b1ea3839a9d83f4081e1fb0e"
+      }
+    ]
+  },
+  "component_versions": {
+    "entity_linking": "v4",
+    "claim_extraction": "v13",
+    "claim_verification": "v3",
+    "entity_registry": "v5",
+    "prompt": "v4"
+  },
+  "artifacts": {
+    "entity_registry_candidates.jsonl": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "knowledge_corpus_manifest.jsonl": "sha256:e9ef7bc05fbf0536be0a7b7417bfe28d05792888a8c3bc7dbac33ae68f59468c",
+    "knowledge_enriched_chunks.jsonl": "sha256:38c28a4f2b2c94453567511cb959489c3c9a2fd1a5771020b304a04fc0140138",
+    "knowledge_quality_report.json": "sha256:4b600aed15500d2ef742ad6d863231ee4a87164e5fd1d1fb9abad9a92c8da582",
+    "qa/claim_review_sample.jsonl": "sha256:dd9db815c1463b97118c4648014388cd7ab651dcf5ffeb6c957d1cca240bfc80",
+    "qa/entity_link_review_sample.jsonl": "sha256:f8f63ebe0d9a0dd8669c0df32a1a71ca7e065a51178f5d582642fd718a777d8d",
+    "qa/qa_review_attestation.json": "sha256:8ef0cd8d5ae41279427983dd9f46cb818b734c70e446877946b4c7bd36006696",
+    "qa/qa_sampling_manifest.json": "sha256:f6921e87c3c99395c9de7a089003aaf0a2ad1c93c73522cab785937513205312"
+  },
+  "quality": {
+    "chunk_count": 76,
+    "linked_entity_occurrences": 167,
+    "claim_count": 21,
+    "all_claims_supported": true,
+    "pipeline_quality_gates": {
+      "all_chunks_processed": true,
+      "zero_failed_chunks": true,
+      "claim_ids_unique": true,
+      "claim_evidence_validated": true,
+      "core_entity_resolution_target_met": true,
+      "pre_embedding_ready": true
+    },
+    "qa_sampling": {
+      "qa_sampling_version": "v1",
+      "selection": "deterministic_stratified_then_content_hash",
+      "claim_population": 21,
+      "claim_sample_count": 21,
+      "claim_sample_sha256": "sha256:dd9db815c1463b97118c4648014388cd7ab651dcf5ffeb6c957d1cca240bfc80",
+      "entity_link_population": 167,
+      "entity_link_sample_count": 100,
+      "entity_link_sample_sha256": "sha256:f8f63ebe0d9a0dd8669c0df32a1a71ca7e065a51178f5d582642fd718a777d8d",
+      "review_status": "pending"
+    },
+    "qa_attestation": {
+      "attestation_version": "v1",
+      "review_status": "approved",
+      "claim_sample_sha256": "sha256:dd9db815c1463b97118c4648014388cd7ab651dcf5ffeb6c957d1cca240bfc80",
+      "entity_link_sample_sha256": "sha256:f8f63ebe0d9a0dd8669c0df32a1a71ca7e065a51178f5d582642fd718a777d8d",
+      "claim_reviewed_count": 21,
+      "entity_link_reviewed_count": 100,
+      "generation_mode": "rule_only",
+      "reviewer": "Codex production release QA; exact-span entity-role review",
+      "rejected_sample_ids": [],
+      "notes": "All 21 claims and 100 entity-link samples reviewed; actual claim generation uses real deepseek-flash, extraction v13/prompt v4. rule_only denotes the existing release QA artifact generation contract, not claim generation."
+    },
+    "generation_mode": "rule_only",
+    "pre_embedding_release_ready": true
+  },
+  "excluded_stages": [
+    "embedding",
+    "qdrant_indexing",
+    "bm25_indexing",
+    "online_retrieval",
+    "rrf",
+    "rerank"
+  ]
+}

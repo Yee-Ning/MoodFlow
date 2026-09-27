@@ -1,0 +1,11 @@
+{
+  "qa_sampling_version": "v1",
+  "selection": "deterministic_stratified_then_content_hash",
+  "claim_population": 21,
+  "claim_sample_count": 21,
+  "claim_sample_sha256": "sha256:dd9db815c1463b97118c4648014388cd7ab651dcf5ffeb6c957d1cca240bfc80",
+  "entity_link_population": 167,
+  "entity_link_sample_count": 100,
+  "entity_link_sample_sha256": "sha256:f8f63ebe0d9a0dd8669c0df32a1a71ca7e065a51178f5d582642fd718a777d8d",
+  "review_status": "pending"
+}
