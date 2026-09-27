@@ -1,0 +1,40 @@
+{
+  "report_version": "v1",
+  "document_count": 2,
+  "chunk_count": 76,
+  "knowledge_status": {
+    "success": 67,
+    "partial": 9,
+    "skipped": 0,
+    "failed": 0
+  },
+  "entity_linking": {
+    "linked_occurrences": 82,
+    "distinct_linked_entities": 2,
+    "unresolved_occurrences": 0,
+    "unique_unresolved_mentions": 0,
+    "resolved_occurrence_ratio": 1.0,
+    "registry_candidate_resolution_ratio": 1.0,
+    "unresolved_by_reason": {},
+    "top_unresolved": []
+  },
+  "claims": {
+    "claim_count": 79,
+    "unique_claim_ids": 79,
+    "duplicate_claim_ids": 0,
+    "verification_status": {
+      "SUPPORTED": 75,
+      "PARTIALLY_SUPPORTED": 1,
+      "CONTRADICTED": 1,
+      "INSUFFICIENT_EVIDENCE": 2
+    }
+  },
+  "quality_gates": {
+    "all_chunks_processed": true,
+    "zero_failed_chunks": true,
+    "claim_ids_unique": true,
+    "claim_evidence_validated": true,
+    "core_entity_resolution_target_met": true,
+    "pre_embedding_ready": true
+  }
+}

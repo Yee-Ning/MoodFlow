@@ -1,0 +1,554 @@
+{
+  "documents": {
+    "doc-wl-native-v2-001-3b9acc738bff7ee9b2ae": {
+      "source_id": "wl-native-v2-001",
+      "url": "https://www.wsws.org/en/articles/2012/12/05/nirv-d05.html",
+      "title": "Assessing an American pop icon",
+      "publisher": "World Socialist Web Site",
+      "raw_path": "data/raw/html/wl-native-v2-001--20260927T020036.318583Z--dda83b56f08bad39.html",
+      "raw_response_sha256": "dda83b56f08bad394c250dfb419d917f58445d7cf8bb3180adb04ed7e137626c",
+      "source_context_captures": [
+        {
+          "source_url": "https://www.wsws.org/en/articles/2012/12/05/nirv-d05.html",
+          "publisher": "World Socialist Web Site",
+          "title": "Assessing an American pop icon",
+          "locator": "article#article p; decoded DOM text [1328:1754]",
+          "captured_at": "2026-09-27T02:00:36.318583Z",
+          "capture_method": "verbatim_web_excerpt",
+          "response_sha256": "dda83b56f08bad394c250dfb419d917f58445d7cf8bb3180adb04ed7e137626c",
+          "content": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s. Nirvana was influenced by such groups as The Melvins and especially the American punk group, The Pixies.",
+          "content_sha256": "49096284635d82d82740ade3ea004d0884e9dbf001628128c49e37c954a44a9c",
+          "segments": [
+            {
+              "role": "article_sentence",
+              "exact_span": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s. Nirvana was influenced by such groups as The Melvins and especially the American punk group, The Pixies.",
+              "start": 0,
+              "end": 426
+            }
+          ]
+        }
+      ],
+      "source_context_capture_provenance": [
+        {
+          "raw_path": "data/raw/html/wl-native-v2-001--20260927T020036.318583Z--dda83b56f08bad39.html",
+          "response_sha256": "dda83b56f08bad394c250dfb419d917f58445d7cf8bb3180adb04ed7e137626c",
+          "content_sha256": "49096284635d82d82740ade3ea004d0884e9dbf001628128c49e37c954a44a9c",
+          "source_text_start": 1328,
+          "source_text_end": 1754,
+          "source_text_sha256": "0abdf8ce2d4f290090708fe8387a9edabe0c238ce711a56218ed1ad44c1ba2cd",
+          "locator": "article#article p; decoded DOM text [1328:1754]",
+          "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text",
+          "extraction_method": "BeautifulSoup; remove script/style; separator='' strip=False"
+        }
+      ]
+    },
+    "doc-wl-native-v2-002-dd868528eddc49706ffe": {
+      "source_id": "wl-native-v2-002",
+      "url": "https://www.abc.net.au/news/2024-04-05/30-years-kurt-cobain-died-alternative-music-1994/103652402",
+      "title": "Kurt Cobain's legacy is evident in the music from the year he died",
+      "publisher": "ABC News",
+      "raw_path": "data/raw/html/wl-native-v2-002--20260927T020038.685647Z--82b98e20c5a14cca.html",
+      "raw_response_sha256": "82b98e20c5a14ccac700e4981651af641db8d15ea7427778c19951b30fcf33d6",
+      "source_context_captures": [
+        {
+          "source_url": "https://www.abc.net.au/news/2024-04-05/30-years-kurt-cobain-died-alternative-music-1994/103652402",
+          "publisher": "ABC News",
+          "title": "Kurt Cobain's legacy is evident in the music from the year he died",
+          "locator": "main#content p; decoded DOM text [15652:15815]",
+          "captured_at": "2026-09-27T02:00:38.685647Z",
+          "capture_method": "verbatim_web_excerpt",
+          "response_sha256": "82b98e20c5a14ccac700e4981651af641db8d15ea7427778c19951b30fcf33d6",
+          "content": "For example, American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+          "content_sha256": "464f7c72c464758dc23f75f55365c8035757bcebd7222705957d5357aa4e8e1e",
+          "segments": [
+            {
+              "role": "article_sentence",
+              "exact_span": "For example, American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+              "start": 0,
+              "end": 163
+            }
+          ]
+        }
+      ],
+      "source_context_capture_provenance": [
+        {
+          "raw_path": "data/raw/html/wl-native-v2-002--20260927T020038.685647Z--82b98e20c5a14cca.html",
+          "response_sha256": "82b98e20c5a14ccac700e4981651af641db8d15ea7427778c19951b30fcf33d6",
+          "content_sha256": "464f7c72c464758dc23f75f55365c8035757bcebd7222705957d5357aa4e8e1e",
+          "source_text_start": 15652,
+          "source_text_end": 15815,
+          "source_text_sha256": "8db263642252abb956c5c4a35587b0b90eaaf005f3e8f73a864bb9fa2ba83b17",
+          "locator": "main#content p; decoded DOM text [15652:15815]",
+          "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text",
+          "extraction_method": "BeautifulSoup; remove script/style; separator='' strip=False"
+        }
+      ]
+    }
+  },
+  "all_persisted_evidence_spans_and_source_chunk_ids_valid": true,
+  "native_candidates": [
+    {
+      "source_id": "wl-native-v2-001",
+      "document_id": "doc-wl-native-v2-001-3b9acc738bff7ee9b2ae",
+      "chunk_id": "child-8b686e5334c7b896431e157f",
+      "parent_id": "parent-b94cc092da9fb51f19658233",
+      "chunk_content_sha256": "81a2764460d408e7f67a2c158a859cf7091c65c849474418f6d60bbef2081b7b",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:9ed0087f16f0896a6b7585d0c85a747ba116fe5784c7cd771c11d8b42c2cbf86"
+      },
+      "claim": {
+        "claim_id": "claim:d025713850e37cf4ccc5283b",
+        "statement": "Nirvana was influenced by The Pixies.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "influenced_by",
+        "object_entity_id": "artist:pixies",
+        "object_value": null,
+        "time": null,
+        "source_chunk_id": "child-8b686e5334c7b896431e157f",
+        "evidence_span": "Nirvana was influenced by such groups as The Melvins and especially the American punk group, The Pixies.",
+        "confidence": 0.9,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "SUPPORTED",
+        "confidence": 1.0,
+        "evidence_span": "Nirvana was influenced by such groups as The Melvins and especially the American punk group, The Pixies.",
+        "reason": "The source explicitly states that Nirvana was influenced by The Pixies, directly supporting the claim."
+      }
+    },
+    {
+      "source_id": "wl-native-v2-001",
+      "document_id": "doc-wl-native-v2-001-3b9acc738bff7ee9b2ae",
+      "chunk_id": "child-e8ab7103e1e2816914615785",
+      "parent_id": "parent-b94cc092da9fb51f19658233",
+      "chunk_content_sha256": "1816aed50b5fd2edd14ebb8af9ccc07bf4b9a7522f8192dd56236b25806d389c",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:919f72edfdded6c8c4477cb47f4538c487a8989ab8df244f635bfe84640a02a8"
+      },
+      "claim": {
+        "claim_id": "claim:76352b012d857fcd2b9b48a4",
+        "statement": "Nirvana emerged from the West Coast American punk scene of the mid-to-late 1980s.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "emerged_from_scene",
+        "object_entity_id": null,
+        "object_value": "West Coast American punk scene",
+        "time": {
+          "year": null,
+          "date": null,
+          "start_year": 1985,
+          "end_year": 1989,
+          "raw": "mid-to-late 1980s"
+        },
+        "source_chunk_id": "child-e8ab7103e1e2816914615785",
+        "evidence_span": "Emerging from the West Coast American punk scene of the mid-to-late 1980s",
+        "confidence": 0.85,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "SUPPORTED",
+        "confidence": 0.95,
+        "evidence_span": "Emerging from the West Coast American punk scene of the mid-to-late 1980s",
+        "reason": "The chunk explicitly states that Cobain was 'Emerging from the West Coast American punk scene of the mid-to-late 1980s,' which directly supports the claim that Nirvana emerged from that scene during that period."
+      }
+    },
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "parent-000278c5c52880de721efb46",
+      "parent_id": null,
+      "chunk_content_sha256": "a7fb7d05a91f626c3c3ed043008ba6715f6cc81ea84e4db940c5764993ee971b",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:fd1f98cb57f269085d9ff5fa90dbf097dfa56cc83e0314933f62d092df2d1d91"
+      },
+      "claim": {
+        "claim_id": "claim:fde6b86b5afdd2b1cc20b81a",
+        "statement": "Nirvana's album Nevermind is associated with the grunge movement.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "belongs_to_scene",
+        "object_entity_id": null,
+        "object_value": "grunge",
+        "time": null,
+        "source_chunk_id": "parent-000278c5c52880de721efb46",
+        "evidence_span": "scored a symbolic win for the burgeoning grunge movement when its album Nevermind",
+        "confidence": 0.85,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "SUPPORTED",
+        "confidence": 0.98,
+        "evidence_span": "scored a symbolic win for the burgeoning grunge movement when its album Nevermind",
+        "reason": "The source explicitly states that Nirvana's album Nevermind scored a symbolic win for the burgeoning grunge movement, directly associating the album with grunge."
+      }
+    },
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "child-7e70c110cdd29cbbaa9879cc",
+      "parent_id": "parent-6c2a559daf094b1ddd9f8d90",
+      "chunk_content_sha256": "caeb007543f4ed6a61cd3ecff2863905a50dfbbdc26c246671d23159563f918a",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:50b13045e644216e2453215159fb2f4fea30df0d275e3286d0c3918b99530302"
+      },
+      "claim": {
+        "claim_id": "claim:e9c46011cc1597793529ca6b",
+        "statement": "Punk rock's influence on grunge was evident.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "influenced",
+        "object_entity_id": null,
+        "object_value": "grunge",
+        "time": null,
+        "source_chunk_id": "child-7e70c110cdd29cbbaa9879cc",
+        "evidence_span": "Punk rock's influence on grunge was evident",
+        "confidence": 0.8,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "SUPPORTED",
+        "confidence": 1.0,
+        "evidence_span": "Punk rock's influence on grunge was evident",
+        "reason": "The chunk content explicitly states the exact claim: \"Punk rock's influence on grunge was evident.\" Every material part of the claim is directly present in the source."
+      }
+    },
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "child-36062f18063fdd833537235d",
+      "parent_id": "parent-e208970619d888331a613d1b",
+      "chunk_content_sha256": "a9bdb341bec6352480776a94b10632c053dd91dff783a2bfc3951991618771fa",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:f423fe6e9781fe3385c84c20e87fa6642c197532c398c415c38c9293e8cf98ee"
+      },
+      "claim": {
+        "claim_id": "claim:77533f6bf85e6f221c779f1c",
+        "statement": "Nirvana's success changed the American music industry.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "influenced",
+        "object_entity_id": null,
+        "object_value": "American music industry",
+        "time": null,
+        "source_chunk_id": "child-36062f18063fdd833537235d",
+        "evidence_span": "Nirvana's success dramatically changed the American music industry",
+        "confidence": 0.9,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "SUPPORTED",
+        "confidence": 0.98,
+        "evidence_span": "Nirvana's success dramatically changed the American music industry",
+        "reason": "The chunk explicitly states that Nirvana's success dramatically changed the American music industry, directly supporting the claim."
+      }
+    },
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "child-9a17f2d459cd03b4eb930f4a",
+      "parent_id": "parent-c4c46393864635097c469c47",
+      "chunk_content_sha256": "55b1e70f48476ae44ab7d72442958086b03dc2dda173bfb0158f10eedf723dc2",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:3871632b85e8a00dd007a771dd615ab58892058c1a4db85f05a98c025a8dbd6e"
+      },
+      "claim": {
+        "claim_id": "claim:bf6ae99ce653aa66777d454c",
+        "statement": "Pixies had a profound influence on Nirvana.",
+        "subject_entity_id": "artist:pixies",
+        "predicate": "influenced",
+        "object_entity_id": "artist:nirvana",
+        "object_value": null,
+        "time": null,
+        "source_chunk_id": "child-9a17f2d459cd03b4eb930f4a",
+        "evidence_span": "American alt-rockers Pixies, who had a profound influence on Nirvana",
+        "confidence": 0.95,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "SUPPORTED",
+        "confidence": 0.99,
+        "evidence_span": "American alt-rockers Pixies, who had a profound influence on Nirvana",
+        "reason": "The chunk explicitly states that the Pixies 'had a profound influence on Nirvana,' directly supporting the claim."
+      }
+    },
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "parent-4c450003640694212f279db8",
+      "parent_id": null,
+      "chunk_content_sha256": "6a9a26c50eb605bf7ef9b29a7ae8d378489ff73e73ec91fe2769d30cd35ba80e",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:02e39619503d4debb89503ed1228fb305fc7dd9eebcdf5128f224c91c00f30a2"
+      },
+      "claim": {
+        "claim_id": "claim:cff43835ae0bab3108dc933c",
+        "statement": "Nirvana stood on the shoulders of Pixies.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "influenced_by",
+        "object_entity_id": "artist:pixies",
+        "object_value": null,
+        "time": null,
+        "source_chunk_id": "parent-4c450003640694212f279db8",
+        "evidence_span": "stood on the shoulders of giants such as REM and Pixies and The Replacements and Sonic Youth",
+        "confidence": 0.7,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "PARTIALLY_SUPPORTED",
+        "confidence": 0.9,
+        "evidence_span": "stood on the shoulders of giants such as REM and Pixies and The Replacements and Sonic Youth",
+        "reason": "The source states that a band (hypothetically, if not Nirvana) 'stood on the shoulders of giants such as REM and Pixies...'. This supports the idea that Nirvana (or a band in that position) was influenced by Pixies. However, the claim's phrasing 'Nirvana stood on the shoulders of Pixies' is a specific attribution that is only implied, not explicitly stated as a direct fact about Nirvana; the sentence is a counterfactual about another band. Thus, only part of the claim is explicit."
+      }
+    },
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "child-54cd91a89af3b07927b1f829",
+      "parent_id": "parent-4c450003640694212f279db8",
+      "chunk_content_sha256": "6a9a26c50eb605bf7ef9b29a7ae8d378489ff73e73ec91fe2769d30cd35ba80e",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:6965c34650c3be18670cb2627a9e0b8bdba67755b0128450a48af4ef2b397ccb"
+      },
+      "claim": {
+        "claim_id": "claim:823aaa26b483133ffa78e110",
+        "statement": "Nirvana stood on the shoulders of Pixies.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "influenced_by",
+        "object_entity_id": "artist:pixies",
+        "object_value": null,
+        "time": null,
+        "source_chunk_id": "child-54cd91a89af3b07927b1f829",
+        "evidence_span": "it would have been another band that stood on the shoulders of giants such as REM and Pixies and The Replacements and Sonic Youth",
+        "confidence": 0.6,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "CONTRADICTED",
+        "confidence": 0.95,
+        "evidence_span": "it would have been another band that stood on the shoulders of giants such as REM and Pixies and The Replacements and Sonic Youth",
+        "reason": "The source states that another band (not Nirvana) would have stood on the shoulders of giants such as Pixies, meaning Pixies influenced that hypothetical band, not Nirvana. The claim that Nirvana stood on the shoulders of Pixies is incompatible with the source's conditional framing."
+      }
+    }
+  ],
+  "non_supported_claims": [
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "child-ab3cbff583ed37bf643c8548",
+      "parent_id": "parent-000278c5c52880de721efb46",
+      "chunk_content_sha256": "3e683954ffa380de8951c125ed23b02710a4fc3af393cf8dc10f9457ee8cae60",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:d6b6e87ad14fd601c8503d0c0e4438a221823fbed70e26e769a57e612cbadff7"
+      },
+      "claim": {
+        "claim_id": "claim:24070ee5d1b5e00cb630ee83",
+        "statement": "NWA topped the US album charts in 1991.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "chart_position",
+        "object_entity_id": null,
+        "object_value": "US album charts",
+        "time": {
+          "year": 1991,
+          "date": null,
+          "start_year": null,
+          "end_year": null,
+          "raw": "1991"
+        },
+        "source_chunk_id": "child-ab3cbff583ed37bf643c8548",
+        "evidence_span": "gangsta rappers NWA and Metallica also topped the US album charts",
+        "confidence": 0.85,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "INSUFFICIENT_EVIDENCE",
+        "confidence": 1.0,
+        "evidence_span": null,
+        "reason": "claim_time_not_grounded"
+      }
+    },
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "child-ab3cbff583ed37bf643c8548",
+      "parent_id": "parent-000278c5c52880de721efb46",
+      "chunk_content_sha256": "3e683954ffa380de8951c125ed23b02710a4fc3af393cf8dc10f9457ee8cae60",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:d6b6e87ad14fd601c8503d0c0e4438a221823fbed70e26e769a57e612cbadff7"
+      },
+      "claim": {
+        "claim_id": "claim:2deaea1fc45cca3fd0b178f5",
+        "statement": "REM went to #1 with their album Out Of Time in 1991.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "chart_position",
+        "object_entity_id": null,
+        "object_value": "#1",
+        "time": {
+          "year": 1991,
+          "date": null,
+          "start_year": null,
+          "end_year": null,
+          "raw": "1991"
+        },
+        "source_chunk_id": "child-ab3cbff583ed37bf643c8548",
+        "evidence_span": "REM, now signed to major label Warner Bros, went to #1 with their album Out Of Time",
+        "confidence": 0.9,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "INSUFFICIENT_EVIDENCE",
+        "confidence": 1.0,
+        "evidence_span": null,
+        "reason": "claim_time_not_grounded"
+      }
+    },
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "parent-4c450003640694212f279db8",
+      "parent_id": null,
+      "chunk_content_sha256": "6a9a26c50eb605bf7ef9b29a7ae8d378489ff73e73ec91fe2769d30cd35ba80e",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:02e39619503d4debb89503ed1228fb305fc7dd9eebcdf5128f224c91c00f30a2"
+      },
+      "claim": {
+        "claim_id": "claim:cff43835ae0bab3108dc933c",
+        "statement": "Nirvana stood on the shoulders of Pixies.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "influenced_by",
+        "object_entity_id": "artist:pixies",
+        "object_value": null,
+        "time": null,
+        "source_chunk_id": "parent-4c450003640694212f279db8",
+        "evidence_span": "stood on the shoulders of giants such as REM and Pixies and The Replacements and Sonic Youth",
+        "confidence": 0.7,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "PARTIALLY_SUPPORTED",
+        "confidence": 0.9,
+        "evidence_span": "stood on the shoulders of giants such as REM and Pixies and The Replacements and Sonic Youth",
+        "reason": "The source states that a band (hypothetically, if not Nirvana) 'stood on the shoulders of giants such as REM and Pixies...'. This supports the idea that Nirvana (or a band in that position) was influenced by Pixies. However, the claim's phrasing 'Nirvana stood on the shoulders of Pixies' is a specific attribution that is only implied, not explicitly stated as a direct fact about Nirvana; the sentence is a counterfactual about another band. Thus, only part of the claim is explicit."
+      }
+    },
+    {
+      "source_id": "wl-native-v2-002",
+      "document_id": "doc-wl-native-v2-002-dd868528eddc49706ffe",
+      "chunk_id": "child-54cd91a89af3b07927b1f829",
+      "parent_id": "parent-4c450003640694212f279db8",
+      "chunk_content_sha256": "6a9a26c50eb605bf7ef9b29a7ae8d378489ff73e73ec91fe2769d30cd35ba80e",
+      "knowledge_provenance": {
+        "entity_linking_version": "v4",
+        "claim_extraction_version": "v10",
+        "claim_verification_version": "v3",
+        "registry_version": "v4",
+        "prompt_version": "v1",
+        "knowledge_input_hash": "sha256:6965c34650c3be18670cb2627a9e0b8bdba67755b0128450a48af4ef2b397ccb"
+      },
+      "claim": {
+        "claim_id": "claim:823aaa26b483133ffa78e110",
+        "statement": "Nirvana stood on the shoulders of Pixies.",
+        "subject_entity_id": "artist:nirvana",
+        "predicate": "influenced_by",
+        "object_entity_id": "artist:pixies",
+        "object_value": null,
+        "time": null,
+        "source_chunk_id": "child-54cd91a89af3b07927b1f829",
+        "evidence_span": "it would have been another band that stood on the shoulders of giants such as REM and Pixies and The Replacements and Sonic Youth",
+        "confidence": 0.6,
+        "extraction_source": "llm"
+      },
+      "verification": {
+        "status": "CONTRADICTED",
+        "confidence": 0.95,
+        "evidence_span": "it would have been another band that stood on the shoulders of giants such as REM and Pixies and The Replacements and Sonic Youth",
+        "reason": "The source states that another band (not Nirvana) would have stood on the shoulders of giants such as Pixies, meaning Pixies influenced that hypothetical band, not Nirvana. The claim that Nirvana stood on the shoulders of Pixies is incompatible with the source's conditional framing."
+      }
+    }
+  ],
+  "knowledge_warnings": {
+    "claim_extraction_llm_incomplete:max_output_tokens": 7,
+    "claim_extraction_invalid_output": 2
+  },
+  "provider": {
+    "model": "deepseek-flash",
+    "calls": 193,
+    "stage_counts": {
+      "extraction": 104,
+      "verification": 89
+    },
+    "request_status_counts": {
+      "completed": 163,
+      "failed": 30
+    },
+    "error_types": {
+      "RuntimeError": 30
+    },
+    "latency_ms_median": 3791.59,
+    "latency_ms_max": 9138.83
+  },
+  "runtime": {
+    "retrieval_mode": "hybrid",
+    "index_manifest": "data/indexing/worldline/source-context-20260926/v4/index_build_manifest.json",
+    "manifest_sha256": "a74164c52346dd4050468d2e491dfe5993abec16cb70122d9df7d693769d2f17",
+    "approval_status": "approved"
+  },
+  "artifact_hashes": {
+    "knowledge_enriched_chunks.jsonl": "67c26c9900a29fb2b84be37cdb1053c9e051ee3b9bb60f18419e9bac79a57dbc",
+    "provider_trace.jsonl": "b95c41112e7c349ad19d65f28927af5697c024429efb858ca1ed7e9c5e7c7c8a",
+    "native_preparation_run.json": "b4d94f86065bbac0d24d97cba25979d9de86346a99a39e101c78cb593dd73481",
+    "knowledge_quality_report.json": "9fe3b07199457fb4c1ceeaeca46984a8d0f4918b034fc76b24fb69b3bbf66c38"
+  },
+  "new_release_ready": false,
+  "can_run_final_worldline_acceptance": false
+}

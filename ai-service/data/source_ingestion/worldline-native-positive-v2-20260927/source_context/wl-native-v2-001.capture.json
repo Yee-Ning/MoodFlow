@@ -1,0 +1,37 @@
+{
+  "document_id": "doc-wl-native-v2-001-3b9acc738bff7ee9b2ae",
+  "source_id": "wl-native-v2-001",
+  "capture": {
+    "source_url": "https://www.wsws.org/en/articles/2012/12/05/nirv-d05.html",
+    "publisher": "World Socialist Web Site",
+    "title": "Assessing an American pop icon",
+    "locator": "article#article p; decoded DOM text [1328:1754]",
+    "captured_at": "2026-09-27T02:00:36.318583Z",
+    "capture_method": "verbatim_web_excerpt",
+    "response_sha256": "dda83b56f08bad394c250dfb419d917f58445d7cf8bb3180adb04ed7e137626c",
+    "content": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s. Nirvana was influenced by such groups as The Melvins and especially the American punk group, The Pixies.",
+    "content_sha256": "49096284635d82d82740ade3ea004d0884e9dbf001628128c49e37c954a44a9c",
+    "segments": [
+      {
+        "role": "article_sentence",
+        "exact_span": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s. Nirvana was influenced by such groups as The Melvins and especially the American punk group, The Pixies.",
+        "start": 0,
+        "end": 426
+      }
+    ]
+  },
+  "provenance": {
+    "raw_path": "data/raw/html/wl-native-v2-001--20260927T020036.318583Z--dda83b56f08bad39.html",
+    "response_sha256": "dda83b56f08bad394c250dfb419d917f58445d7cf8bb3180adb04ed7e137626c",
+    "content_sha256": "49096284635d82d82740ade3ea004d0884e9dbf001628128c49e37c954a44a9c",
+    "source_text_start": 1328,
+    "source_text_end": 1754,
+    "source_text_sha256": "0abdf8ce2d4f290090708fe8387a9edabe0c238ce711a56218ed1ad44c1ba2cd",
+    "locator": "article#article p; decoded DOM text [1328:1754]",
+    "offset_unit": "unicode_code_point_in_verbatim_decoded_DOM_text",
+    "extraction_method": "BeautifulSoup; remove script/style; separator='' strip=False"
+  },
+  "interview_question": null,
+  "interview_answer": null,
+  "speaker_binding": null
+}
