@@ -1,0 +1,171 @@
+{
+  "manifest_sha256": "445b7263221ae5864015752a6689e5d8303c21409407375a6e0b33ac831f50f3",
+  "release_id": "knowledge-v2-daa965c10984eefa",
+  "collection": "worldline_knowledge_v4_daa965c10984eefa_v1_v2_v4",
+  "candidates": 3,
+  "channels": [
+    "dense",
+    "lexical"
+  ],
+  "bindings": [
+    {
+      "relation_type": "emerged_from_scene",
+      "evidence": {
+        "evidence_id": "knowledge:scene:891610c9c8887e424a61c90b",
+        "source_id": "knowledge:scene:891610c9c8887e424a61c90b",
+        "claim_id": "claim:fd05f277d5d1fa9457b3b85a",
+        "exact_span": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s.",
+        "start_year": null,
+        "end_year": null,
+        "raw_time": null,
+        "confidence": 0.9
+      },
+      "source": {
+        "id": "knowledge:scene:891610c9c8887e424a61c90b",
+        "source_type": "knowledge",
+        "title": "Assessing an American pop icon",
+        "source": "World Socialist Web Site",
+        "url": "https://www.wsws.org/en/articles/2012/12/05/nirv-d05.html",
+        "excerpt": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s.",
+        "metadata": {
+          "document_id": "parent-b94cc092da9fb51f19658233",
+          "source_id": "wl-native-v2-001",
+          "source_locator": "Assessing an American pop icon > Nick Barrickman5 December 2012",
+          "source_content_sha256": "81a2764460d408e7f67a2c158a859cf7091c65c849474418f6d60bbef2081b7b",
+          "source_release_id": "knowledge-v2-daa965c10984eefa",
+          "knowledge_input_hash": "sha256:c8d3ee41ac93c3ebfceb3bba66879a3bb3bdc9f2ac58f7158566561b39fd66e2",
+          "index_input_hash": "sha256:e3110d3b8108491c6e8506481409641804e8bad1db6493be533dfbd25ce54ada",
+          "source_published_at": "2012-12-05",
+          "relation_source_context": {
+            "schema_version": "relation-source-context-v1",
+            "context_id": "context:b31320bd489f8cfd5650d90e",
+            "source_id": "wl-native-v2-001",
+            "document_id": "parent-b94cc092da9fb51f19658233",
+            "chunk_id": "child-8b686e5334c7b896431e157f",
+            "claim_id": "claim:fd05f277d5d1fa9457b3b85a",
+            "source_url": "https://www.wsws.org/en/articles/2012/12/05/nirv-d05.html",
+            "publisher": "World Socialist Web Site",
+            "title": "Assessing an American pop icon",
+            "locator": "article#article p; decoded DOM text [1328:1754]",
+            "captured_at": "2026-09-27T03:18:12.903630Z",
+            "capture_method": "verbatim_web_excerpt",
+            "response_sha256": "dda83b56f08bad394c250dfb419d917f58445d7cf8bb3180adb04ed7e137626c",
+            "source_content_sha256": "81a2764460d408e7f67a2c158a859cf7091c65c849474418f6d60bbef2081b7b",
+            "content": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s. Nirvana was influenced by such groups as The Melvins and especially the American punk group, The Pixies.",
+            "content_sha256": "49096284635d82d82740ade3ea004d0884e9dbf001628128c49e37c954a44a9c",
+            "anchor": {
+              "role": "article_sentence",
+              "exact_span": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s.",
+              "start": 0,
+              "end": 321
+            },
+            "segments": [
+              {
+                "role": "article_sentence",
+                "exact_span": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s. Nirvana was influenced by such groups as The Melvins and especially the American punk group, The Pixies.",
+                "start": 0,
+                "end": 426
+              }
+            ]
+          },
+          "parent_id": "parent-b94cc092da9fb51f19658233",
+          "child_id": "child-8b686e5334c7b896431e157f",
+          "claim_id": "claim:fd05f277d5d1fa9457b3b85a",
+          "source_chunk_id": "child-8b686e5334c7b896431e157f",
+          "context_version": "v1",
+          "retrieval_version": "v1",
+          "scene_expansion_version": "v1",
+          "validator_version": "v1"
+        }
+      },
+      "grounding": null,
+      "grounding_present": false,
+      "source_context_anchor": {
+        "role": "article_sentence",
+        "exact_span": "Nirvana—consisting of lead vocalist-guitarist Kurt Cobain (1967-1994), bass guitarist Krist (credited as Chris) Novoselic and drummer-guitarist David Grohl—emerged from the “Grunge-rock” scene, a West Coast variant of punk, which originated in Seattle, near the band’s hometown of Aberdeen, Washington, in the late 1980s.",
+        "start": 0,
+        "end": 321
+      }
+    },
+    {
+      "relation_type": "influenced",
+      "evidence": {
+        "evidence_id": "knowledge:influence:3d36044aeffb65729063736d",
+        "source_id": "knowledge:influence:3d36044aeffb65729063736d",
+        "claim_id": "claim:fe72b27603b613b82780f909",
+        "exact_span": "American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+        "confidence": 0.95,
+        "strength": "historical_attribution",
+        "stance": "support"
+      },
+      "source": {
+        "id": "knowledge:influence:3d36044aeffb65729063736d",
+        "source_type": "knowledge",
+        "title": "Kurt Cobain's legacy is evident in the music from the year he died",
+        "source": "ABC News",
+        "url": "https://www.abc.net.au/news/2024-04-05/30-years-kurt-cobain-died-alternative-music-1994/103652402",
+        "excerpt": "American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+        "metadata": {
+          "document_id": "parent-82a83cea106e0a0b5c611097",
+          "source_id": "wl-native-v2-002",
+          "source_locator": "Kurt Cobain's legacy is evident in the music from the year he died > Anarchy in the UK",
+          "source_content_sha256": "55b1e70f48476ae44ab7d72442958086b03dc2dda173bfb0158f10eedf723dc2",
+          "source_release_id": "knowledge-v2-daa965c10984eefa",
+          "knowledge_input_hash": "sha256:efc3e697ffd1f403d4f17ba29238133420136486630c40758afb88e61f77e78c",
+          "index_input_hash": "sha256:0d1c7740145669781b31bbf91d250417df9b5336e3b3db6e9a6e487328606f28",
+          "source_published_at": "2024-04-05",
+          "relation_source_context": {
+            "schema_version": "relation-source-context-v1",
+            "context_id": "context:5ab8c994464aa9b309dd03eb",
+            "source_id": "wl-native-v2-002",
+            "document_id": "parent-82a83cea106e0a0b5c611097",
+            "chunk_id": "child-97b7f05741b56b6909b02407",
+            "claim_id": "claim:fe72b27603b613b82780f909",
+            "source_url": "https://www.abc.net.au/news/2024-04-05/30-years-kurt-cobain-died-alternative-music-1994/103652402",
+            "publisher": "ABC News",
+            "title": "Kurt Cobain's legacy is evident in the music from the year he died",
+            "locator": "main#content p; decoded DOM text [15652:15815]",
+            "captured_at": "2026-09-27T03:18:14.989013Z",
+            "capture_method": "verbatim_web_excerpt",
+            "response_sha256": "c24ba194455764abd4da78284a7b102f8e30e2156ea5b145197146b40c8c2f25",
+            "source_content_sha256": "55b1e70f48476ae44ab7d72442958086b03dc2dda173bfb0158f10eedf723dc2",
+            "content": "For example, American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+            "content_sha256": "464f7c72c464758dc23f75f55365c8035757bcebd7222705957d5357aa4e8e1e",
+            "anchor": {
+              "role": "article_sentence",
+              "exact_span": "American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+              "start": 13,
+              "end": 163
+            },
+            "segments": [
+              {
+                "role": "article_sentence",
+                "exact_span": "For example, American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+                "start": 0,
+                "end": 163
+              }
+            ]
+          },
+          "parent_id": "parent-82a83cea106e0a0b5c611097",
+          "child_id": "child-97b7f05741b56b6909b02407",
+          "claim_id": "claim:fe72b27603b613b82780f909",
+          "source_chunk_id": "child-97b7f05741b56b6909b02407",
+          "context_version": "v1",
+          "retrieval_version": "v1",
+          "influence_expansion_version": "v1",
+          "validator_version": "v1",
+          "influence_stance": "support",
+          "influence_strength": "historical_attribution"
+        }
+      },
+      "grounding": null,
+      "grounding_present": false,
+      "source_context_anchor": {
+        "role": "article_sentence",
+        "exact_span": "American alt-rockers Pixies, who had a profound influence on Nirvana, had three top-10 albums in the UK before they even cracked the Billboard top 60.",
+        "start": 13,
+        "end": 163
+      }
+    }
+  ]
+}

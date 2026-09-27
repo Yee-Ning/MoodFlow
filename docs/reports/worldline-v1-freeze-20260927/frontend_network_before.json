@@ -1,0 +1,26 @@
+[
+  {
+    "method": "Network.requestWillBeSent",
+    "requestId": "6228.152",
+    "url": "http://127.0.0.1:5173/api/ai/worldline/sessions",
+    "postData": "{\"query\":\"乐队《Pixies》的年代、scene 和影响关系\"}"
+  },
+  {
+    "method": "Network.responseReceived",
+    "requestId": "6228.152",
+    "url": "http://127.0.0.1:5173/api/ai/worldline/sessions",
+    "status": 200
+  },
+  {
+    "method": "Network.requestWillBeSent",
+    "requestId": "6228.153",
+    "url": "http://127.0.0.1:5173/api/ai/worldline/explore",
+    "postData": "{\"session_id\":\"05d5e607f38c42e089582bff961b2fff\",\"branch_id\":\"wlb:1:25987792b4bb450d8d2b381f21a7f569\"}"
+  },
+  {
+    "method": "Network.responseReceived",
+    "requestId": "6228.153",
+    "url": "http://127.0.0.1:5173/api/ai/worldline/explore",
+    "status": 200
+  }
+]

@@ -1,0 +1,58 @@
+{
+  "flags": {
+    "runtime_entity_binding_pass": true,
+    "scene_relation_online_pass": true,
+    "influence_relation_online_pass": true,
+    "postgres_restart_acceptance": true,
+    "frontend_contract_pass": true,
+    "online_e2e_pass": true,
+    "session_recovery_pass": true,
+    "retrieval_runtime_pass": true,
+    "provider_generation_pass": true,
+    "worldline_v1_freeze_ready": true
+  },
+  "session_id": "05d5e607f38c42e089582bff961b2fff",
+  "revisions": [
+    1,
+    2,
+    2,
+    3
+  ],
+  "graph_sizes": [
+    {
+      "nodes": 11,
+      "edges": 10
+    },
+    {
+      "nodes": 12,
+      "edges": 11
+    },
+    {
+      "nodes": 12,
+      "edges": 11
+    },
+    {
+      "nodes": 13,
+      "edges": 12
+    }
+  ],
+  "checkpoint_counts": [
+    6,
+    6,
+    6,
+    9
+  ],
+  "before_recover_exact_match": true,
+  "preserved_nodes": 12,
+  "preserved_edges": 11,
+  "preserved_sources": 7,
+  "preserved_scene_relations": 1,
+  "preserved_influence_relations": 1,
+  "era_relation_count": 0,
+  "api_process_ids": [
+    17716,
+    32992
+  ],
+  "model_generation_count": 6,
+  "code_baseline_commit": "7afc619"
+}

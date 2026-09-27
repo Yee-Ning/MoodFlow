@@ -1,0 +1,25 @@
+[
+  {
+    "method": "Network.requestWillBeSent",
+    "requestId": "6228.297",
+    "url": "http://127.0.0.1:5173/api/ai/worldline/sessions/05d5e607f38c42e089582bff961b2fff"
+  },
+  {
+    "method": "Network.responseReceived",
+    "requestId": "6228.297",
+    "url": "http://127.0.0.1:5173/api/ai/worldline/sessions/05d5e607f38c42e089582bff961b2fff",
+    "status": 200
+  },
+  {
+    "method": "Network.requestWillBeSent",
+    "requestId": "6228.305",
+    "url": "http://127.0.0.1:5173/api/ai/worldline/explore",
+    "postData": "{\"session_id\":\"05d5e607f38c42e089582bff961b2fff\",\"branch_id\":\"wlb:2:3d62fd665f92493eb71eaa059243aacb\"}"
+  },
+  {
+    "method": "Network.responseReceived",
+    "requestId": "6228.305",
+    "url": "http://127.0.0.1:5173/api/ai/worldline/explore",
+    "status": 200
+  }
+]
