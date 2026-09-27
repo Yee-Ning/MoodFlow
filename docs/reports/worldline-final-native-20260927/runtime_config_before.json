@@ -1,0 +1,6 @@
+{
+  "AI_RAG_RETRIEVAL_MODE": "hybrid",
+  "AI_RAG_RERANK_MODE": null,
+  "AI_RAG_INDEX_MANIFEST": "data/indexing/worldline/source-context-20260926/v4/index_build_manifest.json",
+  "CHECKPOINT_BACKEND": "postgres"
+}

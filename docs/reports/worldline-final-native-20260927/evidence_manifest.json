@@ -1,0 +1,35 @@
+{
+  "artifacts": {
+    "acceptance_evidence.json": "93d906182ac5c241dca6a1d377735e28b20373a6cb82062f524c9a1f47573abe",
+    "continuation_response.json": "ad9c461791bc416a89b3883079b75f25ba9a6b9a40457c0b185a649926ef558c",
+    "create_response.json": "ea54740c13fba8e74548e278e99654cf7756740a1ecb5a9ccd68cfadfaebcc4a",
+    "explore_before_restart_response.json": "68cb8b8a79c73d130d0c02ddac19e9363ab1f741b58bd12ec59f86cfecd58441",
+    "frontend_dom_revision3.txt": "d0f234b83a0b40a8de1b68bc9d0ec51291586ac9de92eeb230a1c804d88287bb",
+    "frontend_network_evidence.json": "3e55e8a0e003ba8e448919b5e174444e50eede633b6f44355344992edd6f8e73",
+    "frontend_revision3_top.png": "d68264fae45d0d75b749395bae98a34fef8a3d78859b949bb140673308af0626",
+    "online_trace_after_restart.jsonl": "3c1ef7709cfa6fdde846c4e5925f30dbc1ef33755de4dfb44763cc7501d93166",
+    "online_trace_before_restart.jsonl": "1951de9a199449f79630552cc042a4ef4fec741ebbdeb5937da8501c623a29ed",
+    "postgres_after_continuation.json": "00948cf6c87f9305882d5c5ec837d43abc48660cef6134c0812731209e55e975",
+    "postgres_after_recover.json": "44609b02258033a8c3789381c08747e95e4b1c6e3da6e0d453937b88d9b0b94b",
+    "postgres_before_stop.json": "2f2fef645a493267be234c4c46d3ec86f2d4282e29fa8b206b001674fce39078",
+    "postgres_process_stopped.json": "e38ee0de2892610bfcff2978fb510a74c8bc8442f87ee618fe136a00e3c3b9e7",
+    "provider_generation_evidence.json": "55ce6bd45ab1d9d9371957117eab327e93f0f3c670cf1d935ce0dd58f72b6dce",
+    "recover_response.json": "68cb8b8a79c73d130d0c02ddac19e9363ab1f741b58bd12ec59f86cfecd58441",
+    "runtime_candidate_binding_evidence.json": "42b70b2e14c369ef2e42e768ed08417cc66c36540a57ccab2935e991d6ce6b26",
+    "runtime_config_before.json": "0b27e74604cf8666ddfc54d25392aebd7ebce2f392e9df74790b09552603a044"
+  },
+  "original_fastapi_python_pids": [
+    16612,
+    30452
+  ],
+  "restarted_fastapi_python_pids": [
+    41004,
+    13388
+  ],
+  "restored_plain_uvicorn_pids": [
+    44404,
+    6304
+  ],
+  "postgres_restart_or_data_mutation_performed": false,
+  "observer_service_overrides": false
+}

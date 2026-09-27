@@ -1,0 +1,38 @@
+{
+  "create": [
+    {
+      "method": "Network.responseReceived",
+      "url": "http://127.0.0.1:5173/api/ai/worldline/sessions",
+      "status": 200,
+      "requestId": "44064.151"
+    }
+  ],
+  "explore": [
+    {
+      "method": "Network.requestWillBeSent",
+      "url": "http://127.0.0.1:5173/api/ai/worldline/explore",
+      "requestId": "44064.152"
+    },
+    {
+      "method": "Network.responseReceived",
+      "url": "http://127.0.0.1:5173/api/ai/worldline/explore",
+      "status": 200,
+      "requestId": "44064.152"
+    }
+  ],
+  "continuation": [
+    {
+      "method": "Network.requestWillBeSent",
+      "url": "http://127.0.0.1:5173/api/ai/worldline/explore",
+      "requestId": "44064.304"
+    },
+    {
+      "method": "Network.responseReceived",
+      "url": "http://127.0.0.1:5173/api/ai/worldline/explore",
+      "status": 200,
+      "requestId": "44064.304"
+    }
+  ],
+  "recoverObservedBy": "production WorldLineSessionService.recover trace and UI revision 2 after page reload",
+  "consoleErrors": []
+}

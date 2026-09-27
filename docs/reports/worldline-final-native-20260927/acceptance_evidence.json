@@ -1,0 +1,64 @@
+{
+  "flags": {
+    "scene_native_positive_ready": true,
+    "influence_native_positive_ready": true,
+    "new_release_ready": true,
+    "retrieval_runtime_pass": true,
+    "provider_generation_pass": true,
+    "session_recovery_pass": true,
+    "postgres_restart_acceptance": false,
+    "frontend_contract_pass": false,
+    "online_e2e_pass": false,
+    "worldline_v1_freeze_ready": false
+  },
+  "code_revision": "165709a5ded9659b76217645a940219832d90a08",
+  "session_id": "bc8ee3a12b0843cab03485288d90bb88",
+  "revision_sequence": [
+    1,
+    2,
+    2,
+    3
+  ],
+  "graph_counts": {
+    "before": [
+      10,
+      9
+    ],
+    "recover": [
+      10,
+      9
+    ],
+    "continuation": [
+      11,
+      10
+    ]
+  },
+  "restart": {
+    "before_python_pid": 30452,
+    "after_python_pid": 13388,
+    "recover_response_exactly_equal": true,
+    "postgres_started_at_unchanged": true,
+    "storage_unchanged_while_stopped_and_after_recover": true,
+    "checkpoint_counts": [
+      6,
+      9
+    ],
+    "actual_savers": [
+      "AsyncCompatiblePostgresSaver"
+    ],
+    "old_nodes_preserved_after_continuation": true,
+    "old_edge_identity_and_evidence_preserved_after_continuation": true,
+    "old_sources_exactly_preserved_after_continuation": true,
+    "nonempty_native_relations_direction_stance_flags_recovery_verified": false,
+    "mechanics_pass": true
+  },
+  "frontend_happy_path_contract_pass": true,
+  "native_relation_expansion_pass": false,
+  "native_relation_counts": [
+    0,
+    0,
+    0
+  ],
+  "provider_generations": 7,
+  "root_cause": "Knowledge claim endpoint artist:nirvana has no validated runtime graph entity binding; candidate extractors require endpoints already in graph and silently return None before validator."
+}
