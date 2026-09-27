@@ -1,0 +1,205 @@
+﻿path,category,bytes,files,recommendation
+ai-service/.venv,B,5094242658,46634,rebuild/install
+ai-service/data,C,3038853164,995,unselected corpus/index/staging; retain locally
+deployment-artifacts/huggingface,A,1207469240,6,source/config/runtime assets; Docker uses narrower allowlist
+.git/objects,C,652127532,6149,archive/exclude; retain locally
+soul-music-room/node_modules,B,264667691,21055,rebuild/install
+ai-service/tmp,C,260430770,77,archive/exclude; retain locally
+.git/modules,C,150416355,28,archive/exclude; retain locally
+visual-qa/mineradio-upstream,C,126296017,10057,non-runtime Eval/visual QA environment; retain locally
+ai-service/.venv-eval,C,125919404,12030,non-runtime Eval/visual QA environment; retain locally
+ai-service/evals,C,119255408,734,archive/exclude; retain locally
+netease-music-api/node_modules,B,110112393,15275,rebuild/install
+deployment-artifacts/artifacts,A,96275033,8,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/artifacts,A,96275033,8,foundation intent classifier runtime asset
+docs/reports,C,28624755,212,archive/exclude; retain locally
+music-backend/target,B,20225038,51,rebuild/install
+netease-music-api/public,A,13522398,36,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/dist,B,12755247,30,rebuild/install
+soul-music-room/public,A,8409863,18,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/.deepeval,C,4942577,1,archive/exclude; retain locally
+ai-service/tests,B,4397396,280,rebuild/install
+netease-music-api/module_example,A,3851542,8,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/data,C,3793263,121,archive/exclude; retain locally
+soul-music-room/src,A,3530068,124,source/config/runtime assets; Docker uses narrower allowlist
+.git/modules,C,2823892,29,non-runtime Eval/visual QA environment; retain locally
+ai-service/app,B,2793770,351,rebuild/install
+ai-service/evals,B,2172352,91,rebuild/install
+ai-service/app,A,2135313,389,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/data,A,1854473,16,approved artifact; only locked files exported
+deployment-artifacts/data,A,1533682,12,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/tests,C,1410028,167,development checks; migration CLI explicitly included in image
+netease-music-api/data,A,1399343,2,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/__pycache__,B,309307,27,rebuild/install
+soul-music-room/package-lock.json,A,299255,1,source/config/runtime assets; Docker uses narrower allowlist
+.git/index,C,239447,1,archive/exclude; retain locally
+docs/deployment-preparation,A,218736,11,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/.dev,C,202401,16,archive/exclude; retain locally
+netease-music-api/pnpm-lock.yaml,A,183508,1,source/config/runtime assets; Docker uses narrower allowlist
+docs/plans,A,182261,10,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/module,A,169978,407,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/.pytest_cache,B,168958,5,rebuild/install
+ai-service/scripts,B,166886,21,rebuild/install
+visual-qa/library-final-turn2.png,C,157005,1,non-runtime Eval/visual QA environment; retain locally
+visual-qa/library-final-volume-turn2.png,C,141043,1,non-runtime Eval/visual QA environment; retain locally
+.dev/logs,C,134110,8,archive/exclude; retain locally
+.git/logs,C,120434,5,archive/exclude; retain locally
+visual-qa/mineradio-turn2.png,C,118204,1,non-runtime Eval/visual QA environment; retain locally
+ai-service/scripts,C,105770,19,development checks; migration CLI explicitly included in image
+docs/superpowers,A,95649,7,source/config/runtime assets; Docker uses narrower allowlist
+music-backend/src,A,91571,34,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/util,A,80783,12,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/tmp,B,76968,5,rebuild/install
+deploy/tests,B,74206,2,rebuild/install
+netease-music-api/interface.d.ts,A,60387,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/README.md,A,57492,1,source/config/runtime assets; Docker uses narrower allowlist
+docs/audits,C,38668,1,archive/exclude; retain locally
+ai-service/run_rag_hybrid_shadow_baseline.py,A,37386,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/__pycache__,B,36702,5,rebuild/install
+ai-service/run_rag_gold_v4_audit.py,A,34809,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/scripts,C,34581,5,development checks; migration CLI explicitly included in image
+deployment_preparation_report.md,A,30988,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/.ruff_cache,B,30928,12,rebuild/install
+soul-music-room/LICENSE,A,28529,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_gold_v4_expand.py,A,26576,1,source/config/runtime assets; Docker uses narrower allowlist
+.git/hooks,C,25827,14,archive/exclude; retain locally
+ai-service/run_context_adapter_tuning.py,A,23208,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_gold_v4_frozen_analysis.py,A,22486,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/.github,A,21113,9,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/artifacts,C,16585,2,training metrics/error analysis; retain locally
+netease-music-api/scripts,C,16123,1,development checks; migration CLI explicitly included in image
+deploy/tests,C,15136,1,development checks; migration CLI explicitly included in image
+ai-service/run_rag_v4_answerability_replay.py,A,15121,1,source/config/runtime assets; Docker uses narrower allowlist
+memory_v1_implementation_report.md,A,13877,1,source/config/runtime assets; Docker uses narrower allowlist
+worldline_final_blocker_report.md,A,13862,1,source/config/runtime assets; Docker uses narrower allowlist
+start-dev.ps1,A,13367,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/server.js,A,13255,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/design-qa.md,A,12779,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_evidence_group_replay.py,A,12566,1,source/config/runtime assets; Docker uses narrower allowlist
+.idea/workspace.xml,C,11016,1,archive/exclude; retain locally
+netease-music-api/README.MD,A,10506,1,source/config/runtime assets; Docker uses narrower allowlist
+worldline_v1_freeze_report.md,A,10161,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/runtime.py,A,9907,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_retrieval_eval.py,A,8887,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_clean.py,A,8711,1,source/config/runtime assets; Docker uses narrower allowlist
+postgres_pgvector_migration_report.md,A,8688,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_eval.py,A,8353,1,source/config/runtime assets; Docker uses narrower allowlist
+.pytest_cache/v,B,6661,2,rebuild/install
+ai-service/run_retrieval.py,A,6369,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/migrations,A,6061,2,source/config/runtime assets; Docker uses narrower allowlist
+docker-compose.production.yml,A,5780,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_trace_collection.py,A,5322,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/audit_inventory.py,A,4595,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/proxy_smoke.py,A,4519,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_enrich.py,A,4084,1,source/config/runtime assets; Docker uses narrower allowlist
+music-backend/pom.xml,A,4004,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/plugins,A,3836,2,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_knowledge.py,A,3726,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_knowledge_release.py,A,3714,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/package.json,A,3648,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/frozen-artifacts.json,A,3561,1,source/config/runtime assets; Docker uses narrower allowlist
+AGENTS.md,A,3401,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_index.py,A,3366,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_chunk.py,A,3230,1,source/config/runtime assets; Docker uses narrower allowlist
+.ruff_cache/0.13.2,B,3145,7,rebuild/install
+ai-service/run_parse.py,A,3127,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/test,A,3125,5,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_parse_corpus.py,A,2926,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_jev_eval.py,A,2812,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_query_understanding.py,A,2747,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_answer_generation.py,A,2564,1,source/config/runtime assets; Docker uses narrower allowlist
+stop-dev.ps1,A,2536,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/README.md,A,2427,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/artifacts.py,A,2405,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_gold_review_prep.py,A,2281,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/requirements.production.txt,A,2252,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_gold_evidence_pack.py,A,2184,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_gold_v3_finalize.py,A,2129,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/.env,C,1834,1,local environment; secrets provisioned separately
+netease-music-api/eslint.config.js,A,1790,1,source/config/runtime assets; Docker uses narrower allowlist
+.env.example,A,1676,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/model_cache.py,A,1590,1,source/config/runtime assets; Docker uses narrower allowlist
+scripts/test-dev-scripts.ps1,C,1582,1,development checks; migration CLI explicitly included in image
+ai-service/run_rag_gold_source_adjudication.py,A,1542,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/package.json,A,1540,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/AGENTS.md,A,1512,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/main.js,A,1440,1,source/config/runtime assets; Docker uses narrower allowlist
+.dev/processes.json,C,1414,1,archive/exclude; retain locally
+.idea/MoodFlow.iml,C,1392,1,archive/exclude; retain locally
+DEVELOPMENT.md,A,1364,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_gold_outcome_policy.py,A,1293,1,source/config/runtime assets; Docker uses narrower allowlist
+.dockerignore,A,1283,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/.husky,A,1258,17,source/config/runtime assets; Docker uses narrower allowlist
+deploy/model-cache-manifest.json,A,1251,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_rag_gold_finalize.py,A,1250,1,source/config/runtime assets; Docker uses narrower allowlist
+.idea/compiler.xml,C,1249,1,archive/exclude; retain locally
+netease-music-api/generateConfig.js,A,1195,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/nginx.conf,A,1155,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/ai.Dockerfile,A,1147,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/LICENSE,A,1102,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/server.test.js,A,1035,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/.env.prod.example,C,1009,1,local environment; secrets provisioned separately
+deploy/HttpHealthCheck.java,A,1006,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/.env.example,A,951,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/java.Dockerfile,A,896,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/netease.Dockerfile,A,880,1,source/config/runtime assets; Docker uses narrower allowlist
+.idea/jarRepositories.xml,C,880,1,archive/exclude; retain locally
+.idea/misc.xml,C,827,1,archive/exclude; retain locally
+ai-service/run_rag_gold_candidate_audit.py,A,739,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/.editorconfig,A,707,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/frontend.Dockerfile,A,665,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/tsconfig.app.json,A,664,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/examples,A,631,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/tsconfig.json,A,618,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/eslint.config.js,A,591,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/vercel.json,A,588,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/components.json,A,576,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/requirements.txt,A,576,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/tsconfig.node.json,A,558,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/app.js,A,555,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/.gitignore,A,541,1,source/config/runtime assets; Docker uses narrower allowlist
+.git/config,C,526,1,archive/exclude; retain locally
+ai-service/.env.worldline-online.example,C,514,1,local environment; secrets provisioned separately
+netease-music-api/main.test.js,A,501,1,source/config/runtime assets; Docker uses narrower allowlist
+.git/refs,C,492,12,archive/exclude; retain locally
+soul-music-room/index.html,A,462,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/vite.config.ts,A,461,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/qdrant.Dockerfile,A,441,1,source/config/runtime assets; Docker uses narrower allowlist
+.gitignore,A,408,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/THIRD_PARTY_NOTICES.md,A,403,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/qdrant-health.sh,A,377,1,source/config/runtime assets; Docker uses narrower allowlist
+.idea/vcs.xml,C,331,1,archive/exclude; retain locally
+.idea/encodings.xml,C,316,1,archive/exclude; retain locally
+.pytest_cache/README.md,B,302,1,rebuild/install
+.idea/modules.xml,C,275,1,archive/exclude; retain locally
+.gitmodules,A,261,1,source/config/runtime assets; Docker uses narrower allowlist
+soul-music-room/.gitignore,A,253,1,source/config/runtime assets; Docker uses narrower allowlist
+.idea/inspectionProfiles,C,251,1,archive/exclude; retain locally
+.idea/.gitignore,C,250,1,archive/exclude; retain locally
+.git/info,C,240,1,archive/exclude; retain locally
+netease-music-api/Dockerfile,A,236,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/docker-compose.qdrant.yml,A,232,1,source/config/runtime assets; Docker uses narrower allowlist
+ai-service/run_worldline_eval.py,A,223,1,source/config/runtime assets; Docker uses narrower allowlist
+.idea/prettier.xml,C,194,1,archive/exclude; retain locally
+soul-music-room/tsconfig.json,A,193,1,source/config/runtime assets; Docker uses narrower allowlist
+.pytest_cache/CACHEDIR.TAG,B,191,1,rebuild/install
+ai-service/run_semantic_relations_eval.py,A,190,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/qdrant-start.sh,A,175,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/.dockerignore,A,169,1,source/config/runtime assets; Docker uses narrower allowlist
+music-backend/.mvn,A,168,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/.gitignore,A,125,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/pnpm-workspace.yaml,A,87,1,source/config/runtime assets; Docker uses narrower allowlist
+.git/COMMIT_EDITMSG,C,81,1,archive/exclude; retain locally
+netease-music-api/.prettierrc,A,74,1,source/config/runtime assets; Docker uses narrower allowlist
+.git/description,C,73,1,archive/exclude; retain locally
+netease-music-api/scf_bootstrap,A,65,1,source/config/runtime assets; Docker uses narrower allowlist
+.git/HEAD,C,48,1,archive/exclude; retain locally
+netease-music-api/.travis.yml,A,44,1,source/config/runtime assets; Docker uses narrower allowlist
+.ruff_cache/CACHEDIR.TAG,B,43,1,rebuild/install
+netease-music-api/.git,A,42,1,source/config/runtime assets; Docker uses narrower allowlist
+deploy/.gitattributes,A,42,1,source/config/runtime assets; Docker uses narrower allowlist
+.pytest_cache/.gitignore,B,37,1,rebuild/install
+.ruff_cache/.gitignore,B,35,1,rebuild/install
+netease-music-api/index.js,A,21,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/index.mjs,A,19,1,source/config/runtime assets; Docker uses narrower allowlist
+netease-music-api/.npmignore,A,14,1,source/config/runtime assets; Docker uses narrower allowlist

@@ -28,6 +28,7 @@ build/
 .env
 .env.*
 !.env.example
+deployment-artifacts/
 
 # ===== OS =====
 .DS_Store

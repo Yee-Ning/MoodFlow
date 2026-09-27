@@ -1,0 +1,30 @@
+{
+  "worldline_freeze_commit": "7afc619",
+  "freeze_report_commit": "fe24b04",
+  "manifest_path": "data/indexing/worldline/final-native-20260927/v4/index_build_manifest.json",
+  "collection_name": "worldline_knowledge_v4_daa965c10984eefa_v1_v2_v4",
+  "source_release_id": "knowledge-v2-daa965c10984eefa",
+  "projection_fingerprint": "sha256:1552c23089f8e9051011bd32d70020cdea22b3354e77f5d8dc04d61b34e6c418",
+  "files": {
+    "artifacts/intent_model/classifier_head.pt": "sha256:2ca187ac89e8fd269ac20da7cc3564c91c9d0413e98f20b622aa890faac55b84",
+    "artifacts/intent_model/encoder/config.json": "sha256:51ff37b1fb9f7cb9f480d07fb3f226ca55d578c15037fc8b315624657c2ef2a9",
+    "artifacts/intent_model/encoder/model.safetensors": "sha256:b994bb91c56d105a0bbcff2744f1a8ba4bbc9e990a0f2a70e3070d9cecd97d67",
+    "artifacts/intent_model/encoder/tokenizer.json": "sha256:75ce1f61959fea5e506c672b2353612ed6d8434faa5301384cdd20843133c1ab",
+    "artifacts/intent_model/encoder/tokenizer_config.json": "sha256:30ddc9a9df40863ccd4b27b8dafd760b8a46da2ca596b45b0ec36cdfe72680b1",
+    "artifacts/intent_model/label_mapping.json": "sha256:cbc0e4667a65620b642f0487bc76c5aa6d1b65674836965b03152f9416f9813d",
+    "artifacts/intent_model/thresholds.json": "sha256:f6ac1edb9a59d0025344b4379650b8d61d6993e2d8c2205b13db156f0f3a578b",
+    "artifacts/intent_model/training_config.json": "sha256:ad76ace84aec3a25e8fb0a580d9286827fb305d8e1d30c950121415cefdaddf4",
+    "data/indexing/worldline/final-native-20260927/v4/index_build_manifest.json": "sha256:445b7263221ae5864015752a6689e5d8303c21409407375a6e0b33ac831f50f3",
+    "data/indexing/worldline/final-native-20260927/v4/index_projection.jsonl": "sha256:1552c23089f8e9051011bd32d70020cdea22b3354e77f5d8dc04d61b34e6c418",
+    "data/indexing/worldline/final-native-20260927/v4/ready_index_approval.json": "sha256:36301da7de536e26ccdbd7d72d74d25257551415ad814bf264c98eb607319127",
+    "data/knowledge/releases/worldline-final-native-release-20260927/v2/entity_registry_candidates.jsonl": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "data/knowledge/releases/worldline-final-native-release-20260927/v2/knowledge_corpus_manifest.jsonl": "sha256:e9ef7bc05fbf0536be0a7b7417bfe28d05792888a8c3bc7dbac33ae68f59468c",
+    "data/knowledge/releases/worldline-final-native-release-20260927/v2/knowledge_enriched_chunks.jsonl": "sha256:38c28a4f2b2c94453567511cb959489c3c9a2fd1a5771020b304a04fc0140138",
+    "data/knowledge/releases/worldline-final-native-release-20260927/v2/knowledge_quality_report.json": "sha256:4b600aed15500d2ef742ad6d863231ee4a87164e5fd1d1fb9abad9a92c8da582",
+    "data/knowledge/releases/worldline-final-native-release-20260927/v2/knowledge_release_manifest.json": "sha256:8c9d8ed7e4c81ce85958aebfd207d9e22ec0425f5312bd7b32c7f367f6536d24",
+    "data/knowledge/releases/worldline-final-native-release-20260927/v2/qa/claim_review_sample.jsonl": "sha256:dd9db815c1463b97118c4648014388cd7ab651dcf5ffeb6c957d1cca240bfc80",
+    "data/knowledge/releases/worldline-final-native-release-20260927/v2/qa/entity_link_review_sample.jsonl": "sha256:f8f63ebe0d9a0dd8669c0df32a1a71ca7e065a51178f5d582642fd718a777d8d",
+    "data/knowledge/releases/worldline-final-native-release-20260927/v2/qa/qa_review_attestation.json": "sha256:8ef0cd8d5ae41279427983dd9f46cb818b734c70e446877946b4c7bd36006696",
+    "data/knowledge/releases/worldline-final-native-release-20260927/v2/qa/qa_sampling_manifest.json": "sha256:f6921e87c3c99395c9de7a089003aaf0a2ad1c93c73522cab785937513205312"
+  }
+}

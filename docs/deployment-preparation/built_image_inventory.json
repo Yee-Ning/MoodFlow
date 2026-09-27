@@ -1,0 +1,22 @@
+[
+  {
+    "service": "frontend",
+    "image_id": "sha256:8ee212427b6a51a595785ce75819c1b74660831a8799434b61ca585805dff888",
+    "size_bytes": 32522920
+  },
+  {
+    "service": "qdrant",
+    "image_id": "sha256:d55a1602d079ded592bb0199bac55a49accbb94918c429dc5e29890b197ca1d6",
+    "size_bytes": 70717394
+  },
+  {
+    "service": "netease",
+    "image_id": "sha256:6051bbdfd1ad7b1534d85d0a62ff3f82a029a5f78a87e90fec34344033ece7cf",
+    "size_bytes": 86680635
+  },
+  {
+    "service": "java",
+    "image_id": "sha256:14c50f6b0447cf4a577b57e5609b2cccb488c507b3589b46f2db5a32cff33e82",
+    "size_bytes": 117040751
+  }
+]
