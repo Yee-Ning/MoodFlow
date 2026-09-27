@@ -38,6 +38,9 @@ class ProviderTrace:
         content = payload.get("chunk_content")
         if isinstance(content, str):
             event["chunk_content_sha256"] = sha256(content.encode()).hexdigest()
+        for key in ("chunk_id", "batch_start", "batch_end"):
+            if key in payload:
+                event[key] = payload[key]
         try:
             result = await self.delegate.generate(payload, **kwargs)
             event["provider_output"] = result
@@ -68,7 +71,7 @@ async def run(root: Path, config_path: Path, registry_path: Path,
         config,
         entity_linker=EntityLinker(config, registry=registry),
         claim_extractor=ClaimExtractor(config, runtime=ProviderTrace(
-            ExistingLLMClaimExtractionRuntime(), "extraction", trace)),
+            ExistingLLMClaimExtractionRuntime(max_output_tokens=4096 if config.prompt_version == "v2" else None), "extraction", trace)),
         claim_verifier=ClaimVerifier(config, runtime=ProviderTrace(
             ExistingLLMClaimVerificationRuntime(), "verification", trace)),
     )
@@ -81,7 +84,7 @@ async def run(root: Path, config_path: Path, registry_path: Path,
                "elapsed_seconds": round(time.perf_counter() - started, 2),
                "config_path": config_path.relative_to(root).as_posix(),
                "registry_path": registry_path.relative_to(root).as_posix(),
-               "production_components_unchanged": True}
+               "claim_extraction_version": config.claim_extraction_version}
     (output_root / "native_preparation_run.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return summary

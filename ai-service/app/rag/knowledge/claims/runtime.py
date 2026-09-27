@@ -18,6 +18,9 @@ class ClaimExtractionRuntime(Protocol):
 
 
 class ExistingLLMClaimExtractionRuntime:
+    def __init__(self, *, max_output_tokens: int | None = None) -> None:
+        self.max_output_tokens = max_output_tokens
+
     async def generate(
         self,
         payload: dict[str, object],
@@ -40,6 +43,7 @@ class ExistingLLMClaimExtractionRuntime:
             instructions,
             schema,
             schema_name=schema_name,
+            **({"max_output_tokens": self.max_output_tokens} if self.max_output_tokens is not None else {}),
         )
         if response.status != "completed" or not response.output_text:
             detail = getattr(response, "incomplete_details", None)

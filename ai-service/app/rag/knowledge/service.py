@@ -12,6 +12,7 @@ from .config import KnowledgeConfig
 from .corpus import KnowledgeCorpusReader
 from .models import KnowledgeEnrichedChunk, KnowledgeStatus
 from .ownership import deduplicate_claim_ownership
+from .child_grounding import ground_parent_claims
 from .pipeline import KnowledgePipeline
 from .report import KnowledgeQualityReporter
 from .validator import KnowledgeValidator
@@ -81,6 +82,8 @@ class KnowledgePipelineService:
             chunks = await self.pipeline.process_batch(
                 source_chunks, existing_by_id=existing
             )
+            if self.config.prompt_version == "v2":
+                chunks = ground_parent_claims(chunks)
             chunks = deduplicate_claim_ownership(chunks)
             validator = KnowledgeValidator()
             for source, chunk in zip(source_chunks, chunks, strict=True):

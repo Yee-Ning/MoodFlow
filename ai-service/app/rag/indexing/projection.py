@@ -11,6 +11,7 @@ from app.rag.knowledge.models import (
     KnowledgeEnrichedParentChunk,
 )
 from app.rag.knowledge.verification.models import VerifiedClaim, VerificationStatus
+from app.rag.knowledge.child_grounding import validate_grounding
 from app.rag.enrichment.temporal import mentioned_year_bounds
 
 from .config import IndexingConfig
@@ -36,6 +37,8 @@ class IndexDocumentProjector:
             raise ValueError(f"parent_id_mismatch:{chunk.chunk_id}")
         if parent.doc_id != chunk.doc_id:
             raise ValueError(f"parent_document_mismatch:{chunk.chunk_id}")
+        for item in chunk.knowledge.claims:
+            validate_grounding(item, chunk, parent)
         dense_text = chunk.retrieval_content.strip()
         lexical_terms = self._lexical_terms(chunk)
         bm25_parts = [dense_text]
@@ -180,6 +183,8 @@ class IndexDocumentProjector:
             "verification_confidence": item.verification.confidence,
             "extraction_source": claim.extraction_source.value,
         }
+        if item.grounding is not None:
+            payload["grounding"] = item.grounding.model_dump(mode="json")
         return {key: value for key, value in payload.items() if value is not None}
 
     def _input_hash(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, model_serializer
 
 from ..claims.models import Claim
 
@@ -40,3 +40,34 @@ class VerifiedClaim(BaseModel):
 
     claim: Claim
     verification: ClaimVerification
+    # Internal provenance envelope; provider-facing Claim/ClaimCandidate schemas
+    # and predicate vocabulary stay unchanged. Empty legacy records serialize
+    # identically, preserving existing release hashes.
+    grounding: "ChildClaimGrounding | None" = None
+
+    @model_serializer(mode="wrap")
+    def serialize(self, handler):
+        result = handler(self)
+        if self.grounding is None:
+            result.pop("grounding", None)
+        return result
+
+
+class ChildClaimGrounding(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    derived_from: str
+    source_id: str
+    document_id: str
+    parent_chunk_id: str
+    child_chunk_id: str
+    parent_start: int = Field(ge=0)
+    parent_end: int = Field(gt=0)
+    child_start: int = Field(ge=0)
+    child_end: int = Field(gt=0)
+    parent_content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    child_content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    response_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+VerifiedClaim.model_rebuild()

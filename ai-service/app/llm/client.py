@@ -74,6 +74,7 @@ async def _create_response(
     enable_tools: bool,
     output_format: dict[str, Any] | None = None,
     model: str | None = None,
+    max_output_tokens: int | None = None,
 ) -> Response:
     settings = get_settings()
 
@@ -89,7 +90,7 @@ async def _create_response(
                 "instructions": instructions,
                 "input": input_items,
                 "reasoning": {"effort": "none"},
-                "max_output_tokens": settings.max_output_tokens,
+                "max_output_tokens": max_output_tokens or settings.max_output_tokens,
                 "text": {"format": output_format or OUTPUT_FORMAT},
             }
             if output_format is not None:
@@ -146,6 +147,7 @@ async def create_structured_response(
     *,
     schema_name: str,
     model: str | None = None,
+    max_output_tokens: int | None = None,
 ) -> Response:
     """Run a strict, tool-free JSON Schema request with shared provider settings."""
     return await _create_response(
@@ -157,6 +159,7 @@ async def create_structured_response(
             "schema": _provider_compatible_schema(schema), "strict": True,
         },
         model=model,
+        **({"max_output_tokens": max_output_tokens} if max_output_tokens is not None else {}),
     )
 
 
