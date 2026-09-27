@@ -1,0 +1,472 @@
+registry_version: v5
+entities:
+- entity_id: artist:jay_chou
+  entity_type: artist
+  canonical_name: 周杰伦
+  aliases:
+  - 周杰倫
+  - 周董
+  - Jay Chou
+  - JAY CHOU
+  - Chou
+  - Jay
+  ambiguous_aliases:
+  - Jay
+- entity_id: person:vincent_fang
+  entity_type: person
+  canonical_name: 方文山
+  aliases:
+  - Vincent Fang
+  ambiguous_aliases: []
+- entity_id: artist:eason_chan
+  entity_type: artist
+  canonical_name: 陈奕迅
+  aliases:
+  - 陳奕迅
+  - Eason Chan
+  ambiguous_aliases: []
+- entity_id: artist:jacky_wu
+  entity_type: artist
+  canonical_name: 吴宗宪
+  aliases:
+  - 吳宗憲
+  - Jacky Wu
+  ambiguous_aliases: []
+- entity_id: artist:landy_wen
+  entity_type: artist
+  canonical_name: 温岚
+  aliases:
+  - 溫嵐
+  - Landy Wen
+  ambiguous_aliases: []
+- entity_id: artist:nan_quan_mama
+  entity_type: artist
+  canonical_name: 南拳妈妈
+  aliases:
+  - 南拳媽媽
+  - Nan Quan Mama
+  ambiguous_aliases: []
+- entity_id: album:jay_2000
+  entity_type: album
+  canonical_name: Jay
+  aliases:
+  - 周杰伦同名专辑
+  - 周杰倫同名專輯
+  ambiguous_aliases:
+  - Jay
+- entity_id: album:fantasy
+  entity_type: album
+  canonical_name: 范特西
+  aliases:
+  - Fantasy
+  ambiguous_aliases: []
+- entity_id: album:eight_dimensions
+  entity_type: album
+  canonical_name: 八度空间
+  aliases:
+  - 八度空間
+  - The Eight Dimensions
+  ambiguous_aliases: []
+- entity_id: album:ye_hui_mei
+  entity_type: album
+  canonical_name: 叶惠美
+  aliases:
+  - 葉惠美
+  - 叶惠美专辑
+  - 葉惠美專輯
+  ambiguous_aliases:
+  - 叶惠美
+  - 葉惠美
+- entity_id: album:qi_li_xiang
+  entity_type: album
+  canonical_name: 七里香
+  aliases:
+  - 七里香专辑
+  - 七里香專輯
+  ambiguous_aliases:
+  - 七里香
+- entity_id: album:novembers_chopin
+  entity_type: album
+  canonical_name: 十一月的萧邦
+  aliases:
+  - 十一月的蕭邦
+  - 11月的萧邦
+  - 11月的蕭邦
+  - November's Chopin
+  ambiguous_aliases: []
+- entity_id: album:still_fantasy
+  entity_type: album
+  canonical_name: 依然范特西
+  aliases:
+  - Still Fantasy
+  ambiguous_aliases: []
+- entity_id: album:capricorn
+  entity_type: album
+  canonical_name: 魔杰座
+  aliases:
+  - 魔傑座
+  - Capricorn
+  ambiguous_aliases: []
+- entity_id: song:qi_li_xiang
+  entity_type: song
+  canonical_name: 七里香
+  aliases:
+  - 七里香歌曲
+  ambiguous_aliases:
+  - 七里香
+- entity_id: song:qing_tian
+  entity_type: song
+  canonical_name: 晴天
+  aliases:
+  - 晴天歌曲
+  ambiguous_aliases: []
+- entity_id: song:blue_and_white_porcelain
+  entity_type: song
+  canonical_name: 青花瓷
+  aliases:
+  - Blue and White Porcelain
+  ambiguous_aliases: []
+- entity_id: song:east_wind_breaks
+  entity_type: song
+  canonical_name: 东风破
+  aliases:
+  - 東風破
+  - East Wind Breaks
+  ambiguous_aliases: []
+- entity_id: song:nunchucks
+  entity_type: song
+  canonical_name: 双截棍
+  aliases:
+  - 雙截棍
+  - Nunchucks
+  ambiguous_aliases: []
+- entity_id: song:dragon_fist
+  entity_type: song
+  canonical_name: 龙拳
+  aliases:
+  - 龍拳
+  - Dragon Fist
+  ambiguous_aliases: []
+- entity_id: song:my_territory
+  entity_type: song
+  canonical_name: 我的地盘
+  aliases:
+  - 我的地盤
+  - My Territory
+  ambiguous_aliases: []
+- entity_id: genre:r_and_b
+  entity_type: genre
+  canonical_name: R&B
+  aliases:
+  - R＆B
+  - RnB
+  - Rhythm and Blues
+  - 节奏布鲁斯
+  - 節奏藍調
+  ambiguous_aliases: []
+- entity_id: genre:hip_hop
+  entity_type: genre
+  canonical_name: Hip-Hop
+  aliases:
+  - Hip Hop
+  - hiphop
+  - 嘻哈
+  ambiguous_aliases: []
+- entity_id: genre:chinese_style
+  entity_type: genre
+  canonical_name: 中国风
+  aliases:
+  - 中國風
+  - Zhongguo Feng
+  - Chinese style
+  ambiguous_aliases: []
+- entity_id: genre:c_pop
+  entity_type: genre
+  canonical_name: C-pop
+  aliases:
+  - C Pop
+  - Mandopop
+  - 华语流行音乐
+  - 華語流行音樂
+  ambiguous_aliases: []
+- entity_id: award:golden_melody_awards
+  entity_type: award
+  canonical_name: 金曲奖
+  aliases:
+  - 金曲獎
+  - Golden Melody Awards
+  ambiguous_aliases: []
+- entity_id: label:jvr_music
+  entity_type: label
+  canonical_name: 杰威尔音乐
+  aliases:
+  - 杰威爾音樂
+  - JVR Music
+  ambiguous_aliases: []
+- entity_id: label:sony_music_taiwan
+  entity_type: label
+  canonical_name: 台湾索尼音乐娱乐
+  aliases:
+  - 台灣索尼音樂娛樂
+  - Sony Music Taiwan
+  ambiguous_aliases: []
+- entity_id: album:greatest_works_of_art
+  entity_type: album
+  canonical_name: 最伟大的作品
+  aliases:
+  - 最偉大的作品
+  - Greatest Works of Art
+  ambiguous_aliases: []
+- entity_id: album:the_era
+  entity_type: album
+  canonical_name: 跨时代
+  aliases:
+  - 跨時代
+  - The Era
+  ambiguous_aliases: []
+- entity_id: album:im_busy
+  entity_type: album
+  canonical_name: 我很忙
+  aliases:
+  - On the Run
+  ambiguous_aliases: []
+- entity_id: album:exclamation_mark
+  entity_type: album
+  canonical_name: 惊叹号
+  aliases:
+  - 驚嘆號
+  - Exclamation Mark
+  ambiguous_aliases: []
+- entity_id: album:bedtime_stories
+  entity_type: album
+  canonical_name: 周杰伦的床边故事
+  aliases:
+  - 周杰倫的床邊故事
+  - Jay Chou's Bedtime Stories
+  ambiguous_aliases: []
+- entity_id: album:aiyo_not_bad
+  entity_type: album
+  canonical_name: 哎呦，不错哦
+  aliases:
+  - 哎呦,不錯哦
+  - Aiyo, Not Bad
+  ambiguous_aliases: []
+- entity_id: song:far_away
+  entity_type: song
+  canonical_name: 千里之外
+  aliases:
+  - Faraway
+  - Far Away
+  ambiguous_aliases: []
+- entity_id: song:chrysanthemum_terrace
+  entity_type: song
+  canonical_name: 菊花台
+  aliases:
+  - Chrysanthemums Terrace
+  - Chrysanthemum Terrace
+  ambiguous_aliases: []
+- entity_id: song:in_the_name_of_father
+  entity_type: song
+  canonical_name: 以父之名
+  aliases:
+  - In the Name of the Father
+  ambiguous_aliases: []
+- entity_id: song:nocturne
+  entity_type: song
+  canonical_name: 夜曲
+  aliases:
+  - Nocturne
+  ambiguous_aliases: []
+- entity_id: song:rice_field
+  entity_type: song
+  canonical_name: 稻香
+  aliases:
+  - Rice Field
+  ambiguous_aliases: []
+- entity_id: song:william_castle
+  entity_type: song
+  canonical_name: 威廉古堡
+  aliases:
+  - William Castle
+  ambiguous_aliases: []
+- entity_id: song:fearless
+  entity_type: song
+  canonical_name: 霍元甲
+  aliases:
+  - Fearless
+  ambiguous_aliases:
+  - 霍元甲
+- entity_id: song:love_before_ad
+  entity_type: song
+  canonical_name: 爱在西元前
+  aliases:
+  - 愛在西元前
+  - Love Before BC
+  ambiguous_aliases: []
+- entity_id: song:hair_like_snow
+  entity_type: song
+  canonical_name: 发如雪
+  aliases:
+  - 髮如雪
+  - Hair Like Snow
+  ambiguous_aliases: []
+- entity_id: song:love_confession
+  entity_type: song
+  canonical_name: 告白气球
+  aliases:
+  - 告白氣球
+  - Love Confession
+  ambiguous_aliases: []
+- entity_id: artist:jolin_tsai
+  entity_type: artist
+  canonical_name: 蔡依林
+  aliases:
+  - Jolin Tsai
+  ambiguous_aliases: []
+- entity_id: artist:andy_lau
+  entity_type: artist
+  canonical_name: 刘德华
+  aliases:
+  - 劉德華
+  - Andy Lau
+  ambiguous_aliases: []
+- entity_id: artist:wang_leehom
+  entity_type: artist
+  canonical_name: 王力宏
+  aliases:
+  - Leehom Wang
+  ambiguous_aliases: []
+- entity_id: artist:amei
+  entity_type: artist
+  canonical_name: 张惠妹
+  aliases:
+  - 張惠妹
+  - A-Mei
+  - A-Mei Chang
+  ambiguous_aliases: []
+- entity_id: artist:she
+  entity_type: artist
+  canonical_name: S.H.E
+  aliases:
+  - SHE
+  ambiguous_aliases: []
+- entity_id: artist:gem
+  entity_type: artist
+  canonical_name: 邓紫棋
+  aliases:
+  - 鄧紫棋
+  - G.E.M.
+  - G.E.M
+  ambiguous_aliases: []
+- entity_id: artist:jj_lin
+  entity_type: artist
+  canonical_name: 林俊杰
+  aliases:
+  - 林俊傑
+  - JJ Lin
+  ambiguous_aliases: []
+- entity_id: artist:jacky_cheung
+  entity_type: artist
+  canonical_name: 张学友
+  aliases:
+  - 張學友
+  - Jacky Cheung
+  ambiguous_aliases: []
+- entity_id: artist:hins_cheung
+  entity_type: artist
+  canonical_name: 张敬轩
+  aliases:
+  - 張敬軒
+  - Hins Cheung
+  ambiguous_aliases: []
+- entity_id: artist:khalil_fong
+  entity_type: artist
+  canonical_name: 方大同
+  aliases:
+  - Khalil Fong
+  ambiguous_aliases: []
+- entity_id: artist:faye_wong
+  entity_type: artist
+  canonical_name: 王菲
+  aliases:
+  - Faye Wong
+  ambiguous_aliases: []
+- entity_id: artist:jam_hsiao
+  entity_type: artist
+  canonical_name: 萧敬腾
+  aliases:
+  - 蕭敬騰
+  - Jam Hsiao
+  ambiguous_aliases: []
+- entity_id: person:hannah_quinlivan
+  entity_type: person
+  canonical_name: 昆凌
+  aliases:
+  - Hannah Quinlivan
+  ambiguous_aliases: []
+- entity_id: person:hung_ching_yiu
+  entity_type: person
+  canonical_name: 洪敬尧
+  aliases:
+  - 洪敬堯
+  ambiguous_aliases: []
+- entity_id: person:chung_hing_man
+  entity_type: person
+  canonical_name: 钟兴民
+  aliases:
+  - 鍾興民
+  - Chung Hing-man
+  ambiguous_aliases: []
+- entity_id: award:golden_melody_awards_13th
+  entity_type: award
+  canonical_name: 第十三届金曲奖
+  aliases:
+  - 第十三屆金曲獎
+  ambiguous_aliases: []
+- entity_id: award:best_lyricist
+  entity_type: award
+  canonical_name: 最佳作词人奖
+  aliases:
+  - 最佳作詞人獎
+  ambiguous_aliases: []
+- entity_id: award:best_pop_vocal_album
+  entity_type: award
+  canonical_name: 最佳流行音乐演唱专辑奖
+  aliases:
+  - 最佳流行音樂演唱專輯獎
+  ambiguous_aliases: []
+- entity_id: artist:nirvana
+  entity_type: artist
+  canonical_name: Nirvana
+  aliases: []
+  ambiguous_aliases: []
+- entity_id: artist:pixies
+  entity_type: artist
+  canonical_name: Pixies
+  aliases:
+  - The Pixies
+  ambiguous_aliases: []
+- entity_id: artist:kurt_cobain
+  entity_type: artist
+  canonical_name: Kurt Cobain
+  aliases:
+  - Cobain
+  ambiguous_aliases:
+  - Cobain
+- entity_id: artist:nwa
+  entity_type: artist
+  canonical_name: NWA
+  aliases:
+  - N.W.A.
+  ambiguous_aliases: []
+- entity_id: artist:rem
+  entity_type: artist
+  canonical_name: REM
+  aliases:
+  - R.E.M.
+  ambiguous_aliases: []
+- entity_id: artist:metallica
+  entity_type: artist
+  canonical_name: Metallica
+  aliases: []
+  ambiguous_aliases: []
