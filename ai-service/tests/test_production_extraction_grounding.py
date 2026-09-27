@@ -137,3 +137,51 @@ async def test_extraction_runtime_budget_does_not_change_provider_claim_schema(m
     monkeypatch.setattr("app.llm.client.create_structured_response", response)
     await ExistingLLMClaimExtractionRuntime(max_output_tokens=4096).generate({}, instructions="strict", schema=ClaimExtractionOutput.model_json_schema(), schema_name="test")
     assert observed["max_output_tokens"] == 4096
+
+
+@pytest.mark.asyncio
+async def test_semantic_actor_rejection_is_retained_before_factual_claim_ownership():
+    calls = []
+    proposal = candidate("A member of Alpha influenced Beta.").model_copy(
+        update={"statement": "A member of Alpha influenced Beta."})
+    async def generate(payload, **kwargs):
+        calls.append((payload, kwargs))
+        if kwargs["schema_name"] == "music_claim_admission_v3":
+            return json.dumps({"status": "INSUFFICIENT_EVIDENCE", "confidence": 1,
+                               "evidence_span": None, "reason": "A member's action is not Alpha's action"})
+        return json.dumps({"claims": [proposal.model_dump(mode="json")]})
+    result = await ClaimExtractor(KnowledgeConfig(prompt_version="v3"), runtime=SimpleNamespace(generate=generate)).extract(
+        _enriched(proposal.evidence_span), ENTITIES)
+    assert result.claims == [] and result.status == "success"
+    assert "semantic_admission_rejected" in result.warnings[0]
+    assert calls[1][0]["subject_identity"]["canonical_name"] == "Alpha"
+
+
+@pytest.mark.asyncio
+async def test_semantic_admission_preserves_real_direction_and_cannot_rewrite_evidence():
+    async def generate(payload, **kwargs):
+        if kwargs["schema_name"] == "music_claim_admission_v3":
+            return json.dumps({"status": "SUPPORTED", "confidence": 1,
+                               "evidence_span": payload["chunk_content"], "reason": "Both semantic roles explicit"})
+        return json.dumps({"claims": [candidate().model_dump(mode="json")]})
+    extractor = ClaimExtractor(KnowledgeConfig(prompt_version="v3"), runtime=SimpleNamespace(generate=generate))
+    result = await extractor.extract(_enriched(candidate().evidence_span), ENTITIES)
+    assert result.claims[0].subject_entity_id == "artist:alpha"
+    assert result.claims[0].object_entity_id == "artist:beta"
+    async def tamper(payload, **kwargs):
+        return json.dumps({"status": "SUPPORTED", "confidence": 1, "evidence_span": "invented", "reason": "invalid"})
+    extractor.runtime = SimpleNamespace(generate=tamper)
+    with pytest.raises(ValueError, match="admission_evidence_mismatch"):
+        await extractor._admit(candidate(), _enriched(candidate().evidence_span), ENTITIES)
+
+
+@pytest.mark.asyncio
+async def test_admission_transport_failure_does_not_approve_a_proposal():
+    async def generate(payload, **kwargs):
+        if kwargs["schema_name"] == "music_claim_admission_v3":
+            raise RuntimeError("provider_unavailable")
+        return json.dumps({"claims": [candidate().model_dump(mode="json")]})
+    result = await ClaimExtractor(KnowledgeConfig(prompt_version="v3", retry_count=0), runtime=SimpleNamespace(generate=generate)).extract(
+        _enriched(candidate().evidence_span), ENTITIES)
+    assert result.claims == [] and result.status == "partial"
+    assert "admission_unavailable" in result.warnings[0]

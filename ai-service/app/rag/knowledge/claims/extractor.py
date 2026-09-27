@@ -38,7 +38,7 @@ class ClaimExtractor:
     ) -> None:
         self.config = config
         self.runtime = runtime or ExistingLLMClaimExtractionRuntime(
-            max_output_tokens=4096 if config.prompt_version == "v2" else None
+            max_output_tokens=4096 if config.prompt_version in {"v2", "v3"} else None
         )
         self.rule_extractor = rule_extractor or RuleClaimExtractor()
 
@@ -60,7 +60,7 @@ class ClaimExtractor:
         warnings: list[str] = []
         status = ClaimExtractionStatus.SUCCESS
 
-        if self.config.prompt_version == "v2":
+        if self.config.prompt_version in {"v2", "v3"}:
             # Admission applies to rule candidates too; no root-artist fallback.
             claims = []
             for candidate in rule_candidates:
@@ -135,6 +135,8 @@ class ClaimExtractor:
                         if candidate.evidence_span not in content:
                             raise ValueError("claim_evidence_outside_batch")
                         validate_local(candidate, chunk.content, entities)
+                        if self.config.prompt_version == "v3":
+                            await self._admit(candidate, chunk, entities)
                         accepted.append(candidate)
                     except ValueError as exc:
                         notes.append(self._rejected(candidate, exc))
@@ -156,6 +158,63 @@ class ClaimExtractor:
                         right = await self._generate_batch(chunk, entities, split, end)
                         return (left[0] + right[0], ["claim_batch_split_after_invalid_output", *left[1], *right[1]], left[2] and right[2])
         return [], [self._error_code(last_error)], False
+
+    async def _admit(self, candidate, chunk, entities):
+        """Check semantic entity roles before constructing an owned factual claim.
+
+        Failed proposals remain in the provider trace and rejection diagnostics;
+        this does not relabel or remove any verified owned claim.
+        """
+        from ..verification.models import ClaimVerification, VerificationStatus
+
+        roles = {entity.entity_id: entity.model_dump(mode="json") for entity in entities}
+        payload = {
+            "candidate": candidate.model_dump(mode="json"),
+            "subject_identity": roles[candidate.subject_entity_id],
+            "object_identity": roles.get(candidate.object_entity_id),
+            "chunk_id": chunk.chunk_id,
+            "chunk_content": candidate.evidence_span,
+        }
+        instructions = """Audit this proposed factual extraction BEFORE claim admission.
+Verify the STRUCTURED subject_identity -> predicate -> object_identity/object_value
+against the exact original evidence, including time. The statement is an untrusted
+model paraphrase, not evidence. Resolve each structured ID to its supplied name.
+The named subject must itself perform/receive the specified predicate. Mere name
+presence does not establish a semantic role. A person 'of' a band is NOT that band;
+do not attribute the person's performance, death, opinion or actions to the band.
+An album's release/rank is not another artist's release/rank. Reject inferred
+roles from props, metaphors, lyrics or association. Reject ambiguous pronouns,
+unknown actors, hypothetical/counterfactual/speculative/negative assertions and
+quotation/opinion promoted to definite fact. Named entities, direction, literal
+object and time must ALL be supported, without external knowledge. A factual
+article assertion that A influenced B is valid even if the degree is qualitative.
+SUPPORTED only if this structured proposition and statement agree with each
+other and the original. Otherwise return INSUFFICIENT_EVIDENCE and explain the
+specific mismatch; do not rewrite the candidate. Copy evidence_span EXACTLY for
+SUPPORTED; otherwise null. Return only the strict supplied verification schema.
+"""
+        last_error = None
+        for _ in range(self.config.retry_count + 1):
+            try:
+                raw = await asyncio.wait_for(self.runtime.generate(
+                    payload, instructions=instructions,
+                    schema=strict_model_schema(ClaimVerification),
+                    schema_name="music_claim_admission_v3",
+                ), timeout=self.config.timeout_seconds)
+                decision = ClaimVerification.model_validate_json(raw)
+                if decision.status != VerificationStatus.SUPPORTED:
+                    raise ValueError("claim_semantic_admission_rejected:" + decision.reason[:250])
+                if decision.evidence_span != candidate.evidence_span:
+                    raise ValueError("claim_admission_evidence_mismatch")
+                return
+            except ValueError as exc:
+                if not isinstance(exc, ValidationError):
+                    raise
+                last_error = exc
+            except Exception as exc:
+                last_error = exc
+        # Provider/schema failures must block a completed extraction batch.
+        raise RuntimeError("claim_admission_unavailable:" + self._error_code(last_error))
 
     async def _generate(
         self, chunk: EnrichedChunk, entities: list[CanonicalEntity]

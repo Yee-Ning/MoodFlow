@@ -82,7 +82,7 @@ class KnowledgePipelineService:
             chunks = await self.pipeline.process_batch(
                 source_chunks, existing_by_id=existing
             )
-            if self.config.prompt_version == "v2":
+            if self.config.prompt_version in {"v2", "v3"}:
                 chunks = ground_parent_claims(chunks)
             chunks = deduplicate_claim_ownership(chunks)
             validator = KnowledgeValidator()
