@@ -147,6 +147,17 @@ def test_conflicting_existing_identity_rejects_claim_atomically():
     assert binder.materialize(p, g, [d]) == g
 
 
+def test_cleanup_preserves_endpoint_used_by_an_existing_typed_projector():
+    from app.agent.foundation.subgraphs.worldline.models import WorldLineEdge
+    binder, p, g, d = fixture()
+    materialized = binder.materialize(p, g, [d])
+    projected = materialized.model_copy(update={
+        "nodes": [*materialized.nodes, WorldLineNode(id="era:1990s", type="era", name="1990s")],
+        "edges": [WorldLineEdge(source="artist:b", target="era:1990s", relation="career_phase")],
+    })
+    assert binder.finalize(g, projected, [], [], []) == projected
+
+
 def test_production_build_graph_hook_materializes_before_relation_validation(monkeypatch):
     from app.agent.foundation.subgraphs.worldline import graph as graph_module
     from app.agent.foundation.subgraphs.worldline.models import MusicEntityFacts, ResolvedEntity

@@ -221,7 +221,9 @@ class VerifiedEndpointMaterializer:
     @staticmethod
     def finalize(original, graph, sources, scene_relations, influence_relations):
         original_ids = {node.id for node in original.nodes}
-        native_ids = set()
+        # Other existing typed projectors (for example Era) may also validate
+        # a relation to this endpoint. Do not prune a node they already use.
+        native_ids = {identity for edge in graph.edges for identity in (edge.source, edge.target)}
         scene_bindings = {}
         source_map = {source.id: source for source in sources}
         for relation in [*scene_relations, *influence_relations]:
