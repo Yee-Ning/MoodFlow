@@ -9,6 +9,27 @@ from .models import ClaimCandidate
 from .rules import is_subjective
 
 
+def validate_predicate_types(candidate: ClaimCandidate, entities: list[CanonicalEntity]) -> None:
+    """Reject structured arguments incompatible with the existing predicate."""
+    by_id = {entity.entity_id: entity for entity in entities}
+    subject = by_id.get(candidate.subject_entity_id)
+    target = by_id.get(candidate.object_entity_id)
+    predicate = candidate.predicate.value
+    if subject is None:
+        raise ValueError("claim_unknown_subject_entity")
+    if predicate == "includes_track" and (
+        subject.entity_type.value != "album" or target is None or target.entity_type.value != "song"
+    ):
+        raise ValueError("claim_predicate_argument_type_mismatch")
+    if predicate == "performed_at" and target is not None and target.entity_type.value not in {"event", "place"}:
+        raise ValueError("claim_predicate_argument_type_mismatch")
+    if predicate in {"has_genre", "contains_music_element"} and target is not None and target.entity_type.value != "genre":
+        raise ValueError("claim_predicate_argument_type_mismatch")
+    if predicate in {"belongs_to_scene", "representative_of_scene", "style_scene_association", "emerged_from_scene"}:
+        if not re.search(r"\b(?:scene|movement|community|collective)\b|场景|場景|社群|音乐圈|音樂圈", candidate.evidence_span, re.I):
+            raise ValueError("claim_scene_not_explicit")
+
+
 _MODALITIES = {
     "counterfactual": r"\b(?:would have|could have|had it not|were it not)\b",
     "hypothetical": r"\b(?:if|unless|imagine|suppose|hypothetical|another band could)\b|假如|假设|如果",
@@ -45,6 +66,7 @@ def batches(text: str, limit: int = 1200) -> list[tuple[int, int]]:
 
 
 def validate_local(candidate: ClaimCandidate, text: str, entities: list[CanonicalEntity]) -> None:
+    validate_predicate_types(candidate, entities)
     span = candidate.evidence_span
     if text.count(span) != 1:
         raise ValueError("claim_evidence_missing_or_ambiguous")

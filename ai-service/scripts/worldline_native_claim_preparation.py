@@ -71,7 +71,7 @@ async def run(root: Path, config_path: Path, registry_path: Path,
         config,
         entity_linker=EntityLinker(config, registry=registry),
         claim_extractor=ClaimExtractor(config, runtime=ProviderTrace(
-            ExistingLLMClaimExtractionRuntime(max_output_tokens=4096 if config.prompt_version in {"v2", "v3"} else None), "extraction", trace)),
+            ExistingLLMClaimExtractionRuntime(max_output_tokens=4096 if config.prompt_version in {"v2", "v3", "v4"} else None), "extraction", trace)),
         claim_verifier=ClaimVerifier(config, runtime=ProviderTrace(
             ExistingLLMClaimVerificationRuntime(), "verification", trace)),
     )

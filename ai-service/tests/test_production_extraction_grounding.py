@@ -47,6 +47,14 @@ def test_factual_direction_alias_ambiguity_and_ungrounded_date():
         validate_local(candidate(time={"year": 1994}), "Alpha influenced Beta.", ENTITIES)
 
 
+@pytest.mark.parametrize("predicate", ["includes_track", "performed_at", "has_genre"])
+def test_named_artist_is_not_a_track_event_or_genre(predicate):
+    proposal = candidate().model_copy(update={"predicate": __import__(
+        "app.rag.knowledge.claims.models", fromlist=["ClaimPredicate"]).ClaimPredicate(predicate)})
+    with pytest.raises(ValueError, match="predicate_argument_type_mismatch"):
+        validate_local(proposal, proposal.evidence_span, ENTITIES)
+
+
 @pytest.mark.asyncio
 async def test_failed_batch_splits_without_salvaging_json_or_retrying_success():
     calls = []

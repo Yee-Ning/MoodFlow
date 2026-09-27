@@ -30,4 +30,8 @@ Do not infer dates from publication date, title, world knowledge or adjacent fac
 Use time=null when the evidence does not explicitly state the claim's date.
 Never output an all-null time object. Output no more than four atomic claims per
 batch; prefer explicit relational facts over generic 'other' descriptions.
+Use includes_track only for an album containing a named song, never band members.
+performed_at object is an event/place, never a band merely named in a caption.
+representative_of_scene requires explicit representative/leading/iconic status.
+Temporal succession and metaphors do not establish literal causal influence.
 """

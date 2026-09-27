@@ -38,7 +38,7 @@ class ClaimExtractor:
     ) -> None:
         self.config = config
         self.runtime = runtime or ExistingLLMClaimExtractionRuntime(
-            max_output_tokens=4096 if config.prompt_version in {"v2", "v3"} else None
+            max_output_tokens=4096 if config.prompt_version in {"v2", "v3", "v4"} else None
         )
         self.rule_extractor = rule_extractor or RuleClaimExtractor()
 
@@ -60,7 +60,7 @@ class ClaimExtractor:
         warnings: list[str] = []
         status = ClaimExtractionStatus.SUCCESS
 
-        if self.config.prompt_version in {"v2", "v3"}:
+        if self.config.prompt_version in {"v2", "v3", "v4"}:
             # Admission applies to rule candidates too; no root-artist fallback.
             claims = []
             for candidate in rule_candidates:
@@ -135,7 +135,7 @@ class ClaimExtractor:
                         if candidate.evidence_span not in content:
                             raise ValueError("claim_evidence_outside_batch")
                         validate_local(candidate, chunk.content, entities)
-                        if self.config.prompt_version == "v3":
+                        if self.config.prompt_version in {"v3", "v4"}:
                             await self._admit(candidate, chunk, entities)
                         accepted.append(candidate)
                     except ValueError as exc:
@@ -192,6 +192,16 @@ SUPPORTED only if this structured proposition and statement agree with each
 other and the original. Otherwise return INSUFFICIENT_EVIDENCE and explain the
 specific mismatch; do not rewrite the candidate. Copy evidence_span EXACTLY for
 SUPPORTED; otherwise null. Return only the strict supplied verification schema.
+Predicate meanings are binding, even if the statement sounds true:
+includes_track is album containment of a SONG, never band membership.
+performed_at has an EVENT or PLACE as object, never the performer's band.
+representative_of_scene requires explicit representative/leading/iconic status;
+a chart success, symbolic win or mere genre label does not assert that status.
+influenced/inspired require explicit causal influence, not merely temporal
+succession ("followed by"), popularity, collaboration or a metaphor.
+"Symbolic regicide" or "stood on the shoulders" alone is metaphor, not a
+literal definite relation. Reject a proposed factual predicate derived solely
+from such wording. 'other' also must be a literal objective atomic fact.
 """
         last_error = None
         for _ in range(self.config.retry_count + 1):
