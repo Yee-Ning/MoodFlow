@@ -1,0 +1,75 @@
+{
+  "runtime_entity_binding_pass": true,
+  "scene_relation_online_pass": false,
+  "influence_relation_online_pass": true,
+  "postgres_restart_acceptance": true,
+  "frontend_contract_pass": true,
+  "online_e2e_pass": false,
+  "worldline_v1_freeze_ready": false,
+  "session_recovery_pass": true,
+  "retrieval_runtime_pass": true,
+  "provider_generation_pass": true,
+  "session_id": "a209655236234f8e8894f69d9a96c062",
+  "revision_sequence": [
+    1,
+    2,
+    2,
+    3
+  ],
+  "graph_counts": [
+    [
+      10,
+      9
+    ],
+    [
+      11,
+      10
+    ],
+    [
+      11,
+      10
+    ],
+    [
+      12,
+      11
+    ]
+  ],
+  "relation_counts": {
+    "scene": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "influence": [
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "checkpoint_counts": [
+    6,
+    6,
+    6,
+    9
+  ],
+  "checkpoint_process_pids": [
+    27824,
+    44420
+  ],
+  "recover_dto_exact": true,
+  "postgres_storage_unchanged_until_continuation": true,
+  "graph_nodes_preserved_exactly": true,
+  "graph_edges_and_evidence_preserved": true,
+  "sources_and_provenance_preserved_exactly": true,
+  "relation_dtos_flags_direction_stance_preserved_exactly": true,
+  "consumed_branches_and_evidence_history_preserved": true,
+  "blocker": "SceneRelationValidator._scene_is_supported literal scene name mismatch: Grunge-rock scene versus quoted Grunge-rock in exact span",
+  "scope_stop": "No validator/extraction/corpus/Eval/Gold modifications; V1 is not frozen.",
+  "online_trace_code_commit": "2aaa1ee",
+  "final_cleanup_guard_commit": "f23c208",
+  "final_cleanup_equivalent_on_all_four_real_response_graphs": true,
+  "final_regression_tests": "143 passed, 22 subtests passed",
+  "final_binding_unit_test_count": 25
+}

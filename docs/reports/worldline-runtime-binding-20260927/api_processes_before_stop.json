@@ -1,0 +1,12 @@
+[
+  {
+    "ProcessId": 42924,
+    "ParentProcessId": 39408,
+    "CommandLine": "\"D:\\code\\ProjectsAll\\MoodFlow\\ai-service\\.venv\\Scripts\\python.exe\" -X utf8 -m scripts.worldline_online_acceptance_server --trace ../docs/reports/worldline-runtime-binding-20260927/online_trace_before_restart.jsonl --port 8001"
+  },
+  {
+    "ProcessId": 44420,
+    "ParentProcessId": 42924,
+    "CommandLine": "\"C:\\Users\\33994\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" -X utf8 -m scripts.worldline_online_acceptance_server --trace ../docs/reports/worldline-runtime-binding-20260927/online_trace_before_restart.jsonl --port 8001"
+  }
+]

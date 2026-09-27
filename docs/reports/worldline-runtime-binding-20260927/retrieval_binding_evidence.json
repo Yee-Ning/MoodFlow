@@ -1,0 +1,57 @@
+{
+  "manifest": "data\\indexing\\worldline\\final-native-20260927\\v4\\index_build_manifest.json",
+  "manifest_sha256": "445b7263221ae5864015752a6689e5d8303c21409407375a6e0b33ac831f50f3",
+  "collection": "worldline_knowledge_v4_daa965c10984eefa_v1_v2_v4",
+  "source_release_id": "knowledge-v2-daa965c10984eefa",
+  "real_backend": "QdrantHybridSearchBackend",
+  "real_encoder": "QwenQueryEncoder",
+  "root_query_status": "success",
+  "root_query_channels": [
+    "dense",
+    "lexical"
+  ],
+  "root_candidate_count": 3,
+  "continuation_retrieval_status": [
+    "empty",
+    "empty"
+  ],
+  "source_context_in_adapter": [
+    {
+      "document_id": "parent-b94cc092da9fb51f19658233",
+      "chunk_id": "child-8b686e5334c7b896431e157f",
+      "source_id": "wl-native-v2-001",
+      "source_content_sha256": "81a2764460d408e7f67a2c158a859cf7091c65c849474418f6d60bbef2081b7b",
+      "native_claim_ids": [
+        "claim:0c163c1f10d86873919b2313",
+        "claim:22f9b645af73a90f6ce96094",
+        "claim:2cff3adfd2b33ed1b4f9ba4d",
+        "claim:303d9367e3fa98ece47dac18",
+        "claim:d025713850e37cf4ccc5283b",
+        "claim:fd05f277d5d1fa9457b3b85a"
+      ],
+      "source_context_count": 4
+    },
+    {
+      "document_id": "parent-525103ee7aeeb743f68c686a",
+      "chunk_id": "child-73e72b66e37ca9bb0572068f",
+      "source_id": "wl-native-v2-002",
+      "source_content_sha256": "6a9a26c50eb605bf7ef9b29a7ae8d378489ff73e73ec91fe2769d30cd35ba80e",
+      "native_claim_ids": [
+        "claim:1a70ce4fbec65a85abe6bfac"
+      ],
+      "source_context_count": 0
+    },
+    {
+      "document_id": "parent-82a83cea106e0a0b5c611097",
+      "chunk_id": "child-97b7f05741b56b6909b02407",
+      "source_id": "wl-native-v2-002",
+      "source_content_sha256": "55b1e70f48476ae44ab7d72442958086b03dc2dda173bfb0158f10eedf723dc2",
+      "native_claim_ids": [
+        "claim:0985dded6f665f68ab186783",
+        "claim:c7bcfe0e6f6204e623cc3510",
+        "claim:fe72b27603b613b82780f909"
+      ],
+      "source_context_count": 3
+    }
+  ]
+}

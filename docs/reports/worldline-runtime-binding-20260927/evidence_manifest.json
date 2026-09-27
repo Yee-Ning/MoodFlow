@@ -1,0 +1,130 @@
+{
+  "scope": "runtime_binding_only_one_real_online_restart_run",
+  "files": [
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/acceptance_evidence.json",
+      "bytes": 1803,
+      "sha256": "325b0fbc9c9a6a3b4f8c6d6cc5119e57d185d51f281ba44811db9284515f020c"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/api_fully_stopped.json",
+      "bytes": 122,
+      "sha256": "53d81a4cf434e0a1e571e78ed00d5305c61ebdff95b035857a86364d652dcf8c"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/api_processes_after_restart.json",
+      "bytes": 653,
+      "sha256": "3c49cf7dcd28e122f24d7f0c67023136c32dc0195238441a1a6c84418e8ebadd"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/api_processes_before_stop.json",
+      "bytes": 655,
+      "sha256": "b586320d34393cfcd9006a1b14528843c3d5ccfc1ec54f0c7596e09d6d11a435"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/continuation_response.json",
+      "bytes": 157605,
+      "sha256": "58582f0d124b33ee524295a6855635d9f62defcd8d427280882db425dbbed9ad"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/create_response.json",
+      "bytes": 172349,
+      "sha256": "79bf0adfc83747ba204bc950fcb526102ff0350b58fae85436a9808954407bed"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/explore_before_restart_response.json",
+      "bytes": 100334,
+      "sha256": "f5938e91618de512576da1f5fb143014d56ca1276cbefa5b9659f73734e6f24c"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/final_runtime_config.json",
+      "bytes": 449,
+      "sha256": "621a294bdf6a3673bf6fa2398041ca14abcb480d97579ca8bd8964fb826448bb"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/frontend_influence.png",
+      "bytes": 66218,
+      "sha256": "594d2dec8096bf775688c45185d2965a886e9288bb8cb141f03ee2608b68fcc1"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/frontend_influence_dom.txt",
+      "bytes": 12296,
+      "sha256": "ce2229694dfe8e708300927fdd4919986b8867a238d6e3936f5d3d983cb54d72"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/frontend_network_after.json",
+      "bytes": 804,
+      "sha256": "1280d645fc2ab6e95ee26392c8ab1e3a885ec5bb2f6a10ae37a6f4231bbef79c"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/frontend_network_before.json",
+      "bytes": 825,
+      "sha256": "5dd4304148063bcd81c7c1ba400f0d5fb7327d67f5abcdb19db49fb31d812057"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/frontend_revision3.png",
+      "bytes": 64234,
+      "sha256": "24df86596881079ef8f668b5ff54c78ee77295133ec3fa77a290383983b77f03"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/frontend_revision3_dom.txt",
+      "bytes": 11976,
+      "sha256": "63867d9ab7eb34494cea2e3c431a47143770e1f3f7d8b2336a55650be5b998ff"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/initial_api_processes.json",
+      "bytes": 498,
+      "sha256": "61d209059d201fd4f811b236b9d413d64559ab8aea2faae104b816000c40ceea"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/online_trace_after_restart.jsonl",
+      "bytes": 630831,
+      "sha256": "cb1e647e448f3aac92cbe7c099bb3eb392aabbe661c8bb519c1dda491da3b51d"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/online_trace_before_restart.jsonl",
+      "bytes": 1464523,
+      "sha256": "ae8ac1a09d320674114bde63163c7ffa191c1e37fd61eaf90661cae3a51ed128"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/postgres_after_continuation.json",
+      "bytes": 282894,
+      "sha256": "eccdf31e4cfa46606677c734ea6d72e44d15ce305f564807a1697f7995365082"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/postgres_after_recover.json",
+      "bytes": 214480,
+      "sha256": "d2dd98e27403c9b2d49e3988b7fd35d020494cd77840729a033da91826f03ee1"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/postgres_before_stop.json",
+      "bytes": 214480,
+      "sha256": "2bb81b35be3145c4d9bd4c5b90f84fa7db3299b4de52772ccf709e36f6f6ded1"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/postgres_process_stopped.json",
+      "bytes": 214480,
+      "sha256": "db96b0eb8bcca4af54e959c501cbeada3686f087cb6971d02fd605f211d2ca8c"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/provider_generation_evidence.json",
+      "bytes": 1339,
+      "sha256": "511284a996502c3947ef285769a1abc29ddb7e6642e709f781023325b04ca4f8"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/recover_response.json",
+      "bytes": 100334,
+      "sha256": "f5938e91618de512576da1f5fb143014d56ca1276cbefa5b9659f73734e6f24c"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/retrieval_binding_evidence.json",
+      "bytes": 2082,
+      "sha256": "40b81e8a82e4d7d5c2a2f00e14e10ebeed5abaabb853e7a25e20ad7ed7913b0e"
+    },
+    {
+      "path": "../docs/reports/worldline-runtime-binding-20260927/runtime_entity_binding_evidence.json",
+      "bytes": 12115,
+      "sha256": "bab550e58a5f56e117aa701c5379276e4c01dba5ac2c04d6264fafb509b5a902"
+    }
+  ]
+}
