@@ -74,7 +74,9 @@ _SCENE_CUE_RE = re.compile(
 _NEGATION_RE = re.compile(
     r"不属于|不屬於|并非|並非|不是|无关|無關|"
     r"not\s+(?:part\s+of|associated\s+with|from|a\s+member\s+of)|"
-    r"never\s+(?:part\s+of|associated\s+with)",
+    r"never\s+(?:part\s+of|associated\s+with)|"
+    r"\b(?:never|not)\s+(?:emerg\w*|originat\w*|belong\w*)|"
+    r"\b(?:didn't|did\s+not)\s+(?:emerge|originate|belong)",
     re.IGNORECASE,
 )
 _MEMBERSHIP_CUE_RE = re.compile(
@@ -99,6 +101,27 @@ _ASSOCIATION_CUE_RE = re.compile(
     r"同属|同屬|共同参与|共同參與|同一|same|both|together",
     re.IGNORECASE,
 )
+_SCENE_SPECULATION_RE = re.compile(
+    r"\b(?:may|might|could)\s+(?:have\s+|be\s+|have\s+been\s+)?"
+    r"(?:emerg\w*|belong\w*|originat\w*|part\s+of|a\s+member\s+of)|"
+    r"\b(?:possibly|perhaps|probably|seemingly|speculated)\b|"
+    r"可能|或许|或許|似乎|据推测|據推測",
+    re.IGNORECASE,
+)
+
+
+def _scene_name_in_span(name: str, span: str) -> bool:
+    """Compare typography only; never change the immutable evidence text.
+
+    Remove balanced double-quote delimiters, keeping their contents, whitespace,
+    hyphens and word boundaries. Apostrophes and unmatched quotes stay intact.
+    """
+    def comparison(value: str) -> str:
+        value = normalized_text(value)
+        return re.sub(r'“([^“”"]+)”|"([^“”"]+)"',
+                      lambda match: match.group(1) or match.group(2), value)
+
+    return re.search(rf"(?<!\w){re.escape(comparison(name))}(?!\w)", comparison(span)) is not None
 
 _PREDICATE_TO_RELATION = {
     "belongs_to_scene": SceneRelationType.BELONGS_TO_SCENE,
@@ -502,6 +525,8 @@ class SceneRelationValidator:
             reasons.append("candidate_confidence_mismatch")
         if len(candidate.evidence.exact_span) > 2_000:
             reasons.append("evidence_span_too_long")
+        if _SCENE_SPECULATION_RE.search(candidate.evidence.exact_span):
+            reasons.append("speculative_scene_relation")
         if not self._time_is_supported(candidate):
             reasons.append("time_not_in_evidence_span")
         membership_stance = self._membership_stance(candidate, document)
@@ -588,6 +613,7 @@ class SceneRelationValidator:
                 and claim.time == candidate.claim_time
                 and claim.source_chunk_id
                 == candidate.evidence_source.metadata.get("source_chunk_id")
+                and claim.source_chunk_id == document.metadata.get("chunk_id")
                 and claim.evidence_span == candidate.evidence.exact_span
                 and min(claim.extraction_confidence, claim.verification_confidence)
                 == candidate.confidence
@@ -623,7 +649,7 @@ class SceneRelationValidator:
         span = " ".join(candidate.evidence.exact_span.split()).casefold()
         if _NEGATION_RE.search(span) or _SCENE_CUE_RE.search(span) is None:
             return False
-        if candidate.scene_name.casefold() not in span:
+        if not _scene_name_in_span(candidate.scene_name, span):
             return False
         named_entity = (
             candidate.target_entity

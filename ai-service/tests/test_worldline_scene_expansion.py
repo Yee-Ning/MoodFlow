@@ -174,6 +174,52 @@ def test_explicit_artist_scene_evidence_projects_traceable_graph() -> None:
     assert source.metadata["claim_id"] == relation.evidence[0].claim_id
 
 
+@pytest.mark.parametrize("quoted", ['“Seattle grunge” scene', '"Seattle grunge" scene',
+                                   '“Seattle grunge scene”', 'Seattle grunge scene'])
+def test_emergence_typography_matches_without_rewriting_evidence(quoted):
+    span = f"Nirvana emerged from the {quoted}."
+    doc = document(31, predicate="emerged_from_scene", span=span)
+    result = expand([doc])
+    assert len(result.relations) == 1
+    assert result.relations[0].scene_name == SCENE_NAME
+    assert result.relations[0].evidence[0].exact_span == span
+    source = next(s for s in result.sources if s.id == result.relations[0].evidence[0].source_id)
+    assert source.excerpt == span
+    assert doc.metadata["supported_claims"][0]["evidence_span"] == span
+
+
+@pytest.mark.parametrize("span", [
+    'Nirvana emerged from the “other grunge” scene.',
+    'Nirvana emerged from the “Seattle grunge” scenes.',
+    'Nirvana emerged from the “Seattle grunge" scene.',
+    'Nirvana mentioned the “Seattle grunge” scene.',
+    'Nirvana was not part of the “Seattle grunge” scene.',
+    'Nirvana never emerged from the “Seattle grunge” scene.',
+    'Nirvana did not emerge from the “Seattle grunge” scene.',
+    'Nirvana may have emerged from the “Seattle grunge” scene.',
+    'Nirvana possibly emerged from the “Seattle grunge” scene.',
+])
+def test_quote_matching_keeps_identity_negation_and_speculation_guards(span):
+    result = expand([document(32, predicate="emerged_from_scene", span=span)])
+    assert result.relations == []
+
+
+@pytest.mark.parametrize("drift", ["span", "chunk", "unsupported", "insufficient"])
+def test_quoted_scene_keeps_original_claim_and_document_binding_guards(drift):
+    doc = document(33, predicate="emerged_from_scene",
+                   span='Nirvana emerged from the “Seattle grunge” scene.')
+    metadata = deepcopy(doc.metadata)
+    if drift == "span":
+        doc = doc.model_copy(update={"content": 'Nirvana emerged from the Seattle grunge scene.'})
+    elif drift == "chunk":
+        metadata["chunk_id"] = "changed-child"
+    elif drift == "unsupported":
+        metadata["supported_claims"] = []
+    else:
+        metadata["sufficiency_status"] = "insufficient"
+    assert expand([doc.model_copy(update={"metadata": metadata})]).relations == []
+
+
 @pytest.mark.parametrize("subject,expected_node,name", [
     ("song:teen_spirit", SONG, "Smells Like Teen Spirit"),
     ("album:nevermind", ALBUM, "Nevermind"),
