@@ -23,13 +23,15 @@ COPY --from=dependencies /app/requirements.txt ./requirements.txt
 COPY --from=dependencies /app/requirements.production.txt ./requirements.production.txt
 RUN python -m pip check
 COPY ai-service/app/ app/
+COPY ai-service/data/intent/taxonomy.json data/intent/taxonomy.json
 COPY ai-service/migrations/ migrations/
 COPY ai-service/scripts/migrate_agent_postgres.py scripts/migrate_agent_postgres.py
 COPY deploy/*.py deploy/
 COPY deploy/frozen-artifacts.json deploy/frozen-artifacts.json
 COPY deploy/model-cache-manifest.json deploy/model-cache-manifest.json
 # Generate transport-only configuration inside the image, preserving source YAML.
-RUN python -m deploy.runtime configure \
+RUN printf '%s  %s\n' 'a60027b108e744d2baa457b6221572b9720d6f1ba377ef0350dbe014002bc63a' '/app/data/intent/taxonomy.json' | sha256sum -c - \
+    && python -m deploy.runtime configure \
     && useradd --system --uid 10001 app && chown -R app:app /app
 USER app
 EXPOSE 8001

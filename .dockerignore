@@ -5,6 +5,9 @@
 !ai-service/
 !ai-service/app/
 !ai-service/app/**
+!ai-service/data/
+!ai-service/data/intent/
+!ai-service/data/intent/taxonomy.json
 !ai-service/migrations/
 !ai-service/migrations/**
 !ai-service/requirements.txt

@@ -30,6 +30,10 @@ def test_ai_image_requires_verified_local_cpu_torch():
     assert "a09987c95ec4cffdb6df798d3d641558110a334cfccce22f2f046d83142bc260" in dockerfile
     assert "sha256sum -c -" in dockerfile
     assert "--no-index --no-deps --find-links=/tmp/wheelhouse --require-hashes" in dockerfile
+    dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")
+    assert "!ai-service/data/intent/taxonomy.json" in dockerignore
+    assert "COPY ai-service/data/intent/taxonomy.json data/intent/taxonomy.json" in dockerfile
+    assert "a60027b108e744d2baa457b6221572b9720d6f1ba377ef0350dbe014002bc63a" in dockerfile
 
 
 def fixture_lock(root):
