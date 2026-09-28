@@ -5,6 +5,8 @@ x-ai: &ai
   build:
     context: .
     dockerfile: deploy/ai.Dockerfile
+    additional_contexts:
+      wheelhouse: ./deployment-artifacts/wheelhouse
   init: true
   environment: &ai-env
     POSTGRES_DB: ${POSTGRES_DB:-moodflow_agent}

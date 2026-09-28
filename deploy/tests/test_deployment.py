@@ -19,6 +19,19 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ai-service"))
 
 
+def test_ai_image_requires_verified_local_cpu_torch():
+    compose = yaml.safe_load((ROOT / "docker-compose.production.yml").read_text(encoding="utf-8"))
+    dockerfile = (ROOT / "deploy/ai.Dockerfile").read_text(encoding="utf-8")
+    requirements = (ROOT / "deploy/requirements.production.txt").read_text(encoding="utf-8")
+    assert compose["x-ai"]["build"]["additional_contexts"]["wheelhouse"] == "./deployment-artifacts/wheelhouse"
+    assert "torch==2.14.0+cpu" in requirements
+    assert "download.pytorch.org" not in requirements
+    assert "COPY --from=wheelhouse /torch-2.14.0+cpu-cp312-cp312-manylinux_2_28_x86_64.whl" in dockerfile
+    assert "a09987c95ec4cffdb6df798d3d641558110a334cfccce22f2f046d83142bc260" in dockerfile
+    assert "sha256sum -c -" in dockerfile
+    assert "--no-index --no-deps --find-links=/tmp/wheelhouse --require-hashes" in dockerfile
+
+
 def fixture_lock(root):
     (root / "manifest.json").write_text(json.dumps({"collection_name": "approved",
         "source_release_id": "release", "projection_fingerprint": "projection",

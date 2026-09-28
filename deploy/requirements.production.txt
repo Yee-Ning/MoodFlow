@@ -1,6 +1,6 @@
-# Pinned from the frozen local runtime; Linux resolver validation is still required.
-# CPU container uses the same Torch version; CUDA dependencies intentionally omitted.
---extra-index-url https://download.pytorch.org/whl/cpu
+# Pinned from the frozen local runtime; the Linux image validates this set.
+# CPU Torch is installed from the SHA-verified local wheelhouse before resolving
+# these requirements. The resolver must not access the PyTorch CPU index.
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.14.2
