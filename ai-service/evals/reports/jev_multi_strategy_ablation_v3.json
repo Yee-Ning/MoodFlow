@@ -1,0 +1,402 @@
+{
+  "dataset_sha256": "4d5eba1b34142593fde46997e355fdea62885f43b48de3988d7f81129174eb0c",
+  "contract_sha256": "238d373ff43db0eea72dae17525525276a666c3819f959de8925206b0915a97c",
+  "selection_rule": "maximize .45 exact + .35 micro_f1 - .10 over - .10 under among nondominated dev candidates",
+  "candidate_count": 143,
+  "pareto_count": 12,
+  "hybrid_control": {
+    "count": 41,
+    "exact_count": 18,
+    "exact_match": 0.439,
+    "micro_precision": 0.8525,
+    "micro_recall": 0.6667,
+    "micro_f1": 0.7482,
+    "macro_f1": 0.7399,
+    "per_route": {
+      "current_song": {
+        "support": 20,
+        "precision": 1.0,
+        "recall": 0.65,
+        "f1": 0.7879,
+        "tp": 13,
+        "fp": 0,
+        "fn": 7
+      },
+      "tool_calling": {
+        "support": 22,
+        "precision": 0.8889,
+        "recall": 0.7273,
+        "f1": 0.8,
+        "tp": 16,
+        "fp": 2,
+        "fn": 6
+      },
+      "worldline": {
+        "support": 13,
+        "precision": 0.6667,
+        "recall": 0.6154,
+        "f1": 0.64,
+        "tp": 8,
+        "fp": 4,
+        "fn": 5
+      },
+      "general_chat": {
+        "support": 23,
+        "precision": 0.8333,
+        "recall": 0.6522,
+        "f1": 0.7317,
+        "tp": 15,
+        "fp": 3,
+        "fn": 8
+      }
+    },
+    "over_routing_count": 9,
+    "over_routing_rate": 0.2195,
+    "under_routing_count": 20,
+    "under_routing_rate": 0.4878,
+    "route_count_error_count": 17,
+    "route_count_error_rate": 0.4146,
+    "mean_absolute_route_count_error": 0.561,
+    "tp": 52,
+    "fp": 9,
+    "fn": 26
+  },
+  "best_by_family": {
+    "global_threshold": {
+      "mode": "noul",
+      "config": {
+        "family": "global_threshold",
+        "threshold": 0.3
+      },
+      "metrics": {
+        "count": 41,
+        "exact_count": 37,
+        "exact_match": 0.9024,
+        "micro_precision": 0.9625,
+        "micro_recall": 0.9872,
+        "micro_f1": 0.9747,
+        "macro_f1": 0.9735,
+        "per_route": {
+          "current_song": {
+            "support": 20,
+            "precision": 0.9524,
+            "recall": 1.0,
+            "f1": 0.9756,
+            "tp": 20,
+            "fp": 1,
+            "fn": 0
+          },
+          "tool_calling": {
+            "support": 22,
+            "precision": 1.0,
+            "recall": 0.9545,
+            "f1": 0.9767,
+            "tp": 21,
+            "fp": 0,
+            "fn": 1
+          },
+          "worldline": {
+            "support": 13,
+            "precision": 0.9286,
+            "recall": 1.0,
+            "f1": 0.963,
+            "tp": 13,
+            "fp": 1,
+            "fn": 0
+          },
+          "general_chat": {
+            "support": 23,
+            "precision": 0.9583,
+            "recall": 1.0,
+            "f1": 0.9787,
+            "tp": 23,
+            "fp": 1,
+            "fn": 0
+          }
+        },
+        "over_routing_count": 3,
+        "over_routing_rate": 0.0732,
+        "under_routing_count": 1,
+        "under_routing_rate": 0.0244,
+        "route_count_error_count": 4,
+        "route_count_error_rate": 0.0976,
+        "mean_absolute_route_count_error": 0.0976,
+        "tp": 77,
+        "fp": 3,
+        "fn": 1
+      },
+      "utility": 0.737465
+    },
+    "per_route_threshold": {
+      "mode": "noul",
+      "config": {
+        "family": "per_route_threshold",
+        "thresholds": {
+          "current_song": 0.3,
+          "tool_calling": 0.25,
+          "worldline": 0.45,
+          "general_chat": 0.5
+        }
+      },
+      "metrics": {
+        "count": 41,
+        "exact_count": 39,
+        "exact_match": 0.9512,
+        "micro_precision": 0.975,
+        "micro_recall": 1.0,
+        "micro_f1": 0.9873,
+        "macro_f1": 0.9847,
+        "per_route": {
+          "current_song": {
+            "support": 20,
+            "precision": 0.9524,
+            "recall": 1.0,
+            "f1": 0.9756,
+            "tp": 20,
+            "fp": 1,
+            "fn": 0
+          },
+          "tool_calling": {
+            "support": 22,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 22,
+            "fp": 0,
+            "fn": 0
+          },
+          "worldline": {
+            "support": 13,
+            "precision": 0.9286,
+            "recall": 1.0,
+            "f1": 0.963,
+            "tp": 13,
+            "fp": 1,
+            "fn": 0
+          },
+          "general_chat": {
+            "support": 23,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 23,
+            "fp": 0,
+            "fn": 0
+          }
+        },
+        "over_routing_count": 2,
+        "over_routing_rate": 0.0488,
+        "under_routing_count": 0,
+        "under_routing_rate": 0.0,
+        "route_count_error_count": 2,
+        "route_count_error_rate": 0.0488,
+        "mean_absolute_route_count_error": 0.0488,
+        "tp": 78,
+        "fp": 2,
+        "fn": 0
+      },
+      "utility": 0.768715
+    },
+    "top_k_min_score": {
+      "mode": "noul",
+      "config": {
+        "family": "top_k_min_score",
+        "k": 3,
+        "minimum_score": 0.3
+      },
+      "metrics": {
+        "count": 41,
+        "exact_count": 37,
+        "exact_match": 0.9024,
+        "micro_precision": 0.9625,
+        "micro_recall": 0.9872,
+        "micro_f1": 0.9747,
+        "macro_f1": 0.9735,
+        "per_route": {
+          "current_song": {
+            "support": 20,
+            "precision": 0.9524,
+            "recall": 1.0,
+            "f1": 0.9756,
+            "tp": 20,
+            "fp": 1,
+            "fn": 0
+          },
+          "tool_calling": {
+            "support": 22,
+            "precision": 1.0,
+            "recall": 0.9545,
+            "f1": 0.9767,
+            "tp": 21,
+            "fp": 0,
+            "fn": 1
+          },
+          "worldline": {
+            "support": 13,
+            "precision": 0.9286,
+            "recall": 1.0,
+            "f1": 0.963,
+            "tp": 13,
+            "fp": 1,
+            "fn": 0
+          },
+          "general_chat": {
+            "support": 23,
+            "precision": 0.9583,
+            "recall": 1.0,
+            "f1": 0.9787,
+            "tp": 23,
+            "fp": 1,
+            "fn": 0
+          }
+        },
+        "over_routing_count": 3,
+        "over_routing_rate": 0.0732,
+        "under_routing_count": 1,
+        "under_routing_rate": 0.0244,
+        "route_count_error_count": 4,
+        "route_count_error_rate": 0.0976,
+        "mean_absolute_route_count_error": 0.0976,
+        "tp": 77,
+        "fp": 3,
+        "fn": 1
+      },
+      "utility": 0.737465
+    },
+    "native_noul": {
+      "mode": "noul",
+      "config": {
+        "family": "native_noul"
+      },
+      "metrics": {
+        "count": 41,
+        "exact_count": 36,
+        "exact_match": 0.878,
+        "micro_precision": 0.9867,
+        "micro_recall": 0.9487,
+        "micro_f1": 0.9673,
+        "macro_f1": 0.9625,
+        "per_route": {
+          "current_song": {
+            "support": 20,
+            "precision": 1.0,
+            "recall": 0.95,
+            "f1": 0.9744,
+            "tp": 19,
+            "fp": 0,
+            "fn": 1
+          },
+          "tool_calling": {
+            "support": 22,
+            "precision": 1.0,
+            "recall": 0.9091,
+            "f1": 0.9524,
+            "tp": 20,
+            "fp": 0,
+            "fn": 2
+          },
+          "worldline": {
+            "support": 13,
+            "precision": 0.9231,
+            "recall": 0.9231,
+            "f1": 0.9231,
+            "tp": 12,
+            "fp": 1,
+            "fn": 1
+          },
+          "general_chat": {
+            "support": 23,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 23,
+            "fp": 0,
+            "fn": 0
+          }
+        },
+        "over_routing_count": 1,
+        "over_routing_rate": 0.0244,
+        "under_routing_count": 4,
+        "under_routing_rate": 0.0976,
+        "route_count_error_count": 5,
+        "route_count_error_rate": 0.122,
+        "mean_absolute_route_count_error": 0.122,
+        "tp": 74,
+        "fp": 1,
+        "fn": 4
+      },
+      "utility": 0.721455
+    }
+  },
+  "chosen": {
+    "mode": "noul",
+    "config": {
+      "family": "per_route_threshold",
+      "thresholds": {
+        "current_song": 0.3,
+        "tool_calling": 0.25,
+        "worldline": 0.45,
+        "general_chat": 0.5
+      }
+    },
+    "metrics": {
+      "count": 41,
+      "exact_count": 39,
+      "exact_match": 0.9512,
+      "micro_precision": 0.975,
+      "micro_recall": 1.0,
+      "micro_f1": 0.9873,
+      "macro_f1": 0.9847,
+      "per_route": {
+        "current_song": {
+          "support": 20,
+          "precision": 0.9524,
+          "recall": 1.0,
+          "f1": 0.9756,
+          "tp": 20,
+          "fp": 1,
+          "fn": 0
+        },
+        "tool_calling": {
+          "support": 22,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 22,
+          "fp": 0,
+          "fn": 0
+        },
+        "worldline": {
+          "support": 13,
+          "precision": 0.9286,
+          "recall": 1.0,
+          "f1": 0.963,
+          "tp": 13,
+          "fp": 1,
+          "fn": 0
+        },
+        "general_chat": {
+          "support": 23,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 23,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "over_routing_count": 2,
+      "over_routing_rate": 0.0488,
+      "under_routing_count": 0,
+      "under_routing_rate": 0.0,
+      "route_count_error_count": 2,
+      "route_count_error_rate": 0.0488,
+      "mean_absolute_route_count_error": 0.0488,
+      "tp": 78,
+      "fp": 2,
+      "fn": 0
+    },
+    "utility": 0.768715
+  },
+  "dev_results_sha256": "114d2a167b37c50cc7e4222b85c5fd78d78d5544b9fed1e4c79e43f4b5bfe6e8"
+}

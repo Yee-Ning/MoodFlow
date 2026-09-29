@@ -1,0 +1,75 @@
+{
+  "mode": "noul",
+  "config": {
+    "family": "per_route_threshold",
+    "thresholds": {
+      "current_song": 0.3,
+      "tool_calling": 0.25,
+      "worldline": 0.45,
+      "general_chat": 0.5
+    }
+  },
+  "dev_utility": 0.768715,
+  "dev_metrics": {
+    "count": 41,
+    "exact_count": 39,
+    "exact_match": 0.9512,
+    "micro_precision": 0.975,
+    "micro_recall": 1.0,
+    "micro_f1": 0.9873,
+    "macro_f1": 0.9847,
+    "per_route": {
+      "current_song": {
+        "support": 20,
+        "precision": 0.9524,
+        "recall": 1.0,
+        "f1": 0.9756,
+        "tp": 20,
+        "fp": 1,
+        "fn": 0
+      },
+      "tool_calling": {
+        "support": 22,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 22,
+        "fp": 0,
+        "fn": 0
+      },
+      "worldline": {
+        "support": 13,
+        "precision": 0.9286,
+        "recall": 1.0,
+        "f1": 0.963,
+        "tp": 13,
+        "fp": 1,
+        "fn": 0
+      },
+      "general_chat": {
+        "support": 23,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 23,
+        "fp": 0,
+        "fn": 0
+      }
+    },
+    "over_routing_count": 2,
+    "over_routing_rate": 0.0488,
+    "under_routing_count": 0,
+    "under_routing_rate": 0.0,
+    "route_count_error_count": 2,
+    "route_count_error_rate": 0.0488,
+    "mean_absolute_route_count_error": 0.0488,
+    "tp": 78,
+    "fp": 2,
+    "fn": 0
+  },
+  "dev_dataset_sha256": "4d5eba1b34142593fde46997e355fdea62885f43b48de3988d7f81129174eb0c",
+  "blind_dataset_sha256": "137e9e3c479b8f1d3a309fbf1e03142c79b55dc4933d34f55bcb600c78dedc94",
+  "contract_sha256": "238d373ff43db0eea72dae17525525276a666c3819f959de8925206b0915a97c",
+  "dev_results_sha256": "114d2a167b37c50cc7e4222b85c5fd78d78d5544b9fed1e4c79e43f4b5bfe6e8",
+  "frozen_at": "2026-09-29T06:07:50.713228+00:00"
+}
