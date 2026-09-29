@@ -1,0 +1,401 @@
+{
+  "formal_label_policy": "historical labels unchanged, including questionable labels; candidates excluded",
+  "single_intent": {
+    "jev_choice": {
+      "count": 31,
+      "correct": 24,
+      "accuracy": 0.7742,
+      "macro_f1": 0.8137,
+      "per_route": {
+        "current_song": {
+          "support": 4,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tool_calling": {
+          "support": 8,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "general_chat": {
+          "support": 10,
+          "precision": 0.6364,
+          "recall": 0.7,
+          "f1": 0.6667
+        },
+        "worldline": {
+          "support": 9,
+          "precision": 0.625,
+          "recall": 0.5556,
+          "f1": 0.5883
+        }
+      },
+      "confusion_matrix": {
+        "current_song": {
+          "current_song": 4,
+          "tool_calling": 0,
+          "general_chat": 0,
+          "worldline": 0,
+          "none": 0,
+          "multiple": 0
+        },
+        "tool_calling": {
+          "current_song": 0,
+          "tool_calling": 8,
+          "general_chat": 0,
+          "worldline": 0,
+          "none": 0,
+          "multiple": 0
+        },
+        "general_chat": {
+          "current_song": 0,
+          "tool_calling": 0,
+          "general_chat": 7,
+          "worldline": 3,
+          "none": 0,
+          "multiple": 0
+        },
+        "worldline": {
+          "current_song": 0,
+          "tool_calling": 0,
+          "general_chat": 4,
+          "worldline": 5,
+          "none": 0,
+          "multiple": 0
+        }
+      }
+    },
+    "main_graph_selected": {
+      "count": 31,
+      "correct": 20,
+      "accuracy": 0.6452,
+      "macro_f1": 0.75,
+      "per_route": {
+        "current_song": {
+          "support": 4,
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6667
+        },
+        "tool_calling": {
+          "support": 8,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "general_chat": {
+          "support": 10,
+          "precision": 0.8,
+          "recall": 0.4,
+          "f1": 0.5333
+        },
+        "worldline": {
+          "support": 9,
+          "precision": 1.0,
+          "recall": 0.6667,
+          "f1": 0.8
+        }
+      },
+      "confusion_matrix": {
+        "current_song": {
+          "current_song": 2,
+          "tool_calling": 0,
+          "general_chat": 1,
+          "worldline": 0,
+          "none": 1,
+          "multiple": 0
+        },
+        "tool_calling": {
+          "current_song": 0,
+          "tool_calling": 8,
+          "general_chat": 0,
+          "worldline": 0,
+          "none": 0,
+          "multiple": 0
+        },
+        "general_chat": {
+          "current_song": 0,
+          "tool_calling": 0,
+          "general_chat": 4,
+          "worldline": 0,
+          "none": 6,
+          "multiple": 0
+        },
+        "worldline": {
+          "current_song": 0,
+          "tool_calling": 0,
+          "general_chat": 0,
+          "worldline": 6,
+          "none": 3,
+          "multiple": 0
+        }
+      }
+    }
+  },
+  "multi_intent": {
+    "main_graph_selected": {
+      "count": 14,
+      "exact_match": 0.7143,
+      "exact_count": 10,
+      "micro_precision": 1.0,
+      "micro_recall": 0.7586,
+      "micro_f1": 0.8627,
+      "macro_f1": 0.8643,
+      "per_route_f1": {
+        "current_song": 0.8571,
+        "tool_calling": 0.8,
+        "general_chat": 0.8,
+        "worldline": 1.0
+      },
+      "over_routing_rate": 0.0,
+      "under_routing_rate": 0.2857,
+      "tp": 22,
+      "fp": 0,
+      "fn": 7
+    },
+    "jev_choice_diagnostic_only": {
+      "count": 14,
+      "exact_match": 0.0,
+      "exact_count": 0,
+      "micro_precision": 1.0,
+      "micro_recall": 0.4828,
+      "micro_f1": 0.6512,
+      "macro_f1": 0.609,
+      "per_route_f1": {
+        "current_song": 0.7692,
+        "tool_calling": 0.7143,
+        "general_chat": 0.6667,
+        "worldline": 0.2858
+      },
+      "over_routing_rate": 0.0,
+      "under_routing_rate": 1.0,
+      "tp": 14,
+      "fp": 0,
+      "fn": 15
+    }
+  },
+  "boundary_cases": {
+    "count": 16,
+    "single_jev_choice": {
+      "count": 14,
+      "correct": 12,
+      "accuracy": 0.8571,
+      "macro_f1": 0.8958,
+      "per_route": {
+        "current_song": {
+          "support": 1,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tool_calling": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "general_chat": {
+          "support": 6,
+          "precision": 0.8333,
+          "recall": 0.8333,
+          "f1": 0.8333
+        },
+        "worldline": {
+          "support": 4,
+          "precision": 0.75,
+          "recall": 0.75,
+          "f1": 0.75
+        }
+      },
+      "confusion_matrix": {
+        "current_song": {
+          "current_song": 1,
+          "tool_calling": 0,
+          "general_chat": 0,
+          "worldline": 0,
+          "none": 0,
+          "multiple": 0
+        },
+        "tool_calling": {
+          "current_song": 0,
+          "tool_calling": 3,
+          "general_chat": 0,
+          "worldline": 0,
+          "none": 0,
+          "multiple": 0
+        },
+        "general_chat": {
+          "current_song": 0,
+          "tool_calling": 0,
+          "general_chat": 5,
+          "worldline": 1,
+          "none": 0,
+          "multiple": 0
+        },
+        "worldline": {
+          "current_song": 0,
+          "tool_calling": 0,
+          "general_chat": 1,
+          "worldline": 3,
+          "none": 0,
+          "multiple": 0
+        }
+      }
+    },
+    "single_main_graph_selected": {
+      "count": 14,
+      "correct": 4,
+      "accuracy": 0.2857,
+      "macro_f1": 0.35,
+      "per_route": {
+        "current_song": {
+          "support": 1,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "tool_calling": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "general_chat": {
+          "support": 6,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "worldline": {
+          "support": 4,
+          "precision": 1.0,
+          "recall": 0.25,
+          "f1": 0.4
+        }
+      },
+      "confusion_matrix": {
+        "current_song": {
+          "current_song": 0,
+          "tool_calling": 0,
+          "general_chat": 0,
+          "worldline": 0,
+          "none": 1,
+          "multiple": 0
+        },
+        "tool_calling": {
+          "current_song": 0,
+          "tool_calling": 3,
+          "general_chat": 0,
+          "worldline": 0,
+          "none": 0,
+          "multiple": 0
+        },
+        "general_chat": {
+          "current_song": 0,
+          "tool_calling": 0,
+          "general_chat": 0,
+          "worldline": 0,
+          "none": 6,
+          "multiple": 0
+        },
+        "worldline": {
+          "current_song": 0,
+          "tool_calling": 0,
+          "general_chat": 0,
+          "worldline": 1,
+          "none": 3,
+          "multiple": 0
+        }
+      }
+    },
+    "multi_main_graph_selected": {
+      "count": 0,
+      "exact_match": null,
+      "exact_count": 0,
+      "micro_precision": null,
+      "micro_recall": null,
+      "micro_f1": 0.0,
+      "macro_f1": 0.0,
+      "per_route_f1": {
+        "current_song": 0.0,
+        "tool_calling": 0.0,
+        "general_chat": 0.0,
+        "worldline": 0.0
+      },
+      "over_routing_rate": null,
+      "under_routing_rate": null,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0
+    }
+  },
+  "candidate_cases": {
+    "count": 12,
+    "forced_route_count": 2
+  },
+  "failures": {
+    "parse_schema_rate": 0.0,
+    "api_failure_rate": 0.0,
+    "fallback_rate": 1.0,
+    "fallback_reasons": {
+      "shadow_mode": 13,
+      "low_confidence": 5,
+      "complex_existing_route": 27
+    },
+    "retry_rate": 0.0,
+    "timeout_rate": 0.0
+  },
+  "latency_ms": {
+    "jev_api": {
+      "count": 45,
+      "average": 571.55,
+      "p50": 542.38,
+      "p95": 693.19,
+      "p99": 1041.37
+    },
+    "jev_wall": {
+      "count": 45,
+      "average": 571.77,
+      "p50": 542.57,
+      "p95": 693.39,
+      "p99": 1041.74
+    },
+    "hybrid_router": {
+      "count": 45,
+      "average": 1640.47,
+      "p50": 1556.32,
+      "p95": 3250.72,
+      "p99": 3965.24
+    }
+  },
+  "usage_total_formal": {
+    "input_tokens": 17384,
+    "output_tokens": 2362
+  },
+  "usage_total_all_calls": {
+    "input_tokens": 22721,
+    "output_tokens": 3097
+  },
+  "response_models": {
+    "jev-1.13.0": 59
+  },
+  "questionable_cases": [
+    "manual-hard-019",
+    "manual-hard-021",
+    "manual-hard-027",
+    "manual-multi-011",
+    "manual-multi-020",
+    "manual-test-worldline-001",
+    "manual-world-002",
+    "manual-world-007",
+    "manual-world-022",
+    "manual-hard-020",
+    "manual-multi-009",
+    "manual-multi-010",
+    "manual-multi-014",
+    "manual-multi-025",
+    "manual-world-017"
+  ]
+}
