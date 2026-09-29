@@ -292,6 +292,14 @@ def test_frontend_preserves_api_paths_and_streaming():
 def test_host_nginx_only_proxies_loopback_and_preserves_sse():
     nginx = (ROOT / "deploy/nginx-host.conf").read_text()
     assert "listen 80 default_server;" in nginx
+    http_server, https_server = nginx.split("server {\n    listen 443 ssl default_server;", 1)
+    assert "location ^~ /.well-known/acme-challenge/ {" in http_server
+    assert "root /var/www/moodflow-acme;" in http_server
+    assert "return 308 https://47.83.162.191$request_uri;" in http_server
+    assert "proxy_pass" not in http_server
+    assert "ssl_certificate /etc/letsencrypt/live/47.83.162.191/fullchain.pem;" in https_server
+    assert "ssl_certificate_key /etc/letsencrypt/live/47.83.162.191/privkey.pem;" in https_server
+    assert "ssl_protocols TLSv1.2 TLSv1.3;" in https_server
     assert nginx.count("proxy_pass http://127.0.0.1:8088;") == 3
     assert nginx.index("location /api/ai/ {") < nginx.index("location /api/ {")
     ai_location = nginx.split("location /api/ai/ {", 1)[1].split("\n    }", 1)[0]
@@ -300,6 +308,9 @@ def test_host_nginx_only_proxies_loopback_and_preserves_sse():
                       "proxy_set_header X-Forwarded-Proto $scheme;"):
         assert directive in ai_location
     assert "postgres:5432" not in nginx and "qdrant:6333" not in nginx
+    hook = (ROOT / "deploy/certbot-reload-nginx.sh").read_text()
+    assert '"${RENEWED_LINEAGE:-}" != /etc/letsencrypt/live/47.83.162.191' in hook
+    assert hook.index("/usr/sbin/nginx -t") < hook.index("/usr/bin/systemctl reload nginx")
 
 
 @pytest.fixture(scope="module")
