@@ -14,8 +14,10 @@ from app.agent.foundation.subgraphs.worldline.models import (
     MusicKnowledgeDocument,
     ResolvedEntity,
     WorldLineGraph,
+    WorldLineEdge,
     WorldLineNode,
     WorldLineNodeType,
+    WorldLineRelation,
 )
 from app.agent.structured_output import ModelOutput
 
@@ -148,6 +150,48 @@ def valid_branch_drafts() -> str:
 
 
 class WorldLineGenerationTests(unittest.TestCase):
+    def test_exploration_invalid_drafts_fall_back_to_evidenced_unvisited_nodes(self) -> None:
+        runtime = ScriptedRuntime(["not-json", "still-not-json"])
+        source = EvidenceSource(
+            id="catalog:1", source_type=EvidenceType.MUSIC_API,
+            title="目录", source="目录",
+        )
+        worldline = graph().model_copy(update={"edges": [
+            WorldLineEdge(
+                source="netease:song:1", target="netease:artist:2",
+                relation=WorldLineRelation.PERFORMED_BY,
+                evidence_ids=[source.id],
+            ),
+            WorldLineEdge(
+                source="netease:song:1", target="netease:album:3",
+                relation=WorldLineRelation.BELONGS_TO_ALBUM,
+                evidence_ids=[source.id],
+            ),
+        ]})
+
+        with self.assertLogs("app.agent.foundation.subgraphs.worldline.generation", "WARNING"):
+            branches = asyncio.run(
+                StructuredWorldLineGenerator(runtime).generate_exploration_branches(
+                    entity(), worldline, [source],
+                    visited_nodes=["netease:song:1"],
+                )
+            )
+
+        self.assertEqual([branch.target_entity.id for branch in branches], [
+            "netease:artist:2", "netease:album:3",
+        ])
+        self.assertEqual([call["retry"] for call in runtime.calls], [False, True])
+
+    def test_exploration_fallback_does_not_offer_nodes_without_evidence(self) -> None:
+        runtime = ScriptedRuntime(["not-json", "still-not-json"])
+        with self.assertLogs("app.agent.foundation.subgraphs.worldline.generation", "WARNING"):
+            branches = asyncio.run(
+                StructuredWorldLineGenerator(runtime).generate_exploration_branches(
+                    entity(), graph(), [], visited_nodes=["netease:song:1"],
+                )
+            )
+        self.assertEqual(branches, [])
+
     def test_exploration_branches_allow_fewer_than_three_and_reject_visited_target(self) -> None:
         runtime = ScriptedRuntime([
             json.dumps({"branches": [{

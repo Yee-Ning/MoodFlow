@@ -1,4 +1,5 @@
 import json
+import logging
 from types import SimpleNamespace
 from typing import Any, Protocol
 
@@ -41,6 +42,9 @@ from app.llm.client import create_generation_response
 
 class WorldLineGenerationError(RuntimeError):
     """Raised after structured generation or grounding validation is exhausted."""
+
+
+logger = logging.getLogger(__name__)
 
 
 class WorldLineStructuredRuntime(Protocol):
@@ -350,6 +354,9 @@ class StructuredWorldLineGenerator:
         try:
             draft = await service.run(generate)
         except StructuredOutputError as exc:
+            if exploration:
+                logger.warning("worldline.exploration_branch_fallback")
+                return _grounded_exploration_branches(graph, sources, eligible)
             raise WorldLineGenerationError("worldline_branches_invalid") from exc
         return _materialize_branches(draft, graph)
 
@@ -386,6 +393,43 @@ _BRANCH_TARGET_TYPES = {
         WorldLineNodeType.RELATED_WORK,
     },
 }
+
+
+def _grounded_exploration_branches(
+    graph: WorldLineGraph,
+    sources: list[EvidenceSource],
+    eligible: set[str],
+) -> list[WorldLineBranch]:
+    """Keep continuation available using only evidenced, unvisited graph nodes."""
+    source_ids = {source.id for source in sources}
+    evidenced_nodes = {
+        endpoint
+        for edge in graph.edges
+        if edge.evidence_ids and set(edge.evidence_ids).issubset(source_ids)
+        for endpoint in (edge.source, edge.target)
+    }
+    branch_types = {
+        WorldLineNodeType.SONG: WorldLineBranchType.RELATED_WORK,
+        WorldLineNodeType.ARTIST: WorldLineBranchType.ARTIST,
+        WorldLineNodeType.ALBUM: WorldLineBranchType.ALBUM,
+    }
+    branches = [
+        WorldLineBranch(
+            id=f"branch:{index}",
+            title=f"继续探索《{node.name}》",
+            description="沿当前图谱中已有来源的关系继续探索。",
+            branch_type=branch_types[node.type],
+            target_entity=WorldLineBranchTarget(
+                id=node.id, type=node.type, name=node.name,
+            ),
+        )
+        for index, node in enumerate(
+            (node for node in graph.nodes if node.id in eligible and node.id in evidenced_nodes),
+            start=1,
+        )
+    ][:3]
+    _validate_grounded_branches(branches, graph)
+    return branches
 
 
 def _graph_payload(graph: WorldLineGraph) -> dict[str, Any]:
