@@ -1,4 +1,6 @@
+import io
 import json
+import logging
 import shutil
 import sys
 import subprocess
@@ -12,7 +14,8 @@ import yaml
 
 from deploy.artifacts import LOCK_PATH, digest, export, verify, within
 from deploy.audit_inventory import category, inventory
-from deploy.runtime import configure, load_secrets, validate_contract, validate_http, validate_schema, warm_models
+from deploy.runtime import (configure, configure_shadow_telemetry_logging, load_secrets,
+                            validate_contract, validate_http, validate_schema, warm_models)
 from deploy.model_cache import export_model_cache, verify_model_cache
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,6 +40,21 @@ def test_ai_image_requires_verified_local_cpu_torch():
         assert f"!ai-service/evals/config/{filename}" in dockerignore
         assert f"COPY ai-service/evals/config/{filename} evals/config/{filename}" in dockerfile
     assert "a60027b108e744d2baa457b6221572b9720d6f1ba377ef0350dbe014002bc63a" in dockerfile
+
+
+def test_production_shadow_telemetry_info_is_emitted_once():
+    shadow_logger = logging.getLogger("app.agent.decision.jev.shadow_v5")
+    original = (list(shadow_logger.handlers), shadow_logger.level, shadow_logger.propagate)
+    output = io.StringIO()
+    try:
+        shadow_logger.handlers = []
+        configure_shadow_telemetry_logging(output)
+        configure_shadow_telemetry_logging(output)
+        shadow_logger.info('jev.v5_shadow {"decision_type":"router_v5_shadow"}')
+        assert len(shadow_logger.handlers) == 1
+        assert output.getvalue().count("jev.v5_shadow ") == 1
+    finally:
+        shadow_logger.handlers, shadow_logger.level, shadow_logger.propagate = original
 
 
 def fixture_lock(root):
