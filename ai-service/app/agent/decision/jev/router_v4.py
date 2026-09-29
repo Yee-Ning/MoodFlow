@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import re
+from collections.abc import Awaitable
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
@@ -188,7 +189,7 @@ class JevRouterCandidate:
 
     async def route_with_trace(
         self, text: str, context: RoutingContext | None = None,
-        *, fallback_decision: RouteDecision | None = None,
+        *, fallback_decision: RouteDecision | Awaitable[RouteDecision] | None = None,
     ) -> CandidateTrace:
         if not text.strip() or len(text) > 4_000:
             raise ValueError("query must contain 1..4000 nonblank characters")
@@ -270,7 +271,10 @@ class JevRouterCandidate:
         except (JevDecisionError, TaskConstructionError, KeyError, ValueError, TypeError, AttributeError) as exc:
             reason = str(exc) if isinstance(exc, (JevDecisionError, TaskConstructionError)) else type(exc).__name__
             if fallback_decision is not None:
-                decision = fallback_decision
+                decision = (
+                    await fallback_decision if isinstance(fallback_decision, Awaitable)
+                    else fallback_decision
+                )
             else:
                 if self.fallback_router is None:
                     from app.agent.foundation.hybrid_routing import create_hybrid_router

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import asyncio
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -12,7 +13,7 @@ import pytest
 from app.agent.decision.jev.capability_criteria import ROUTER_QUESTION_INSTRUCTIONS, router_criteria
 from app.agent.decision.jev.client import DecisionAnswer, DecisionResponse, JevDecisionError
 from app.agent.decision.jev.router_v4 import JevRouterCandidate, frozen_thresholds, split_clauses
-from app.agent.decision.jev.telemetry import record_v4_shadow
+from app.agent.decision.jev.telemetry import record_v4_shadow, record_v4_shadow_failure
 from app.agent.foundation.main_graph import build_main_graph
 from app.agent.foundation.routing import RouteDecision, RouteKey, RouteTask, RoutingContext
 from app.agent.foundation.state.main import create_main_state
@@ -156,6 +157,14 @@ async def test_route_fragment_conflict_and_api_failure_use_hybrid_only_then():
     assert trace.decision == baseline
 
     broken = SimpleNamespace(decide=AsyncMock(side_effect=JevDecisionError("TimeoutError")))
+    shared_baseline = asyncio.create_task(asyncio.sleep(0, result=baseline))
+    fallback.route.reset_mock()
+    trace = await JevRouterCandidate(broken, fallback_router=fallback).route_with_trace(
+        "说说音乐。", fallback_decision=shared_baseline,
+    )
+    assert trace.decision == baseline
+    fallback.route.assert_not_awaited()
+
     fallback.route.reset_mock()
     trace = await JevRouterCandidate(broken, fallback_router=fallback).route_with_trace("说说音乐。")
     assert trace.router_source == "hybrid_fallback"
@@ -202,6 +211,8 @@ def test_shadow_telemetry_omits_query_and_fragments(caplog):
     event = json.loads(caplog.records[-1].message.split(" ", 1)[1])
     assert event["candidate_routes"] == ["general_chat"]
     assert "private phrase" not in caplog.text
+    record_v4_shadow_failure("TimeoutError")
+    assert "TimeoutError" in caplog.text
 
 
 @pytest.mark.asyncio

@@ -94,12 +94,15 @@ def build_main_graph(
         if v4_shadow:
             from app.agent.decision.jev.client import JevClient
             from app.agent.decision.jev.router_v4 import JevRouterCandidate
-            from app.agent.decision.jev.telemetry import record_v4_shadow
+            from app.agent.decision.jev.telemetry import record_v4_shadow, record_v4_shadow_failure
 
             candidate = jev_v4_shadow_router or JevRouterCandidate(jev_client or JevClient(settings))
+            baseline_task = asyncio.create_task(router.route(state["current_input"], context))
             baseline, shadow = await asyncio.gather(
-                router.route(state["current_input"], context),
-                candidate.route_with_trace(state["current_input"], context),
+                baseline_task,
+                candidate.route_with_trace(
+                    state["current_input"], context, fallback_decision=baseline_task,
+                ),
                 return_exceptions=True,
             )
             if isinstance(baseline, BaseException):
@@ -107,6 +110,8 @@ def build_main_graph(
             decision = baseline
             if not isinstance(shadow, BaseException):
                 record_v4_shadow(decision, shadow)
+            else:
+                record_v4_shadow_failure(type(shadow).__name__)
             # Candidate RouteTasks are never sent to Subgraphs in Shadow Mode.
             return {"route_decision": RouteDecision.model_validate(decision.model_dump())}
 

@@ -78,3 +78,11 @@ def record_v4_shadow(baseline: RouteDecision, candidate: CandidateTrace) -> None
         == {task.route_key for task in proposed.tasks},
     }
     logger.info("jev.v4_shadow %s", json.dumps(event, ensure_ascii=False, separators=(",", ":")))
+
+
+def record_v4_shadow_failure(error_type: str) -> None:
+    """Keep candidate failures observable without propagating user text."""
+    logger.warning("jev.v4_shadow_failure %s", json.dumps({
+        "decision_type": "router_v4_shadow", "error_type": error_type,
+        "candidate_failed": True,
+    }, separators=(",", ":")))
