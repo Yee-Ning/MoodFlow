@@ -9,6 +9,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 BASE = "https://47.83.162.191"
+WORLDLINE_SMOKE_QUERY = "Radiohead"
 
 
 def request(path: str, payload: dict[str, str] | None = None, timeout: int = 30):
@@ -51,7 +52,7 @@ def run() -> dict[str, object]:
                          "final_seconds": round(times["final"], 3)}
     for attempt in (1, 2):
         try:
-            with request("/api/ai/worldline/sessions", {"query": "Pixies"}, timeout=180) as response:
+            with request("/api/ai/worldline/sessions", {"query": WORLDLINE_SMOKE_QUERY}, timeout=180) as response:
                 created = json.load(response)
             break
         except HTTPError as exc:
@@ -75,7 +76,13 @@ def run() -> dict[str, object]:
 def main() -> None:
     try:
         print(json.dumps(run(), ensure_ascii=False))
-    except (HTTPError, URLError, OSError, ValueError, json.JSONDecodeError) as exc:
+    except HTTPError as exc:
+        print(f"public_smoke_failed:http_{exc.code}", file=sys.stderr)
+        raise SystemExit(1) from None
+    except ValueError as exc:
+        print(f"public_smoke_failed:{exc}", file=sys.stderr)
+        raise SystemExit(1) from None
+    except (URLError, OSError, json.JSONDecodeError) as exc:
         # The response body and user/session contents must not enter deploy logs.
         print(f"public_smoke_failed:{type(exc).__name__}", file=sys.stderr)
         raise SystemExit(1) from None

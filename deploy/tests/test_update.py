@@ -143,6 +143,7 @@ def test_public_smoke_checks_sse_order_and_worldline_read(monkeypatch):
     assert result["sse"]["status"] == "passed"
     assert result["worldline"] == {"status": "passed", "attempts": 1, "node_count": 1}
     assert paths[-1] == "/api/ai/worldline/sessions/s1"
+    assert update_smoke.WORLDLINE_SMOKE_QUERY == "Radiohead"
 
 
 def test_public_smoke_rejects_buffered_events(monkeypatch):
