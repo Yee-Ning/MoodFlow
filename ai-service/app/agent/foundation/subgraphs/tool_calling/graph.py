@@ -1,4 +1,5 @@
 import json
+import re
 from collections.abc import Sequence
 from typing import Any
 
@@ -52,6 +53,56 @@ TOOL_LIMIT_MESSAGE = (
     "请缩小请求范围或分成两次完成。"
 )
 INVALID_TOOL_OUTPUT_MESSAGE = "工具选择或参数格式无效，本次没有执行工具。"
+
+# Tool output and conversation history can supply entity references, but only
+# the assigned user clause can authorize a player or library mutation.
+_ACTION_REQUESTS = {
+    "pause_player": r"暂停|停一下|停住",
+    "resume_player": r"继续播放|恢复播放|接着播放",
+    "play_next": r"下一首|下一曲|切歌|换歌",
+    "play_previous": r"上一首|上一曲|切回上一首",
+    "set_volume": r"音量|调大|调小|关小|声音大|声音小",
+    "set_muted": r"静音|取消静音",
+    "seek_to": r"进度|跳到|定位到|拖到|快进|快退",
+    "seek_by": r"快进|快退|前进|后退|进度",
+    "set_play_mode": r"播放模式|单曲循环|列表循环|随机播放|顺序播放",
+    "play_song": r"播放|放一首|来一首|听一下|听这首|听它",
+    "set_liked": r"收藏|喜欢|点赞|点个喜欢",
+    "open_lyrics": r"打开歌词|显示歌词|查看歌词|展开歌词",
+    "add_song_to_playlist": r"加入.{0,8}歌单|添加到.{0,8}歌单|放进.{0,8}歌单",
+}
+_ACTION_CLAUSE = re.compile(r"[,，.。!！?？;；]|然后|接着|随后|并且|同时|以及|但是|不过|但")
+_ACTION_NEGATION = re.compile(r"(?:别|不要|不用|无需|不再|不要再)[^,，.。!！?？;；]{0,8}$")
+
+
+def _action_intent_errors(state: ToolCallingState) -> dict[str, str]:
+    text = state["current_input"]
+    clauses = _ACTION_CLAUSE.split(text)
+    errors: dict[str, str] = {}
+    for call in _latest_tool_calls(state):
+        name = call.get("name")
+        pattern = _ACTION_REQUESTS.get(name)
+        if pattern is None:
+            continue
+        args = call.get("args") or {}
+        if name == "set_liked" and args.get("liked") is False:
+            pattern = r"取消收藏|取消喜欢|不喜欢|移除收藏"
+        allowed = False
+        for clause in clauses:
+            for match in re.finditer(pattern, clause, re.IGNORECASE):
+                if _ACTION_NEGATION.search(clause[:match.start()]):
+                    continue
+                if name == "set_liked" and args.get("liked") is True and re.search(
+                    r"(?:取消|不)\s*$", clause[:match.start()]
+                ):
+                    continue
+                allowed = True
+                break
+            if allowed:
+                break
+        if not allowed:
+            errors[str(call.get("id") or "")] = "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+    return errors
 
 
 def _route_after_direct(state: ToolCallingState) -> str:
@@ -455,11 +506,15 @@ def build_tool_calling_subgraph(
         argument_errors = _argument_errors(state)
         reference_errors = _reference_errors(state)
         duplicate_errors = _duplicate_call_errors(state)
+        action_errors = _action_intent_errors(state)
         messages: list[ToolMessage] = []
         for call in _latest_tool_calls(state):
             call_id = str(call.get("id", ""))
             if call_id in argument_errors:
                 error_code, message = argument_errors[call_id]
+            elif call_id in action_errors:
+                error_code = "unauthorized_action"
+                message = action_errors[call_id]
             elif call_id in reference_errors:
                 error_code = "untrusted_entity_reference"
                 message = reference_errors[call_id]
@@ -485,7 +540,8 @@ def build_tool_calling_subgraph(
     def route_validated_calls(state: ToolCallingState) -> str:
         return (
             "reject_tool_calls"
-            if _argument_errors(state) or _reference_errors(state) or _duplicate_call_errors(state)
+            if (_argument_errors(state) or _reference_errors(state)
+                or _duplicate_call_errors(state) or _action_intent_errors(state))
             else "tools"
         )
 

@@ -23,6 +23,32 @@ from tests.test_llm_router import TAXONOMY
 
 
 class MultiIntentRoutingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_analysis_and_favorite_has_only_two_tasks(self) -> None:
+        model = Mock(side_effect=AssertionError("covered query must not reach model"))
+        runtime = SimpleNamespace(classify=AsyncMock(side_effect=AssertionError("LLM must not run")))
+        router = HybridIntentRouter(SimpleNamespace(route=model), LLMRouter(TAXONOMY, runtime=runtime))
+
+        decision = await router.route("分析当前这首歌为什么这么伤感，然后收藏它")
+
+        self.assertEqual(
+            [task.route_key for task in decision.tasks],
+            [RouteKey.CURRENT_SONG, RouteKey.TOOL_CALLING],
+        )
+        self.assertEqual([task.input_text for task in decision.tasks], ["分析当前这首歌为什么这么伤感", "收藏它"])
+        model.assert_not_called()
+        runtime.classify.assert_not_awaited()
+
+    async def test_negated_player_action_preserves_analysis_without_tool_task(self) -> None:
+        model = Mock(side_effect=AssertionError("covered query must not reach model"))
+        runtime = SimpleNamespace(classify=AsyncMock(side_effect=AssertionError("LLM must not run")))
+        router = HybridIntentRouter(SimpleNamespace(route=model), LLMRouter(TAXONOMY, runtime=runtime))
+
+        decision = await router.route("不要切歌，分析一下当前这首歌")
+
+        self.assertEqual([task.route_key for task in decision.tasks], [RouteKey.CURRENT_SONG])
+        model.assert_not_called()
+        runtime.classify.assert_not_awaited()
+
     async def test_negated_action_is_reviewed_by_llm_before_dispatch(self) -> None:
         text = "不要暂停"
 

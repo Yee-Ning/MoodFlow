@@ -309,6 +309,58 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(task.data["entities"]["songs"][0]["position"], 1)
         self.assertEqual(task.data["entities"]["songs"][0]["song_id"], 101)
 
+    async def test_search_then_play_rejects_unrequested_favorite_from_model(self) -> None:
+        play_song_tool = next(item for item in CLIENT_ACTION_TOOLS if item.name == "play_song")
+        liked_tool = next(item for item in CLIENT_ACTION_TOOLS if item.name == "set_liked")
+        search = tool_call("search_music", "search-1", {"keyword": "测试歌曲"})
+        liked = tool_call("set_liked", "liked-1", {"song_id": 101, "liked": True})
+        observed: list[dict] = []
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(), play_song_tool, liked_tool],
+            assistant=scripted_assistant([
+                AIMessage(content="", tool_calls=[*search.tool_calls, *liked.tool_calls]),
+                tool_call("search_music", "search-2", {"keyword": "测试歌曲"}),
+                tool_call("play_song", "play-1", {"song": {
+                    "song_id": 101, "name": "测试歌曲", "artists": ["测试歌手"],
+                    "album": "测试专辑", "cover_url": "https://example.test/cover.jpg",
+                    "duration": 180000,
+                }}),
+                AIMessage(content="已请求播放。"),
+            ], observed),
+        )
+
+        result = await invoke(graph, text="搜索测试歌曲，然后播放它")
+
+        actions = result["task_result"].data["client_actions"]
+        self.assertEqual([action["name"] for action in actions], ["play_song"])
+        rejected = [json.loads(str(message.content))["error"]
+                    for message in observed[1]["messages"] if isinstance(message, ToolMessage)]
+        self.assertIn("unauthorized_action", rejected)
+        self.assertNotIn("set_liked", [item["name"] for item in result["task_result"].data["tool_call_details"] if item["status"] == "success"])
+
+    async def test_explicit_favorite_is_allowed_but_negated_favorite_is_not(self) -> None:
+        liked_tool = next(item for item in CLIENT_ACTION_TOOLS if item.name == "set_liked")
+        context = RoutingContext(has_current_song=True, current_song_id=101)
+        graph = create_tool_calling_subgraph(
+            tools=[liked_tool],
+            assistant=scripted_assistant([
+                tool_call("set_liked", "liked-yes", {"song_id": 101, "liked": True}),
+                AIMessage(content="已发送收藏指令。"),
+            ]),
+        )
+        allowed = await invoke(graph, text="收藏当前这首歌", context=context)
+        self.assertEqual([a["name"] for a in allowed["task_result"].data["client_actions"]], ["set_liked"])
+
+        graph = create_tool_calling_subgraph(
+            tools=[liked_tool],
+            assistant=scripted_assistant([
+                tool_call("set_liked", "liked-no", {"song_id": 101, "liked": True}),
+                AIMessage(content="不会收藏。"),
+            ]),
+        )
+        denied = await invoke(graph, text="不要收藏这首歌，分析它", context=context)
+        self.assertEqual(denied["task_result"].data["client_actions"], [])
+
     async def test_prior_entities_are_passed_to_assistant(self) -> None:
         prior = ReferencedEntities(
             songs=[

@@ -33,6 +33,11 @@ _CLAUSE_SEPARATOR = re.compile(
     r"再(?=(?:帮|请|给|把|告诉|分析|收藏|暂停|播放|继续|恢复|"
     r"切换|切到|换|下一|上一|查看|打开))"
 )
+_NEGATED_ACTION = re.compile(
+    r"^(?:别|不要|不用|无需)[^,，.。!！?？;；]{0,12}"
+    r"(?:切歌|换歌|下一首|上一首|暂停|继续播放|播放|收藏|喜欢|"
+    r"加入|添加到|搜索|查找|打开歌词|调大|调小|静音|快进|快退)"
+)
 
 
 @dataclass(frozen=True)
@@ -48,8 +53,14 @@ def _mark_span(flags: list[bool], start: int, end: int) -> None:
         flags[index] = True
 
 
-def _effective_positions(text: str) -> set[int]:
+def _effective_positions(text: str, *, ignore_negated_action: bool = False) -> set[int]:
     ignored = [False] * len(text)
+    # A cancelled action is a constraint on this turn, not a dispatchable
+    # intent. Keep standalone negations unresolved for existing LLM handling.
+    if ignore_negated_action:
+        for start, end in _segment_spans(text):
+            if _NEGATED_ACTION.search(text[start:end].strip()):
+                _mark_span(ignored, start, end)
     for match in re.finditer(r"\s+", text):
         _mark_span(ignored, *match.span())
     for index, character in enumerate(text):
@@ -112,7 +123,7 @@ def _unresolved_fragments(
 
 
 def calculate_coverage(text: str, matches: list[RuleMatch] | list[IntentItem]) -> CoverageResult:
-    effective = _effective_positions(text)
+    effective = _effective_positions(text, ignore_negated_action=bool(matches))
     covered: set[int] = set()
     for match in matches:
         covered.update(index for index in effective if match.start <= index < match.end)

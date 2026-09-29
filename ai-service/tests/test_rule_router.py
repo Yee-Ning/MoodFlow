@@ -111,6 +111,24 @@ class RuleRouterTestCase(unittest.TestCase):
         self.assertTrue(decision.is_complete)
         self.assertEqual(decision.unresolved_text, "")
 
+    def test_current_song_analysis_complement_does_not_create_chat(self) -> None:
+        decision = self.assert_intents(
+            "分析当前这首歌为什么这么伤感，然后收藏它",
+            [
+                (IntentType.CURRENT_SONG, "analyze_current_song"),
+                (IntentType.TOOL_CALLING, "favorite_song"),
+            ],
+        )
+        self.assertTrue(decision.is_complete)
+
+    def test_negated_action_keeps_positive_current_song_task(self) -> None:
+        decision = self.assert_intents(
+            "不要切歌，分析一下当前这首歌",
+            [(IntentType.CURRENT_SONG, "analyze_current_song")],
+        )
+        self.assertTrue(decision.is_complete)
+        self.assertEqual(decision.unresolved_text, "")
+
     def test_routes_pause_and_lyric_analysis_as_two_intents(self) -> None:
         decision = self.assert_intents(
             "暂停一下，然后告诉我这首歌歌词什么意思",
