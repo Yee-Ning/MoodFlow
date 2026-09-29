@@ -11,6 +11,7 @@ from app.agent.foundation.routing import RouteDecision, RouteKey, RouteTask
 from app.config.settings import Settings
 
 from .client import DecisionClient, JevDecisionError
+from .capability_criteria import ROUTER_QUESTION_INSTRUCTIONS, router_criteria
 from .telemetry import record_decision
 
 
@@ -34,13 +35,8 @@ async def compare_route(text: str, existing: RouteDecision, *,
         response = await client.decide(
             {"query": text[:4000]},
             {"route": Choice(
-                instructions="Which MoodFlow subgraph should handle this single user request?",
-                criteria={
-                    RouteKey.CURRENT_SONG.value: "Analyze the currently playing song or lyrics",
-                    RouteKey.TOOL_CALLING.value: "Perform a music player or library operation",
-                    RouteKey.WORLDLINE.value: "Research music knowledge or relationships",
-                    RouteKey.GENERAL_CHAT.value: "General conversation or questions",
-                },
+                instructions=ROUTER_QUESTION_INSTRUCTIONS,
+                criteria=router_criteria(),
             )},
         )
         answer = response.answers["route"]
@@ -48,7 +44,7 @@ async def compare_route(text: str, existing: RouteDecision, *,
         confidence = answer.confidence
         if proposed is None or confidence is None or not 0 <= confidence <= 1:
             reason = "invalid_response"
-    except (JevDecisionError, KeyError, ValueError, TypeError, AttributeError) as exc:
+    except (JevDecisionError, KeyError, ValueError, TypeError, AttributeError, OSError) as exc:
         reason = str(exc) if isinstance(exc, JevDecisionError) else type(exc).__name__
     if baseline is None:
         reason = reason or "complex_existing_route"

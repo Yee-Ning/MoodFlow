@@ -23,6 +23,7 @@ COPY --from=dependencies /app/requirements.txt ./requirements.txt
 COPY --from=dependencies /app/requirements.production.txt ./requirements.production.txt
 RUN python -m pip check
 COPY ai-service/app/ app/
+COPY ai-service/evals/config/router_capability_contract.json evals/config/router_capability_contract.json
 COPY ai-service/data/intent/taxonomy.json data/intent/taxonomy.json
 COPY ai-service/migrations/ migrations/
 COPY ai-service/scripts/migrate_agent_postgres.py scripts/migrate_agent_postgres.py

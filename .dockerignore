@@ -5,6 +5,9 @@
 !ai-service/
 !ai-service/app/
 !ai-service/app/**
+!ai-service/evals/
+!ai-service/evals/config/
+!ai-service/evals/config/router_capability_contract.json
 !ai-service/data/
 !ai-service/data/intent/
 !ai-service/data/intent/taxonomy.json
