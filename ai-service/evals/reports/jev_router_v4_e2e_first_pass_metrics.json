@@ -1,0 +1,133 @@
+{
+  "dataset_sha256": "216197f910ef0efc7acc44e790744ee0770bbac20f9d9f2e1420f9780a4fdf7c",
+  "evaluated_at": "2026-09-29T08:19:35.422591+00:00",
+  "hybrid": {
+    "cases": 24,
+    "routing": {
+      "exact": 0.4583,
+      "exact_count": 11,
+      "micro_precision": 0.7273,
+      "micro_recall": 0.7742,
+      "micro_f1": 0.75,
+      "macro_f1": 0.7268,
+      "over_count": 8,
+      "under_count": 6,
+      "per_route": {
+        "current_song": {
+          "support": 6,
+          "precision": 0.8,
+          "recall": 0.6667,
+          "f1": 0.7273
+        },
+        "tool_calling": {
+          "support": 11,
+          "precision": 0.8182,
+          "recall": 0.8182,
+          "f1": 0.8182
+        },
+        "worldline": {
+          "support": 5,
+          "precision": 0.6,
+          "recall": 0.6,
+          "f1": 0.6
+        },
+        "general_chat": {
+          "support": 9,
+          "precision": 0.6667,
+          "recall": 0.8889,
+          "f1": 0.7619
+        }
+      }
+    },
+    "tasks": {
+      "full_decision_exact": 0.2083,
+      "full_decision_exact_count": 5,
+      "task_count_accuracy": 0.4583,
+      "task_route_accuracy": 0.6061,
+      "fragment_accuracy": 0.4242,
+      "dependency_accuracy": 0.6667,
+      "ordering_accuracy": 0.4167,
+      "clarify_precision": 0.0,
+      "clarify_recall": 0.0
+    },
+    "reliability": {
+      "fallback_rate": 0.0
+    },
+    "performance": {
+      "average_ms": 3826.27,
+      "p50_ms": 4931.07,
+      "p95_ms": 9486.82,
+      "p99_ms": 10696.74,
+      "api_calls_total": 18,
+      "api_calls_per_query": 0.75,
+      "input_tokens": 24853,
+      "output_tokens": 875
+    }
+  },
+  "jev": {
+    "cases": 24,
+    "routing": {
+      "exact": 0.9583,
+      "exact_count": 23,
+      "micro_precision": 0.9688,
+      "micro_recall": 1.0,
+      "micro_f1": 0.9842,
+      "macro_f1": 0.9773,
+      "over_count": 1,
+      "under_count": 0,
+      "per_route": {
+        "current_song": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tool_calling": {
+          "support": 11,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "worldline": {
+          "support": 5,
+          "precision": 0.8333,
+          "recall": 1.0,
+          "f1": 0.9091
+        },
+        "general_chat": {
+          "support": 9,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      }
+    },
+    "tasks": {
+      "full_decision_exact": 0.8333,
+      "full_decision_exact_count": 20,
+      "task_count_accuracy": 0.9167,
+      "task_route_accuracy": 0.9697,
+      "fragment_accuracy": 0.8788,
+      "dependency_accuracy": 0.9394,
+      "ordering_accuracy": 0.9167,
+      "clarify_precision": 1.0,
+      "clarify_recall": 0.8
+    },
+    "reliability": {
+      "fallback": 2,
+      "timeout": 1,
+      "task_construction_failure": 1,
+      "fallback_rate": 0.0833
+    },
+    "performance": {
+      "average_ms": 1542.06,
+      "p50_ms": 644.52,
+      "p95_ms": 8569.04,
+      "p99_ms": 11301.82,
+      "api_calls_total": 39,
+      "api_calls_per_query": 1.625,
+      "input_tokens": 52412,
+      "output_tokens": 2879
+    }
+  }
+}

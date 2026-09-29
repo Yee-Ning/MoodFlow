@@ -1,0 +1,9 @@
+{
+  "dataset_sha256": "8ca3cf3aca26530a3b8bfdcc9b83b0828bede2ba5b7916eb6c6f5caaeaf0118e",
+  "purpose": "untuned regression of frozen Single Choice through V4 task path",
+  "cases": 20,
+  "route_exact_count": 19,
+  "route_exact": 0.95,
+  "clarify_count": 1,
+  "fallback_count": 0
+}
