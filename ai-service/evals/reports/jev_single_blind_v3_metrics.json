@@ -1,0 +1,106 @@
+{
+  "dataset_sha256": "8ca3cf3aca26530a3b8bfdcc9b83b0828bede2ba5b7916eb6c6f5caaeaf0118e",
+  "question_type": "Choice",
+  "criteria_source": "unchanged capability_criteria.py V2",
+  "count": 20,
+  "correct": 20,
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "per_route": {
+    "current_song": {
+      "support": 5,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "tool_calling": {
+      "support": 5,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "general_chat": {
+      "support": 5,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "worldline": {
+      "support": 5,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "confusion_matrix": {
+    "current_song": {
+      "current_song": 5,
+      "tool_calling": 0,
+      "general_chat": 0,
+      "worldline": 0,
+      "none": 0,
+      "multiple": 0
+    },
+    "tool_calling": {
+      "current_song": 0,
+      "tool_calling": 5,
+      "general_chat": 0,
+      "worldline": 0,
+      "none": 0,
+      "multiple": 0
+    },
+    "general_chat": {
+      "current_song": 0,
+      "tool_calling": 0,
+      "general_chat": 5,
+      "worldline": 0,
+      "none": 0,
+      "multiple": 0
+    },
+    "worldline": {
+      "current_song": 0,
+      "tool_calling": 0,
+      "general_chat": 0,
+      "worldline": 5,
+      "none": 0,
+      "multiple": 0
+    }
+  },
+  "general_chat_worldline_confusion": 0,
+  "low_confidence_count": 0,
+  "low_confidence_case_ids": [],
+  "operations": {
+    "wall_latency_ms": {
+      "count": 20,
+      "average": 637.17,
+      "p50": 570.3,
+      "p95": 963.16,
+      "p99": 1408.36
+    },
+    "api_latency_ms": {
+      "count": 20,
+      "average": 636.56,
+      "p50": 569.92,
+      "p95": 962.56,
+      "p99": 1405.54
+    },
+    "api_calls_total": 20,
+    "api_calls_per_query": 1.0,
+    "local_model_calls_total": null,
+    "token_usage": {
+      "input_tokens": 20883,
+      "output_tokens": 1050
+    },
+    "parse_schema_failures": 0,
+    "api_failures": 0,
+    "timeout_failures": 0,
+    "router_failures": 0,
+    "fallback_or_clarification_count": 0,
+    "llm_escalation_count": 0,
+    "clarification_count": 0,
+    "incomplete_count": null,
+    "response_models": {
+      "jev-1.13.0": 20
+    }
+  }
+}

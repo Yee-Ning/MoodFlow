@@ -293,9 +293,13 @@ def operational_metrics(outputs: list[dict[str, Any]], *, jev: bool) -> dict[str
             "local_model_calls_total": None if jev else sum(o["local_model_calls"] for o in outputs),
             "token_usage": dict(usage),
             "parse_schema_failures": sum(o.get("error_category") == "parse_schema_failure" for o in outputs),
-            "timeout_api_failures": sum(o.get("error_category") == "api_failure" for o in outputs),
+            "api_failures": sum(o.get("error_category") == "api_failure" for o in outputs),
+            "timeout_failures": sum("timeout" in (o.get("error_type") or "").lower() for o in outputs),
             "router_failures": sum(o.get("error_category") == "router_failure" for o in outputs),
             "fallback_or_clarification_count": sum(bool(o.get("fallback_reason")) for o in outputs),
+            "llm_escalation_count": sum(o.get("fallback_reason") == "llm_escalation" for o in outputs),
+            "clarification_count": sum(o.get("fallback_reason") == "needs_clarification" for o in outputs),
+            "incomplete_count": sum(o.get("is_complete") is False for o in outputs) if not jev else None,
             "response_models": dict(Counter(o["response_model"] for o in outputs
                                             if o.get("response_model")))}
 

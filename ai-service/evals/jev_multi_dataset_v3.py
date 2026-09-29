@@ -151,7 +151,7 @@ def build() -> dict[str, list[dict]]:
         raise ValueError("invalid capability label")
     prior_queries = {_normal(row["query"]) for row in gold}
     examples = {_normal(example) for spec in contract["routes"]
-                for field in ("positive_examples", "negative_examples", "ambiguous_queries")
+                for field in ("positive_examples", "negative_examples", "boundary_examples", "ambiguous_queries")
                 for example in spec[field]}
     for row in single:
         if _normal(row["query"]) in prior_queries | examples:
@@ -186,7 +186,7 @@ def freeze() -> dict[str, str]:
              "", "## 支持度与冻结哈希", "",
              *[f"- {name}: SHA256 `{hashes[name]}`；route support " + ", ".join(f"{route}={Counter(k for r in rows for k in r['gold_routes'])[route]}" for route in ROUTES)
                for name, rows in (("multi_dev_v3", dev), ("multi_blind_test_v3", blind), ("single_blind_v3", single))],
-             "", "检查包括原 Gold V2 与 Contract 示例对 Single blind 的精确去重、所有 V3 query 的精确去重，以及 dev/blind 最大规范化字符串相似度 <0.72。语义层面的完全独立性无法由字面检查保证。",
+             "", "检查包括原 Gold V2 与 Contract 正反例、边界例和模糊例对 Single blind 的精确去重、所有 V3 query 的精确去重，以及 dev/blind 最大规范化字符串相似度 <0.72。语义层面的完全独立性无法由字面检查保证。",
              "", "## 评测边界", "",
              "所有当前歌曲请求假定有有效 SongContext；路由评测不调用下游服务。模糊实体案例按 Contract 需澄清，不强塞给 Worldline。此阶段不会修改原 Gold V2、Contract、Single criteria、生产阈值或生产路由。",
              ""]

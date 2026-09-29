@@ -18,7 +18,7 @@
 - multi_blind_test_v3: SHA256 `137e9e3c479b8f1d3a309fbf1e03142c79b55dc4933d34f55bcb600c78dedc94`；route support current_song=10, tool_calling=12, general_chat=11, worldline=9
 - single_blind_v3: SHA256 `8ca3cf3aca26530a3b8bfdcc9b83b0828bede2ba5b7916eb6c6f5caaeaf0118e`；route support current_song=5, tool_calling=5, general_chat=5, worldline=5
 
-检查包括原 Gold V2 与 Contract 示例对 Single blind 的精确去重、所有 V3 query 的精确去重，以及 dev/blind 最大规范化字符串相似度 <0.72。语义层面的完全独立性无法由字面检查保证。
+检查包括原 Gold V2 与 Contract 正反例、边界例和模糊例对 Single blind 的精确去重、所有 V3 query 的精确去重，以及 dev/blind 最大规范化字符串相似度 <0.72。语义层面的完全独立性无法由字面检查保证。
 
 ## 评测边界
 

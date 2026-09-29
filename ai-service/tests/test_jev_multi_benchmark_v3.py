@@ -2,7 +2,7 @@ import pytest
 
 from app.agent.decision.jev.client import DecisionAnswer, DecisionResponse
 from evals.jev_multi_benchmark_v3 import (
-    ROUTES, call_jev_multi, candidate_configs, multi_questions, route_metrics,
+    ROUTES, call_jev_multi, candidate_configs, multi_questions, operational_metrics, route_metrics,
     select,
 )
 
@@ -94,3 +94,23 @@ def test_dev_candidates_include_all_four_selection_families():
     families = {item["config"]["family"] for item in candidate_configs(rows)}
     assert families == {"global_threshold", "per_route_threshold",
                         "top_k_min_score", "native_noul"}
+
+
+def test_operations_distinguish_api_timeout_from_schema_and_clarification():
+    outputs = [
+        {"wall_latency_ms": 5, "api_latency_ms": None, "api_calls": 1,
+         "local_model_calls": 2, "usage": {}, "error_category": "api_failure",
+         "error_type": "TimeoutError", "fallback_reason": "needs_clarification",
+         "is_complete": False},
+        {"wall_latency_ms": 7, "api_latency_ms": None, "api_calls": 0,
+         "local_model_calls": 1, "usage": {}, "error_category": "parse_schema_failure",
+         "error_type": "ValueError", "fallback_reason": "llm_escalation",
+         "is_complete": True},
+    ]
+    metrics = operational_metrics(outputs, jev=False)
+    assert metrics["api_failures"] == 1
+    assert metrics["timeout_failures"] == 1
+    assert metrics["parse_schema_failures"] == 1
+    assert metrics["clarification_count"] == 1
+    assert metrics["llm_escalation_count"] == 1
+    assert metrics["incomplete_count"] == 1
