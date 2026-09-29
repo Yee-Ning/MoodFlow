@@ -1,6 +1,22 @@
 import type { AiChatNode, AiSongRecommendation } from '../types/aiChat'
 
 const AI_API_BASE_URL = (import.meta.env.VITE_AI_API_BASE_URL ?? '').replace(/\/$/, '')
+const ACCEPTANCE_TELEMETRY_KEY = 'moodflow-acceptance-telemetry'
+
+function acceptanceTelemetryHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {}
+
+  try {
+    const marker = new URLSearchParams(window.location.search).get('__moodflow_acceptance')
+    if (marker === '1') window.sessionStorage.setItem(ACCEPTANCE_TELEMETRY_KEY, '1')
+    if (marker === '0') window.sessionStorage.removeItem(ACCEPTANCE_TELEMETRY_KEY)
+    return window.sessionStorage.getItem(ACCEPTANCE_TELEMETRY_KEY) === '1'
+      ? { 'X-MoodFlow-Telemetry-Class': 'acceptance' }
+      : {}
+  } catch {
+    return {}
+  }
+}
 
 export interface ChatRequest {
   message: string
@@ -388,6 +404,7 @@ export async function* streamAiChatMessage(
       headers: {
         Accept: 'text/event-stream',
         'Content-Type': 'application/json',
+        ...acceptanceTelemetryHeaders(),
       },
       body: JSON.stringify(request),
       signal,

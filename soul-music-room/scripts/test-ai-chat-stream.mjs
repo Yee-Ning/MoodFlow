@@ -392,6 +392,44 @@ try {
   assert.equal(cleared.status, 'idle')
 
   const { streamAiChatMessage } = await server.ssrLoadModule('/src/services/aiChat.ts')
+  const telemetryStorage = new Map()
+  globalThis.window = {
+    location: { search: '' },
+    sessionStorage: {
+      getItem: (key) => telemetryStorage.get(key) ?? null,
+      setItem: (key, value) => telemetryStorage.set(key, value),
+      removeItem: (key) => telemetryStorage.delete(key),
+    },
+  }
+  let requestHeaders
+  globalThis.fetch = async (_url, init) => {
+    requestHeaders = init.headers
+    return streamResponse([sse('done', {})])
+  }
+  const telemetryRequest = {
+    message: '验收遥测', thread_id: 'acceptance-test', current_song_id: null,
+    player_context: playerContext({ has_current_song: false, current_song_id: null }),
+  }
+  async function sendTelemetryRequest() {
+    for await (const event of streamAiChatMessage(telemetryRequest)) { void event }
+  }
+  await sendTelemetryRequest()
+  assert.equal(requestHeaders['X-MoodFlow-Telemetry-Class'], undefined)
+  globalThis.window.location.search = '?__moodflow_acceptance=1'
+  await sendTelemetryRequest()
+  assert.equal(requestHeaders['X-MoodFlow-Telemetry-Class'], 'acceptance')
+  globalThis.window.location.search = ''
+  await sendTelemetryRequest()
+  assert.equal(requestHeaders['X-MoodFlow-Telemetry-Class'], 'acceptance')
+  globalThis.window.location.search = '?__moodflow_acceptance=0'
+  await sendTelemetryRequest()
+  assert.equal(requestHeaders['X-MoodFlow-Telemetry-Class'], undefined)
+  globalThis.window.location.search = '?__moodflow_acceptance=1'
+  globalThis.window.sessionStorage.getItem = () => { throw new Error('storage unavailable') }
+  await sendTelemetryRequest()
+  assert.equal(requestHeaders['X-MoodFlow-Telemetry-Class'], undefined)
+  delete globalThis.window
+
   globalThis.fetch = async () => streamResponse([
     sse('final', {
       type: 'chat', status: 'success', message: '世界线已生成', search_query: null,
