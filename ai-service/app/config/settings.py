@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     jev_enabled: bool = Field(default=False, validation_alias="JEV_ENABLED")
     jev_shadow_mode: bool = Field(default=True, validation_alias="JEV_SHADOW_MODE")
     jev_router_enabled: bool = Field(default=False, validation_alias="JEV_ROUTER_ENABLED")
+    jev_router_v4_shadow_enabled: bool = Field(
+        default=False, validation_alias="JEV_ROUTER_V4_SHADOW_ENABLED"
+    )
     jev_memory_filter_enabled: bool = Field(default=False, validation_alias="JEV_MEMORY_FILTER_ENABLED")
     jev_context_select_enabled: bool = Field(default=False, validation_alias="JEV_CONTEXT_SELECT_ENABLED")
     jev_provider: Literal["typesafe"] = Field(default="typesafe", validation_alias="JEV_PROVIDER")

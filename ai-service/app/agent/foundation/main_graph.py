@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Sequence
 from typing import Any, TYPE_CHECKING
 from uuid import uuid4
@@ -23,6 +24,7 @@ from app.schemas.context import MusicAgentContext
 if TYPE_CHECKING:
     from app.agent.foundation.hybrid_routing import AsyncIntentRouter
     from app.agent.decision.jev.client import DecisionClient
+    from app.agent.decision.jev.router_v4 import JevRouterCandidate
 
 
 def create_hybrid_router():
@@ -52,6 +54,7 @@ def build_main_graph(
     development_routes: Sequence[RouteKey] | None = None,
     intent_router: AsyncIntentRouter | None = None,
     jev_client: DecisionClient | None = None,
+    jev_v4_shadow_router: JevRouterCandidate | None = None,
     current_song_subgraph: CompiledStateGraph | None = None,
     tool_calling_subgraph: CompiledStateGraph | None = None,
     worldline_subgraph: CompiledStateGraph | None = None,
@@ -79,13 +82,39 @@ def build_main_graph(
         return {"current_input": current_input, "final_response": None, "route_decision": None}
 
     async def intent_route(state: MainState) -> dict[str, RouteDecision]:
-        decision = await router.route(state["current_input"], state.get("routing_context", RoutingContext()))
+        from app.config.settings import get_settings
+        settings = get_settings() if (
+            intent_router is None or jev_client is not None or jev_v4_shadow_router is not None
+        ) else None
+        context = state.get("routing_context", RoutingContext())
+        v4_shadow = (
+            settings is not None and settings.jev_enabled and settings.jev_shadow_mode
+            and (settings.jev_router_v4_shadow_enabled or jev_v4_shadow_router is not None)
+        )
+        if v4_shadow:
+            from app.agent.decision.jev.client import JevClient
+            from app.agent.decision.jev.router_v4 import JevRouterCandidate
+            from app.agent.decision.jev.telemetry import record_v4_shadow
+
+            candidate = jev_v4_shadow_router or JevRouterCandidate(jev_client or JevClient(settings))
+            baseline, shadow = await asyncio.gather(
+                router.route(state["current_input"], context),
+                candidate.route_with_trace(state["current_input"], context),
+                return_exceptions=True,
+            )
+            if isinstance(baseline, BaseException):
+                raise baseline
+            decision = baseline
+            if not isinstance(shadow, BaseException):
+                record_v4_shadow(decision, shadow)
+            # Candidate RouteTasks are never sent to Subgraphs in Shadow Mode.
+            return {"route_decision": RouteDecision.model_validate(decision.model_dump())}
+
+        decision = await router.route(state["current_input"], context)
         # Check even injected router results before dispatching anything.
         decision = RouteDecision.model_validate(decision.model_dump())
         if jev_client is not None or intent_router is None:
-            from app.config.settings import get_settings
-            settings = get_settings()
-            if settings.jev_enabled and settings.jev_router_enabled:
+            if settings is not None and settings.jev_enabled and settings.jev_router_enabled:
                 from app.agent.decision.jev.client import JevClient
                 from app.agent.decision.jev.router import compare_route
                 decision = await compare_route(

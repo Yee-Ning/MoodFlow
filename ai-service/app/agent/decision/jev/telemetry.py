@@ -5,8 +5,14 @@ from __future__ import annotations
 import json
 import logging
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+from app.agent.foundation.routing import RouteDecision
 
 from .client import DecisionResponse
+
+if TYPE_CHECKING:
+    from .router_v4 import CandidateTrace
 
 logger = logging.getLogger(__name__)
 
@@ -45,3 +51,30 @@ def record_decision(decision_type: str, response: DecisionResponse | None, *,
         "usage": response.usage if response else None,
     }
     logger.info("jev.decision %s", json.dumps(event, ensure_ascii=False, separators=(",", ":")))
+
+
+def record_v4_shadow(baseline: RouteDecision, candidate: CandidateTrace) -> None:
+    """Record aggregate decisions only: no query, fragment, secret or user identifier."""
+    proposed = candidate.decision
+    event = {
+        "decision_type": "router_v4_shadow",
+        "router_source": candidate.router_source,
+        "fallback_reason": candidate.fallback_reason,
+        "response_model": candidate.response_model,
+        "latency_ms": candidate.latency_ms,
+        "api_calls": candidate.api_calls,
+        "usage": candidate.usage,
+        "scores": candidate.scores,
+        "confidence": candidate.confidence,
+        "baseline_routes": [task.route_key.value for task in baseline.tasks],
+        "candidate_routes": [task.route_key.value for task in proposed.tasks],
+        "baseline_task_count": len(baseline.tasks),
+        "candidate_task_count": len(proposed.tasks),
+        "baseline_dependency_count": sum(len(task.depends_on) for task in baseline.tasks),
+        "candidate_dependency_count": sum(len(task.depends_on) for task in proposed.tasks),
+        "baseline_clarify": baseline.needs_clarification,
+        "candidate_clarify": proposed.needs_clarification,
+        "route_agreement": {task.route_key for task in baseline.tasks}
+        == {task.route_key for task in proposed.tasks},
+    }
+    logger.info("jev.v4_shadow %s", json.dumps(event, ensure_ascii=False, separators=(",", ":")))
