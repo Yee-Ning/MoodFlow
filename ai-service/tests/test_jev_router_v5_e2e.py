@@ -12,12 +12,14 @@ from app.agent.foundation.routing import RouteKey, RoutingContext
 from app.agent.foundation.state.main import create_main_state
 from app.agent.foundation.subgraphs.current_song.graph import create_current_song_subgraph
 from app.agent.foundation.subgraphs.general_chat.graph import create_general_chat_subgraph
+from app.agent.foundation.subgraphs.tool_calling import CLIENT_ACTION_TOOLS
 from app.agent.foundation.subgraphs.tool_calling.graph import create_tool_calling_subgraph
 from app.agent.foundation.subgraphs.worldline.graph import create_worldline_subgraph
 from app.agent.foundation.subgraphs.worldline.models import EntityType
 from tests.test_foundation_e2e_acceptance import KnowledgeRetriever, SongProvider
 from tests.test_jev_router_v5 import Client
 from tests.test_worldline_graph import FakeGenerator, FakeMusicService, entity
+from tests.test_tool_calling_subgraph import search_tool, scripted_assistant, tool_call
 
 pytestmark = pytest.mark.asyncio
 
@@ -96,3 +98,37 @@ async def test_v5_ambiguous_entity_clarifies_before_worldline_dispatch():
     assert result["route_decision"].needs_clarification
     assert not result["task_results"]
     assert not tools and not song and not chat
+
+
+async def test_v5_search_result_reaches_next_tool_task_and_queues_player_action():
+    search_calls = []
+    play_song = next(tool for tool in CLIENT_ACTION_TOOLS if tool.name == "play_song")
+    scripted = scripted_assistant([
+        tool_call("search_music", "v5-search", {"keyword": "测试歌曲", "limit": 1}),
+        AIMessage(content="搜索完成。"),
+        tool_call("play_song", "v5-play", {"song": {
+            "song_id": 101, "name": "测试歌曲", "artists": ["测试歌手"],
+            "album": "测试专辑", "cover_url": "https://example.test/cover.jpg",
+            "duration": 180000,
+        }}),
+        AIMessage(content="已排队播放。"),
+    ])
+    seen_prior = []
+
+    async def assistant(messages, current_input, routing_context, prior_entities):
+        if "播放" in current_input:
+            seen_prior.extend(prior_entities)
+        return await scripted(messages, current_input, routing_context, prior_entities)
+
+    graph = build_main_graph(
+        intent_router=JevRouterV5(Client(["tool_calling", "tool_calling"])),
+        tool_calling_subgraph=create_tool_calling_subgraph(
+            tools=[search_tool(calls=search_calls), play_song], assistant=assistant,
+        ),
+    ).compile()
+    result = await graph.ainvoke(create_main_state("先搜索《测试歌曲》，然后播放搜索到的版本。"))
+    assert search_calls == [{"keyword": "测试歌曲", "limit": 1}]
+    assert seen_prior and seen_prior[0].songs[0].song_id == 101
+    tasks = result["task_results"]
+    assert len(tasks) == 2
+    assert tasks[1].data["client_actions"][0]["name"] == "play_song"

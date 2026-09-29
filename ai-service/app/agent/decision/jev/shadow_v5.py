@@ -27,6 +27,7 @@ def _routes(decision: RouteDecision) -> list[str]:
 
 def _record(baseline: RouteDecision, trace: RouterTraceV5) -> None:
     decision = trace.decision
+    comparable = trace.router_source != "legacy_hybrid_fallback"
     event = {
         "timestamp": datetime.now(UTC).isoformat(),
         "decision_type": "router_v5_shadow",
@@ -36,9 +37,11 @@ def _record(baseline: RouteDecision, trace: RouterTraceV5) -> None:
         "candidate_routes": _routes(decision),
         "baseline_task_count": len(baseline.tasks),
         "candidate_task_count": len(decision.tasks),
-        "route_agreement": _routes(baseline) == _routes(decision),
-        "task_count_agreement": len(baseline.tasks) == len(decision.tasks),
-        "clarify_disagreement": baseline.needs_clarification != decision.needs_clarification,
+        "route_agreement": _routes(baseline) == _routes(decision) if comparable else None,
+        "task_count_agreement": len(baseline.tasks) == len(decision.tasks) if comparable else None,
+        "clarify_disagreement": (
+            baseline.needs_clarification != decision.needs_clarification if comparable else None
+        ),
         "candidate_clarify": decision.needs_clarification,
         "dependency_edge_count": sum(len(task.depends_on) for task in decision.tasks),
         "confidence": trace.confidence,
@@ -55,12 +58,14 @@ def _record(baseline: RouteDecision, trace: RouterTraceV5) -> None:
     }
     _counts["total_requests"] += 1
     _counts[trace.router_source] += 1
-    _counts["agreement"] += int(event["route_agreement"])
+    _counts["comparable"] += int(comparable)
+    _counts["agreement"] += int(event["route_agreement"] is True)
     _counts["fallback"] += int(trace.fallback_reason is not None)
     _counts["timeout"] += int(trace.fallback_reason == "timeout")
     _counts["clarify"] += int(decision.needs_clarification)
-    for route in event["candidate_routes"]:
-        _counts[f"route:{route}"] += 1
+    if comparable:
+        for route in event["candidate_routes"]:
+            _counts[f"route:{route}"] += 1
     _latencies.append(trace.total_router_latency_ms)
     _tokens.append(sum(value for value in trace.usage.values() if isinstance(value, int)))
     logger.info("jev.v5_shadow %s", json.dumps(event, ensure_ascii=False, separators=(",", ":")))
@@ -120,7 +125,9 @@ def snapshot() -> dict[str, object]:
         "counts": dict(_counts),
         "jev_single_rate": _counts["jev_single"] / total if total else None,
         "jev_multi_rate": _counts["jev_multi"] / total if total else None,
-        "agreement_rate": _counts["agreement"] / total if total else None,
+        "agreement_rate": (
+            _counts["agreement"] / _counts["comparable"] if _counts["comparable"] else None
+        ),
         "fallback_rate": _counts["fallback"] / total if total else None,
         "clarify_rate": _counts["clarify"] / total if total else None,
         "p50_ms": percentile(.5), "p95_ms": percentile(.95), "p99_ms": percentile(.99),

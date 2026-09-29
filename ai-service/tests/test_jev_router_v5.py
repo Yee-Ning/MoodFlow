@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -11,7 +12,7 @@ import pytest
 
 from app.agent.decision.jev.client import DecisionAnswer, DecisionResponse, JevDecisionError
 from app.agent.decision.jev.router_v5 import JevRouterV5
-from app.agent.decision.jev.shadow_v5 import snapshot
+from app.agent.decision.jev.shadow_v5 import _record, snapshot
 from app.agent.decision.jev.task_orchestrator_v5 import parse_task_clauses
 from app.agent.foundation.main_graph import build_main_graph
 from app.agent.foundation.routing import RouteDecision, RouteKey, RouteTask, RoutingContext
@@ -126,6 +127,16 @@ async def test_rule_guard_rejects_unsupported_service_and_historical_simulation(
 
 
 @pytest.mark.asyncio
+async def test_negated_unsupported_action_does_not_cancel_supported_explanation():
+    client = Client(["general_chat"])
+    trace = await JevRouterV5(client).route_with_trace(
+        "不要订机票，解释什么是转调。",
+    )
+    assert not trace.decision.needs_clarification
+    assert [task.route_key for task in trace.decision.tasks] == [RouteKey.GENERAL_CHAT]
+
+
+@pytest.mark.asyncio
 async def test_worldline_requires_identified_root_and_result_selection_depends_on_search():
     world = await JevRouterV5(Client(["worldline"])).route_with_trace(
         "介绍某位歌手的影响证据。",
@@ -177,14 +188,31 @@ async def test_shadow_is_nonblocking_private_and_never_dispatches_candidate(capl
                                jev_router_v5_shadow_enabled=True,
                                jev_router_v4_shadow_enabled=False,
                                jev_router_confidence_threshold=.8)
-    with patch("app.config.settings.get_settings", return_value=settings):
+    with (patch("app.config.settings.get_settings", return_value=settings),
+          caplog.at_level(logging.INFO, logger="app.agent.decision.jev.shadow_v5")):
         graph = build_main_graph(intent_router=baseline_router, jev_v5_shadow_router=candidate).compile()
         result = await asyncio.wait_for(graph.ainvoke(create_main_state("播放秘密歌曲。")), timeout=2)
-    assert result["final_response"] == "legacy answer"
-    assert snapshot()["pending"] >= 1
-    gate.set()
-    await asyncio.sleep(.05)
+        assert result["final_response"] == "legacy answer"
+        assert snapshot()["pending"] >= 1
+        gate.set()
+        await asyncio.sleep(.05)
+    assert "jev.v5_shadow " in caplog.text
     assert "秘密歌曲" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_shadow_fallback_does_not_count_as_candidate_agreement(caplog):
+    baseline = RouteDecision(needs_clarification=True, clarification_question="baseline")
+    failed_client = SimpleNamespace(decide=AsyncMock(side_effect=JevDecisionError("timeout")))
+    trace = await JevRouterV5(failed_client).route_with_trace(
+        "解释音乐。", fallback_decision=baseline,
+    )
+    with caplog.at_level(logging.INFO, logger="app.agent.decision.jev.shadow_v5"):
+        _record(baseline, trace)
+    event = json.loads(caplog.records[-1].message.split("jev.v5_shadow ", 1)[1])
+    assert event["router_source"] == "legacy_hybrid_fallback"
+    assert event["route_agreement"] is None
+    assert event["task_count_agreement"] is None
 
 
 def test_v5_gold_is_frozen_and_new():

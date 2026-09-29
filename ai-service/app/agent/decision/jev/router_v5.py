@@ -73,10 +73,12 @@ class RuleGuard:
             return ()
         return tuple(parse_task_clauses(text))
 
-    def preflight_question(self, text: str) -> str | None:
-        if _UNSUPPORTED_EXTERNAL_ACTION.search(text):
+    def preflight_question(self, clauses) -> str | None:
+        # The parser already removed negated clauses. A prohibited action
+        # mentioned only in a negation must not cancel a supported request.
+        if any(_UNSUPPORTED_EXTERNAL_ACTION.search(clause.text) for clause in clauses):
             return "当前仅支持音乐相关能力；请把外部预订或通信请求交给相应服务。"
-        if _UNSUPPORTED_COUNTERFACTUAL.search(text):
+        if any(_UNSUPPORTED_COUNTERFACTUAL.search(clause.text) for clause in clauses):
             return "当前无法模拟未发生的音乐历史。请改为询问可核实的音乐实体关系。"
         return None
 
@@ -213,7 +215,7 @@ class JevRouterV5:
         attempted_jev_calls = 0
         jev_start = orchestration_start = None
         try:
-            preflight = self.guard.preflight_question(text)
+            preflight = self.guard.preflight_question(clauses)
             if preflight:
                 decision = clarify(preflight)
             elif not clauses:
