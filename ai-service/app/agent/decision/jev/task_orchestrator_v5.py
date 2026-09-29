@@ -22,7 +22,10 @@ _COMPACT_BOUNDARY = re.compile(
     r"(?<=区别)(?=(?:查看|搜索|播放|打开|收藏|探索))"
 )
 _NEGATIVE_PREFIX = re.compile(r"^(?:不要|不用|无需|别|不必|请勿)")
-_DEPENDENCY_REFERENCE = re.compile(r"(?:它|其|搜索到的|刚刚|播放的版本|这首|这个结果)")
+_DEPENDENCY_REFERENCE = re.compile(r"(?:它|其|搜索到的|刚刚|播放的版本|这首|这个结果|选一首)")
+_UNSPECIFIED_WORLDLINE_ROOT = re.compile(
+    r"(?:其他|某位|某个|一些|一位|这个|那个)(?:艺人|歌手|乐队|专辑|歌曲)"
+)
 _UNCERTAIN_COMPOUND = re.compile(r"(?:分别|各自|各做|各来)")
 _SEPARATELY = re.compile(r"^分别(?P<body>.+?)和(?P<second>[^和]+)$")
 
@@ -112,6 +115,11 @@ class TaskOrchestrator:
         if not set(routes) <= plan.selected_routes:
             raise OrchestrationFailure("task_conflict")
         question = _safety_question(list(clauses), list(routes), plan.context)
+        if not question and any(
+            route is RouteKey.WORLDLINE and _UNSPECIFIED_WORLDLINE_ROOT.search(clause.text)
+            for clause, route in zip(clauses, routes, strict=True)
+        ):
+            question = "请指明要探索的具体歌曲、歌手或专辑。"
         if question:
             return clarify(question)
         run_id = uuid4().hex

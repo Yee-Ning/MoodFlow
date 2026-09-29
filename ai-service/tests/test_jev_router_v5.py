@@ -102,6 +102,42 @@ async def test_multi_cross_route_order_and_current_song_context():
 
 
 @pytest.mark.asyncio
+async def test_negated_action_keeps_separate_affirmative_request():
+    query = "不要播放，分析正在听的歌。"
+    trace = await JevRouterV5(Client(["current_song"])).route_with_trace(
+        query, RoutingContext(has_current_song=True, current_song_id=101),
+    )
+    assert trace.router_source == "jev_single"
+    assert [task.input_text for task in trace.decision.tasks] == ["分析正在听的歌"]
+
+
+@pytest.mark.asyncio
+async def test_rule_guard_rejects_unsupported_service_and_historical_simulation():
+    client = Client(["general_chat"])
+    router = JevRouterV5(client)
+    for query in (
+        "解释节奏，并替我预订酒店。",
+        "假如这张专辑从未发行，会改写哪些历史？",
+    ):
+        trace = await router.route_with_trace(query)
+        assert trace.decision.needs_clarification
+        assert not trace.decision.tasks
+    assert not client.calls
+
+
+@pytest.mark.asyncio
+async def test_worldline_requires_identified_root_and_result_selection_depends_on_search():
+    world = await JevRouterV5(Client(["worldline"])).route_with_trace(
+        "介绍某位歌手的影响证据。",
+    )
+    assert world.decision.needs_clarification
+    query = "先搜索陈奕迅的歌，选一首播放。"
+    tool = await JevRouterV5(Client(["tool_calling", "tool_calling"])).route_with_trace(query)
+    assert len(tool.decision.tasks) == 2
+    assert tool.decision.tasks[1].depends_on == [tool.decision.tasks[0].task_id]
+
+
+@pytest.mark.asyncio
 async def test_timeout_low_confidence_schema_failure_and_route_conflict_fallback():
     baseline = RouteDecision(is_complete=True, tasks=[RouteTask(
         task_id="legacy", route_key=RouteKey.GENERAL_CHAT, input_text="fallback",

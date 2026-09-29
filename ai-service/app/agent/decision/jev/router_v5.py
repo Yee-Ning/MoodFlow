@@ -22,7 +22,13 @@ from .task_orchestrator_v5 import (
 )
 
 _ROUTES = tuple(router_criteria())
-_EMPTY_OR_NEGATED = re.compile(r"^\s*(?:(?:不要|不用|别|请勿).*)?$", re.I)
+_UNSUPPORTED_EXTERNAL_ACTION = re.compile(
+    r"(?:订|预订|预约|购买|买|发送|叫).*(?:机票|航班|火车票|酒店|出租车|外卖|邮件|短信|会议)"
+)
+_UNSUPPORTED_COUNTERFACTUAL = re.compile(
+    r"(?:如果|假如|倘若|要是).*(?:从未|从来没|没有|没|未曾|不曾|晚|早)"
+    r".*(?:发行|出道|存在|创作|演唱|推出)"
+)
 
 
 class JevRouteFailure(ValueError):
@@ -66,6 +72,13 @@ class RuleGuard:
         if not text.strip() or len(text) > 4_000:
             return ()
         return tuple(parse_task_clauses(text))
+
+    def preflight_question(self, text: str) -> str | None:
+        if _UNSUPPORTED_EXTERNAL_ACTION.search(text):
+            return "当前仅支持音乐相关能力；请把外部预订或通信请求交给相应服务。"
+        if _UNSUPPORTED_COUNTERFACTUAL.search(text):
+            return "当前无法模拟未发生的音乐历史。请改为询问可核实的音乐实体关系。"
+        return None
 
 
 def _sum_usage(responses: list[DecisionResponse]) -> dict[str, int]:
@@ -200,7 +213,10 @@ class JevRouterV5:
         attempted_jev_calls = 0
         jev_start = orchestration_start = None
         try:
-            if not clauses or _EMPTY_OR_NEGATED.fullmatch(text):
+            preflight = self.guard.preflight_question(text)
+            if preflight:
+                decision = clarify(preflight)
+            elif not clauses:
                 decision = clarify("请说明你希望执行的音乐相关请求；已否定的操作不会执行。")
             elif needs_decomposition_review(text, list(clauses)):
                 # A compact request with multiple predicates is unsafe to
