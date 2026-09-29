@@ -1,0 +1,20 @@
+{"case_id":"s-c-01","query":"在播曲目的第二段歌词比第一段更像在自责吗？","gold_routes":["current_song"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-c-02","query":"我现在听到的副歌，主人公态度有没有转变？","gold_routes":["current_song"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-c-03","query":"从眼下播放的曲子里能读出怎样的叙事视角？","gold_routes":["current_song"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-c-04","query":"只分析当前歌给人的紧绷感从何而来。","gold_routes":["current_song"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-c-05","query":"正在听的这支曲目歌词有哪些重复意象？","gold_routes":["current_song"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-t-01","query":"把播放位置跳到两分十秒。","gold_routes":["tool_calling"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-t-02","query":"从音乐库检索一下 Cocteau Twins 的曲目。","gold_routes":["tool_calling"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-t-03","query":"替我打开当前歌曲的歌词页。","gold_routes":["tool_calling"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-t-04","query":"切换成随机播放模式。","gold_routes":["tool_calling"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-t-05","query":"列出我的个人歌单。","gold_routes":["tool_calling"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-g-01","query":"小调一定听起来比大调难过吗？","gold_routes":["general_chat"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-g-02","query":"复节奏和切分节奏在概念上有何不同？","gold_routes":["general_chat"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-g-03","query":"为什么熟悉的旋律容易被反复播放？","gold_routes":["general_chat"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-g-04","query":"怎样理解歌曲中的留白？","gold_routes":["general_chat"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-g-05","query":"耳朵为什么会觉得某些和弦很稳定？","gold_routes":["general_chat"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-w-01","query":"沿着 Aphex Twin 的有据影响边，看看后继创作者有哪些。","gold_routes":["worldline"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-w-02","query":"给出 Fela Kuti 与相关音乐场景的关系图和引用。","gold_routes":["worldline"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-w-03","query":"追踪 Cocteau Twins 在证据里连接到哪些乐队。","gold_routes":["worldline"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-w-04","query":"梳理 Miles Davis 的影响网络，标出每条边的来源。","gold_routes":["worldline"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
+{"case_id":"s-w-05","query":"看看 Joni Mitchell 的《Hejira》与其他作品的有据联系。","gold_routes":["worldline"],"split":"single_blind_v3","source":"manually_authored_capability_v3","capability_contract_version":"1.0"}
