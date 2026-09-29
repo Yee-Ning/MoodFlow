@@ -41,7 +41,7 @@ _SPLIT = re.compile(
 )
 _SEQUENCE = re.compile(r"然后|接着|随后|最后|再|^先$")
 _NEGATED = re.compile(r"^(?:请勿|不要|不用|无需|别|不必|do not\b|don't\b)", re.I)
-_PRONOUN = re.compile(r"(?:这个|那个|这位|那位|同名|(?<![\u4e00-\u9fff])他|她|它)")
+_PRONOUN = re.compile(r"(?:这个|那个|这位|那位|同名|他|她|它)")
 _COUNTERFACTUAL = re.compile(r"(?:如果|假如|倘若|要是).*(?:从未|从来没|没有|未曾).*(?:发行|出道|存在|创作|演唱)")
 _CURRENT_REFERENCE = re.compile(r"(?:这首歌|当前(?:这)?首|正在(?:播放|放)|在播|眼下(?:这)?首|它)")
 _TARGET_ACTION = re.compile(r"(?:收藏|喜欢|歌词页|这首歌的歌词|当前歌曲的歌词|加入.*歌单)")
@@ -93,7 +93,13 @@ def split_clauses(query: str) -> list[Clause]:
         value = raw.strip(" \t\r\n,，。.!?！？;；")
         if value:
             start = cursor + raw.index(value)
-            clauses.append(Clause(value, start, start + len(value), bool(_SEQUENCE.search(between))))
+            sequential = bool(_SEQUENCE.search(between))
+            if clauses and value.startswith("再") and ("，" in between or "," in between):
+                value = value[1:]
+                start += 1
+                sequential = True
+            if value:
+                clauses.append(Clause(value, start, start + len(value), sequential))
             between = ""
         between += match.group()
         cursor = match.end()
@@ -101,7 +107,15 @@ def split_clauses(query: str) -> list[Clause]:
     value = raw.strip(" \t\r\n,，。.!?！？;；")
     if value:
         start = cursor + raw.index(value)
-        clauses.append(Clause(value, start, start + len(value), bool(_SEQUENCE.search(between))))
+        sequential = bool(_SEQUENCE.search(between))
+        # A comma can split before 再 even when the following action verb is
+        # absent from the conservative separator list. Treat it as order syntax.
+        if clauses and value.startswith("再") and ("，" in between or "," in between):
+            value = value[1:]
+            start += 1
+            sequential = True
+        if value:
+            clauses.append(Clause(value, start, start + len(value), sequential))
     return [clause for clause in clauses if not _NEGATED.match(clause.text)]
 
 
@@ -126,7 +140,9 @@ def _safety_question(clauses: list[Clause], routes: list[RouteKey], context: Rou
                 and not prior_play):
             return "当前没有可操作的歌曲。请先播放歌曲或说明目标歌曲。"
         if route is RouteKey.WORLDLINE and _PRONOUN.search(clause.text):
-            if not any(not _PRONOUN.search(previous.text) for previous in clauses[:index]):
+            if "同名" in clause.text or not any(
+                not _PRONOUN.search(previous.text) for previous in clauses[:index]
+            ):
                 return "请说明要探索的具体歌曲、歌手或专辑，以及需要区分的同名实体。"
     return None
 

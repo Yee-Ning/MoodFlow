@@ -112,6 +112,21 @@ async def test_missing_context_negation_and_unsupported_are_safe():
 
 
 @pytest.mark.asyncio
+async def test_unanchored_person_reference_clarifies_before_worldline_dispatch():
+    trace = await JevRouterCandidate(FakeClient(["worldline"])).route_with_trace(
+        "看看他与谁存在有据的音乐关联。"
+    )
+    assert trace.decision.needs_clarification
+    assert trace.decision.tasks == []
+
+
+def test_comma_plus_temporal_adverb_keeps_order_without_verb_dictionary():
+    clauses = split_clauses("搜索某乐队的专辑，再梳理其关系。")
+    assert [clause.text for clause in clauses] == ["搜索某乐队的专辑", "梳理其关系"]
+    assert clauses[1].sequential
+
+
+@pytest.mark.asyncio
 async def test_named_play_can_supply_song_context_to_later_analysis():
     trace = await JevRouterCandidate(FakeClient(["tool_calling", "current_song"])).route_with_trace(
         "先播放《海阔天空》，然后分析正在播放的歌。"
