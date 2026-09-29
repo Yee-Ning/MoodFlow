@@ -15,6 +15,8 @@ WORLDLINE_SMOKE_QUERY = "Radiohead"
 def request(path: str, payload: dict[str, str] | None = None, timeout: int = 30):
     body = None if payload is None else json.dumps(payload).encode("utf-8")
     headers = {} if body is None else {"Content-Type": "application/json"}
+    if path == "/api/ai/chat":
+        headers["X-MoodFlow-Telemetry-Class"] = "acceptance"
     return urlopen(Request(BASE + path, data=body, headers=headers), timeout=timeout,
                    context=ssl.create_default_context())
 

@@ -139,7 +139,9 @@ def changed_services(paths: list[str], *, approve_contract: bool = False) -> lis
             selected.add("ai-service")
         elif path == "ai-service/requirements.txt" or path.startswith((
             "ai-service/app/", "ai-service/migrations/", "ai-service/data/intent/",
-        )) or path == "ai-service/scripts/migrate_agent_postgres.py":
+        )) or path in {"ai-service/scripts/migrate_agent_postgres.py",
+                       "ai-service/evals/config/router_capability_contract.json",
+                       "ai-service/evals/config/jev_multi_frozen_strategy_v3.json"}:
             selected.add("ai-service")
     return [service for service in BUILDABLE if service in selected]
 

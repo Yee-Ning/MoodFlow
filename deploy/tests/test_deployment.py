@@ -33,6 +33,9 @@ def test_ai_image_requires_verified_local_cpu_torch():
     dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")
     assert "!ai-service/data/intent/taxonomy.json" in dockerignore
     assert "COPY ai-service/data/intent/taxonomy.json data/intent/taxonomy.json" in dockerfile
+    for filename in ("router_capability_contract.json", "jev_multi_frozen_strategy_v3.json"):
+        assert f"!ai-service/evals/config/{filename}" in dockerignore
+        assert f"COPY ai-service/evals/config/{filename} evals/config/{filename}" in dockerfile
     assert "a60027b108e744d2baa457b6221572b9720d6f1ba377ef0350dbe014002bc63a" in dockerfile
 
 

@@ -16,6 +16,8 @@ def test_update_rebuilds_only_affected_images():
     assert update.changed_services(["netease-music-api", "ai-service/app/main.py"]) == [
         "netease", "ai-service"]
     assert update.changed_services(["deploy/qdrant-health.sh"]) == ["qdrant"]
+    assert update.changed_services(["ai-service/evals/config/jev_multi_frozen_strategy_v3.json"]) == [
+        "ai-service"]
 
 
 @pytest.mark.parametrize("path", ["docker-compose.production.yml", ".env.example", "deploy/nginx-host.conf"])
@@ -154,6 +156,15 @@ class Response:
 
     def __iter__(self):
         return iter(self.payload)
+
+
+def test_public_smoke_marks_ai_request_as_acceptance(monkeypatch):
+    requests = []
+    monkeypatch.setattr(update_smoke, "urlopen", lambda request, **kwargs: requests.append(request))
+    update_smoke.request("/api/ai/chat", {"message": "fixture"})
+    update_smoke.request("/healthz")
+    assert requests[0].get_header("X-moodflow-telemetry-class") == "acceptance"
+    assert requests[1].get_header("X-moodflow-telemetry-class") is None
 
 
 def test_public_smoke_checks_sse_order_and_worldline_read(monkeypatch):
