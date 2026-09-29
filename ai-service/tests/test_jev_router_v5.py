@@ -191,13 +191,16 @@ async def test_shadow_is_nonblocking_private_and_never_dispatches_candidate(capl
     with (patch("app.config.settings.get_settings", return_value=settings),
           caplog.at_level(logging.INFO, logger="app.agent.decision.jev.shadow_v5")):
         graph = build_main_graph(intent_router=baseline_router, jev_v5_shadow_router=candidate).compile()
-        result = await asyncio.wait_for(graph.ainvoke(create_main_state("播放秘密歌曲。")), timeout=2)
+        result = await asyncio.wait_for(graph.ainvoke(create_main_state(
+            "播放秘密歌曲。", continuity_context={"telemetry_sample_kind": "acceptance"},
+        )), timeout=2)
         assert result["final_response"] == "legacy answer"
         assert snapshot()["pending"] >= 1
         gate.set()
         await asyncio.sleep(.05)
     assert "jev.v5_shadow " in caplog.text
     assert "秘密歌曲" not in caplog.text
+    assert '"sample_kind":"acceptance"' in caplog.text
 
 
 @pytest.mark.asyncio
@@ -211,6 +214,9 @@ async def test_shadow_fallback_does_not_count_as_candidate_agreement(caplog):
         _record(baseline, trace)
     event = json.loads(caplog.records[-1].message.split("jev.v5_shadow ", 1)[1])
     assert event["router_source"] == "legacy_hybrid_fallback"
+    assert event["sample_kind"] == "synthetic"
+    assert event["candidate_subgraph_dispatch_count"] == 0
+    assert event["candidate_tool_action_dispatch_count"] == 0
     assert event["route_agreement"] is None
     assert event["task_count_agreement"] is None
 

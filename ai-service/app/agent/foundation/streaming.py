@@ -202,6 +202,7 @@ async def stream_foundation_assistant(
     graph: Any | None = None,
     user_id: str | None = None,
     memory_runtime: Any | None = None,
+    telemetry_sample_kind: str = "production",
 ) -> AsyncIterator[SongAssistantStreamEvent]:
     final_response: str | None = None
     task_results: list[TaskResult] = []
@@ -239,7 +240,7 @@ async def stream_foundation_assistant(
         message,
         messages=[HumanMessage(content=message)],
         routing_context=routing_context,
-        continuity_context=continuity_context,
+        continuity_context={**continuity_context, "telemetry_sample_kind": telemetry_sample_kind},
     )
 
     async for part in (graph or get_foundation_graph()).astream(
@@ -343,6 +344,7 @@ async def invoke_foundation_assistant(
     graph: Any | None = None,
     user_id: str | None = None,
     memory_runtime: Any | None = None,
+    telemetry_sample_kind: str = "production",
 ) -> FoundationResponse:
     continuity, graph_thread_id, continuity_context, session = await _continuity_start(
         thread_id,
@@ -377,7 +379,7 @@ async def invoke_foundation_assistant(
             message,
             messages=[HumanMessage(content=message)],
             routing_context=routing_context,
-            continuity_context=continuity_context,
+            continuity_context={**continuity_context, "telemetry_sample_kind": telemetry_sample_kind},
         ),
         _graph_config(graph_thread_id, session),
         context=MusicAgentContext(session_cookie=session_cookie, user_id=user_id),

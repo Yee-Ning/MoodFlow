@@ -100,14 +100,18 @@ def build_main_graph(
             from app.agent.decision.jev.shadow_v5 import _record_failure, schedule_shadow
 
             baseline_task = asyncio.create_task(router.route(state["current_input"], context))
+            sample_kind = state.get("continuity_context", {}).get("telemetry_sample_kind", "production")
             try:
                 candidate = jev_v5_shadow_router or JevRouterV5(
                     jev_client or JevClient(settings),
                     confidence_threshold=settings.jev_router_confidence_threshold,
                 )
-                schedule_shadow(candidate, state["current_input"], context, baseline_task)
+                schedule_shadow(
+                    candidate, state["current_input"], context, baseline_task,
+                    sample_kind=sample_kind,
+                )
             except Exception as exc:
-                _record_failure(type(exc).__name__)
+                _record_failure(type(exc).__name__, sample_kind=sample_kind)
             decision = await baseline_task
             return {"route_decision": RouteDecision.model_validate(decision.model_dump())}
 

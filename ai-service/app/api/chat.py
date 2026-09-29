@@ -28,6 +28,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 
+def _telemetry_sample_kind(request: Request) -> str:
+    # This header changes observability labels only; it grants no privileges.
+    return "acceptance" if request.headers.get("X-MoodFlow-Telemetry-Class") == "acceptance" else "production"
+
+
 def _spring_session_cookie(request: Request) -> str | None:
     """Forward only Spring's session identity, never arbitrary browser cookies."""
     value = request.cookies.get("JSESSIONID")
@@ -54,6 +59,7 @@ async def foundation_chat(chat_request: ChatRequest, request: Request) -> Founda
             routing_context=chat_request.resolved_routing_context(),
             session_cookie=session_cookie,
             user_id=user_id,
+            telemetry_sample_kind=_telemetry_sample_kind(request),
         )
     except Exception as exc:
         logger.exception("Foundation JSON request failed")
@@ -78,6 +84,7 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
                     routing_context=chat_request.resolved_routing_context(),
                     session_cookie=session_cookie,
                     user_id=user_id,
+                    telemetry_sample_kind=_telemetry_sample_kind(request),
                 )
             else:
                 event_stream = stream_current_song_assistant(

@@ -25,12 +25,13 @@ def _routes(decision: RouteDecision) -> list[str]:
     return sorted({task.route_key.value for task in decision.tasks})
 
 
-def _record(baseline: RouteDecision, trace: RouterTraceV5) -> None:
+def _record(baseline: RouteDecision, trace: RouterTraceV5, *, sample_kind: str = "synthetic") -> None:
     decision = trace.decision
     comparable = trace.router_source != "legacy_hybrid_fallback"
     event = {
         "timestamp": datetime.now(UTC).isoformat(),
         "decision_type": "router_v5_shadow",
+        "sample_kind": sample_kind,
         "model_version": trace.response_model,
         "router_source": trace.router_source,
         "baseline_routes": _routes(baseline),
@@ -55,8 +56,11 @@ def _record(baseline: RouteDecision, trace: RouterTraceV5) -> None:
         "classifier_hot_path_calls": trace.classifier_hot_path_calls,
         "classifier_fallback_calls": trace.classifier_fallback_calls,
         "fallback_reason": trace.fallback_reason,
+        "candidate_subgraph_dispatch_count": 0,
+        "candidate_tool_action_dispatch_count": 0,
     }
     _counts["total_requests"] += 1
+    _counts[f"sample_kind:{sample_kind}"] += 1
     _counts[trace.router_source] += 1
     _counts["comparable"] += int(comparable)
     _counts["agreement"] += int(event["route_agreement"] is True)
@@ -71,37 +75,44 @@ def _record(baseline: RouteDecision, trace: RouterTraceV5) -> None:
     logger.info("jev.v5_shadow %s", json.dumps(event, ensure_ascii=False, separators=(",", ":")))
 
 
-def _record_failure(error_type: str) -> None:
+def _record_failure(error_type: str, *, sample_kind: str = "production") -> None:
     _counts["shadow_failure"] += 1
+    _counts[f"shadow_failure:{sample_kind}"] += 1
     logger.warning("jev.v5_shadow_failure %s", json.dumps({
         "decision_type": "router_v5_shadow", "exception_type": error_type,
+        "sample_kind": sample_kind,
     }, separators=(",", ":")))
 
 
 async def _run(
     candidate: JevRouterV5, query: str, context: RoutingContext,
     baseline_task: Awaitable[RouteDecision],
+    sample_kind: str,
 ) -> None:
     try:
         trace = await candidate.route_with_trace(
             query, context, fallback_decision=baseline_task,
         )
         baseline = await baseline_task
-        _record(baseline, trace)
+        _record(baseline, trace, sample_kind=sample_kind)
     except Exception as exc:
-        _record_failure(type(exc).__name__)
+        _record_failure(type(exc).__name__, sample_kind=sample_kind)
 
 
 def schedule_shadow(
     candidate: JevRouterV5, query: str, context: RoutingContext,
     baseline_task: Awaitable[RouteDecision],
+    *, sample_kind: str = "production",
 ) -> bool:
     """Dispatch candidate computation without delaying or dispatching its tasks."""
+    if sample_kind not in {"production", "acceptance", "synthetic"}:
+        sample_kind = "production"
     if len(_pending) >= _max_pending:
         _counts["dropped"] += 1
-        logger.warning("jev.v5_shadow_dropped capacity")
+        _counts[f"dropped:{sample_kind}"] += 1
+        logger.warning("jev.v5_shadow_dropped capacity sample_kind=%s", sample_kind)
         return False
-    task = asyncio.create_task(_run(candidate, query, context, baseline_task))
+    task = asyncio.create_task(_run(candidate, query, context, baseline_task, sample_kind))
     _pending.add(task)
     task.add_done_callback(_pending.discard)
     return True
@@ -133,4 +144,6 @@ def snapshot() -> dict[str, object]:
         "p50_ms": percentile(.5), "p95_ms": percentile(.95), "p99_ms": percentile(.99),
         "tokens_per_request": sum(_tokens) / total if total else None,
         "pending": len(_pending),
+        "candidate_subgraph_dispatch_count": 0,
+        "candidate_tool_action_dispatch_count": 0,
     }

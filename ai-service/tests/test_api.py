@@ -263,6 +263,7 @@ class ApiTests(unittest.TestCase):
         ):
             response = self.client.post(
                 "/api/ai/chat",
+                headers={"X-MoodFlow-Telemetry-Class": "acceptance"},
                 json={
                     "message": "暂停一下",
                     "thread_id": "foundation-api",
@@ -288,6 +289,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual([name for name, _ in events], ["action", "final", "done"])
         self.assertEqual(events[0][1]["name"], "pause_player")
         self.assertEqual(captured["thread_id"], "foundation-api")
+        self.assertEqual(captured["telemetry_sample_kind"], "acceptance")
         context = captured["routing_context"]
         self.assertEqual(context.current_song_id, 185809)
         self.assertEqual(context.current_time, 30)
