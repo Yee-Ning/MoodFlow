@@ -4,6 +4,7 @@
 
 - Single 继续使用 `capability_criteria.py` 从 Router Capability Contract v1.0 投影的 Choice V2 文案、原 `ROUTER_QUESTION_INSTRUCTIONS` 和 `jev-latest`；没有改 criteria 或 0.8 的既有生产置信度阈值。低于现有门槛时回退 Hybrid。
 - Multi 使用 V3 冻结配置 `jev_multi_frozen_strategy_v3.json`：CurrentSong .30、ToolCalling .25、Worldline .45、GeneralChat .50。四个 Noul 的 state、instructions、criteria 与 V3 相同；单元测试逐字段比较。
+- 运行时校验上述阈值以及配置中冻结的 Capability Contract SHA256；漂移时拒绝构造候选，而非静默改变路由语义。
 - 核心实现为 `app/agent/decision/jev/router_v4.py` 的 `JevRouterCandidate`。`route()` 返回原生 `RouteDecision`；`route_with_trace()` 同时返回来源、回退原因、延迟、模型、概率、token 与 API 调用数。四个 Subgraph 的接口未改。
 
 ```mermaid

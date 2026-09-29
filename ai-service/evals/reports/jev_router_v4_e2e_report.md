@@ -67,7 +67,7 @@ Jev 正常请求没有串行运行完整 Hybrid；一次 Noul 超时触发 Hybri
 
 ## 验证
 
-- `python -m pytest tests -q`：**1258 passed、14 skipped、228 subtests passed**（最终 0.8 门槛补齐后）。
-- `python -m pytest tests/test_jev_router_v4.py tests/test_jev_router_e2e_v4.py -q`：16 passed。
+- `python -m pytest tests -q`：**1259 passed、14 skipped、228 subtests passed**（最终冻结配置校验后）。
+- `python -m pytest tests/test_jev_router_v4.py tests/test_jev_router_e2e_v4.py -q`：17 passed。
 - 本次修改文件 `ruff check` 与 `compileall`：通过；仓库范围 `ruff check app evals tests` 仍有 41 处与本次文件无关的既有问题。
 - 未执行候选的真实 Subgraph、服务 API 或浏览器播放器副作用；shadow 候选只产出决策。
