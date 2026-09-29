@@ -6,6 +6,8 @@
 
 **Blind qualification limit:** two parser mismatches (`v5-09`, `v5-18`) were corrected after Gold freeze but before the first API run. Thus even the preserved first pass is an independent new dataset, but not a fully untouched parser blind. The safety and dependency changes after inspecting first-pass failures make the second run a **seen-sample repeat**. No labels changed. The first-pass raw results, metrics and failures are preserved separately.
 
+After the repeat, the guard was refined to inspect affirmative clauses individually and Shadow fallback agreement accounting was corrected. The 30-case remote comparison was not run a third time. A direct deterministic check on Gold `v5-19`, `v5-20`, `v5-25` and `v5-26` confirmed the final guard still rejects the two unsupported requests and does not reject the two negated-action requests; targeted V5 tests passed on the final code. The repeat numbers should be read as evidence for the immediately preceding V5 candidate revision, not an exact remote measurement of the final telemetry revision.
+
 Both routers saw the same 30 cases and frozen context in each run. Baseline and candidate execution order alternated by case. Candidate computation ended at `RouteDecision`; no Subgraph was dispatched by the offline benchmark. Remote calls and tokens count provider usage reported to the tracker; Jev calls that failed before returning usage may make token totals a lower bound. Percentiles use linear interpolation over the observed cases.
 
 ## Results
