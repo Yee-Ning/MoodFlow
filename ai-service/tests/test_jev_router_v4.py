@@ -119,6 +119,11 @@ async def test_unanchored_person_reference_clarifies_before_worldline_dispatch()
     assert trace.decision.needs_clarification
     assert trace.decision.tasks == []
 
+    anchored = await JevRouterCandidate(FakeClient(["worldline"])).route_with_trace(
+        "探索某位音乐人与其他作品的有据联系。"
+    )
+    assert anchored.decision.is_complete
+
 
 def test_comma_plus_temporal_adverb_keeps_order_without_verb_dictionary():
     clauses = split_clauses("搜索某乐队的专辑，再梳理其关系。")

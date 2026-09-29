@@ -41,7 +41,7 @@ _SPLIT = re.compile(
 )
 _SEQUENCE = re.compile(r"然后|接着|随后|最后|再|^先$")
 _NEGATED = re.compile(r"^(?:请勿|不要|不用|无需|别|不必|do not\b|don't\b)", re.I)
-_PRONOUN = re.compile(r"(?:这个|那个|这位|那位|同名|他|她|它)")
+_PRONOUN = re.compile(r"(?:这个|那个|这位|那位|同名|(?<!其)他|她|它)")
 _COUNTERFACTUAL = re.compile(r"(?:如果|假如|倘若|要是).*(?:从未|从来没|没有|未曾).*(?:发行|出道|存在|创作|演唱)")
 _CURRENT_REFERENCE = re.compile(r"(?:这首歌|当前(?:这)?首|正在(?:播放|放)|在播|眼下(?:这)?首|它)")
 _TARGET_ACTION = re.compile(r"(?:收藏|喜欢|歌词页|这首歌的歌词|当前歌曲的歌词|加入.*歌单)")
