@@ -427,6 +427,12 @@ try {
   globalThis.window.location.search = '?__moodflow_acceptance=1'
   globalThis.window.sessionStorage.getItem = () => { throw new Error('storage unavailable') }
   await sendTelemetryRequest()
+  assert.equal(requestHeaders['X-MoodFlow-Telemetry-Class'], 'acceptance')
+  globalThis.window.location.search = ''
+  await sendTelemetryRequest()
+  assert.equal(requestHeaders['X-MoodFlow-Telemetry-Class'], 'acceptance')
+  globalThis.window.location.search = '?__moodflow_acceptance=0'
+  await sendTelemetryRequest()
   assert.equal(requestHeaders['X-MoodFlow-Telemetry-Class'], undefined)
   delete globalThis.window
 

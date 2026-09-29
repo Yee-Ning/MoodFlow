@@ -2,20 +2,24 @@ import type { AiChatNode, AiSongRecommendation } from '../types/aiChat'
 
 const AI_API_BASE_URL = (import.meta.env.VITE_AI_API_BASE_URL ?? '').replace(/\/$/, '')
 const ACCEPTANCE_TELEMETRY_KEY = 'moodflow-acceptance-telemetry'
+let acceptanceTelemetryActive = false
 
 function acceptanceTelemetryHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {}
 
+  const marker = new URLSearchParams(window.location.search).get('__moodflow_acceptance')
+  if (marker === '1') acceptanceTelemetryActive = true
+  if (marker === '0') acceptanceTelemetryActive = false
   try {
-    const marker = new URLSearchParams(window.location.search).get('__moodflow_acceptance')
     if (marker === '1') window.sessionStorage.setItem(ACCEPTANCE_TELEMETRY_KEY, '1')
     if (marker === '0') window.sessionStorage.removeItem(ACCEPTANCE_TELEMETRY_KEY)
-    return window.sessionStorage.getItem(ACCEPTANCE_TELEMETRY_KEY) === '1'
-      ? { 'X-MoodFlow-Telemetry-Class': 'acceptance' }
-      : {}
+    if (marker === null && window.sessionStorage.getItem(ACCEPTANCE_TELEMETRY_KEY) === '1') {
+      acceptanceTelemetryActive = true
+    }
   } catch {
-    return {}
+    // The explicit URL marker still applies when embedded browsers block storage.
   }
+  return acceptanceTelemetryActive ? { 'X-MoodFlow-Telemetry-Class': 'acceptance' } : {}
 }
 
 export interface ChatRequest {
