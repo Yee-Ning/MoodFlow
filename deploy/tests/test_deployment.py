@@ -289,6 +289,19 @@ def test_frontend_preserves_api_paths_and_streaming():
     assert 'VITE_API_BASE_URL="" VITE_AI_API_BASE_URL=""' in dockerfile
 
 
+def test_host_nginx_only_proxies_loopback_and_preserves_sse():
+    nginx = (ROOT / "deploy/nginx-host.conf").read_text()
+    assert "listen 80 default_server;" in nginx
+    assert nginx.count("proxy_pass http://127.0.0.1:8088;") == 3
+    assert nginx.index("location /api/ai/ {") < nginx.index("location /api/ {")
+    ai_location = nginx.split("location /api/ai/ {", 1)[1].split("\n    }", 1)[0]
+    for directive in ("proxy_buffering off;", "proxy_request_buffering off;",
+                      "proxy_cache off;", "proxy_read_timeout 300s;",
+                      "proxy_set_header X-Forwarded-Proto $scheme;"):
+        assert directive in ai_location
+    assert "postgres:5432" not in nginx and "qdrant:6333" not in nginx
+
+
 @pytest.fixture(scope="module")
 def compiled_java_probe(tmp_path_factory):
     directory = tmp_path_factory.mktemp("java-probe")
