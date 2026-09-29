@@ -26,6 +26,7 @@ DATASET = ROOT / "evals/datasets/router_e2e_blind_v4.jsonl"
 RESULTS = ROOT / "evals/reports/jev_router_v4_e2e_results.jsonl"
 METRICS = ROOT / "evals/reports/jev_router_v4_e2e_metrics.json"
 FAILURES = ROOT / "evals/reports/jev_router_v4_failure_cases.jsonl"
+FIRST_PASS_RESULTS = ROOT / "evals/reports/jev_router_v4_e2e_first_pass_results.jsonl"
 SINGLE_GUARD = ROOT / "evals/datasets/single_blind_v3.jsonl"
 SINGLE_GUARD_RESULTS = ROOT / "evals/reports/jev_router_v4_single_guard_results.jsonl"
 SINGLE_GUARD_METRICS = ROOT / "evals/reports/jev_router_v4_single_guard_metrics.json"
@@ -277,10 +278,36 @@ def summarize_results(rows: list[dict[str, Any]]) -> None:
                "evaluated_at": datetime.now(UTC).isoformat(),
                "hybrid": summarize(rows, "hybrid"), "jev": summarize(rows, "jev")}
     METRICS.write_text(json.dumps(metrics, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    failures = [row for row in rows if row["gold"]["expected_tasks"] != row["jev"]["tasks"]
-                or row["gold"]["expected_clarify"] != row["jev"]["clarify"]
-                or set(row["gold"]["expected_routes"]) != set(row["jev"]["routes"])]
+    failures = failure_rows(rows, "post_fix_repeat")
+    if FIRST_PASS_RESULTS.exists():
+        first = [json.loads(line) for line in FIRST_PASS_RESULTS.read_text(encoding="utf-8").splitlines()]
+        if len(first) != len(rows):
+            raise RuntimeError("first-pass V4 results are incomplete")
+        failures = failure_rows(first, "first_blind") + failures
     write_jsonl(FAILURES, failures)
+
+
+def failure_rows(rows: list[dict[str, Any]], phase: str) -> list[dict[str, Any]]:
+    failures = []
+    for row in rows:
+        gold, candidate = row["gold"], row["jev"]
+        route_error = set(gold["expected_routes"]) != set(candidate["routes"])
+        task_error = gold["expected_tasks"] != candidate["tasks"]
+        clarify_error = gold["expected_clarify"] != candidate["clarify"]
+        if route_error or task_error or clarify_error:
+            failures.append({
+                "phase": phase, "case_id": row["case_id"], "query": row["query"],
+                "facet": gold["facet"], "expected_routes": gold["expected_routes"],
+                "actual_routes": candidate["routes"],
+                "expected_tasks": gold["expected_tasks"], "actual_tasks": candidate["tasks"],
+                "expected_clarify": gold["expected_clarify"],
+                "actual_clarify": candidate["clarify"], "route_error": route_error,
+                "task_error": task_error, "clarify_error": clarify_error,
+                "router_source": candidate["router_source"],
+                "fallback_reason": candidate["fallback_reason"],
+                "latency_ms": candidate["latency_ms"],
+            })
+    return failures
 
 
 async def run_single_guard() -> None:

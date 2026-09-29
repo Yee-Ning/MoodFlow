@@ -1,6 +1,6 @@
 import json
 
-from evals.jev_router_e2e_v4 import DATASET_SHA256, read_cases, summarize
+from evals.jev_router_e2e_v4 import DATASET_SHA256, failure_rows, read_cases, summarize
 
 
 def test_dataset_freeze_and_task_annotations():
@@ -29,3 +29,16 @@ def test_summary_requires_task_exact_not_only_route_set():
 
 def test_all_frozen_rows_are_json_serializable():
     assert len(json.dumps(read_cases(), ensure_ascii=False)) > 1000
+
+
+def test_failure_rows_preserve_phase_and_task_mismatch():
+    row = {"case_id": "unit", "query": "sample",
+           "gold": {"expected_routes": ["tool_calling"],
+                    "expected_tasks": [{"route": "tool_calling", "fragment": "play", "depends_on": []}],
+                    "expected_clarify": False, "facet": "unit"},
+           "jev": {"routes": ["tool_calling"], "tasks": [], "clarify": False,
+                   "router_source": "hybrid_fallback", "fallback_reason": "route_fragment_conflict",
+                   "latency_ms": 500}}
+    failures = failure_rows([row], "first_blind")
+    assert failures[0]["phase"] == "first_blind"
+    assert not failures[0]["route_error"] and failures[0]["task_error"]
