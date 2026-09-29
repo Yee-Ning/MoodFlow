@@ -1,5 +1,6 @@
 import asyncio
 import re
+from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -11,6 +12,13 @@ from app.agent.foundation.model_routing.model_router import ModelRouter
 from app.agent.foundation.model_routing.schemas import ModelRouteResult
 from app.agent.foundation.routing import RouteDecision, RoutingContext
 from app.agent.foundation.rule_routing import RuleRouter
+
+
+# Optional request-local accounting used by the V5 Legacy fallback. The
+# classifier remains unchanged and independently usable by the old router.
+classifier_fallback_counter: ContextVar[list[int] | None] = ContextVar(
+    "classifier_fallback_counter", default=None
+)
 
 _SEMANTIC_COMPLEXITY = re.compile(
     r"(?:别|不要|不用|无需|并非|不是|如果|假如|要是|除非|否则|"
@@ -86,6 +94,9 @@ class HybridIntentRouter:
         for segment in rule.unresolved_segments:
             # The CPU/GPU forward must not block the asynchronous graph's event loop.
             model = await asyncio.to_thread(self._model.route, segment.text)
+            counter = classifier_fallback_counter.get()
+            if counter is not None:
+                counter[0] += 1
             reason = self._policy.reason(model, self._thresholds, segment.text)
             llm = None
             if reason is not None:

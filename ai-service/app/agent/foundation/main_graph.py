@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from app.agent.foundation.hybrid_routing import AsyncIntentRouter
     from app.agent.decision.jev.client import DecisionClient
     from app.agent.decision.jev.router_v4 import JevRouterCandidate
+    from app.agent.decision.jev.router_v5 import JevRouterV5
 
 
 def create_hybrid_router():
@@ -55,6 +56,7 @@ def build_main_graph(
     intent_router: AsyncIntentRouter | None = None,
     jev_client: DecisionClient | None = None,
     jev_v4_shadow_router: JevRouterCandidate | None = None,
+    jev_v5_shadow_router: JevRouterV5 | None = None,
     current_song_subgraph: CompiledStateGraph | None = None,
     tool_calling_subgraph: CompiledStateGraph | None = None,
     worldline_subgraph: CompiledStateGraph | None = None,
@@ -84,9 +86,31 @@ def build_main_graph(
     async def intent_route(state: MainState) -> dict[str, RouteDecision]:
         from app.config.settings import get_settings
         settings = get_settings() if (
-            intent_router is None or jev_client is not None or jev_v4_shadow_router is not None
+            intent_router is None or jev_client is not None
+            or jev_v4_shadow_router is not None or jev_v5_shadow_router is not None
         ) else None
         context = state.get("routing_context", RoutingContext())
+        v5_shadow = (
+            settings is not None and settings.jev_enabled and settings.jev_shadow_mode
+            and getattr(settings, "jev_router_v5_shadow_enabled", False)
+        )
+        if v5_shadow:
+            from app.agent.decision.jev.client import JevClient
+            from app.agent.decision.jev.router_v5 import JevRouterV5
+            from app.agent.decision.jev.shadow_v5 import _record_failure, schedule_shadow
+
+            baseline_task = asyncio.create_task(router.route(state["current_input"], context))
+            try:
+                candidate = jev_v5_shadow_router or JevRouterV5(
+                    jev_client or JevClient(settings),
+                    confidence_threshold=settings.jev_router_confidence_threshold,
+                )
+                schedule_shadow(candidate, state["current_input"], context, baseline_task)
+            except Exception as exc:
+                _record_failure(type(exc).__name__)
+            decision = await baseline_task
+            return {"route_decision": RouteDecision.model_validate(decision.model_dump())}
+
         v4_shadow = (
             settings is not None and settings.jev_enabled and settings.jev_shadow_mode
             and (settings.jev_router_v4_shadow_enabled or jev_v4_shadow_router is not None)
