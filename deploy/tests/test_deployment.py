@@ -273,6 +273,7 @@ def test_v5_shadow_secret_is_required_when_enabled(tmp_path, monkeypatch):
     for filename in ("postgres_password", "llm_api_key", "qdrant_api_key"):
         (tmp_path / filename).write_text("fixture-only", encoding="utf-8")
     monkeypatch.setenv("JEV_ENABLED", "true")
+    monkeypatch.setenv("TYPESAFE_API_KEY", "")
     with pytest.raises(FileNotFoundError):
         load_secrets(tmp_path)
     (tmp_path / "typesafe_api_key").write_text("fixture-jev-only", encoding="utf-8")
