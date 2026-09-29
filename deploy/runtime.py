@@ -15,9 +15,12 @@ ROOT = Path("/app")
 
 
 def load_secrets(secret_root: Path = Path("/run/secrets")) -> None:
-    for name, filename in (("PGPASSWORD", "postgres_password"),
-                           ("LLM_API_KEY", "llm_api_key"),
-                           ("QDRANT_API_KEY", "qdrant_api_key")):
+    secrets = [("PGPASSWORD", "postgres_password"),
+               ("LLM_API_KEY", "llm_api_key"),
+               ("QDRANT_API_KEY", "qdrant_api_key")]
+    if os.environ.get("JEV_ENABLED") == "true":
+        secrets.append(("TYPESAFE_API_KEY", "typesafe_api_key"))
+    for name, filename in secrets:
         value = (secret_root / filename).read_text(encoding="utf-8").strip()
         # Secret diagnostics never include the value or underlying exception.
         if not value or any(c in value for c in '\r\n"\\'):
@@ -43,11 +46,20 @@ def validate_contract() -> None:
     expected = {"CHECKPOINT_BACKEND": "postgres", "PERSISTENCE_BACKEND": "postgres",
                 "MEMORY_BACKEND": "postgres", "AI_RAG_RETRIEVAL_MODE": "hybrid",
                 "AI_RAG_RERANK_MODE": "off", "AI_AGENT_GRAPH_MODE": "foundation",
-                "JEV_ENABLED": "false", "JEV_ROUTER_ENABLED": "false",
+                "JEV_SHADOW_MODE": "true", "JEV_ROUTER_ENABLED": "false",
+                "JEV_ROUTER_V4_SHADOW_ENABLED": "false",
                 "JEV_MEMORY_FILTER_ENABLED": "false", "JEV_CONTEXT_SELECT_ENABLED": "false"}
     for name, value in expected.items():
         if os.environ.get(name) != value:
             raise ValueError(f"production_contract_mismatch:{name}")
+    jev_enabled = os.environ.get("JEV_ENABLED")
+    v5_shadow_enabled = os.environ.get("JEV_ROUTER_V5_SHADOW_ENABLED")
+    if (jev_enabled, v5_shadow_enabled) not in {("false", "false"), ("true", "true")}:
+        raise ValueError("production_contract_mismatch:JEV_V5_SHADOW_PAIR")
+    if jev_enabled == "true" and (
+        os.environ.get("JEV_PROVIDER") != "typesafe" or not os.environ.get("TYPESAFE_API_KEY")
+    ):
+        raise ValueError("production_jev_provider_unavailable")
     lock = json.loads(LOCK_PATH.read_text(encoding="utf-8"))
     if os.environ.get("AI_RAG_INDEX_MANIFEST") != lock["manifest_path"]:
         raise ValueError("production_manifest_not_frozen")

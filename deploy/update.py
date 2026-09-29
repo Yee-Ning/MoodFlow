@@ -65,7 +65,8 @@ def read_env_paths() -> dict[str, str]:
     env_file = ROOT / ".env.production"
     if not env_file.is_file() or env_file.stat().st_mode & 0o077:
         raise UpdateError("env_file_missing_or_permissions_not_600")
-    names = {"POSTGRES_PASSWORD_FILE", "LLM_API_KEY_FILE", "QDRANT_API_KEY_FILE"}
+    names = {"POSTGRES_PASSWORD_FILE", "LLM_API_KEY_FILE", "QDRANT_API_KEY_FILE",
+             "TYPESAFE_API_KEY_FILE"}
     paths: dict[str, str] = {}
     for line in env_file.read_text(encoding="utf-8").splitlines():
         if not line or line.lstrip().startswith("#") or "=" not in line:

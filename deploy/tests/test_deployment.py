@@ -145,6 +145,8 @@ def production_environment(monkeypatch):
             monkeypatch.setenv(key, str(value))
     monkeypatch.setenv("DATABASE_URL", "postgresql://moodflow@postgres:5432/moodflow_agent")
     monkeypatch.setenv("AI_RAG_INDEX_MANIFEST", json.loads(LOCK_PATH.read_text())["manifest_path"])
+    monkeypatch.setenv("JEV_ENABLED", "false")
+    monkeypatch.setenv("JEV_ROUTER_V5_SHADOW_ENABLED", "false")
     for name, value in {"POSTGRES_USER": "moodflow", "POSTGRES_DB": "moodflow_agent",
             "SPRING_BOOT_BASE_URL": "http://java:8080", "NETEASE_API_BASE_URL": "http://netease:3000",
             "QDRANT_URL": "http://qdrant:6333", "LLM_BASE_URL": "https://provider.invalid"}.items():
@@ -159,6 +161,24 @@ def test_production_contract_and_failure_paths(monkeypatch):
                        ("DATABASE_URL", "postgresql://user:password@postgres/db"),
                        ("DATABASE_URL", "postgresql://other@postgres/other"),
                        ("LLM_BASE_URL", "https://embedded-key@provider.invalid")]:
+        old = __import__("os").environ[key]
+        monkeypatch.setenv(key, value)
+        with pytest.raises(ValueError):
+            validate_contract()
+        monkeypatch.setenv(key, old)
+
+
+def test_production_contract_allows_only_v5_shadow_with_provider(monkeypatch):
+    production_environment(monkeypatch)
+    monkeypatch.setenv("JEV_ENABLED", "true")
+    monkeypatch.setenv("JEV_ROUTER_V5_SHADOW_ENABLED", "true")
+    monkeypatch.setenv("JEV_PROVIDER", "typesafe")
+    monkeypatch.setenv("TYPESAFE_API_KEY", "fixture-only")
+    validate_contract()
+    for key, value in (("JEV_SHADOW_MODE", "false"), ("JEV_ROUTER_ENABLED", "true"),
+                       ("JEV_ROUTER_V5_SHADOW_ENABLED", "false"),
+                       ("JEV_ROUTER_V4_SHADOW_ENABLED", "true"),
+                       ("TYPESAFE_API_KEY", "")):
         old = __import__("os").environ[key]
         monkeypatch.setenv(key, value)
         with pytest.raises(ValueError):
@@ -238,6 +258,7 @@ def test_secret_files_fail_closed_without_disclosing_values(tmp_path, monkeypatc
         (tmp_path / filename).write_text(value, encoding="utf-8")
     for name in ("PGPASSWORD", "LLM_API_KEY", "QDRANT_API_KEY"):
         monkeypatch.setenv(name, "")
+    monkeypatch.setenv("JEV_ENABLED", "false")
     if valid:
         load_secrets(tmp_path)
         assert __import__("os").environ["PGPASSWORD"] == value
@@ -246,6 +267,17 @@ def test_secret_files_fail_closed_without_disclosing_values(tmp_path, monkeypatc
             load_secrets(tmp_path)
         if value:
             assert value not in str(error.value)
+
+
+def test_v5_shadow_secret_is_required_when_enabled(tmp_path, monkeypatch):
+    for filename in ("postgres_password", "llm_api_key", "qdrant_api_key"):
+        (tmp_path / filename).write_text("fixture-only", encoding="utf-8")
+    monkeypatch.setenv("JEV_ENABLED", "true")
+    with pytest.raises(FileNotFoundError):
+        load_secrets(tmp_path)
+    (tmp_path / "typesafe_api_key").write_text("fixture-jev-only", encoding="utf-8")
+    load_secrets(tmp_path)
+    assert __import__("os").environ["TYPESAFE_API_KEY"] == "fixture-jev-only"
 
 
 def test_warm_models_uses_existing_singletons_without_inference():
@@ -269,6 +301,8 @@ def test_compose_readiness_and_isolation():
             assert dependency["condition"] in {"service_healthy", "service_completed_successfully"}
     assert services["migrate"]["restart"] == "no"
     assert services["ai-service"]["depends_on"]["migrate"]["condition"] == "service_completed_successfully"
+    assert "typesafe_api_key" in compose["x-ai"]["secrets"]
+    assert compose["x-ai"]["environment"]["JEV_ROUTER_ENABLED"] == "false"
     for mount in services["ai-service"]["volumes"]:
         assert mount["read_only"] is True and mount["bind"]["create_host_path"] is False
         assert mount["target"] != "/app/data"

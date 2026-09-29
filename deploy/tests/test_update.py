@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 
 import pytest
 
@@ -28,6 +29,34 @@ def test_update_requires_explicit_contract_review_and_rebuilds_all_images():
                                    approve_contract=True) == list(update.BUILDABLE)
     with pytest.raises(update.UpdateError, match="manual_review_required"):
         update.changed_services(["deploy/nginx-host.conf"], approve_contract=True)
+
+
+def test_preflight_requires_typesafe_secret_path_without_reading_value(monkeypatch, tmp_path):
+    monkeypatch.setattr(update, "ROOT", tmp_path)
+    names = ("POSTGRES_PASSWORD_FILE", "LLM_API_KEY_FILE", "QDRANT_API_KEY_FILE",
+             "TYPESAFE_API_KEY_FILE")
+    paths = {}
+    for name in names:
+        path = tmp_path / name.lower()
+        path.write_text("fixture-only", encoding="utf-8")
+        path.chmod(0o600)
+        paths[name] = str(path)
+    env = tmp_path / ".env.production"
+    env.write_text("\n".join(f"{name}={path}" for name, path in paths.items()), encoding="utf-8")
+    env.chmod(0o600)
+    # Windows chmod cannot represent POSIX 0600; the updater itself runs on Linux.
+    original_stat = type(env).stat
+
+    def private_stat(path, *args, **kwargs):
+        result = original_stat(path, *args, **kwargs)
+        return os.stat_result([result.st_mode & ~0o077, *list(result)[1:]])
+
+    monkeypatch.setattr(type(env), "stat", private_stat)
+    assert update.read_env_paths() == paths
+    env.write_text("\n".join(f"{name}={path}" for name, path in paths.items()
+                             if name != "TYPESAFE_API_KEY_FILE"), encoding="utf-8")
+    with pytest.raises(update.UpdateError, match="secret_file_missing_or_empty:TYPESAFE_API_KEY_FILE"):
+        update.read_env_paths()
 
 
 def test_update_requires_explicit_migration_review():

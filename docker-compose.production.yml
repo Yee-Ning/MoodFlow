@@ -28,16 +28,21 @@ x-ai: &ai
     AI_RAG_RETRIEVAL_MODE: hybrid
     AI_RAG_RERANK_MODE: "off"
     AI_RAG_INDEX_MANIFEST: ${AI_RAG_INDEX_MANIFEST:-data/indexing/worldline/final-native-20260927/v4/index_build_manifest.json}
-    JEV_ENABLED: "false"
+    JEV_ENABLED: ${JEV_ENABLED:-false}
     JEV_SHADOW_MODE: "true"
     JEV_ROUTER_ENABLED: "false"
+    JEV_ROUTER_V4_SHADOW_ENABLED: "false"
+    JEV_ROUTER_V5_SHADOW_ENABLED: ${JEV_ROUTER_V5_SHADOW_ENABLED:-false}
     JEV_MEMORY_FILTER_ENABLED: "false"
     JEV_CONTEXT_SELECT_ENABLED: "false"
+    JEV_PROVIDER: typesafe
+    JEV_MODEL: ${JEV_MODEL:-jev-latest}
     HF_HOME: /models
   secrets:
     - postgres_password
     - llm_api_key
     - qdrant_api_key
+    - typesafe_api_key
   volumes:
     - type: bind
       source: ${INTENT_MODEL_DIR:-./deployment-artifacts/artifacts/intent_model}
@@ -187,3 +192,5 @@ secrets:
     file: ${LLM_API_KEY_FILE:?Set LLM_API_KEY_FILE}
   qdrant_api_key:
     file: ${QDRANT_API_KEY_FILE:?Set QDRANT_API_KEY_FILE}
+  typesafe_api_key:
+    file: ${TYPESAFE_API_KEY_FILE:?Set TYPESAFE_API_KEY_FILE}
