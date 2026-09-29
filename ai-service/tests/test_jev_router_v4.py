@@ -187,6 +187,13 @@ def test_syntax_split_is_not_based_on_route_keywords():
     assert [item.sequential for item in clauses] == [False, False, True]
 
 
+def test_v3_multi_thresholds_are_semantically_frozen():
+    assert frozen_thresholds() == {
+        "current_song": .30, "tool_calling": .25,
+        "worldline": .45, "general_chat": .50,
+    }
+
+
 def test_frozen_v4_gold_has_grounded_tasks_and_no_v3_query_overlap():
     dataset_dir = Path(__file__).resolve().parents[1] / "evals/datasets"
     rows = [json.loads(line) for line in (dataset_dir / "router_e2e_blind_v4.jsonl")

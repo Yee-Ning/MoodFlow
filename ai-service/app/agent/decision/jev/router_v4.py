@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import re
 from collections.abc import Awaitable
@@ -19,11 +20,15 @@ from app.agent.foundation.routing import (
     RoutingContext,
 )
 
-from .capability_criteria import ROUTER_QUESTION_INSTRUCTIONS, router_criteria
+from .capability_criteria import CONTRACT_PATH, ROUTER_QUESTION_INSTRUCTIONS, router_criteria
 from .client import DecisionClient, DecisionResponse, JevDecisionError
 
 _FROZEN_CONFIG = Path(__file__).resolve().parents[4] / "evals/config/jev_multi_frozen_strategy_v3.json"
 _ROUTES = tuple(router_criteria())
+_FROZEN_THRESHOLDS = {
+    "current_song": .30, "tool_calling": .25,
+    "worldline": .45, "general_chat": .50,
+}
 _HEAD_INSTRUCTIONS = (
     "Does this request contain a distinct affirmative supported intent for {route}? "
     "Judge this route independently of the other three; a separate unsupported request "
@@ -79,8 +84,10 @@ def frozen_thresholds() -> dict[str, float]:
     if data.get("mode") != "noul" or data.get("config", {}).get("family") != "per_route_threshold":
         raise RuntimeError("Jev Multi V3 strategy is not frozen Noul")
     thresholds = data["config"]["thresholds"]
-    if set(thresholds) != set(_ROUTES) or any(not 0 <= value <= 1 for value in thresholds.values()):
-        raise RuntimeError("invalid frozen Jev Multi thresholds")
+    if thresholds != _FROZEN_THRESHOLDS or set(thresholds) != set(_ROUTES):
+        raise RuntimeError("Jev Multi thresholds differ from V3 freeze")
+    if hashlib.sha256(CONTRACT_PATH.read_bytes()).hexdigest() != data.get("contract_sha256"):
+        raise RuntimeError("Router Capability Contract differs from V3 freeze")
     return thresholds
 
 
