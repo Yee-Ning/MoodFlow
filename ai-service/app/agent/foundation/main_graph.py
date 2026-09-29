@@ -96,7 +96,10 @@ def build_main_graph(
             from app.agent.decision.jev.router_v4 import JevRouterCandidate
             from app.agent.decision.jev.telemetry import record_v4_shadow, record_v4_shadow_failure
 
-            candidate = jev_v4_shadow_router or JevRouterCandidate(jev_client or JevClient(settings))
+            candidate = jev_v4_shadow_router or JevRouterCandidate(
+                jev_client or JevClient(settings),
+                single_confidence_threshold=settings.jev_router_confidence_threshold,
+            )
             baseline_task = asyncio.create_task(router.route(state["current_input"], context))
             baseline, shadow = await asyncio.gather(
                 baseline_task,

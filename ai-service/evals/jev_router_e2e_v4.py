@@ -237,11 +237,16 @@ async def run() -> None:
     cases = read_cases()
     settings = get_settings()
     if (not settings.jev_shadow_mode or settings.jev_model != "jev-latest"
-            or settings.jev_timeout_seconds != 5 or not settings.typesafe_api_key):
+            or settings.jev_timeout_seconds != 5
+            or settings.jev_router_confidence_threshold != .8
+            or not settings.typesafe_api_key):
         raise RuntimeError("V4 benchmark requires frozen Jev alias/config, API key and Shadow Mode")
     router = create_hybrid_router(device="cpu")
     recorder = HybridUsage(router)
-    candidate = JevRouterCandidate(JevClient(settings), fallback_router=router)
+    candidate = JevRouterCandidate(
+        JevClient(settings), fallback_router=router,
+        single_confidence_threshold=settings.jev_router_confidence_threshold,
+    )
     rows: list[dict[str, Any]] = []
     try:
         for index, case in enumerate(cases):
@@ -315,10 +320,13 @@ async def run_single_guard() -> None:
     if hashlib.sha256(SINGLE_GUARD.read_bytes()).hexdigest() != SINGLE_GUARD_SHA256:
         raise RuntimeError("V3 Single blind changed after freeze")
     settings = get_settings()
-    if not settings.jev_shadow_mode or not settings.typesafe_api_key:
+    if (not settings.jev_shadow_mode or not settings.typesafe_api_key
+            or settings.jev_router_confidence_threshold != .8):
         raise RuntimeError("single regression requires Jev key and Shadow Mode")
     cases = [json.loads(line) for line in SINGLE_GUARD.read_text(encoding="utf-8").splitlines()]
-    candidate = JevRouterCandidate(JevClient(settings))
+    candidate = JevRouterCandidate(
+        JevClient(settings), single_confidence_threshold=settings.jev_router_confidence_threshold,
+    )
     rows = []
     for index, case in enumerate(cases, 1):
         context = RoutingContext(has_current_song=True, current_song_id=101)

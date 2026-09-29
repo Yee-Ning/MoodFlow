@@ -179,9 +179,15 @@ def _usage(responses: list[DecisionResponse]) -> dict[str, int]:
 class JevRouterCandidate:
     """One Choice for Single; parallel frozen Noul and clause Choice calls for Multi."""
 
-    def __init__(self, client: DecisionClient, *, fallback_router=None) -> None:
+    def __init__(
+        self, client: DecisionClient, *, fallback_router=None,
+        single_confidence_threshold: float = .8,
+    ) -> None:
+        if not 0 <= single_confidence_threshold <= 1:
+            raise ValueError("single confidence threshold must be in [0, 1]")
         self.client = client
         self.fallback_router = fallback_router
+        self.single_confidence_threshold = single_confidence_threshold
         self.thresholds = frozen_thresholds()
 
     async def route(self, text: str, context: RoutingContext | None = None) -> RouteDecision:
@@ -222,6 +228,8 @@ class JevRouterCandidate:
                 route = RouteKey(answer.choice)
                 confidence = answer.confidence
                 scores = answer.probabilities
+                if confidence < self.single_confidence_threshold:
+                    raise TaskConstructionError("low_choice_confidence")
                 question = _safety_question(clauses, [route], context)
                 decision = _clarify(question) if question else _make_decision(clauses, [route], [confidence])
             else:

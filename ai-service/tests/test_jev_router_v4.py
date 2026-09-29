@@ -154,6 +154,15 @@ async def test_route_fragment_conflict_and_api_failure_use_hybrid_only_then():
     assert trace.router_source == "hybrid_fallback"
     assert trace.fallback_reason == "route_fragment_conflict"
     fallback.route.assert_awaited_once()
+
+    low = SimpleNamespace(decide=AsyncMock(return_value=response({
+        "route": DecisionAnswer("choice", choice="general_chat", confidence=.79),
+    })))
+    fallback.route.reset_mock()
+    low_trace = await JevRouterCandidate(low, fallback_router=fallback).route_with_trace("聊聊音乐。")
+    assert low_trace.router_source == "hybrid_fallback"
+    assert low_trace.fallback_reason == "low_choice_confidence"
+    fallback.route.assert_awaited_once()
     assert trace.decision == baseline
 
     broken = SimpleNamespace(decide=AsyncMock(side_effect=JevDecisionError("TimeoutError")))
