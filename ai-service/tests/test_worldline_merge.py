@@ -161,3 +161,45 @@ class WorldLineMergeTests(unittest.TestCase):
             ["relation-source-1", "relation-source-2"],
         )
         self.assertEqual(old.edges[0].evidence_ids, ["relation-source-1"])
+
+    def test_bounded_continuation_keeps_old_graph_and_evidenced_album_connections(self):
+        root = node("netease:song:1", WorldLineNodeType.SONG)
+        album = node("netease:album:3", WorldLineNodeType.ALBUM)
+        old_nodes = [root, album, *[
+            node(f"netease:song:{i}", WorldLineNodeType.SONG) for i in range(10, 18)
+        ]]
+        old = WorldLineGraph(root=root.id, nodes=old_nodes, edges=[
+            WorldLineEdge(source=root.id, target=album.id,
+                          relation=WorldLineRelation.BELONGS_TO_ALBUM, evidence_ids=["old"])
+        ])
+        additions = [node(f"netease:song:{i}", WorldLineNodeType.SONG) for i in range(20, 30)]
+        increment = WorldLineGraph(root=album.id, nodes=[album, *additions], edges=[
+            WorldLineEdge(source=song.id, target=album.id,
+                          relation=WorldLineRelation.BELONGS_TO_ALBUM,
+                          evidence_ids=[f"new-{index}"])
+            for index, song in enumerate(additions)
+        ])
+        new_sources = [source(f"new-{index}") for index in range(len(additions))]
+
+        with self.assertRaisesRegex(WorldLineMergeError, "capacity_reached"):
+            merge_worldline_graph(old, increment, [source("old")], new_sources,
+                                  target_node_id=album.id)
+        merged, sources = merge_worldline_graph(
+            old, increment, [source("old")], new_sources,
+            target_node_id=album.id, bounded=True,
+        )
+
+        self.assertEqual(merged.root, root.id)
+        self.assertEqual(len(merged.nodes), 15)
+        self.assertEqual(len(merged.edges), 6)
+        self.assertTrue({n.id for n in old_nodes}.issubset({n.id for n in merged.nodes}))
+        self.assertTrue({e for edge in merged.edges for e in edge.evidence_ids}.issubset({s.id for s in sources}))
+
+    def test_bounded_continuation_does_not_hide_conflicting_source(self):
+        artist = node("netease:artist:2", WorldLineNodeType.ARTIST)
+        graph = WorldLineGraph(root=artist.id, nodes=[artist])
+        original = source("shared")
+        changed = original.model_copy(update={"excerpt": "different evidence"})
+        with self.assertRaisesRegex(WorldLineMergeError, "source_conflict"):
+            merge_worldline_graph(graph, graph, [original], [changed],
+                                  target_node_id=artist.id, bounded=True)

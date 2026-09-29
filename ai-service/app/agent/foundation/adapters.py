@@ -1,10 +1,11 @@
 from collections.abc import Awaitable, Callable
+import re
 from typing import Any
 
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.runtime import Runtime
 
-from app.agent.foundation.models import TaskResult
+from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.routing import RouteKey, RouteTask
 from app.agent.foundation.state.main import MainState
 from app.agent.foundation.subgraphs.tool_calling.models import ReferencedEntities
@@ -46,6 +47,37 @@ def _prior_task_results(
         for result in state.get("task_results", [])
         if result.task_id in prior_task_ids
     ]
+
+
+_ARTIST_REFERENCE = re.compile(r"(?<!其)(?:他|她|它)(?=的)|这位歌手|这个歌手")
+
+
+def _ground_same_turn_artist_reference(
+    state: MainState, task: RouteTask,
+) -> str:
+    """Bind a later Worldline pronoun to one user-named, searched artist."""
+    text = task.input_text
+    if not _ARTIST_REFERENCE.search(text):
+        return text
+    decision = state["route_decision"]
+    tasks_by_id = {item.task_id: item for item in decision.tasks}
+    for result in reversed(_prior_task_results(state, task)):
+        prior_task = tasks_by_id[result.task_id]
+        if (prior_task.route_key is not RouteKey.TOOL_CALLING
+            or result.status is not TaskStatus.SUCCESS):
+            continue
+        raw = result.data.get("entities")
+        if not raw:
+            continue
+        entities = ReferencedEntities.model_validate(raw)
+        named_artists = {
+            artist for song in entities.songs for artist in song.artists
+            if artist and artist.casefold() in prior_task.input_text.casefold()
+        }
+        if len(named_artists) == 1:
+            artist = next(iter(named_artists))
+            return _ARTIST_REFERENCE.sub(f"歌手《{artist}》", text)
+    return text
 
 
 def create_subgraph_adapter(
@@ -118,6 +150,7 @@ def create_subgraph_adapter(
                 direct_complete=False,
             )
         elif route_key is RouteKey.WORLDLINE:
+            common_input["current_input"] = _ground_same_turn_artist_reference(state, task)
             common_input.update(
                 routing_context=state["routing_context"],
                 user_query=common_input["current_input"],

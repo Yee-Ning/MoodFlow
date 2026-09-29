@@ -43,6 +43,7 @@ def merge_worldline_graph(
     new_sources: list[EvidenceSource],
     *,
     target_node_id: str,
+    bounded: bool = False,
 ) -> tuple[WorldLineGraph, list[EvidenceSource]]:
     if increment.root != target_node_id or target_node_id not in {n.id for n in old.nodes}:
         raise WorldLineMergeError("invalid_expansion_root")
@@ -60,6 +61,63 @@ def merge_worldline_graph(
         if previous is not None and _source_identity(previous) != _source_identity(source):
             raise WorldLineMergeError("source_conflict")
         sources.setdefault(source.id, source)
+
+    if bounded:
+        # Session continuations retain the already published graph and admit
+        # only complete, evidenced edges that fit the result schema. Catalog
+        # fanout must not turn a valid continuation into a merge failure.
+        available_sources = sources
+        kept_nodes = {node.id: node for node in old.nodes}
+        kept_edges = {(e.source, e.target, e.relation): e for e in old.edges}
+        kept_sources = {source.id: source for source in old_sources}
+        candidates = sorted(
+            increment.edges,
+            key=lambda edge: 0 if target_node_id in {edge.source, edge.target} else 1,
+        )
+        for edge in candidates:
+            if any(source_id not in available_sources for source_id in edge.evidence_ids):
+                raise WorldLineMergeError("missing_edge_evidence")
+            key = (edge.source, edge.target, edge.relation)
+            previous = kept_edges.get(key)
+            evidence_ids = list(dict.fromkeys([
+                *(previous.evidence_ids if previous else []), *edge.evidence_ids,
+            ]))
+            missing_nodes = {
+                endpoint for endpoint in (edge.source, edge.target)
+                if endpoint not in kept_nodes
+            }
+            missing_sources = {
+                evidence_id for evidence_id in evidence_ids
+                if evidence_id not in kept_sources
+            }
+            if (len(kept_nodes) + len(missing_nodes) > 15
+                or len(kept_edges) + (previous is None) > 20
+                or len(kept_sources) + len(missing_sources) > 30
+                or len(evidence_ids) > 8):
+                continue
+            for node_id in missing_nodes:
+                kept_nodes[node_id] = nodes[node_id]
+            for source_id in missing_sources:
+                kept_sources[source_id] = available_sources[source_id]
+            kept_edges[key] = (
+                edge if previous is None else WorldLineEdge(
+                    source=previous.source, target=previous.target,
+                    relation=previous.relation, description=previous.description,
+                    evidence_ids=evidence_ids,
+                )
+            )
+        for source in new_sources:
+            if len(kept_sources) >= 30:
+                break
+            kept_sources.setdefault(source.id, source)
+        try:
+            graph = WorldLineGraph(
+                root=old.root, nodes=list(kept_nodes.values()),
+                edges=list(kept_edges.values()),
+            )
+        except ValueError as exc:
+            raise WorldLineMergeError("invalid_merged_graph") from exc
+        return graph, list(kept_sources.values())
 
     edges = {(e.source, e.target, e.relation): e for e in old.edges}
     for edge in increment.edges:

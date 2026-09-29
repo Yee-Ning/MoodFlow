@@ -30,7 +30,7 @@ _CURRENT_SONG_REFERENCE = re.compile(
 )
 _CONVERSATION_REFERENCE = re.compile(
     r"(?:这个歌手|这位歌手|这张专辑|那张专辑)|"
-    r"(?:^|[，。！？\s])(?:他|她|它)(?=的|有|是|与|和|在|曾|为|如)"
+    r"(?<!其)(?:他|她|它)(?=的|有|是|与|和|在|曾|为|如)"
 )
 _REFERENCE_REPLACEMENTS = re.compile(
     r"(?:他|她|它|这个歌手|这位歌手|这张专辑|那张专辑)"

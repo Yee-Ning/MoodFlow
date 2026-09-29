@@ -595,7 +595,24 @@ def build_worldline_subgraph(
                     state["prior_graph"], graph,
                     state.get("prior_sources", []), sources,
                     target_node_id=entity.entity_id,
+                    bounded=True,
                 )
+                retained_edges = {
+                    (edge.source, edge.target, edge.relation.value): set(edge.evidence_ids)
+                    for edge in graph.edges
+                }
+                def retained_relation(relation: Any) -> bool:
+                    target = relation.target_entity or getattr(relation, "era", None) or getattr(relation, "scene", None)
+                    if target is None:
+                        return False
+                    evidence = retained_edges.get((
+                        relation.source_entity.node_id, target.node_id,
+                        relation.relation_type.value,
+                    ))
+                    return evidence is not None and {item.source_id for item in relation.evidence}.issubset(evidence)
+                era_relations = [relation for relation in era_relations if retained_relation(relation)]
+                scene_relations = [relation for relation in scene_relations if retained_relation(relation)]
+                influence_relations = [relation for relation in influence_relations if retained_relation(relation)]
                 era_relations = merge_era_relations(
                     state.get("prior_era_relations", []),
                     era_relations,
