@@ -23,6 +23,13 @@ def test_update_blocks_sensitive_contract_changes(path):
         update.changed_services([path])
 
 
+def test_update_requires_explicit_contract_review_and_rebuilds_all_images():
+    assert update.changed_services(["docker-compose.production.yml", ".env.example"],
+                                   approve_contract=True) == list(update.BUILDABLE)
+    with pytest.raises(update.UpdateError, match="manual_review_required"):
+        update.changed_services(["deploy/nginx-host.conf"], approve_contract=True)
+
+
 def test_update_requires_explicit_migration_review():
     paths = ["ai-service/app/agent/postgres_migrations/009_add.sql", "ai-service/app/main.py"]
     assert update.migration_changes(paths) == paths[:1]

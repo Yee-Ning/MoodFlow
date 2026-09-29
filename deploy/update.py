@@ -110,12 +110,17 @@ def preflight() -> str:
     return previous
 
 
-def changed_services(paths: list[str]) -> list[str]:
+def changed_services(paths: list[str], *, approve_contract: bool = False) -> list[str]:
     selected: set[str] = set()
     for path in paths:
-        if path in {"docker-compose.production.yml", ".env.example", "deploy/nginx-host.conf"}:
+        if path == "deploy/nginx-host.conf" or (
+            path in {"docker-compose.production.yml", ".env.example"} and not approve_contract
+        ):
             raise UpdateError(f"manual_review_required_for_deployment_contract:{path}")
-        if path == ".dockerignore":
+        if path == "docker-compose.production.yml":
+            # A reviewed Compose change may affect any service's build or runtime.
+            selected.update(BUILDABLE)
+        elif path == ".dockerignore":
             selected.update(BUILDABLE)
         elif path == "netease-music-api" or path.startswith("netease-music-api/") or path == "deploy/netease.Dockerfile":
             selected.add("netease")
@@ -194,7 +199,7 @@ def safe_log_tail() -> None:
           "-f docker-compose.production.yml logs --tail=80 migrate postgres qdrant netease java ai-service frontend")
 
 
-def update(dry_run: bool, approve_migrations: bool) -> None:
+def update(dry_run: bool, approve_migrations: bool, approve_contract: bool = False) -> None:
     phase = "preflight"
     record: dict[str, object] = {"started_at_utc": datetime.now(timezone.utc).isoformat(),
                                  "status": "running", "phase": phase, "migration": "not_started",
@@ -215,7 +220,7 @@ def update(dry_run: bool, approve_migrations: bool) -> None:
         if subprocess.run(("git", "merge-base", "--is-ancestor", previous, target), cwd=ROOT).returncode:
             raise UpdateError("main_diverged_from_origin_main")
         paths = git("diff", "--name-only", previous, target).splitlines()
-        services = changed_services(paths)
+        services = changed_services(paths, approve_contract=approve_contract)
         changed_migrations = migration_changes(paths)
         if changed_migrations and not approve_migrations:
             raise UpdateError("migration_review_required:rerun_with_--approve-migrations_after_review")
@@ -358,6 +363,7 @@ def main() -> None:
     parser.add_argument("run_id", nargs="?")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--approve-migrations", action="store_true")
+    parser.add_argument("--approve-contract", action="store_true")
     parser.add_argument("--acknowledge-schema-risk", action="store_true")
     args = parser.parse_args()
     os.umask(0o077)
@@ -377,7 +383,7 @@ def main() -> None:
             except (UpdateError, OSError, ValueError, KeyError) as exc:
                 parser.error(str(exc))
         else:
-            update(args.dry_run, args.approve_migrations)
+            update(args.dry_run, args.approve_migrations, args.approve_contract)
 
 
 if __name__ == "__main__":
