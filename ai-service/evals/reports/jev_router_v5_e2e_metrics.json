@@ -1,0 +1,178 @@
+{
+  "dataset_sha256": "24d190d630614a611f19ac2ea1b7fc61cbf529b4222dfe826ec1b2b64f5e6daf",
+  "evaluated_at": "2026-09-29T10:04:14.125138+00:00",
+  "hybrid": {
+    "cases": 30,
+    "routing": {
+      "exact": 0.6,
+      "exact_count": 18,
+      "micro_precision": 0.7429,
+      "micro_recall": 0.8125,
+      "micro_f1": 0.7761,
+      "macro_f1": 0.7327,
+      "over_count": 8,
+      "under_count": 6,
+      "per_route": {
+        "current_song": {
+          "support": 5,
+          "precision": 0.6667,
+          "recall": 0.4,
+          "f1": 0.5
+        },
+        "tool_calling": {
+          "support": 15,
+          "precision": 0.8235,
+          "recall": 0.9333,
+          "f1": 0.875
+        },
+        "worldline": {
+          "support": 4,
+          "precision": 0.8,
+          "recall": 1.0,
+          "f1": 0.8889
+        },
+        "general_chat": {
+          "support": 8,
+          "precision": 0.6,
+          "recall": 0.75,
+          "f1": 0.6667
+        }
+      }
+    },
+    "tasks": {
+      "full_decision_exact": 0.2333,
+      "full_decision_exact_count": 7,
+      "task_count_accuracy": 0.4333,
+      "task_route_accuracy": 0.5814,
+      "fragment_accuracy": 0.3488,
+      "dependency_accuracy": 0.5814,
+      "ordering_accuracy": 0.3333,
+      "clarify_precision": 0.3333,
+      "clarify_recall": 0.1429,
+      "same_route_multi_exact": 0.0,
+      "same_route_multi_count": 8
+    },
+    "reliability": {
+      "fallback_count": 0,
+      "fallback_rate": 0.0,
+      "timeout_count": 0,
+      "api_failure_count": 0,
+      "schema_failure_count": 0,
+      "router_exception_count": 0
+    },
+    "performance": {
+      "average_ms": 4320.86,
+      "p50_ms": 4810.13,
+      "p95_ms": 10927.25,
+      "p99_ms": 11185.45,
+      "api_calls_total": 24,
+      "api_calls_per_query": 0.8,
+      "input_tokens": 33046,
+      "output_tokens": 1217,
+      "tokens_per_query": 1142.1,
+      "normal_jev": {
+        "count": 0,
+        "average_ms": null,
+        "p50_ms": null,
+        "p95_ms": null,
+        "p99_ms": null
+      },
+      "fallback": {
+        "count": 0,
+        "average_ms": null,
+        "p50_ms": null,
+        "p95_ms": null,
+        "p99_ms": null
+      },
+      "classifier_hot_path_calls": 47,
+      "classifier_fallback_calls": 0
+    }
+  },
+  "jev": {
+    "cases": 30,
+    "routing": {
+      "exact": 0.9667,
+      "exact_count": 29,
+      "micro_precision": 1.0,
+      "micro_recall": 0.9688,
+      "micro_f1": 0.9842,
+      "macro_f1": 0.9833,
+      "over_count": 0,
+      "under_count": 1,
+      "per_route": {
+        "current_song": {
+          "support": 5,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tool_calling": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "worldline": {
+          "support": 4,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "general_chat": {
+          "support": 8,
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333
+        }
+      }
+    },
+    "tasks": {
+      "full_decision_exact": 0.9667,
+      "full_decision_exact_count": 29,
+      "task_count_accuracy": 1.0,
+      "task_route_accuracy": 0.9767,
+      "fragment_accuracy": 0.9535,
+      "dependency_accuracy": 1.0,
+      "ordering_accuracy": 0.9667,
+      "clarify_precision": 1.0,
+      "clarify_recall": 1.0,
+      "same_route_multi_exact": 1.0,
+      "same_route_multi_count": 8
+    },
+    "reliability": {
+      "fallback_count": 1,
+      "fallback_rate": 0.0333,
+      "timeout_count": 0,
+      "api_failure_count": 0,
+      "schema_failure_count": 0,
+      "router_exception_count": 0
+    },
+    "performance": {
+      "average_ms": 826.32,
+      "p50_ms": 545.3,
+      "p95_ms": 2328.64,
+      "p99_ms": 5182.56,
+      "api_calls_total": 45,
+      "api_calls_per_query": 1.5,
+      "input_tokens": 66539,
+      "output_tokens": 3781,
+      "tokens_per_query": 2344.0,
+      "normal_jev": {
+        "count": 29,
+        "average_ms": 651.22,
+        "p50_ms": 542.55,
+        "p95_ms": 968.3,
+        "p99_ms": 2739.35
+      },
+      "fallback": {
+        "count": 1,
+        "average_ms": 5904.19,
+        "p50_ms": 5904.19,
+        "p95_ms": 5904.19,
+        "p99_ms": 5904.19
+      },
+      "classifier_hot_path_calls": 0,
+      "classifier_fallback_calls": 3
+    }
+  }
+}
