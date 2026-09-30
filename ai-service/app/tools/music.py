@@ -1,24 +1,41 @@
 import logging
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 import httpx
 from langchain_core.tools import BaseTool, tool
 from langgraph.prebuilt import ToolRuntime
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, StringConstraints, ValidationError
 
 from app.config.settings import get_settings
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
+    AlbumDetailResult,
     AddSongToPlaylistArgs,
     AddSongToPlaylistResult,
+    CreatePlaylistArgs,
+    CreatedPlaylistResult,
+    RemoveSongFromPlaylistArgs,
+    RemoveSongFromPlaylistResult,
+    SetSongLikedArgs,
+    SongLikeResult,
+    SpringCreatedPlaylistResponse,
+    SpringSongLikeResponse,
+    EntitySearchItem,
+    EntitySearchResult,
+    GetAlbumDetailArgs,
+    GetPlaylistDetailArgs,
     GetSongLyricsArgs,
     MusicSearchResult,
     SearchMusicArgs,
+    SearchEntitiesArgs,
+    PlaylistDetailResult,
     SongLyricsResult,
     SpringMusicSearchResponse,
+    SpringAlbumDetailResponse,
     SpringMusicEntityDetailResponse,
     SpringMusicEntitySearchResponse,
     SpringPlaylistMutationResponse,
+    SpringPlaylistDetailResponse,
     SpringSongLyricsResponse,
     SpringUserPlaylistsResponse,
     ToolFailure,
@@ -164,7 +181,7 @@ class MusicServiceClient:
             "limit": search_input.limit,
         }
         if entity_type is not None:
-            if entity_type not in {"song", "artist", "album"}:
+            if entity_type not in {"song", "artist", "album", "playlist"}:
                 raise ValueError("unsupported music entity type")
             params["type"] = entity_type
         payload = await self._request(
@@ -237,6 +254,46 @@ class MusicServiceClient:
             ]
         )
 
+    async def get_playlist_detail(self, playlist_id: int) -> PlaylistDetailResult:
+        detail_input = GetPlaylistDetailArgs(playlist_id=playlist_id)
+        payload = await self._request(
+            "GET", f"/api/playlists/{detail_input.playlist_id}"
+        )
+        parsed = self._validate_response(payload, SpringPlaylistDetailResponse)
+        assert isinstance(parsed, SpringPlaylistDetailResponse)
+        playlist = parsed.data.playlist
+        if playlist.playlist_id != detail_input.playlist_id:
+            raise MusicServiceError(
+                "invalid_response", "音乐服务返回了不匹配的歌单数据。"
+            )
+        return PlaylistDetailResult(
+            playlist_id=playlist.playlist_id,
+            name=playlist.name,
+            description=parsed.data.description,
+            cover_url=playlist.cover_img_url,
+            creator=playlist.creator,
+            track_count=playlist.track_count,
+            songs=parsed.data.songs,
+        )
+
+    async def get_album_detail(self, album_id: int) -> AlbumDetailResult:
+        detail_input = GetAlbumDetailArgs(album_id=album_id)
+        payload = await self._request("GET", f"/api/albums/{detail_input.album_id}")
+        parsed = self._validate_response(payload, SpringAlbumDetailResponse)
+        assert isinstance(parsed, SpringAlbumDetailResponse)
+        album = parsed.data.album
+        if album.entity_type != "album" or album.entity_id != detail_input.album_id:
+            raise MusicServiceError(
+                "invalid_response", "音乐服务返回了不匹配的专辑数据。"
+            )
+        return AlbumDetailResult(
+            album_id=album.entity_id,
+            name=album.name,
+            artist=album.artist,
+            cover_url=album.cover_url,
+            songs=parsed.data.songs,
+        )
+
     async def add_song_to_playlist(
         self,
         playlist_id: int,
@@ -260,6 +317,40 @@ class MusicServiceClient:
             song_id=mutation_input.song_id,
             status=parsed.data.status,
             message=parsed.data.message,
+        )
+
+    async def set_song_liked(self, song_id: int, liked: bool) -> SongLikeResult:
+        args = SetSongLikedArgs(song_id=song_id, liked=liked)
+        payload = await self._request(
+            "POST", f"/api/songs/{args.song_id}/like",
+            params={"liked": str(args.liked).lower()},
+        )
+        parsed = self._validate_response(payload, SpringSongLikeResponse)
+        assert isinstance(parsed, SpringSongLikeResponse)
+        if parsed.data.song_id != args.song_id or parsed.data.liked != args.liked:
+            raise MusicServiceError("invalid_response", "音乐服务返回了不匹配的红心状态。")
+        return parsed.data
+
+    async def create_playlist(self, name: str, privacy: int = 0) -> CreatedPlaylistResult:
+        args = CreatePlaylistArgs(name=name, privacy=privacy)
+        payload = await self._request("POST", "/api/playlists", params=args.model_dump())
+        parsed = self._validate_response(payload, SpringCreatedPlaylistResponse)
+        assert isinstance(parsed, SpringCreatedPlaylistResponse)
+        if parsed.data.name != args.name:
+            raise MusicServiceError("invalid_response", "音乐服务返回了不匹配的新建歌单。")
+        return parsed.data
+
+    async def remove_song_from_playlist(
+        self, playlist_id: int, song_id: int,
+    ) -> RemoveSongFromPlaylistResult:
+        args = RemoveSongFromPlaylistArgs(playlist_id=playlist_id, song_id=song_id)
+        payload = await self._request(
+            "DELETE", f"/api/playlists/{args.playlist_id}/songs/{args.song_id}"
+        )
+        parsed = self._validate_response(payload, SpringPlaylistMutationResponse)
+        assert isinstance(parsed, SpringPlaylistMutationResponse)
+        return RemoveSongFromPlaylistResult(
+            **args.model_dump(), status=parsed.data.status, message=parsed.data.message,
         )
 
 
@@ -290,6 +381,42 @@ async def search_music_tool(keyword: str, limit: int = 10) -> str:
 
 
 @tool(
+    "search_entities_tool",
+    args_schema=SearchEntitiesArgs,
+    description=(
+        "按 query 搜索真实音乐实体，可指定 entity_type 为 artist、album、playlist 或 song。"
+        "返回统一的实体 ID、名称、类型及元数据；搜索歌手、专辑或歌单时优先调用。"
+    ),
+)
+async def search_entities_tool(
+    query: str,
+    entity_type: str | None = None,
+    limit: int = 5,
+) -> str:
+    search_input = SearchEntitiesArgs(
+        query=query, entity_type=entity_type, limit=limit
+    )
+    entities = await MusicServiceClient().search_entities(
+        search_input.query,
+        entity_type=search_input.entity_type,
+        limit=search_input.limit,
+    )
+    return EntitySearchResult(
+        query=search_input.query,
+        entity_type=search_input.entity_type,
+        entities=[EntitySearchItem(
+            id=entity.entity_id,
+            name=entity.name,
+            type=entity.entity_type,
+            artist=entity.artist,
+            album=entity.album,
+            cover_url=entity.cover_url,
+            metadata=entity.metadata,
+        ) for entity in entities],
+    ).model_dump_json()
+
+
+@tool(
     "get_song_lyrics",
     description="根据真实 song_id 获取完整原文歌词、翻译和歌词状态。",
 )
@@ -316,6 +443,34 @@ async def get_user_playlists_tool(
 
 
 @tool(
+    "get_playlist_detail_tool",
+    description=(
+        "用从 search_entities_tool 或 get_user_playlists 取得的真实 playlist_id "
+        "读取歌单基本信息和完整歌曲列表。个人歌单应先调用 get_user_playlists。"
+    ),
+)
+async def get_playlist_detail_tool(
+    playlist_id: Annotated[int, Field(gt=0, description="可信来源的真实歌单 ID。")],
+    runtime: ToolRuntime[MusicAgentContext, Any],
+) -> str:
+    result = await _authenticated_client(runtime).get_playlist_detail(playlist_id)
+    return result.model_dump_json()
+
+
+@tool(
+    "get_album_detail_tool",
+    args_schema=GetAlbumDetailArgs,
+    description=(
+        "用 search_entities_tool 取得的真实 album_id 读取整张专辑的完整歌曲列表。"
+        "需要播放整张专辑时，先搜索专辑，再调用本工具。"
+    ),
+)
+async def get_album_detail_tool(album_id: int) -> str:
+    result = await MusicServiceClient().get_album_detail(album_id)
+    return result.model_dump_json()
+
+
+@tool(
     "add_song_to_playlist",
     description=(
         "把真实 song_id 加入真实 playlist_id。必须先从搜索/历史工具结果取得歌曲 ID，"
@@ -334,11 +489,50 @@ async def add_song_to_playlist_tool(
     return result.model_dump_json()
 
 
+@tool("set_song_liked_tool")
+async def set_song_liked_tool(
+    song_id: Annotated[int, Field(gt=0)],
+    liked: Annotated[bool, Field(strict=True)],
+    runtime: ToolRuntime[MusicAgentContext, Any],
+) -> str:
+    """设置网易云云端红心状态。ID 来自当前歌曲或可信工具结果；成功后自动更新播放器红心。"""
+    result = await _authenticated_client(runtime).set_song_liked(song_id, liked)
+    return result.model_dump_json()
+
+
+@tool("create_playlist_tool")
+async def create_playlist_tool(
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40, pattern=r"\S")],
+    runtime: ToolRuntime[MusicAgentContext, Any],
+    privacy: Literal[0, 10] = 0,
+) -> str:
+    """按用户指定名称新建自建歌单，privacy 为 0 公开或 10 私密；返回可信歌单 ID 可继续添加歌曲。"""
+    result = await _authenticated_client(runtime).create_playlist(name, privacy)
+    return result.model_dump_json()
+
+
+@tool("remove_song_from_playlist_tool")
+async def remove_song_from_playlist_tool(
+    playlist_id: Annotated[int, Field(gt=0)],
+    song_id: Annotated[int, Field(gt=0)],
+    runtime: ToolRuntime[MusicAgentContext, Any],
+) -> str:
+    """从当前用户可编辑歌单移除一首歌。先读用户歌单，再读取目标歌单详情确认歌曲 ID 和归属。"""
+    result = await _authenticated_client(runtime).remove_song_from_playlist(playlist_id, song_id)
+    return result.model_dump_json()
+
+
 MUSIC_AGENT_TOOLS: list[BaseTool] = [
     search_music_tool,
+    search_entities_tool,
     get_song_lyrics_tool,
     get_user_playlists_tool,
+    get_playlist_detail_tool,
+    get_album_detail_tool,
     add_song_to_playlist_tool,
+    set_song_liked_tool,
+    create_playlist_tool,
+    remove_song_from_playlist_tool,
 ]
 
 

@@ -127,6 +127,104 @@ class MusicServiceClientTests(unittest.TestCase):
         self.assertEqual(result[0].entity_type, "artist")
         self.assertEqual(result[0].metadata["album_size"], 40)
 
+    def test_search_playlist_entities_and_empty_results(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            self.assertEqual(request.url.path, "/api/music/entities/search")
+            self.assertEqual(request.url.params["type"], "playlist")
+            return httpx.Response(200, json={
+                "code": 200, "message": "success", "data": [{
+                    "id": 77, "entityType": "playlist", "name": "学习歌单",
+                    "artist": "测试用户", "album": "", "coverUrl": "",
+                    "metadata": {"track_count": 2}, "relatedEntities": [],
+                }] if request.url.params["keyword"] == "学习" else [],
+            })
+
+        def search(query: str):
+            return MusicServiceClient().search_entities(query, entity_type="playlist")
+
+        result = run_with_transport(httpx.MockTransport(handler), lambda: search("学习"))
+        self.assertEqual((result[0].entity_id, result[0].entity_type), (77, "playlist"))
+        empty = run_with_transport(httpx.MockTransport(handler), lambda: search("不存在"))
+        self.assertEqual(empty, [])
+
+    def test_get_playlist_detail_returns_all_songs_with_session(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            self.assertEqual(request.url.path, "/api/playlists/77")
+            self.assertEqual(request.headers["cookie"], "JSESSIONID=session-4")
+            return httpx.Response(200, json={
+                "code": 200, "message": "success", "data": {
+                    "playlist": {
+                        "id": 77, "name": "学习歌单", "coverImgUrl": "",
+                        "trackCount": 1, "creator": "测试用户", "subscribed": False,
+                    },
+                    "description": "专注时听", "songs": [{
+                        "id": 185809, "name": "晴天", "artists": ["周杰伦"],
+                        "album": "叶惠美", "coverUrl": "", "duration": 269000,
+                    }],
+                },
+            })
+
+        result = run_with_transport(
+            httpx.MockTransport(handler),
+            lambda: MusicServiceClient("JSESSIONID=session-4").get_playlist_detail(77),
+        )
+        self.assertEqual(result.name, "学习歌单")
+        self.assertEqual(result.songs[0].song_id, 185809)
+        self.assertEqual(result.songs[0].artists, ["周杰伦"])
+
+    def test_get_album_detail_returns_complete_tracks(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            self.assertEqual(request.url.path, "/api/albums/18905")
+            return httpx.Response(200, json={
+                "code": 200, "message": "success", "data": {
+                    "album": {
+                        "id": 18905, "entityType": "album", "name": "叶惠美",
+                        "artist": "周杰伦", "album": "叶惠美", "coverUrl": "",
+                        "metadata": {"size": 2}, "relatedEntities": [],
+                    },
+                    "songs": [
+                        {"id": 185809, "name": "晴天", "artists": ["周杰伦"],
+                         "album": "叶惠美", "coverUrl": "", "duration": 269000},
+                        {"id": 185811, "name": "以父之名", "artists": ["周杰伦"],
+                         "album": "叶惠美", "coverUrl": "", "duration": 342000},
+                    ],
+                },
+            })
+
+        result = run_with_transport(
+            httpx.MockTransport(handler),
+            lambda: MusicServiceClient().get_album_detail(18905),
+        )
+
+        self.assertEqual(result.album_id, 18905)
+        self.assertEqual(result.name, "叶惠美")
+        self.assertEqual([song.song_id for song in result.songs], [185809, 185811])
+
+    def test_get_playlist_detail_rejects_wrong_id_and_invalid_argument(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json={
+                "code": 200, "message": "success", "data": {
+                    "playlist": {
+                        "id": 88, "name": "其他歌单", "coverImgUrl": "",
+                        "trackCount": 0, "creator": "测试用户", "subscribed": False,
+                    }, "description": "", "songs": [],
+                },
+            })
+
+        empty = run_with_transport(
+            httpx.MockTransport(handler),
+            lambda: MusicServiceClient().get_playlist_detail(88),
+        )
+        self.assertEqual(empty.songs, [])
+        with self.assertRaises(MusicServiceError) as raised:
+            run_with_transport(
+                httpx.MockTransport(handler),
+                lambda: MusicServiceClient().get_playlist_detail(77),
+            )
+        self.assertEqual(raised.exception.code, "invalid_response")
+        with self.assertRaises(ValueError):
+            asyncio.run(MusicServiceClient().get_playlist_detail(0))
+
     def test_entity_detail_rejects_mismatched_backend_entity(self) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             self.assertEqual(request.url.path, "/api/music/entities/song/185809")

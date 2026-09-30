@@ -1,10 +1,11 @@
 import json
 import unittest
 from collections.abc import Sequence
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import BaseTool, tool
+from pydantic import ValidationError
 
 from app.agent.foundation.models import TaskStatus
 from app.agent.foundation.routing import (
@@ -15,6 +16,8 @@ from app.agent.foundation.routing import (
 )
 from app.agent.foundation.subgraphs.tool_calling import (
     CLIENT_ACTION_TOOLS,
+    AlbumReference,
+    ArtistReference,
     ClientActionName,
     PlaylistReference,
     ReferencedEntities,
@@ -24,15 +27,22 @@ from app.agent.foundation.subgraphs.tool_calling import (
 from app.agent.foundation.subgraphs.tool_calling.graph import (
     MAX_TOOL_CALLS,
     TOOL_LIMIT_MESSAGE,
+    _extract_entities,
+    _track_matches_reference,
 )
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
+    AlbumDetailResult,
     AddSongToPlaylistArgs,
     SearchMusicArgs,
+    MusicEntity,
+    MusicTrack,
+    PlaylistDetailResult,
+    SongLikeResult,
     UserPlaylist,
     UserPlaylistsResult,
 )
-from app.tools.music import MUSIC_AGENT_TOOLS, MusicServiceClient
+from app.tools.music import MUSIC_AGENT_TOOLS, MusicServiceClient, MusicServiceError
 
 
 def routing_intent(sub_intent: str, *, order: int = 0) -> IntentItem:
@@ -166,6 +176,308 @@ def add_to_playlist_tool(calls: list[dict]) -> BaseTool:
 
 
 class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
+    async def test_queue_insert_append_and_jump_emit_client_actions(self) -> None:
+        song_payload = {
+            "song_id": 101,
+            "name": "测试歌曲",
+            "artists": ["测试歌手"],
+            "album": "测试专辑",
+            "cover_url": "https://example.test/cover.jpg",
+            "duration": 180000,
+        }
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(), *CLIENT_ACTION_TOOLS],
+            assistant=scripted_assistant([
+                tool_call("search_music", "queue-search", {"keyword": "测试歌曲"}),
+                tool_call("insert_next_track", "queue-insert", {"song": song_payload}),
+                tool_call("append_to_queue", "queue-append", {"song": song_payload}),
+                tool_call("jump_to_queue_item", "queue-jump", {"index": 3}),
+                AIMessage(content="已发送队列操作。"),
+            ]),
+        )
+
+        result = await invoke(
+            graph,
+            text="把测试歌曲放到下一首，随后加到末尾，再跳到第 3 首",
+            context=RoutingContext(queue_size=5, current_index=0),
+        )
+
+        actions = result["task_result"].data["client_actions"]
+        self.assertEqual(
+            [action["name"] for action in actions],
+            ["insert_next_track", "append_to_queue", "jump_to_queue_item"],
+        )
+        self.assertEqual(actions[0]["arguments"]["song"]["song_id"], 101)
+        self.assertEqual(actions[2]["arguments"], {"index": 3})
+
+    async def test_queue_jump_rejects_out_of_range_index(self) -> None:
+        graph = create_tool_calling_subgraph(
+            tools=CLIENT_ACTION_TOOLS,
+            assistant=scripted_assistant([
+                tool_call("jump_to_queue_item", "bad-jump", {"index": 6}),
+                AIMessage(content="目标位置超出队列范围。"),
+            ]),
+        )
+
+        result = await invoke(
+            graph,
+            text="跳到播放列表第 6 首",
+            context=RoutingContext(queue_size=5, current_index=0),
+        )
+
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+        self.assertEqual(result["task_result"].data["client_actions"], [])
+
+    async def test_album_detail_can_replace_queue_with_full_album(self) -> None:
+        album_track = MusicTrack(
+            song_id=185809, name="晴天", artists=["周杰伦"],
+            album="叶惠美", duration=269000,
+        )
+
+        async def fake_search_entities(client, keyword, *, entity_type=None, limit=5):
+            return [MusicEntity(
+                entity_id=18905, entity_type="album", name="叶惠美",
+                artist="周杰伦", album="叶惠美",
+            )]
+
+        async def fake_get_album_detail(client, album_id):
+            return AlbumDetailResult(
+                album_id=album_id, name="叶惠美", artist="周杰伦",
+                cover_url="", songs=[album_track],
+            )
+
+        graph = create_tool_calling_subgraph(assistant=scripted_assistant([
+            tool_call("search_entities_tool", "album-search", {
+                "query": "周杰伦 叶惠美", "entity_type": "album",
+            }),
+            tool_call("get_album_detail_tool", "album-detail", {"album_id": 18905}),
+            tool_call("play_album", "album-play", {
+                "album_id": 18905,
+                "name": "叶惠美",
+                "tracks": [album_track.model_dump(mode="json")],
+            }),
+            AIMessage(content="已请求播放整张《叶惠美》。"),
+        ]))
+        with (
+            patch.object(MusicServiceClient, "search_entities", fake_search_entities),
+            patch.object(MusicServiceClient, "get_album_detail", fake_get_album_detail),
+        ):
+            result = await invoke(graph, text="播放周杰伦的《叶惠美》这张专辑")
+
+        action = result["task_result"].data["client_actions"][0]
+        self.assertEqual(action["name"], "play_album")
+        self.assertEqual(action["arguments"]["tracks"][0]["song_id"], 185809)
+
+    async def test_playlist_detail_can_replace_queue_with_full_playlist(self) -> None:
+        playlist_track = MusicTrack(
+            song_id=185809, name="晴天", artists=["周杰伦"], album="叶惠美",
+        )
+
+        async def fake_get_user_playlists(client):
+            return UserPlaylistsResult(playlists=[
+                UserPlaylist(playlist_id=77, name="私人收藏", editable=True),
+            ])
+
+        async def fake_get_playlist_detail(client, playlist_id):
+            return PlaylistDetailResult(
+                playlist_id=playlist_id, name="私人收藏", description="",
+                cover_url="", creator="测试用户", track_count=1,
+                songs=[playlist_track],
+            )
+
+        graph = create_tool_calling_subgraph(assistant=scripted_assistant([
+            tool_call("get_user_playlists", "playlist-list"),
+            tool_call("get_playlist_detail_tool", "playlist-detail", {
+                "playlist_id": 77,
+            }),
+            tool_call("play_playlist", "playlist-play", {
+                "playlist_id": 77,
+                "name": "私人收藏",
+                "tracks": [playlist_track.model_dump(mode="json")],
+            }),
+            AIMessage(content="已请求播放私人收藏歌单。"),
+        ]))
+        with (
+            patch.object(MusicServiceClient, "get_user_playlists", fake_get_user_playlists),
+            patch.object(MusicServiceClient, "get_playlist_detail", fake_get_playlist_detail),
+        ):
+            result = await invoke(graph, text="播放我的私人收藏歌单")
+
+        action = result["task_result"].data["client_actions"][0]
+        self.assertEqual(action["name"], "play_playlist")
+        self.assertEqual(action["arguments"]["playlist_id"], 77)
+
+    def test_reference_models_share_id_name_type_and_reject_mismatch(self) -> None:
+        references = [
+            ArtistReference(position=1, id=6452, name="周杰伦"),
+            AlbumReference(position=1, id=18905, name="叶惠美"),
+            SongReference(position=1, song_id=185809, name="晴天"),
+            PlaylistReference(position=1, playlist_id=77, name="学习"),
+        ]
+        self.assertEqual(
+            [item.model_dump()["type"] for item in references],
+            ["artist", "album", "song", "playlist"],
+        )
+        self.assertEqual([item.model_dump()["id"] for item in references],
+                         [6452, 18905, 185809, 77])
+        with self.assertRaises(ValidationError):
+            PlaylistReference(position=1, playlist_id=77, id=88, name="学习")
+
+    def test_detailed_results_upgrade_catalog_references(self) -> None:
+        references = _extract_entities([
+            {"name": "search_entities_tool", "content": json.dumps({
+                "query": "学习", "entity_type": None, "entities": [
+                    {"id": 77, "type": "playlist", "name": "学习"},
+                    {"id": 185809, "type": "song", "name": "晴天",
+                     "artist": "周杰伦", "album": "", "metadata": {}},
+                ],
+            }, ensure_ascii=False)},
+            {"name": "get_user_playlists", "content": UserPlaylistsResult(
+                playlists=[UserPlaylist(playlist_id=77, name="学习", editable=True)]
+            ).model_dump_json()},
+            {"name": "search_music", "content": json.dumps({
+                "keyword": "晴天", "limit": 1, "songs": [{
+                    "song_id": 185809, "name": "晴天", "artists": ["周杰伦"],
+                    "album": "叶惠美", "cover_url": "", "duration": 269000,
+                }],
+            }, ensure_ascii=False)},
+        ])
+        self.assertTrue(references.playlists[0].editable)
+        self.assertEqual(references.songs[0].album, "叶惠美")
+        self.assertTrue(references.songs[0].playable)
+        catalog_only = _extract_entities([{"name": "search_entities_tool", "content":
+            json.dumps({"query": "晴天", "entities": [{
+                "id": 185809, "type": "song", "name": "晴天",
+                "artist": "周杰伦", "album": "叶惠美",
+            }]}, ensure_ascii=False)}])
+        self.assertFalse(_track_matches_reference(
+            MusicTrack(song_id=185809, name="晴天", artists=["周杰伦"],
+                       album="叶惠美"),
+            catalog_only.songs[0],
+        ))
+
+    async def test_search_artist_uses_entity_tool_and_keeps_reference(self) -> None:
+        queries: list[tuple[str, str | None]] = []
+        observed: list[dict] = []
+
+        async def fake_search_entities(client, keyword, *, entity_type=None, limit=5):
+            queries.append((keyword, entity_type))
+            return [MusicEntity(
+                entity_id=6452, entity_type="artist", name="周杰伦",
+                artist="周杰伦", cover_url="", metadata={},
+            )]
+
+        graph = create_tool_calling_subgraph(
+            tools=MUSIC_AGENT_TOOLS,
+            assistant=scripted_assistant([
+                tool_call("search_entities_tool", "artist-search", {
+                    "query": "周杰伦", "entity_type": "artist",
+                }),
+                AIMessage(content="找到歌手周杰伦。"),
+            ], observed),
+        )
+        with patch.object(MusicServiceClient, "search_entities", fake_search_entities):
+            result = await invoke(graph, text="搜索周杰伦")
+
+        self.assertEqual(queries, [("周杰伦", "artist")])
+        tool_result = next(message for message in observed[1]["messages"]
+                           if isinstance(message, ToolMessage))
+        self.assertEqual(json.loads(str(tool_result.content))["entities"][0]["type"],
+                         "artist")
+        self.assertEqual(json.loads(str(tool_result.content))["entities"][0]["id"],
+                         6452)
+        self.assertEqual(result["task_result"].status, TaskStatus.SUCCESS)
+        artist = result["task_result"].data["entities"]["artists"][0]
+        self.assertEqual((artist["id"], artist["name"], artist["type"]),
+                         (6452, "周杰伦", "artist"))
+
+    async def test_user_playlist_name_resolves_to_detail_and_songs(self) -> None:
+        observed_ids: list[int] = []
+
+        async def fake_get_user_playlists(client):
+            return UserPlaylistsResult(playlists=[
+                UserPlaylist(playlist_id=77, name="学习", editable=True),
+            ])
+
+        async def fake_get_playlist_detail(client, playlist_id):
+            observed_ids.append(playlist_id)
+            return PlaylistDetailResult(
+                playlist_id=playlist_id, name="学习", description="",
+                cover_url="", creator="测试用户", track_count=1,
+                songs=[MusicTrack(song_id=185809, name="晴天",
+                                  artists=["周杰伦"], album="叶惠美")],
+            )
+
+        graph = create_tool_calling_subgraph(
+            tools=MUSIC_AGENT_TOOLS,
+            assistant=scripted_assistant([
+                tool_call("get_user_playlists", "my-playlists"),
+                tool_call("get_playlist_detail_tool", "playlist-detail", {
+                    "playlist_id": 77,
+                }),
+                AIMessage(content="你的学习歌单里有《晴天》，歌手是周杰伦。"),
+            ]),
+        )
+        with (
+            patch.object(MusicServiceClient, "get_user_playlists", fake_get_user_playlists),
+            patch.object(MusicServiceClient, "get_playlist_detail", fake_get_playlist_detail),
+        ):
+            result = await invoke(graph, text="查看我的学习歌单里面有哪些歌")
+
+        self.assertEqual(observed_ids, [77])
+        self.assertEqual(result["task_result"].status, TaskStatus.SUCCESS)
+        self.assertEqual(result["task_result"].data["entities"]["songs"][0]["song_id"], 185809)
+        self.assertIn("晴天", result["task_result"].content)
+
+    async def test_playlist_detail_rejects_untrusted_id(self) -> None:
+        calls: list[int] = []
+
+        async def fake_get_playlist_detail(client, playlist_id):
+            calls.append(playlist_id)
+            raise AssertionError("untrusted ID should never reach backend")
+
+        graph = create_tool_calling_subgraph(
+            tools=MUSIC_AGENT_TOOLS,
+            assistant=scripted_assistant([
+                tool_call("get_playlist_detail_tool", "untrusted-detail", {
+                    "playlist_id": 999,
+                }),
+                AIMessage(content="请先确定歌单。"),
+            ]),
+        )
+        with patch.object(MusicServiceClient, "get_playlist_detail", fake_get_playlist_detail):
+            result = await invoke(graph, text="查看歌单")
+        self.assertEqual(calls, [])
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+
+    async def test_playlist_detail_api_failure_is_safe(self) -> None:
+        observed: list[dict] = []
+
+        async def fake_get_playlist_detail(client, playlist_id):
+            raise MusicServiceError("timeout", "歌单详情暂时无法读取。")
+
+        graph = create_tool_calling_subgraph(
+            tools=MUSIC_AGENT_TOOLS,
+            assistant=scripted_assistant([
+                tool_call("get_playlist_detail_tool", "failed-detail", {
+                    "playlist_id": 77,
+                }),
+                AIMessage(content="歌单详情暂时无法读取。"),
+            ], observed),
+        )
+        prior = ReferencedEntities(playlists=[
+            PlaylistReference(position=1, playlist_id=77, name="学习")
+        ])
+        with patch.object(MusicServiceClient, "get_playlist_detail", fake_get_playlist_detail):
+            result = await invoke(graph, text="查看学习歌单", prior_entities=[prior])
+
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+        tool_message = next(message for message in observed[1]["messages"]
+                            if isinstance(message, ToolMessage))
+        payload = json.loads(str(tool_message.content))
+        self.assertEqual(payload["error"], "timeout")
+        self.assertNotIn("Traceback", str(tool_message.content))
+
     async def test_graph_contains_direct_and_tool_loop_paths(self) -> None:
         graph = create_tool_calling_subgraph(
             assistant=scripted_assistant([AIMessage(content="完成")])
@@ -224,21 +536,22 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
         graph = create_tool_calling_subgraph(
             assistant=scripted_assistant([])
         )
-        result = await invoke(
-            graph,
-            intents=[
-                routing_intent("lower_volume", order=0),
-                routing_intent("favorite_song", order=1),
-            ],
-            context=RoutingContext(
-                has_current_song=True,
-                current_song_id=101,
-                volume=0.1,
-                queue_size=1,
-                current_index=0,
-                current_song_liked=False,
-            ),
-        )
+        with patch.object(MusicServiceClient, "set_song_liked", AsyncMock(return_value=SongLikeResult(
+            song_id=101, liked=True, status="synced", message="已同步",
+        ))) as sync:
+            result = await invoke(
+                graph,
+                intents=[
+                    routing_intent("lower_volume", order=0),
+                    routing_intent("favorite_song", order=1),
+                ],
+                context=RoutingContext(
+                    has_current_song=True, current_song_id=101, volume=0.1,
+                    queue_size=1, current_index=0, current_song_liked=False,
+                ),
+            )
+        sync.assert_awaited_once_with(101, True)
+        self.assertEqual(result["task_result"].data["tool_calls"], 1)
 
         actions = result["task_result"].data["client_actions"]
         self.assertEqual([item["name"] for item in actions], ["set_volume", "set_liked"])
@@ -339,26 +652,31 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("set_liked", [item["name"] for item in result["task_result"].data["tool_call_details"] if item["status"] == "success"])
 
     async def test_explicit_favorite_is_allowed_but_negated_favorite_is_not(self) -> None:
-        liked_tool = next(item for item in CLIENT_ACTION_TOOLS if item.name == "set_liked")
+        liked_tool = next(item for item in MUSIC_AGENT_TOOLS if item.name == "set_song_liked_tool")
         context = RoutingContext(has_current_song=True, current_song_id=101)
         graph = create_tool_calling_subgraph(
             tools=[liked_tool],
             assistant=scripted_assistant([
-                tool_call("set_liked", "liked-yes", {"song_id": 101, "liked": True}),
+                tool_call("set_song_liked_tool", "liked-yes", {"song_id": 101, "liked": True}),
                 AIMessage(content="已发送收藏指令。"),
             ]),
         )
-        allowed = await invoke(graph, text="收藏当前这首歌", context=context)
+        synced = SongLikeResult(song_id=101, liked=True, status="synced", message="已同步")
+        with patch.object(MusicServiceClient, "set_song_liked", AsyncMock(return_value=synced)) as sync:
+            allowed = await invoke(graph, text="收藏当前这首歌", context=context)
+        sync.assert_awaited_once_with(101, True)
         self.assertEqual([a["name"] for a in allowed["task_result"].data["client_actions"]], ["set_liked"])
 
         graph = create_tool_calling_subgraph(
             tools=[liked_tool],
             assistant=scripted_assistant([
-                tool_call("set_liked", "liked-no", {"song_id": 101, "liked": True}),
+                tool_call("set_song_liked_tool", "liked-no", {"song_id": 101, "liked": True}),
                 AIMessage(content="不会收藏。"),
             ]),
         )
-        denied = await invoke(graph, text="不要收藏这首歌，分析它", context=context)
+        with patch.object(MusicServiceClient, "set_song_liked", AsyncMock()) as sync:
+            denied = await invoke(graph, text="不要收藏这首歌，分析它", context=context)
+        sync.assert_not_awaited()
         self.assertEqual(denied["task_result"].data["client_actions"], [])
 
     async def test_prior_entities_are_passed_to_assistant(self) -> None:

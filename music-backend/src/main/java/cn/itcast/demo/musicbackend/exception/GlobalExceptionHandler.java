@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -40,6 +41,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleGatewayTimeout(NeteaseApiTimeoutException exception) {
         log.warn("网易云 API 请求超时: {}", exception.getMessage());
         return error(HttpStatus.GATEWAY_TIMEOUT, exception.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidParameter(MethodArgumentTypeMismatchException exception) {
+        return error(HttpStatus.BAD_REQUEST, "请求参数格式错误: " + exception.getName());
     }
 
     @ExceptionHandler(NeteaseApiException.class)

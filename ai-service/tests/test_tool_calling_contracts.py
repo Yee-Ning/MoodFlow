@@ -7,6 +7,8 @@ from app.agent.foundation.routing import PlayMode, RouteKey, RoutingContext
 from app.agent.foundation.subgraphs.tool_calling import ClientAction, ClientActionName
 from app.agent.foundation.subgraphs.tool_calling.models import (
     EmptyActionArguments,
+    JumpToQueueItemArguments,
+    PlayAlbumArguments,
     SetPlayModeArguments,
     SetVolumeArguments,
 )
@@ -77,6 +79,16 @@ class ToolCallingContractTests(unittest.TestCase):
                 name=ClientActionName.SET_VOLUME,
                 arguments=EmptyActionArguments(),
             )
+
+    def test_queue_actions_enforce_target_and_nonempty_collection(self) -> None:
+        self.assertEqual(JumpToQueueItemArguments(index=5).index, 5)
+        self.assertEqual(JumpToQueueItemArguments(song_id=185809).song_id, 185809)
+        with self.assertRaises(ValidationError):
+            JumpToQueueItemArguments()
+        with self.assertRaises(ValidationError):
+            JumpToQueueItemArguments(song_id=185809, index=1)
+        with self.assertRaises(ValidationError):
+            PlayAlbumArguments(album_id=18905, name="叶惠美", tracks=[])
 
 
 if __name__ == "__main__":

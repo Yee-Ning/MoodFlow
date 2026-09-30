@@ -139,6 +139,51 @@ try {
   assert.equal(completed.status, 'idle')
   unsubscribe()
 
+  // Keep the transport open to prove deltas are rendered before final/EOF.
+  const encoder = new TextEncoder()
+  let liveController
+  let notifyResponseReady
+  const responseReady = new Promise((resolve) => { notifyResponseReady = resolve })
+  globalThis.fetch = async () => new Response(new ReadableStream({
+    start(controller) {
+      liveController = controller
+      notifyResponseReady()
+    },
+  }), { headers: { 'Content-Type': 'text/event-stream; charset=utf-8' } })
+  function waitForContent(content) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        stop()
+        reject(new Error(`Stream did not expose partial content: ${content}`))
+      }, 2000)
+      const stop = useAiChatStore.subscribe((state) => {
+        if (state.messages.at(-1)?.content !== content) return
+        clearTimeout(timer)
+        stop()
+        resolve()
+      })
+    })
+  }
+  useAiChatStore.getState().clearConversation()
+  const liveRequest = useAiChatStore.getState().sendMessage('验证实时流式回答', playerContext())
+  await responseReady
+  const firstDelta = waitForContent('回答正在')
+  liveController.enqueue(encoder.encode(sse('message', { delta: '回答正在' })))
+  await firstDelta
+  assert.equal(useAiChatStore.getState().isSending, true)
+  assert.equal(useAiChatStore.getState().status, 'generating')
+  const secondDelta = waitForContent('回答正在逐步生成')
+  liveController.enqueue(encoder.encode(sse('message', { delta: '逐步生成' })))
+  await secondDelta
+  assert.equal(useAiChatStore.getState().isSending, true)
+  liveController.enqueue(encoder.encode(sse('final', {
+    type: 'chat', message: '回答正在逐步生成', search_query: null,
+  }) + sse('done', {})))
+  liveController.close()
+  await liveRequest
+  assert.equal(useAiChatStore.getState().isSending, false)
+  assert.equal(useAiChatStore.getState().messages.at(-1).content, '回答正在逐步生成')
+
   const { usePlayerStore } = await server.ssrLoadModule('/src/store/playerStore.ts')
   const currentSong = {
     id: 185809,
@@ -304,15 +349,93 @@ try {
   })
   assert.equal(usePlayerStore.getState().currentSong?.id, 303)
   assert.equal(usePlayerStore.getState().currentSong?.coverUrl, searchedSong.cover_url)
+  const queuedSecondSong = {
+    song_id: secondSong.id,
+    name: secondSong.name,
+    artists: secondSong.artists,
+    album: secondSong.album,
+    cover_url: secondSong.coverUrl,
+    duration: secondSong.duration,
+  }
+  const queuedCurrentSong = {
+    song_id: currentSong.id,
+    name: currentSong.name,
+    artists: currentSong.artists,
+    album: currentSong.album,
+    cover_url: currentSong.coverUrl,
+    duration: currentSong.duration,
+  }
+  await executeClientAction({
+    action_id: 'action-insert-next',
+    task_id: 'task-player',
+    name: 'insert_next_track',
+    arguments: { song: queuedSecondSong },
+  })
+  await executeClientAction({
+    action_id: 'action-append-queue',
+    task_id: 'task-player',
+    name: 'append_to_queue',
+    arguments: { song: queuedCurrentSong },
+  })
+  assert.deepEqual(
+    usePlayerStore.getState().queue.map((song) => song.id),
+    [303, 202, 185809],
+  )
+  assert.equal(usePlayerStore.getState().currentSong?.id, 303)
+  await executeClientAction({
+    action_id: 'action-jump-index',
+    task_id: 'task-player',
+    name: 'jump_to_queue_item',
+    arguments: { index: 2 },
+  })
+  assert.equal(usePlayerStore.getState().currentSong?.id, 202)
+  await executeClientAction({
+    action_id: 'action-jump-song',
+    task_id: 'task-player',
+    name: 'jump_to_queue_item',
+    arguments: { song_id: 185809 },
+  })
+  assert.equal(usePlayerStore.getState().currentSong?.id, 185809)
+  await executeClientAction({
+    action_id: 'action-play-album',
+    task_id: 'task-player',
+    name: 'play_album',
+    arguments: {
+      album_id: 10,
+      name: '测试专辑',
+      tracks: [searchedSong, queuedSecondSong],
+    },
+  })
+  assert.deepEqual(usePlayerStore.getState().queue.map((song) => song.id), [303, 202])
+  assert.equal(usePlayerStore.getState().currentSong?.id, 303)
+  await executeClientAction({
+    action_id: 'action-play-playlist',
+    task_id: 'task-player',
+    name: 'play_playlist',
+    arguments: {
+      playlist_id: 77,
+      name: '私人收藏',
+      tracks: [queuedSecondSong, queuedCurrentSong],
+    },
+  })
+  assert.deepEqual(usePlayerStore.getState().queue.map((song) => song.id), [202, 185809])
+  assert.equal(usePlayerStore.getState().currentSong?.id, 202)
   await assert.rejects(
     executeClientAction({
-      action_id: 'action-unknown-like',
+      action_id: 'action-jump-missing',
+      task_id: 'task-player',
+      name: 'jump_to_queue_item',
+      arguments: { song_id: 999 },
+    }),
+    /目标歌曲不在当前播放队列中/,
+  )
+  await executeClientAction({
+      action_id: 'action-synced-nonplaying-like',
       task_id: 'task-player',
       name: 'set_liked',
       arguments: { song_id: 999, liked: true },
-    }),
-    /目标歌曲不在当前播放器中/,
-  )
+    })
+  assert.equal(usePlayerStore.getState().likedSongIds.has(999), true)
 
   globalThis.fetch = async () => streamResponse([
     sse('action', {
@@ -392,6 +515,34 @@ try {
   assert.equal(cleared.status, 'idle')
 
   const { streamAiChatMessage } = await server.ssrLoadModule('/src/services/aiChat.ts')
+  globalThis.fetch = async () => streamResponse([
+    sse('action', {
+      action_id: 'parsed-play-album',
+      task_id: 'task-parser',
+      name: 'play_album',
+      arguments: {
+        album_id: 10,
+        name: '测试专辑',
+        tracks: [searchedSong, queuedSecondSong],
+      },
+    }),
+    sse('action', {
+      action_id: 'parsed-jump',
+      task_id: 'task-parser',
+      name: 'jump_to_queue_item',
+      arguments: { index: 2 },
+    }),
+    sse('done', {}),
+  ])
+  const parsedQueueActions = []
+  for await (const event of streamAiChatMessage({
+    message: '测试队列动作', thread_id: 'queue-parser', current_song_id: null,
+    player_context: playerContext({ has_current_song: false, current_song_id: null }),
+  })) parsedQueueActions.push(event)
+  assert.equal(parsedQueueActions[0].action.name, 'play_album')
+  assert.equal(parsedQueueActions[0].action.arguments.tracks.length, 2)
+  assert.deepEqual(parsedQueueActions[1].action.arguments, { index: 2 })
+
   const telemetryStorage = new Map()
   globalThis.window = {
     location: { search: '' },

@@ -11,12 +11,15 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
+import cn.itcast.demo.musicbackend.dto.AlbumDetailData;
 import cn.itcast.demo.musicbackend.dto.LyricsStatus;
 import cn.itcast.demo.musicbackend.dto.MusicEntityData;
 import cn.itcast.demo.musicbackend.dto.MusicEntityReferenceData;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
+import cn.itcast.demo.musicbackend.dto.CreatedPlaylistData;
+import cn.itcast.demo.musicbackend.dto.SongLikeData;
 import cn.itcast.demo.musicbackend.dto.SongData;
 import cn.itcast.demo.musicbackend.dto.SongLyricsData;
 import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
@@ -32,17 +35,19 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class NeteaseMusicService {
 
     private static final Logger log = LoggerFactory.getLogger(NeteaseMusicService.class);
     private static final int PLAYLIST_LIMIT = 1000;
-    private static final List<String> MUSIC_ENTITY_TYPES = List.of("song", "artist", "album");
+    private static final List<String> MUSIC_ENTITY_TYPES = List.of("song", "artist", "album", "playlist");
 
     private final RestClient neteaseRestClient;
 
@@ -131,6 +136,9 @@ public class NeteaseMusicService {
                 ? ""
                 : entityType.trim().toLowerCase(Locale.ROOT);
         validateMusicEntityType(normalizedType);
+        if ("playlist".equals(normalizedType)) {
+            throw new BadRequestException("歌单详情请使用 /api/playlists/{id}");
+        }
 
         return switch (normalizedType) {
             case "song" -> {
@@ -180,6 +188,24 @@ public class NeteaseMusicService {
             }
             default -> throw new IllegalStateException("unreachable entity type");
         };
+    }
+
+    public AlbumDetailData getAlbumDetail(long albumId) {
+        if (albumId <= 0) {
+            throw new BadRequestException("专辑 id 必须大于 0");
+        }
+        Map<String, Object> response = get("/album", Map.of("id", albumId));
+        Map<String, Object> albumSource = requiredMap(response, "album");
+        List<Map<String, Object>> songSources = requiredList(response, "songs");
+        MusicEntityData album = toAlbumEntity(
+                albumSource,
+                songSources.stream().map(this::toSongReference).toList());
+        if (album.id() != albumId) {
+            throw new NeteaseApiException("网易云 API 返回了不匹配的专辑数据");
+        }
+        return new AlbumDetailData(
+                album,
+                songSources.stream().map(this::toSong).toList());
     }
 
     public SongData getSongDetail(long songId) {
@@ -341,6 +367,78 @@ public class NeteaseMusicService {
         return new PlaylistMutationData("added", "已添加到歌单");
     }
 
+    public SongLikeData setSongLiked(long songId, boolean liked, HttpServletRequest request) {
+        if (songId <= 0) {
+            throw new BadRequestException("歌曲 id 必须大于 0");
+        }
+        String cookie = requireCookie(request);
+        post("/like", Map.of("id", songId, "like", liked), cookie);
+        return new SongLikeData(songId, liked, "synced",
+                liked ? "已同步到网易云我喜欢的音乐" : "已取消网易云红心收藏");
+    }
+
+    public List<Long> getLikedSongIds(HttpServletRequest request) {
+        String cookie = requireCookie(request);
+        UserProfileData profile = getProfile(cookie);
+        Map<String, Object> response = get("/likelist", Map.of("uid", profile.userId()), cookie);
+        if (!(response.get("ids") instanceof List<?> ids)) {
+            throw invalidResponse("ids");
+        }
+        List<Long> result = new ArrayList<>();
+        for (Object id : ids) {
+            if (!(id instanceof Number number) || number.longValue() <= 0) {
+                throw invalidResponse("ids");
+            }
+            result.add(number.longValue());
+        }
+        return List.copyOf(result);
+    }
+
+    public CreatedPlaylistData createPlaylist(String name, int privacy, HttpServletRequest request) {
+        String normalizedName = name == null ? "" : name.trim();
+        if (normalizedName.isBlank() || normalizedName.length() > 40) {
+            throw new BadRequestException("歌单名称必须为 1 到 40 个字符");
+        }
+        if (privacy != 0 && privacy != 10) {
+            throw new BadRequestException("privacy 必须是 0（公开）或 10（私密）");
+        }
+        String cookie = requireCookie(request);
+        Map<String, Object> response = post("/playlist/create",
+                Map.of("name", normalizedName, "privacy", privacy, "type", "NORMAL"), cookie);
+        Map<String, Object> playlist = requiredMap(response, "playlist");
+        long playlistId = requiredLong(playlist, "id");
+        String createdName = requiredString(playlist, "name");
+        if (playlistId <= 0 || !createdName.equals(normalizedName)) {
+            throw new NeteaseApiException("网易云 API 返回了不匹配的新建歌单数据");
+        }
+        return new CreatedPlaylistData(playlistId, createdName, "created", "已新建歌单");
+    }
+
+    public PlaylistMutationData removeSongFromPlaylist(
+            long playlistId, long songId, HttpServletRequest request) {
+        if (playlistId <= 0 || songId <= 0) {
+            throw new BadRequestException("歌单和歌曲 id 必须大于 0");
+        }
+        String cookie = requireCookie(request);
+        UserProfileData profile = getProfile(cookie);
+        Map<String, Object> response = get("/playlist/detail", Map.of("id", playlistId), cookie);
+        Map<String, Object> playlist = requiredMap(response, "playlist");
+        if (requiredLong(playlist, "id") != playlistId) {
+            throw new NeteaseApiException("网易云 API 返回了不匹配的歌单数据");
+        }
+        long creatorId = requiredLong(requiredMap(playlist, "creator"), "userId");
+        if (creatorId != profile.userId() || Boolean.TRUE.equals(playlist.get("subscribed"))) {
+            return new PlaylistMutationData("forbidden", "该歌单不可编辑");
+        }
+        // A missing track list cannot prove that a destructive operation is safe.
+        requiredList(playlist, "trackIds");
+        if (!playlistContainsSong(playlist, songId)) {
+            return new PlaylistMutationData("not_found", "歌曲不在该歌单中，无需移除");
+        }
+        post("/playlist/tracks", Map.of("op", "del", "pid", playlistId, "tracks", songId), cookie);
+        return new PlaylistMutationData("removed", "已从歌单移除歌曲");
+    }
+
     private SongPlaybackData unavailablePlayback(long songId) {
         return new SongPlaybackData(
                 songId,
@@ -435,12 +533,14 @@ public class NeteaseMusicService {
             case "song" -> 1;
             case "album" -> 10;
             case "artist" -> 100;
+            case "playlist" -> 1000;
             default -> throw new IllegalStateException("unreachable entity type");
         };
         String resultField = switch (entityType) {
             case "song" -> "songs";
             case "album" -> "albums";
             case "artist" -> "artists";
+            case "playlist" -> "playlists";
             default -> throw new IllegalStateException("unreachable entity type");
         };
         Map<String, Object> response = get("/cloudsearch", Map.of(
@@ -453,8 +553,22 @@ public class NeteaseMusicService {
             case "song" -> items.stream().map(this::toSongEntity).toList();
             case "album" -> items.stream().map(item -> toAlbumEntity(item, List.of())).toList();
             case "artist" -> items.stream().map(item -> toArtistEntity(item, List.of())).toList();
+            case "playlist" -> items.stream().map(this::toPlaylistEntity).toList();
             default -> throw new IllegalStateException("unreachable entity type");
         };
+    }
+
+    private MusicEntityData toPlaylistEntity(Map<String, Object> source) {
+        Map<String, Object> creator = requiredMap(source, "creator");
+        return new MusicEntityData(
+                requiredLong(source, "id"),
+                "playlist",
+                requiredString(source, "name"),
+                optionalString(creator, "nickname"),
+                "",
+                optionalString(source, "coverImgUrl"),
+                Map.of("track_count", optionalInt(source, "trackCount")),
+                List.of());
     }
 
     private MusicEntityData toSongEntity(Map<String, Object> source) {
@@ -571,7 +685,7 @@ public class NeteaseMusicService {
 
     private void validateMusicEntityType(String entityType) {
         if (!MUSIC_ENTITY_TYPES.contains(entityType)) {
-            throw new BadRequestException("type 必须是 song、artist 或 album");
+            throw new BadRequestException("type 必须是 song、artist、album 或 playlist");
         }
     }
 
@@ -596,8 +710,18 @@ public class NeteaseMusicService {
             String path,
             Map<String, Object> queryParams,
             String cookie) {
+        return request(HttpMethod.GET, path, queryParams, cookie);
+    }
+
+    private Map<String, Object> post(String path, Map<String, Object> queryParams, String cookie) {
+        return request(HttpMethod.POST, path, queryParams, cookie);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> request(
+            HttpMethod method, String path, Map<String, Object> queryParams, String cookie) {
         try {
-            var requestSpec = neteaseRestClient.get()
+            var requestSpec = neteaseRestClient.method(method)
                     .uri(uriBuilder -> {
                         uriBuilder.path(path);
                         queryParams.forEach(uriBuilder::queryParam);
@@ -622,6 +746,11 @@ public class NeteaseMusicService {
                 throw new NeteaseApiTimeoutException("网易云 API 请求超时", exception);
             }
             throw new NeteaseApiException("无法连接网易云 API", exception);
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().value() == 401) {
+                throw new UnauthorizedException("网易云登录已失效，请重新扫码登录");
+            }
+            throw new NeteaseApiException("网易云 API 响应异常", exception);
         } catch (RestClientException exception) {
             throw new NeteaseApiException("网易云 API 响应异常", exception);
         }

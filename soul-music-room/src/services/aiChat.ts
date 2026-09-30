@@ -66,6 +66,7 @@ type EmptyClientActionName =
   | 'play_next'
   | 'play_previous'
   | 'open_lyrics'
+  | 'clear_queue'
 
 export type ClientAction =
   | (ClientActionBase & {
@@ -81,6 +82,22 @@ export type ClientAction =
       arguments: { mode: PlayerPlayMode }
     })
   | (ClientActionBase & { name: 'play_song'; arguments: { song: ClientTrack } })
+  | (ClientActionBase & {
+      name: 'insert_next_track' | 'append_to_queue'
+      arguments: { song: ClientTrack }
+    })
+  | (ClientActionBase & {
+      name: 'play_album'
+      arguments: { album_id: number; name: string; tracks: ClientTrack[] }
+    })
+  | (ClientActionBase & {
+      name: 'play_playlist'
+      arguments: { playlist_id: number; name: string; tracks: ClientTrack[] }
+    })
+  | (ClientActionBase & {
+      name: 'jump_to_queue_item'
+      arguments: { song_id: number } | { index: number }
+    })
   | (ClientActionBase & {
       name: 'set_liked'
       arguments: { song_id: number; liked: boolean }
@@ -190,6 +207,13 @@ function parseClientTrack(value: unknown): ClientTrack {
   }
 }
 
+function parseClientTracks(value: unknown): ClientTrack[] {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 1000) {
+    throw new AiChatApiError('AI 返回了无法识别的播放器动作')
+  }
+  return value.map(parseClientTrack)
+}
+
 function parseClientAction(payload: unknown): ClientAction {
   if (!isRecord(payload) || !hasExactKeys(
     payload,
@@ -218,6 +242,7 @@ function parseClientAction(payload: unknown): ClientAction {
     case 'play_next':
     case 'play_previous':
     case 'open_lyrics':
+    case 'clear_queue':
       if (!hasExactKeys(args, [])) break
       return { ...base, name: payload.name, arguments: {} }
     case 'set_volume':
@@ -252,12 +277,54 @@ function parseClientAction(payload: unknown): ClientAction {
       }
     }
     case 'play_song':
+    case 'insert_next_track':
+    case 'append_to_queue':
       if (!hasExactKeys(args, ['song'])) break
       return {
         ...base,
         name: payload.name,
         arguments: { song: parseClientTrack(args.song) },
       }
+    case 'play_album':
+      if (
+        !hasExactKeys(args, ['album_id', 'name', 'tracks'])
+        || !isPositiveInteger(args.album_id)
+        || typeof args.name !== 'string'
+        || !args.name.trim()
+      ) break
+      return {
+        ...base,
+        name: payload.name,
+        arguments: {
+          album_id: args.album_id,
+          name: args.name,
+          tracks: parseClientTracks(args.tracks),
+        },
+      }
+    case 'play_playlist':
+      if (
+        !hasExactKeys(args, ['playlist_id', 'name', 'tracks'])
+        || !isPositiveInteger(args.playlist_id)
+        || typeof args.name !== 'string'
+        || !args.name.trim()
+      ) break
+      return {
+        ...base,
+        name: payload.name,
+        arguments: {
+          playlist_id: args.playlist_id,
+          name: args.name,
+          tracks: parseClientTracks(args.tracks),
+        },
+      }
+    case 'jump_to_queue_item':
+      if (hasExactKeys(args, ['song_id']) && isPositiveInteger(args.song_id)) {
+        return { ...base, name: payload.name, arguments: { song_id: args.song_id } }
+      }
+      if (hasExactKeys(args, ['index']) && isPositiveInteger(args.index)) {
+        return { ...base, name: payload.name, arguments: { index: args.index } }
+      }
+      break
     case 'set_liked':
       if (
         !hasExactKeys(args, ['song_id', 'liked'])

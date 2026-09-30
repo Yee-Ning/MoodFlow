@@ -21,6 +21,9 @@ from app.context.music import MusicContextProvider
 from app.schemas.client_actions import (
     ClientAction,
     ClientActionName,
+    JumpToQueueItemArguments,
+    PlayAlbumArguments,
+    PlayPlaylistArguments,
     PlaySongArguments,
 )
 
@@ -50,9 +53,24 @@ def _previous_action_target(
                 if not isinstance(action.arguments, PlaySongArguments):
                     raise ValueError("play_song action has invalid arguments")
                 return action.arguments.song.song_id, False
+            if action.name is ClientActionName.PLAY_ALBUM:
+                if not isinstance(action.arguments, PlayAlbumArguments):
+                    raise ValueError("play_album action has invalid arguments")
+                return action.arguments.tracks[0].song_id, False
+            if action.name is ClientActionName.PLAY_PLAYLIST:
+                if not isinstance(action.arguments, PlayPlaylistArguments):
+                    raise ValueError("play_playlist action has invalid arguments")
+                return action.arguments.tracks[0].song_id, False
+            if action.name is ClientActionName.JUMP_TO_QUEUE_ITEM:
+                if not isinstance(action.arguments, JumpToQueueItemArguments):
+                    raise ValueError("jump_to_queue_item action has invalid arguments")
+                if action.arguments.song_id is not None:
+                    return action.arguments.song_id, False
+                return None, True
             if action.name in {
                 ClientActionName.PLAY_NEXT,
                 ClientActionName.PLAY_PREVIOUS,
+                ClientActionName.CLEAR_QUEUE,
             }:
                 return None, True
     return None, False

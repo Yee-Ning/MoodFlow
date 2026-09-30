@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { getAuthStatus, logout as requestLogout } from '../api/auth'
+import { usePlayerStore } from './playerStore'
 
 interface AuthState {
   loggedIn: boolean
@@ -25,9 +26,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         initialized: true,
         checking: false,
       })
+      if (result.loggedIn) await usePlayerStore.getState().refreshLikedSongs()
+      else usePlayerStore.getState().resetLikedSongs()
       return result.loggedIn
     } catch {
       set({ loggedIn: false, initialized: true, checking: false })
+      usePlayerStore.getState().resetLikedSongs()
       return false
     }
   },
@@ -35,5 +39,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     const result = await requestLogout()
     set({ loggedIn: result.loggedIn, initialized: true, checking: false })
+    usePlayerStore.getState().resetLikedSongs()
   },
 }))

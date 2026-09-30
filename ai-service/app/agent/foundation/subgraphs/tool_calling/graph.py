@@ -28,11 +28,15 @@ from app.agent.foundation.subgraphs.tool_calling.direct_actions import (
     resolve_direct_actions,
 )
 from app.agent.foundation.subgraphs.tool_calling.models import (
+    AlbumReference,
+    ArtistReference,
     ClientAction,
+    ClientActionName,
     PendingClientActionPayload,
     PlaylistReference,
     ReferencedEntities,
     SongReference,
+    SetLikedArguments,
     ToolExecutionRecord,
     ToolSelection,
 )
@@ -43,7 +47,17 @@ from app.agent.structured_output import (
 )
 from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
 from app.schemas.context import MusicAgentContext
-from app.schemas.music import MusicSearchResult, MusicTrack, ToolFailure, UserPlaylistsResult
+from app.schemas.music import (
+    AlbumDetailResult,
+    CreatedPlaylistResult,
+    EntitySearchResult,
+    MusicSearchResult,
+    MusicTrack,
+    PlaylistDetailResult,
+    SongLikeResult,
+    ToolFailure,
+    UserPlaylistsResult,
+)
 from app.tools.music import handle_music_tool_error
 
 MAX_TOOL_CALLS = 5
@@ -67,9 +81,18 @@ _ACTION_REQUESTS = {
     "seek_by": r"快进|快退|前进|后退|进度",
     "set_play_mode": r"播放模式|单曲循环|列表循环|随机播放|顺序播放",
     "play_song": r"播放|放一首|来一首|听一下|听这首|听它",
+    "insert_next_track": r"下一首|接下来播放|下一个播放|插播",
+    "append_to_queue": r"(?:加到|加入|添加到|放到).{0,8}(?:队列|列表|末尾|最后)|(?:稍后|待会儿?|等会儿?)(?:播放|放)",
+    "play_album": r"播放|放|听",
+    "play_playlist": r"播放|放|听",
+    "jump_to_queue_item": r"切到|跳到|切换到",
+    "clear_queue": r"清空",
     "set_liked": r"收藏|喜欢|点赞|点个喜欢",
+    "set_song_liked_tool": r"收藏|喜欢|点赞|点个喜欢|红心",
+    "create_playlist_tool": r"(?:新建|创建).{0,40}歌单",
+    "remove_song_from_playlist_tool": r"移除|删除",
     "open_lyrics": r"打开歌词|显示歌词|查看歌词|展开歌词",
-    "add_song_to_playlist": r"加入.{0,8}歌单|添加到.{0,8}歌单|放进.{0,8}歌单",
+    "add_song_to_playlist": r"加入.{0,8}歌单|添加到.{0,8}歌单|放进.{0,8}歌单|(?:新建|创建).{0,40}歌单.{0,40}(?:加入|添加|放进)",
 }
 _ACTION_CLAUSE = re.compile(r"[,，.。!！?？;；]|然后|接着|随后|并且|同时|以及|但是|不过|但")
 _ACTION_NEGATION = re.compile(r"(?:别|不要|不用|无需|不再|不要再)[^,，.。!！?？;；]{0,8}$")
@@ -85,14 +108,14 @@ def _action_intent_errors(state: ToolCallingState) -> dict[str, str]:
         if pattern is None:
             continue
         args = call.get("args") or {}
-        if name == "set_liked" and args.get("liked") is False:
-            pattern = r"取消收藏|取消喜欢|不喜欢|移除收藏"
+        if name in {"set_liked", "set_song_liked_tool"} and args.get("liked") is False:
+            pattern = r"取消收藏|取消喜欢|取消红心|不喜欢|移除收藏"
         allowed = False
         for clause in clauses:
             for match in re.finditer(pattern, clause, re.IGNORECASE):
                 if _ACTION_NEGATION.search(clause[:match.start()]):
                     continue
-                if name == "set_liked" and args.get("liked") is True and re.search(
+                if name in {"set_liked", "set_song_liked_tool"} and args.get("liked") is True and re.search(
                     r"(?:取消|不)\s*$", clause[:match.start()]
                 ):
                     continue
@@ -125,8 +148,12 @@ def _read_json(content: Any) -> dict[str, Any] | None:
 
 def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
     songs: list[SongReference] = []
+    artists: list[ArtistReference] = []
+    albums: list[AlbumReference] = []
     playlists: list[PlaylistReference] = []
     seen_song_ids: set[int] = set()
+    seen_artist_ids: set[int] = set()
+    seen_album_ids: set[int] = set()
     seen_playlist_ids: set[int] = set()
     for result in tool_results:
         content = result.get("content")
@@ -136,15 +163,69 @@ def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
             except ValueError:
                 continue
             for song in parsed.songs:
-                if song.song_id in seen_song_ids:
+                existing = next(
+                    (index for index, item in enumerate(songs)
+                     if item.song_id == song.song_id), None
+                )
+                position = existing + 1 if existing is not None else len(songs) + 1
+                reference = SongReference(
+                    position=position,
+                    queueable=True,
+                    **song.model_dump(mode="json"),
+                )
+                if existing is not None:
+                    songs[existing] = reference
                     continue
                 seen_song_ids.add(song.song_id)
-                songs.append(
-                    SongReference(
-                        position=len(songs) + 1,
-                        **song.model_dump(mode="json"),
-                    )
-                )
+                songs.append(reference)
+        elif result.get("name") == "search_entities_tool" and isinstance(content, str):
+            try:
+                parsed_entities = EntitySearchResult.model_validate_json(content)
+            except ValueError:
+                continue
+            for entity in parsed_entities.entities:
+                if entity.type == "artist" and entity.id not in seen_artist_ids:
+                    seen_artist_ids.add(entity.id)
+                    artists.append(ArtistReference(
+                        position=len(artists) + 1, id=entity.id,
+                        name=entity.name, cover_url=entity.cover_url,
+                    ))
+                elif entity.type == "album" and entity.id not in seen_album_ids:
+                    seen_album_ids.add(entity.id)
+                    albums.append(AlbumReference(
+                        position=len(albums) + 1, id=entity.id,
+                        name=entity.name, artist=entity.artist,
+                        cover_url=entity.cover_url,
+                    ))
+                elif entity.type == "playlist" and entity.id not in seen_playlist_ids:
+                    seen_playlist_ids.add(entity.id)
+                    playlists.append(PlaylistReference(
+                        position=len(playlists) + 1,
+                        playlist_id=entity.id, name=entity.name,
+                    ))
+                elif entity.type == "song" and entity.id not in seen_song_ids:
+                    seen_song_ids.add(entity.id)
+                    duration = entity.metadata.get("duration")
+                    songs.append(SongReference(
+                        position=len(songs) + 1, song_id=entity.id,
+                        name=entity.name,
+                        artists=[name for name in entity.artist.split("、") if name],
+                        album=entity.album, cover_url=entity.cover_url,
+                        duration=duration if isinstance(duration, int) and duration >= 0 else 0,
+                        playable=False,
+                        queueable=False,
+                    ))
+        elif result.get("name") == "create_playlist_tool" and isinstance(content, str):
+            try:
+                created = CreatedPlaylistResult.model_validate_json(content)
+            except ValueError:
+                continue
+            if created.playlist_id not in seen_playlist_ids:
+                seen_playlist_ids.add(created.playlist_id)
+                playlists.append(PlaylistReference(
+                    position=len(playlists) + 1, playlist_id=created.playlist_id,
+                    name=created.name, editable=True,
+                ))
         elif result.get("name") == "get_user_playlists" and isinstance(content, str):
             try:
                 parsed = UserPlaylistsResult.model_validate_json(content)
@@ -152,6 +233,14 @@ def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
                 continue
             for playlist in parsed.playlists:
                 if playlist.playlist_id in seen_playlist_ids:
+                    index = next(
+                        index for index, item in enumerate(playlists)
+                        if item.playlist_id == playlist.playlist_id
+                    )
+                    playlists[index] = PlaylistReference(
+                        position=index + 1,
+                        **playlist.model_dump(mode="json"),
+                    )
                     continue
                 seen_playlist_ids.add(playlist.playlist_id)
                 playlists.append(
@@ -160,7 +249,66 @@ def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
                         **playlist.model_dump(mode="json"),
                     )
                 )
-    return ReferencedEntities(songs=songs, playlists=playlists)
+        elif result.get("name") == "get_playlist_detail_tool" and isinstance(content, str):
+            try:
+                detail = PlaylistDetailResult.model_validate_json(content)
+            except ValueError:
+                continue
+            if detail.playlist_id not in seen_playlist_ids:
+                seen_playlist_ids.add(detail.playlist_id)
+                playlists.append(PlaylistReference(
+                    position=len(playlists) + 1,
+                    playlist_id=detail.playlist_id, name=detail.name,
+                ))
+            for song in detail.songs:
+                existing = next(
+                    (index for index, item in enumerate(songs)
+                     if item.song_id == song.song_id), None
+                )
+                reference = SongReference(
+                    position=existing + 1 if existing is not None else len(songs) + 1,
+                    playable=False,
+                    queueable=True,
+                    **song.model_dump(mode="json"),
+                )
+                if existing is not None:
+                    songs[existing] = reference
+                    continue
+                seen_song_ids.add(song.song_id)
+                songs.append(reference)
+        elif result.get("name") == "get_album_detail_tool" and isinstance(content, str):
+            try:
+                detail = AlbumDetailResult.model_validate_json(content)
+            except ValueError:
+                continue
+            if detail.album_id not in seen_album_ids:
+                seen_album_ids.add(detail.album_id)
+                albums.append(AlbumReference(
+                    position=len(albums) + 1,
+                    id=detail.album_id,
+                    name=detail.name,
+                    artist=detail.artist,
+                    cover_url=detail.cover_url,
+                ))
+            for song in detail.songs:
+                existing = next(
+                    (index for index, item in enumerate(songs)
+                     if item.song_id == song.song_id), None
+                )
+                reference = SongReference(
+                    position=existing + 1 if existing is not None else len(songs) + 1,
+                    playable=False,
+                    queueable=True,
+                    **song.model_dump(mode="json"),
+                )
+                if existing is not None:
+                    songs[existing] = reference
+                    continue
+                seen_song_ids.add(song.song_id)
+                songs.append(reference)
+    return ReferencedEntities(
+        songs=songs, artists=artists, albums=albums, playlists=playlists
+    )
 
 
 def _extract_client_actions(
@@ -168,6 +316,17 @@ def _extract_client_actions(
 ) -> list[ClientAction]:
     actions: list[ClientAction] = []
     for index, result in enumerate(state.get("tool_results", [])):
+        if result.get("name") == "set_song_liked_tool":
+            try:
+                synced = SongLikeResult.model_validate_json(result.get("content"))
+            except (ValueError, TypeError):
+                continue
+            actions.append(ClientAction(
+                action_id=make_action_id(state["task_id"], str(result.get("tool_call_id") or f"like:{index}")),
+                task_id=state["task_id"], name=ClientActionName.SET_LIKED,
+                arguments=SetLikedArguments(song_id=synced.song_id, liked=synced.liked),
+            ))
+            continue
         if result.get("name") not in CLIENT_ACTION_TOOL_NAMES:
             continue
         payload = _read_json(result.get("content"))
@@ -196,23 +355,32 @@ def _latest_tool_calls(state: ToolCallingState) -> list[dict[str, Any]]:
 
 def _known_references(
     state: ToolCallingState,
-) -> tuple[dict[int, SongReference], dict[int, PlaylistReference]]:
+) -> tuple[
+    dict[int, SongReference],
+    dict[int, AlbumReference],
+    dict[int, PlaylistReference],
+]:
     current = _extract_entities(state.get("tool_results", []))
-    groups = [current, *state.get("prior_entities", [])]
+    groups = [*state.get("prior_entities", []), current]
     songs = {
         song.song_id: song
         for group in groups
         for song in group.songs
+    }
+    albums = {
+        album.id: album
+        for group in groups
+        for album in group.albums
     }
     playlists = {
         playlist.playlist_id: playlist
         for group in groups
         for playlist in group.playlists
     }
-    return songs, playlists
+    return songs, albums, playlists
 
 
-def _track_matches_reference(track: MusicTrack, reference: SongReference) -> bool:
+def _track_fields_match(track: MusicTrack, reference: SongReference) -> bool:
     return (
         track.song_id == reference.song_id
         and track.name == reference.name
@@ -223,8 +391,50 @@ def _track_matches_reference(track: MusicTrack, reference: SongReference) -> boo
     )
 
 
+def _track_matches_reference(track: MusicTrack, reference: SongReference) -> bool:
+    return reference.playable and _track_fields_match(track, reference)
+
+
+def _queue_track_matches_reference(
+    track: MusicTrack,
+    reference: SongReference,
+) -> bool:
+    return reference.queueable and _track_fields_match(track, reference)
+
+
+def _known_collection_details(
+    state: ToolCallingState,
+) -> tuple[dict[int, AlbumDetailResult], dict[int, PlaylistDetailResult]]:
+    albums: dict[int, AlbumDetailResult] = {}
+    playlists: dict[int, PlaylistDetailResult] = {}
+    for result in state.get("tool_results", []):
+        content = result.get("content")
+        if not isinstance(content, str):
+            continue
+        try:
+            if result.get("name") == "get_album_detail_tool":
+                detail = AlbumDetailResult.model_validate_json(content)
+                albums[detail.album_id] = detail
+            elif result.get("name") == "get_playlist_detail_tool":
+                detail = PlaylistDetailResult.model_validate_json(content)
+                playlists[detail.playlist_id] = detail
+        except ValueError:
+            continue
+    return albums, playlists
+
+
+def _validated_tracks(raw_tracks: Any) -> list[MusicTrack] | None:
+    if not isinstance(raw_tracks, list):
+        return None
+    try:
+        return [MusicTrack.model_validate(item) for item in raw_tracks]
+    except ValueError:
+        return None
+
+
 def _reference_errors(state: ToolCallingState) -> dict[str, str]:
-    songs, playlists = _known_references(state)
+    songs, albums, playlists = _known_references(state)
+    album_details, playlist_details = _known_collection_details(state)
     current_song_id = state["routing_context"].current_song_id
     known_song_ids = {*songs, *([current_song_id] if current_song_id else [])}
     errors: dict[str, str] = {}
@@ -234,10 +444,35 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
         args = call.get("args")
         if not call_id or not isinstance(args, dict):
             continue
-        if name in {"get_song_lyrics", "set_liked"}:
+        id_fields = {
+            "get_song_lyrics": ("song_id",), "set_liked": ("song_id",),
+            "set_song_liked_tool": ("song_id",), "get_album_detail_tool": ("album_id",),
+            "get_playlist_detail_tool": ("playlist_id",), "play_album": ("album_id",),
+            "play_playlist": ("playlist_id",), "add_song_to_playlist": ("song_id", "playlist_id"),
+            "remove_song_from_playlist_tool": ("song_id", "playlist_id"),
+        }.get(name, ())
+        # Grounding checks must see the same IDs as the executor, even if a schema
+        # would otherwise coerce a numeric string or boolean into an integer.
+        if any(type(args.get(field)) is not int for field in id_fields):
+            errors[call_id] = "实体 ID 必须使用可信结果中的整数，不得转换或猜测。"
+            continue
+        if name in {"get_song_lyrics", "set_liked", "set_song_liked_tool"}:
             song_id = args.get("song_id")
             if isinstance(song_id, int) and song_id not in known_song_ids:
                 errors[call_id] = "歌曲 ID 没有可信来源；请先搜索歌曲或请用户明确选择。"
+            if name == "set_liked":
+                synced = [
+                    _read_json(result.get("content")) or {}
+                    for result in state.get("tool_results", [])
+                    if result.get("name") == "set_song_liked_tool"
+                ]
+                if not any(
+                    item.get("status") == "synced"
+                    and item.get("song_id") == song_id
+                    and item.get("liked") == args.get("liked")
+                    for item in synced
+                ):
+                    errors[call_id] = "请先调用 set_song_liked_tool 同步云端，成功后自动更新本地红心。"
         elif name == "play_song":
             try:
                 track = MusicTrack.model_validate(args.get("song"))
@@ -246,7 +481,56 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
             reference = songs.get(track.song_id)
             if reference is None or not _track_matches_reference(track, reference):
                 errors[call_id] = "播放歌曲必须完整使用 search_music 或历史结果；请先搜索。"
-        elif name == "add_song_to_playlist":
+        elif name in {"insert_next_track", "append_to_queue"}:
+            try:
+                track = MusicTrack.model_validate(args.get("song"))
+            except ValueError:
+                continue
+            reference = songs.get(track.song_id)
+            if reference is None or not _queue_track_matches_reference(track, reference):
+                errors[call_id] = "队列歌曲必须完整使用歌曲搜索或专辑/歌单详情结果。"
+        elif name == "get_album_detail_tool":
+            album_id = args.get("album_id")
+            if isinstance(album_id, int) and album_id not in albums:
+                errors[call_id] = "专辑 ID 没有可信来源；请先搜索专辑。"
+        elif name == "get_playlist_detail_tool":
+            playlist_id = args.get("playlist_id")
+            if isinstance(playlist_id, int) and playlist_id not in playlists:
+                errors[call_id] = "歌单 ID 没有可信来源；请先搜索歌单或读取当前用户歌单。"
+        elif name == "play_album":
+            album_id = args.get("album_id")
+            tracks = _validated_tracks(args.get("tracks"))
+            detail = album_details.get(album_id) if isinstance(album_id, int) else None
+            if (
+                detail is None
+                or args.get("name") != detail.name
+                or tracks != detail.songs
+            ):
+                errors[call_id] = "播放专辑必须完整使用本轮 get_album_detail_tool 的结果。"
+        elif name == "play_playlist":
+            playlist_id = args.get("playlist_id")
+            tracks = _validated_tracks(args.get("tracks"))
+            detail = (
+                playlist_details.get(playlist_id)
+                if isinstance(playlist_id, int)
+                else None
+            )
+            if (
+                detail is None
+                or args.get("name") != detail.name
+                or tracks != detail.songs
+            ):
+                errors[call_id] = "播放歌单必须完整使用本轮 get_playlist_detail_tool 的结果。"
+        elif name == "jump_to_queue_item":
+            index = args.get("index")
+            song_id = args.get("song_id")
+            if any(value is not None and type(value) is not int for value in (index, song_id)):
+                errors[call_id] = "队列目标必须使用整数序号或可信歌曲 ID。"
+            elif isinstance(index, int) and index > state["routing_context"].queue_size:
+                errors[call_id] = "目标位置超出当前播放队列范围。"
+            elif isinstance(song_id, int) and song_id not in known_song_ids:
+                errors[call_id] = "目标歌曲 ID 没有可信来源；请先搜索歌曲。"
+        elif name in {"add_song_to_playlist", "remove_song_from_playlist_tool"}:
             song_id = args.get("song_id")
             playlist_id = args.get("playlist_id")
             if isinstance(song_id, int) and song_id not in known_song_ids:
@@ -257,6 +541,10 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
                     errors[call_id] = "歌单 ID 没有可信来源；请先读取当前用户歌单。"
                 elif not playlist.editable:
                     errors[call_id] = "目标歌单不可编辑；请让用户选择可编辑歌单。"
+            if name == "remove_song_from_playlist_tool":
+                detail = playlist_details.get(playlist_id) if isinstance(playlist_id, int) else None
+                if detail is None or not any(song.song_id == song_id for song in detail.songs):
+                    errors[call_id] = "移除前必须读取本轮目标歌单详情，并确认目标歌曲在其中。"
     return errors
 
 
@@ -313,10 +601,20 @@ def _final_task_result(
     all_tools_failed = bool(state.get("tool_results")) and len(failures) == len(
         state.get("tool_results", [])
     )
+    write_failures = [
+        payload
+        for result in state.get("tool_results", [])
+        if result.get("name") in {
+            "add_song_to_playlist", "remove_song_from_playlist_tool",
+            "create_playlist_tool", "set_song_liked_tool",
+        }
+        if (payload := _read_json(result.get("content"))) is not None
+        and (payload.get("success") is False or payload.get("status") == "forbidden")
+    ]
     limit_reached = content == TOOL_LIMIT_MESSAGE
     status = (
         TaskStatus.FAILED
-        if all_tools_failed or limit_reached
+        if all_tools_failed or write_failures or limit_reached
         else TaskStatus.SUCCESS
     )
     error = None
@@ -324,6 +622,19 @@ def _final_task_result(
         error = TOOL_LIMIT_MESSAGE
     elif all_tools_failed:
         error = str(failures[0].get("message") or "工具调用失败，请稍后重试。")
+    elif write_failures:
+        error = str(write_failures[0].get("message") or "云端操作未完成，请稍后重试。")
+    actual_write_failures = [
+        item for item in write_failures
+        if item.get("error") not in {
+            "untrusted_entity_reference", "duplicate_tool_call", "batch_rejected",
+            "invalid_tool_arguments", "invalid_tool_selection", "unknown_tool",
+        }
+    ]
+    if actual_write_failures and not limit_reached:
+        # Persistence acknowledgements come from the service, even if the model
+        # mistakenly describes a failed write as successful.
+        content = "云端操作未完成：" + str(actual_write_failures[0].get("message") or "请稍后重试。")
     return (
         content,
         TaskResult(

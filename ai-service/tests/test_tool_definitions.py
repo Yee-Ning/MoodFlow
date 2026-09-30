@@ -4,6 +4,12 @@ from pydantic import ValidationError
 
 from app.schemas.music import (
     AddSongToPlaylistArgs,
+    CreatePlaylistArgs,
+    RemoveSongFromPlaylistArgs,
+    SetSongLikedArgs,
+    GetAlbumDetailArgs,
+    GetPlaylistDetailArgs,
+    SearchEntitiesArgs,
     SearchMusicArgs,
 )
 from app.tools.definitions import SEARCH_MUSIC_TOOL
@@ -28,9 +34,15 @@ class SearchMusicToolDefinitionTests(unittest.TestCase):
     def test_langchain_tools_use_explicit_schemas(self) -> None:
         expected_properties = {
             "search_music": {"keyword", "limit"},
+            "search_entities_tool": {"query", "entity_type", "limit"},
             "get_song_lyrics": {"song_id"},
             "get_user_playlists": set(),
+            "get_playlist_detail_tool": {"playlist_id"},
+            "get_album_detail_tool": {"album_id"},
             "add_song_to_playlist": {"playlist_id", "song_id"},
+            "set_song_liked_tool": {"song_id", "liked"},
+            "create_playlist_tool": {"name", "privacy"},
+            "remove_song_from_playlist_tool": {"playlist_id", "song_id"},
         }
 
         self.assertEqual(
@@ -50,6 +62,26 @@ class SearchMusicToolDefinitionTests(unittest.TestCase):
 
         self.assertEqual(set(schema["required"]), {"playlist_id", "song_id"})
         self.assertFalse(schema["additionalProperties"])
+
+    def test_asset_arguments_reject_invalid_or_private_fields(self) -> None:
+        for arguments in ({"name": "  "}, {"name": "x" * 41}, {"name": "学习", "privacy": 1},
+                          {"name": "学习", "session_cookie": "fake"}):
+            with self.subTest(arguments=arguments), self.assertRaises(ValidationError):
+                CreatePlaylistArgs.model_validate(arguments)
+        with self.assertRaises(ValidationError):
+            RemoveSongFromPlaylistArgs(playlist_id=1, song_id=0)
+        with self.assertRaises(ValidationError):
+            SetSongLikedArgs(song_id=1, liked="false")
+
+    def test_entity_search_and_playlist_detail_reject_invalid_arguments(self) -> None:
+        with self.assertRaises(ValidationError):
+            SearchEntitiesArgs(query="   ")
+        with self.assertRaises(ValidationError):
+            SearchEntitiesArgs(query="学习", entity_type="genre")
+        with self.assertRaises(ValidationError):
+            GetPlaylistDetailArgs(playlist_id=0)
+        with self.assertRaises(ValidationError):
+            GetAlbumDetailArgs(album_id=0)
 
 
 if __name__ == "__main__":

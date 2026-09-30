@@ -34,6 +34,8 @@ from app.schemas.client_actions import (
     ClientAction,
     ClientActionName,
     EmptyActionArguments,
+    JumpToQueueItemArguments,
+    PlayAlbumArguments,
     PlaySongArguments,
 )
 from app.schemas.context import SongContext
@@ -234,6 +236,62 @@ class FoundationCurrentSongTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result["task_result"].status, TaskStatus.NEEDS_INPUT)
         self.assertEqual(result["task_result"].content, PENDING_QUEUE_CHANGE_MESSAGE)
+        provider.get_song.assert_not_awaited()
+        assistant.assert_not_awaited()
+
+    async def test_prior_album_play_selects_first_track_for_analysis(self) -> None:
+        play_action = ClientAction(
+            action_id="tool-task:album",
+            task_id="tool-task",
+            name=ClientActionName.PLAY_ALBUM,
+            arguments=PlayAlbumArguments(
+                album_id=10,
+                name="测试专辑",
+                tracks=[MusicTrack(
+                    song_id=2, name="第一首", artists=["测试歌手"], album="测试专辑"
+                )],
+            ),
+        )
+        provider = AsyncMock()
+        provider.get_song.return_value = song(2, "第一首")
+
+        result = await create_current_song_subgraph(
+            provider=provider,
+            assistant=AsyncMock(return_value=AIMessage(content="第一首分析。")),
+        ).ainvoke(current_state(prior_task_results=[action_result(play_action)]))
+
+        provider.get_song.assert_awaited_once_with(2)
+        self.assertEqual(result["task_result"].data["song"]["song_id"], 2)
+
+    async def test_index_queue_jump_does_not_analyze_stale_snapshot(self) -> None:
+        jump_action = ClientAction(
+            action_id="tool-task:jump",
+            task_id="tool-task",
+            name=ClientActionName.JUMP_TO_QUEUE_ITEM,
+            arguments=JumpToQueueItemArguments(index=3),
+        )
+        provider = AsyncMock()
+        assistant = AsyncMock()
+
+        result = await create_current_song_subgraph(
+            provider=provider,
+            assistant=assistant,
+        ).ainvoke(current_state(prior_task_results=[action_result(jump_action)]))
+
+        self.assertEqual(result["task_result"].status, TaskStatus.NEEDS_INPUT)
+        provider.get_song.assert_not_awaited()
+        assistant.assert_not_awaited()
+
+    async def test_clear_queue_does_not_analyze_the_removed_current_song(self) -> None:
+        clear = ClientAction(
+            action_id="tool-task:clear", task_id="tool-task",
+            name=ClientActionName.CLEAR_QUEUE, arguments=EmptyActionArguments(),
+        )
+        provider, assistant = AsyncMock(), AsyncMock()
+        result = await create_current_song_subgraph(
+            provider=provider, assistant=assistant,
+        ).ainvoke(current_state(prior_task_results=[action_result(clear)]))
+        self.assertEqual(result["task_result"].status, TaskStatus.NEEDS_INPUT)
         provider.get_song.assert_not_awaited()
         assistant.assert_not_awaited()
 

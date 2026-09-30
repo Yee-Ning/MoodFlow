@@ -19,6 +19,31 @@ from app.agent.foundation.rule_routing.rule_registry import get_default_rules
 
 
 class RuleRouterTestCase(unittest.TestCase):
+    def test_routes_music_entity_and_playlist_detail_requests(self) -> None:
+        self.assert_intents(
+            "搜索周杰伦", [(IntentType.TOOL_CALLING, "search_music")]
+        )
+        self.assert_intents(
+            "查看我的学习歌单里面有哪些歌",
+            [(IntentType.TOOL_CALLING, "get_playlist_detail")],
+        )
+
+    def test_routes_queue_and_collection_commands(self) -> None:
+        cases = {
+            "把晴天插到下一首": "queue_insert_next",
+            "把晴天加到播放队列末尾": "queue_append",
+            "播放周杰伦的《范特西》这张专辑": "play_collection",
+            "播放我的《私人收藏》歌单": "play_collection",
+            "切到队列里的《晴天》": "jump_to_queue_item",
+            "跳到播放列表第 5 首": "jump_to_queue_index",
+        }
+        for query, sub_intent in cases.items():
+            with self.subTest(query=query):
+                self.assert_intents(
+                    query,
+                    [(IntentType.TOOL_CALLING, sub_intent)],
+                )
+
     def test_routes_explicit_entity_worldline(self) -> None:
         for query in (
             "构建歌曲《七里香》的音乐世界线",

@@ -208,6 +208,9 @@ async def stream_foundation_assistant(
     task_results: list[TaskResult] = []
     route_decision: RouteDecision | None = None
     emitted_action_ids: set[str] = set()
+    streamed_nodes: set[str] = set()
+    visible_scope: str | None = None
+    has_visible_text = False
     continuity, graph_thread_id, continuity_context, session = await _continuity_start(
         thread_id,
         routing_context,
@@ -248,21 +251,36 @@ async def stream_foundation_assistant(
         _graph_config(graph_thread_id, session),
         context=MusicAgentContext(session_cookie=session_cookie, user_id=user_id),
         stream_mode=["messages", "updates"],
+        subgraphs=True,
         version="v2",
     ):
         if part["type"] == "messages":
             message_chunk, metadata = part["data"]
+            namespace = part.get("ns", ())
+            scope = namespace[0] if namespace else ""
+            node = scope.split(":", 1)[0]
             if (
                 metadata.get("langgraph_node") != "agent"
                 or metadata.get("ls_integration") != "langchain_chat_model"
+                or node not in {"current_song_subgraph", "general_chat_subgraph"}
             ):
                 continue
             delta = str(message_chunk.text)
             if delta:
+                if visible_scope != scope and has_visible_text:
+                    yield MessageStreamEvent(delta="\n")
+                visible_scope = scope
+                has_visible_text = True
+                streamed_nodes.add(node)
                 yield MessageStreamEvent(delta=delta)
             continue
 
         if part["type"] != "updates":
+            continue
+
+        # Nested state updates include private prompts and tool results. Public
+        # progress/actions/results are emitted only from the MainGraph boundary.
+        if part.get("ns"):
             continue
 
         for node, update in part["data"].items():
@@ -289,6 +307,16 @@ async def stream_foundation_assistant(
             if node.endswith("_subgraph"):
                 new_results = _task_results(update)
                 task_results.extend(new_results)
+                # Tool/worldline outputs need grounding/schema validation before
+                # display. Emit their public task result as soon as it is ready.
+                for result in new_results:
+                    if result.content and node not in streamed_nodes:
+                        if has_visible_text:
+                            yield MessageStreamEvent(delta="\n")
+                        yield MessageStreamEvent(delta=result.content)
+                        has_visible_text = True
+                streamed_nodes.discard(node)
+                visible_scope = None
                 if continuity is not None:
                     for result in new_results:
                         _record_result(continuity, session, result, request_id)
