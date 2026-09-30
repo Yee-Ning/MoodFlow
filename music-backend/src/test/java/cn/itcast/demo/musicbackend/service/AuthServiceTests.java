@@ -33,7 +33,8 @@ class AuthServiceTests {
     void setUp() {
         RestClient.Builder builder = RestClient.builder().baseUrl("http://localhost:3000");
         server = MockRestServiceServer.bindTo(builder).build();
-        authService = new AuthService(builder.build());
+        RestClient client = builder.build();
+        authService = new AuthService(client, new NeteaseMusicService(client));
     }
 
     @ParameterizedTest

@@ -11,6 +11,7 @@ import cn.itcast.demo.musicbackend.dto.QrKeyData;
 import cn.itcast.demo.musicbackend.exception.BadRequestException;
 import cn.itcast.demo.musicbackend.exception.NeteaseApiException;
 import cn.itcast.demo.musicbackend.exception.NeteaseApiTimeoutException;
+import cn.itcast.demo.musicbackend.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
@@ -25,9 +26,11 @@ public class AuthService {
     static final String NETEASE_COOKIE = "NETEASE_COOKIE";
 
     private final RestClient neteaseRestClient;
+    private final NeteaseMusicService neteaseMusicService;
 
-    public AuthService(RestClient neteaseRestClient) {
+    public AuthService(RestClient neteaseRestClient, NeteaseMusicService neteaseMusicService) {
         this.neteaseRestClient = neteaseRestClient;
+        this.neteaseMusicService = neteaseMusicService;
     }
 
     public QrKeyData createQrKey() {
@@ -67,8 +70,24 @@ public class AuthService {
 
     public AuthStatusData getLoginStatus(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
-        boolean loggedIn = session != null && session.getAttribute(NETEASE_COOKIE) != null;
-        return new AuthStatusData(loggedIn);
+        if (session == null) {
+            return new AuthStatusData(false);
+        }
+        Object value = session.getAttribute(NETEASE_COOKIE);
+        if (!(value instanceof String cookie) || cookie.isBlank()) {
+            session.removeAttribute(NETEASE_COOKIE);
+            return new AuthStatusData(false);
+        }
+
+        try {
+            neteaseMusicService.getCurrentUserProfile(request);
+            return new AuthStatusData(true);
+        } catch (UnauthorizedException exception) {
+            // Only confirmed invalid credentials are cleared; upstream failures
+            // propagate through the existing gateway error response.
+            session.removeAttribute(NETEASE_COOKIE);
+            return new AuthStatusData(false);
+        }
     }
 
     public AuthStatusData logout(HttpServletRequest request) {

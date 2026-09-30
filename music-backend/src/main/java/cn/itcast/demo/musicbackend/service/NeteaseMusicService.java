@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class NeteaseMusicService {
@@ -745,6 +746,11 @@ public class NeteaseMusicService {
                 throw new NeteaseApiTimeoutException("网易云 API 请求超时", exception);
             }
             throw new NeteaseApiException("无法连接网易云 API", exception);
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().value() == 401) {
+                throw new UnauthorizedException("网易云登录已失效，请重新扫码登录");
+            }
+            throw new NeteaseApiException("网易云 API 响应异常", exception);
         } catch (RestClientException exception) {
             throw new NeteaseApiException("网易云 API 响应异常", exception);
         }
