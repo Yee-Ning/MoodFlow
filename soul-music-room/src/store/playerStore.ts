@@ -33,6 +33,9 @@ interface PlayerState {
   lyricsError: string
   notice: string
   playSong: (song: SongSummary, playlist?: SongSummary[]) => Promise<void>
+  insertNextTrack: (song: SongSummary) => void
+  appendToQueue: (song: SongSummary) => void
+  replaceQueueAndPlay: (tracks: SongSummary[]) => Promise<void>
   togglePlayback: () => Promise<void>
   pausePlayback: () => void
   resumePlayback: () => Promise<void>
@@ -270,6 +273,52 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     }
 
     await loadAndPlay(nextIndex)
+  },
+
+  insertNextTrack: (song) => {
+    const state = get()
+    if (state.currentSong?.id === song.id) return
+    const nextQueue = state.queue.filter((item) => item.id !== song.id)
+    let currentIndex = state.currentSong
+      ? nextQueue.findIndex((item) => item.id === state.currentSong?.id)
+      : -1
+    if (state.currentSong && currentIndex < 0) {
+      nextQueue.unshift(state.currentSong)
+      currentIndex = 0
+    }
+    nextQueue.splice(currentIndex >= 0 ? currentIndex + 1 : 0, 0, song)
+    set({
+      queue: nextQueue,
+      playlist: nextQueue,
+      currentIndex,
+    })
+  },
+
+  appendToQueue: (song) => {
+    const state = get()
+    if (state.queue.some((item) => item.id === song.id)) return
+    const nextQueue = [...state.queue]
+    let currentIndex = state.currentIndex
+    if (state.currentSong && currentIndex < 0) {
+      nextQueue.unshift(state.currentSong)
+      currentIndex = 0
+    }
+    nextQueue.push(song)
+    set({ queue: nextQueue, playlist: nextQueue, currentIndex })
+  },
+
+  replaceQueueAndPlay: async (tracks) => {
+    if (tracks.length === 0) return
+    const seen = new Set<number>()
+    const queue = tracks.filter((track) => {
+      if (seen.has(track.id)) return false
+      seen.add(track.id)
+      return true
+    })
+    if (queue.length === 0) return
+    runtimeFailureIds.clear()
+    set({ queue, playlist: queue, currentIndex: 0 })
+    await loadAndPlay(0)
   },
 
   togglePlayback: async () => {

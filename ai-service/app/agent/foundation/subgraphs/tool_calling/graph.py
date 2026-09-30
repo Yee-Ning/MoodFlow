@@ -45,6 +45,7 @@ from app.agent.structured_output import (
 from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
+    AlbumDetailResult,
     EntitySearchResult,
     MusicSearchResult,
     MusicTrack,
@@ -105,6 +106,7 @@ def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
                 position = existing + 1 if existing is not None else len(songs) + 1
                 reference = SongReference(
                     position=position,
+                    queueable=True,
                     **song.model_dump(mode="json"),
                 )
                 if existing is not None:
@@ -147,6 +149,7 @@ def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
                         album=entity.album, cover_url=entity.cover_url,
                         duration=duration if isinstance(duration, int) and duration >= 0 else 0,
                         playable=False,
+                        queueable=False,
                     ))
         elif result.get("name") == "get_user_playlists" and isinstance(content, str):
             try:
@@ -183,14 +186,51 @@ def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
                     playlist_id=detail.playlist_id, name=detail.name,
                 ))
             for song in detail.songs:
-                if song.song_id in seen_song_ids:
+                existing = next(
+                    (index for index, item in enumerate(songs)
+                     if item.song_id == song.song_id), None
+                )
+                reference = SongReference(
+                    position=existing + 1 if existing is not None else len(songs) + 1,
+                    playable=False,
+                    queueable=True,
+                    **song.model_dump(mode="json"),
+                )
+                if existing is not None:
+                    songs[existing] = reference
                     continue
                 seen_song_ids.add(song.song_id)
-                songs.append(SongReference(
-                    position=len(songs) + 1,
-                    playable=False,
-                    **song.model_dump(mode="json"),
+                songs.append(reference)
+        elif result.get("name") == "get_album_detail_tool" and isinstance(content, str):
+            try:
+                detail = AlbumDetailResult.model_validate_json(content)
+            except ValueError:
+                continue
+            if detail.album_id not in seen_album_ids:
+                seen_album_ids.add(detail.album_id)
+                albums.append(AlbumReference(
+                    position=len(albums) + 1,
+                    id=detail.album_id,
+                    name=detail.name,
+                    artist=detail.artist,
+                    cover_url=detail.cover_url,
                 ))
+            for song in detail.songs:
+                existing = next(
+                    (index for index, item in enumerate(songs)
+                     if item.song_id == song.song_id), None
+                )
+                reference = SongReference(
+                    position=existing + 1 if existing is not None else len(songs) + 1,
+                    playable=False,
+                    queueable=True,
+                    **song.model_dump(mode="json"),
+                )
+                if existing is not None:
+                    songs[existing] = reference
+                    continue
+                seen_song_ids.add(song.song_id)
+                songs.append(reference)
     return ReferencedEntities(
         songs=songs, artists=artists, albums=albums, playlists=playlists
     )
@@ -229,7 +269,11 @@ def _latest_tool_calls(state: ToolCallingState) -> list[dict[str, Any]]:
 
 def _known_references(
     state: ToolCallingState,
-) -> tuple[dict[int, SongReference], dict[int, PlaylistReference]]:
+) -> tuple[
+    dict[int, SongReference],
+    dict[int, AlbumReference],
+    dict[int, PlaylistReference],
+]:
     current = _extract_entities(state.get("tool_results", []))
     groups = [*state.get("prior_entities", []), current]
     songs = {
@@ -237,18 +281,22 @@ def _known_references(
         for group in groups
         for song in group.songs
     }
+    albums = {
+        album.id: album
+        for group in groups
+        for album in group.albums
+    }
     playlists = {
         playlist.playlist_id: playlist
         for group in groups
         for playlist in group.playlists
     }
-    return songs, playlists
+    return songs, albums, playlists
 
 
-def _track_matches_reference(track: MusicTrack, reference: SongReference) -> bool:
+def _track_fields_match(track: MusicTrack, reference: SongReference) -> bool:
     return (
-        reference.playable
-        and track.song_id == reference.song_id
+        track.song_id == reference.song_id
         and track.name == reference.name
         and track.artists == reference.artists
         and track.album == reference.album
@@ -257,8 +305,50 @@ def _track_matches_reference(track: MusicTrack, reference: SongReference) -> boo
     )
 
 
+def _track_matches_reference(track: MusicTrack, reference: SongReference) -> bool:
+    return reference.playable and _track_fields_match(track, reference)
+
+
+def _queue_track_matches_reference(
+    track: MusicTrack,
+    reference: SongReference,
+) -> bool:
+    return reference.queueable and _track_fields_match(track, reference)
+
+
+def _known_collection_details(
+    state: ToolCallingState,
+) -> tuple[dict[int, AlbumDetailResult], dict[int, PlaylistDetailResult]]:
+    albums: dict[int, AlbumDetailResult] = {}
+    playlists: dict[int, PlaylistDetailResult] = {}
+    for result in state.get("tool_results", []):
+        content = result.get("content")
+        if not isinstance(content, str):
+            continue
+        try:
+            if result.get("name") == "get_album_detail_tool":
+                detail = AlbumDetailResult.model_validate_json(content)
+                albums[detail.album_id] = detail
+            elif result.get("name") == "get_playlist_detail_tool":
+                detail = PlaylistDetailResult.model_validate_json(content)
+                playlists[detail.playlist_id] = detail
+        except ValueError:
+            continue
+    return albums, playlists
+
+
+def _validated_tracks(raw_tracks: Any) -> list[MusicTrack] | None:
+    if not isinstance(raw_tracks, list):
+        return None
+    try:
+        return [MusicTrack.model_validate(item) for item in raw_tracks]
+    except ValueError:
+        return None
+
+
 def _reference_errors(state: ToolCallingState) -> dict[str, str]:
-    songs, playlists = _known_references(state)
+    songs, albums, playlists = _known_references(state)
+    album_details, playlist_details = _known_collection_details(state)
     current_song_id = state["routing_context"].current_song_id
     known_song_ids = {*songs, *([current_song_id] if current_song_id else [])}
     errors: dict[str, str] = {}
@@ -280,10 +370,53 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
             reference = songs.get(track.song_id)
             if reference is None or not _track_matches_reference(track, reference):
                 errors[call_id] = "播放歌曲必须完整使用 search_music 或历史结果；请先搜索。"
+        elif name in {"insert_next_track", "append_to_queue"}:
+            try:
+                track = MusicTrack.model_validate(args.get("song"))
+            except ValueError:
+                continue
+            reference = songs.get(track.song_id)
+            if reference is None or not _queue_track_matches_reference(track, reference):
+                errors[call_id] = "队列歌曲必须完整使用歌曲搜索或专辑/歌单详情结果。"
+        elif name == "get_album_detail_tool":
+            album_id = args.get("album_id")
+            if isinstance(album_id, int) and album_id not in albums:
+                errors[call_id] = "专辑 ID 没有可信来源；请先搜索专辑。"
         elif name == "get_playlist_detail_tool":
             playlist_id = args.get("playlist_id")
             if isinstance(playlist_id, int) and playlist_id not in playlists:
                 errors[call_id] = "歌单 ID 没有可信来源；请先搜索歌单或读取当前用户歌单。"
+        elif name == "play_album":
+            album_id = args.get("album_id")
+            tracks = _validated_tracks(args.get("tracks"))
+            detail = album_details.get(album_id) if isinstance(album_id, int) else None
+            if (
+                detail is None
+                or args.get("name") != detail.name
+                or tracks != detail.songs
+            ):
+                errors[call_id] = "播放专辑必须完整使用本轮 get_album_detail_tool 的结果。"
+        elif name == "play_playlist":
+            playlist_id = args.get("playlist_id")
+            tracks = _validated_tracks(args.get("tracks"))
+            detail = (
+                playlist_details.get(playlist_id)
+                if isinstance(playlist_id, int)
+                else None
+            )
+            if (
+                detail is None
+                or args.get("name") != detail.name
+                or tracks != detail.songs
+            ):
+                errors[call_id] = "播放歌单必须完整使用本轮 get_playlist_detail_tool 的结果。"
+        elif name == "jump_to_queue_item":
+            index = args.get("index")
+            song_id = args.get("song_id")
+            if isinstance(index, int) and index > state["routing_context"].queue_size:
+                errors[call_id] = "目标位置超出当前播放队列范围。"
+            elif isinstance(song_id, int) and song_id not in known_song_ids:
+                errors[call_id] = "目标歌曲 ID 没有可信来源；请先搜索歌曲。"
         elif name == "add_song_to_playlist":
             song_id = args.get("song_id")
             playlist_id = args.get("playlist_id")

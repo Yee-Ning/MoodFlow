@@ -36,8 +36,9 @@ function requireQueue() {
   }
 }
 
-function toSongSummary(action: Extract<ClientAction, { name: 'play_song' }>): SongSummary {
-  const song = action.arguments.song
+type ClientTrack = Extract<ClientAction, { name: 'play_song' }>['arguments']['song']
+
+function toSongSummary(song: ClientTrack): SongSummary {
   return {
     id: song.song_id,
     name: song.name,
@@ -87,13 +88,36 @@ export async function executeClientAction(action: ClientAction): Promise<void> {
       player.setPlayMode(action.arguments.mode)
       return
     case 'play_song': {
-      const song = toSongSummary(action)
+      const song = toSongSummary(action.arguments.song)
       const latest = usePlayerStore.getState()
       if (latest.currentSong?.id === song.id) {
         await latest.resumePlayback()
       } else {
         await latest.playSong(song)
       }
+      return
+    }
+    case 'insert_next_track':
+      player.insertNextTrack(toSongSummary(action.arguments.song))
+      return
+    case 'append_to_queue':
+      player.appendToQueue(toSongSummary(action.arguments.song))
+      return
+    case 'play_album':
+    case 'play_playlist':
+      await player.replaceQueueAndPlay(action.arguments.tracks.map(toSongSummary))
+      return
+    case 'jump_to_queue_item': {
+      requireQueue()
+      const latest = usePlayerStore.getState()
+      const target = action.arguments
+      const index = 'song_id' in target
+        ? latest.queue.findIndex((song) => song.id === target.song_id)
+        : target.index - 1
+      if (index < 0 || index >= latest.queue.length) {
+        throw new AiClientActionError('AI 切歌操作未执行：目标歌曲不在当前播放队列中')
+      }
+      await latest.playQueueItem(index)
       return
     }
     case 'set_liked': {

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
+import cn.itcast.demo.musicbackend.dto.AlbumDetailData;
 import cn.itcast.demo.musicbackend.dto.LyricsStatus;
 import cn.itcast.demo.musicbackend.dto.MusicEntityData;
 import cn.itcast.demo.musicbackend.dto.MusicEntityReferenceData;
@@ -183,6 +184,24 @@ public class NeteaseMusicService {
             }
             default -> throw new IllegalStateException("unreachable entity type");
         };
+    }
+
+    public AlbumDetailData getAlbumDetail(long albumId) {
+        if (albumId <= 0) {
+            throw new BadRequestException("专辑 id 必须大于 0");
+        }
+        Map<String, Object> response = get("/album", Map.of("id", albumId));
+        Map<String, Object> albumSource = requiredMap(response, "album");
+        List<Map<String, Object>> songSources = requiredList(response, "songs");
+        MusicEntityData album = toAlbumEntity(
+                albumSource,
+                songSources.stream().map(this::toSongReference).toList());
+        if (album.id() != albumId) {
+            throw new NeteaseApiException("网易云 API 返回了不匹配的专辑数据");
+        }
+        return new AlbumDetailData(
+                album,
+                songSources.stream().map(this::toSong).toList());
     }
 
     public SongData getSongDetail(long songId) {

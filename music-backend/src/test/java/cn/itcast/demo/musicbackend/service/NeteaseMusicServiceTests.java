@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
+import cn.itcast.demo.musicbackend.dto.AlbumDetailData;
 import cn.itcast.demo.musicbackend.dto.LyricsStatus;
 import cn.itcast.demo.musicbackend.dto.MusicEntityData;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
@@ -257,6 +258,50 @@ class NeteaseMusicServiceTests {
         assertEquals("artist", album.relatedEntities().get(0).entityType());
         assertEquals("song", album.relatedEntities().get(1).entityType());
         assertEquals(1059955200000L, album.metadata().get("publish_time"));
+        server.verify();
+    }
+
+    @Test
+    void shouldLoadCompleteAlbumTracksForQueuePlayback() {
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/album", "id=18905");
+                    assertNull(request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "album": {
+                            "id": 18905,
+                            "name": "叶惠美",
+                            "picUrl": "https://img.test/album.jpg",
+                            "artists": [{"id": 6452, "name": "周杰伦"}]
+                          },
+                          "songs": [
+                            {
+                              "id": 185809,
+                              "name": "晴天",
+                              "ar": [{"id": 6452, "name": "周杰伦"}],
+                              "al": {"id": 18905, "name": "叶惠美", "picUrl": "https://img.test/album.jpg"},
+                              "dt": 269000
+                            },
+                            {
+                              "id": 185811,
+                              "name": "以父之名",
+                              "ar": [{"id": 6452, "name": "周杰伦"}],
+                              "al": {"id": 18905, "name": "叶惠美", "picUrl": "https://img.test/album.jpg"},
+                              "dt": 342000
+                            }
+                          ]
+                        }
+                        """, APPLICATION_JSON));
+
+        AlbumDetailData detail = musicService.getAlbumDetail(18905);
+
+        assertEquals(18905L, detail.album().id());
+        assertEquals("叶惠美", detail.album().name());
+        assertEquals(List.of(185809L, 185811L),
+                detail.songs().stream().map(SongData::id).toList());
+        assertEquals(269000L, detail.songs().getFirst().duration());
         server.verify();
     }
 

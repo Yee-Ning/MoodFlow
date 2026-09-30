@@ -304,6 +304,86 @@ try {
   })
   assert.equal(usePlayerStore.getState().currentSong?.id, 303)
   assert.equal(usePlayerStore.getState().currentSong?.coverUrl, searchedSong.cover_url)
+  const queuedSecondSong = {
+    song_id: secondSong.id,
+    name: secondSong.name,
+    artists: secondSong.artists,
+    album: secondSong.album,
+    cover_url: secondSong.coverUrl,
+    duration: secondSong.duration,
+  }
+  const queuedCurrentSong = {
+    song_id: currentSong.id,
+    name: currentSong.name,
+    artists: currentSong.artists,
+    album: currentSong.album,
+    cover_url: currentSong.coverUrl,
+    duration: currentSong.duration,
+  }
+  await executeClientAction({
+    action_id: 'action-insert-next',
+    task_id: 'task-player',
+    name: 'insert_next_track',
+    arguments: { song: queuedSecondSong },
+  })
+  await executeClientAction({
+    action_id: 'action-append-queue',
+    task_id: 'task-player',
+    name: 'append_to_queue',
+    arguments: { song: queuedCurrentSong },
+  })
+  assert.deepEqual(
+    usePlayerStore.getState().queue.map((song) => song.id),
+    [303, 202, 185809],
+  )
+  assert.equal(usePlayerStore.getState().currentSong?.id, 303)
+  await executeClientAction({
+    action_id: 'action-jump-index',
+    task_id: 'task-player',
+    name: 'jump_to_queue_item',
+    arguments: { index: 2 },
+  })
+  assert.equal(usePlayerStore.getState().currentSong?.id, 202)
+  await executeClientAction({
+    action_id: 'action-jump-song',
+    task_id: 'task-player',
+    name: 'jump_to_queue_item',
+    arguments: { song_id: 185809 },
+  })
+  assert.equal(usePlayerStore.getState().currentSong?.id, 185809)
+  await executeClientAction({
+    action_id: 'action-play-album',
+    task_id: 'task-player',
+    name: 'play_album',
+    arguments: {
+      album_id: 10,
+      name: '测试专辑',
+      tracks: [searchedSong, queuedSecondSong],
+    },
+  })
+  assert.deepEqual(usePlayerStore.getState().queue.map((song) => song.id), [303, 202])
+  assert.equal(usePlayerStore.getState().currentSong?.id, 303)
+  await executeClientAction({
+    action_id: 'action-play-playlist',
+    task_id: 'task-player',
+    name: 'play_playlist',
+    arguments: {
+      playlist_id: 77,
+      name: '私人收藏',
+      tracks: [queuedSecondSong, queuedCurrentSong],
+    },
+  })
+  assert.deepEqual(usePlayerStore.getState().queue.map((song) => song.id), [202, 185809])
+  assert.equal(usePlayerStore.getState().currentSong?.id, 202)
+  await assert.rejects(
+    executeClientAction({
+      action_id: 'action-jump-missing',
+      task_id: 'task-player',
+      name: 'jump_to_queue_item',
+      arguments: { song_id: 999 },
+    }),
+    /目标歌曲不在当前播放队列中/,
+  )
   await assert.rejects(
     executeClientAction({
       action_id: 'action-unknown-like',
@@ -392,6 +472,34 @@ try {
   assert.equal(cleared.status, 'idle')
 
   const { streamAiChatMessage } = await server.ssrLoadModule('/src/services/aiChat.ts')
+  globalThis.fetch = async () => streamResponse([
+    sse('action', {
+      action_id: 'parsed-play-album',
+      task_id: 'task-parser',
+      name: 'play_album',
+      arguments: {
+        album_id: 10,
+        name: '测试专辑',
+        tracks: [searchedSong, queuedSecondSong],
+      },
+    }),
+    sse('action', {
+      action_id: 'parsed-jump',
+      task_id: 'task-parser',
+      name: 'jump_to_queue_item',
+      arguments: { index: 2 },
+    }),
+    sse('done', {}),
+  ])
+  const parsedQueueActions = []
+  for await (const event of streamAiChatMessage({
+    message: '测试队列动作', thread_id: 'queue-parser', current_song_id: null,
+    player_context: playerContext({ has_current_song: false, current_song_id: null }),
+  })) parsedQueueActions.push(event)
+  assert.equal(parsedQueueActions[0].action.name, 'play_album')
+  assert.equal(parsedQueueActions[0].action.arguments.tracks.length, 2)
+  assert.deepEqual(parsedQueueActions[1].action.arguments, { index: 2 })
+
   const telemetryStorage = new Map()
   globalThis.window = {
     location: { search: '' },

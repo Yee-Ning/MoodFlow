@@ -9,10 +9,12 @@ from pydantic import BaseModel, Field, ValidationError
 from app.config.settings import get_settings
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
+    AlbumDetailResult,
     AddSongToPlaylistArgs,
     AddSongToPlaylistResult,
     EntitySearchItem,
     EntitySearchResult,
+    GetAlbumDetailArgs,
     GetPlaylistDetailArgs,
     GetSongLyricsArgs,
     MusicSearchResult,
@@ -21,6 +23,7 @@ from app.schemas.music import (
     PlaylistDetailResult,
     SongLyricsResult,
     SpringMusicSearchResponse,
+    SpringAlbumDetailResponse,
     SpringMusicEntityDetailResponse,
     SpringMusicEntitySearchResponse,
     SpringPlaylistMutationResponse,
@@ -265,6 +268,24 @@ class MusicServiceClient:
             songs=parsed.data.songs,
         )
 
+    async def get_album_detail(self, album_id: int) -> AlbumDetailResult:
+        detail_input = GetAlbumDetailArgs(album_id=album_id)
+        payload = await self._request("GET", f"/api/albums/{detail_input.album_id}")
+        parsed = self._validate_response(payload, SpringAlbumDetailResponse)
+        assert isinstance(parsed, SpringAlbumDetailResponse)
+        album = parsed.data.album
+        if album.entity_type != "album" or album.entity_id != detail_input.album_id:
+            raise MusicServiceError(
+                "invalid_response", "音乐服务返回了不匹配的专辑数据。"
+            )
+        return AlbumDetailResult(
+            album_id=album.entity_id,
+            name=album.name,
+            artist=album.artist,
+            cover_url=album.cover_url,
+            songs=parsed.data.songs,
+        )
+
     async def add_song_to_playlist(
         self,
         playlist_id: int,
@@ -395,6 +416,19 @@ async def get_playlist_detail_tool(
 
 
 @tool(
+    "get_album_detail_tool",
+    args_schema=GetAlbumDetailArgs,
+    description=(
+        "用 search_entities_tool 取得的真实 album_id 读取整张专辑的完整歌曲列表。"
+        "需要播放整张专辑时，先搜索专辑，再调用本工具。"
+    ),
+)
+async def get_album_detail_tool(album_id: int) -> str:
+    result = await MusicServiceClient().get_album_detail(album_id)
+    return result.model_dump_json()
+
+
+@tool(
     "add_song_to_playlist",
     description=(
         "把真实 song_id 加入真实 playlist_id。必须先从搜索/历史工具结果取得歌曲 ID，"
@@ -419,6 +453,7 @@ MUSIC_AGENT_TOOLS: list[BaseTool] = [
     get_song_lyrics_tool,
     get_user_playlists_tool,
     get_playlist_detail_tool,
+    get_album_detail_tool,
     add_song_to_playlist_tool,
 ]
 

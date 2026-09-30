@@ -4,7 +4,10 @@ from langchain_core.tools import BaseTool, tool
 
 from app.agent.foundation.subgraphs.tool_calling.models import (
     EmptyActionArguments,
+    JumpToQueueItemArguments,
     PendingClientActionPayload,
+    PlayAlbumArguments,
+    PlayPlaylistArguments,
     PlaySongArguments,
     SeekByArguments,
     SeekToArguments,
@@ -82,6 +85,52 @@ async def play_song_tool(song: MusicTrack) -> str:
     return _pending("play_song", {"song": song.model_dump(mode="json")})
 
 
+@tool("insert_next_track", args_schema=PlaySongArguments)
+async def insert_next_track_tool(song: MusicTrack) -> str:
+    """把可信工具结果中的歌曲插入为队列下一首，不中断当前播放。"""
+    return _pending("insert_next_track", {"song": song.model_dump(mode="json")})
+
+
+@tool("append_to_queue", args_schema=PlaySongArguments)
+async def append_to_queue_tool(song: MusicTrack) -> str:
+    """把可信工具结果中的歌曲追加到当前播放队列末尾，不中断当前播放。"""
+    return _pending("append_to_queue", {"song": song.model_dump(mode="json")})
+
+
+@tool("play_album", args_schema=PlayAlbumArguments)
+async def play_album_tool(album_id: int, name: str, tracks: list[MusicTrack]) -> str:
+    """用 get_album_detail_tool 的完整结果替换队列并从专辑第一首开始播放。"""
+    return _pending("play_album", {
+        "album_id": album_id,
+        "name": name,
+        "tracks": [track.model_dump(mode="json") for track in tracks],
+    })
+
+
+@tool("play_playlist", args_schema=PlayPlaylistArguments)
+async def play_playlist_tool(
+    playlist_id: int,
+    name: str,
+    tracks: list[MusicTrack],
+) -> str:
+    """用 get_playlist_detail_tool 的完整结果替换队列并从歌单第一首开始播放。"""
+    return _pending("play_playlist", {
+        "playlist_id": playlist_id,
+        "name": name,
+        "tracks": [track.model_dump(mode="json") for track in tracks],
+    })
+
+
+@tool("jump_to_queue_item", args_schema=JumpToQueueItemArguments)
+async def jump_to_queue_item_tool(
+    song_id: int | None = None,
+    index: int | None = None,
+) -> str:
+    """切换到当前队列中的真实 song_id，或从 1 开始计数的 index 位置。"""
+    args = JumpToQueueItemArguments(song_id=song_id, index=index)
+    return _pending("jump_to_queue_item", args.model_dump(exclude_none=True))
+
+
 @tool("set_liked", args_schema=SetLikedArguments)
 async def set_liked_tool(song_id: int, liked: bool) -> str:
     """明确设置浏览器中当前歌曲的喜欢状态，song_id 不得猜测。"""
@@ -105,6 +154,11 @@ CLIENT_ACTION_TOOLS: list[BaseTool] = [
     seek_by_tool,
     set_play_mode_tool,
     play_song_tool,
+    insert_next_track_tool,
+    append_to_queue_tool,
+    play_album_tool,
+    play_playlist_tool,
+    jump_to_queue_item_tool,
     set_liked_tool,
     open_lyrics_tool,
 ]

@@ -10,8 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
+import cn.itcast.demo.musicbackend.dto.AlbumDetailData;
 import cn.itcast.demo.musicbackend.dto.LyricsStatus;
 import cn.itcast.demo.musicbackend.dto.MusicEntityData;
+import cn.itcast.demo.musicbackend.dto.SongData;
 import cn.itcast.demo.musicbackend.exception.GlobalExceptionHandler;
 import cn.itcast.demo.musicbackend.exception.NotFoundException;
 import cn.itcast.demo.musicbackend.service.NeteaseMusicService;
@@ -88,5 +90,20 @@ class UserMusicControllerTests {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data[0].id").value(6452))
                 .andExpect(jsonPath("$.data[0].entityType").value("artist"));
+    }
+
+    @Test
+    void shouldReturnAlbumDetailWithTracks() throws Exception {
+        MusicEntityData album = new MusicEntityData(
+                18905, "album", "叶惠美", "周杰伦", "叶惠美", "", Map.of(), List.of());
+        when(musicService.getAlbumDetail(18905)).thenReturn(new AlbumDetailData(
+                album,
+                List.of(new SongData(185809, "晴天", List.of("周杰伦"), "叶惠美", "", 269000))));
+
+        mockMvc.perform(get("/api/albums/18905"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.album.id").value(18905))
+                .andExpect(jsonPath("$.data.songs[0].id").value(185809))
+                .andExpect(jsonPath("$.data.songs[0].artists[0]").value("周杰伦"));
     }
 }

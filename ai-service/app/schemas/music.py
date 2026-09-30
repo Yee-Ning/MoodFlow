@@ -45,6 +45,12 @@ class GetPlaylistDetailArgs(BaseModel):
     playlist_id: int = Field(gt=0, description="从搜索或当前用户歌单取得的真实歌单 ID。")
 
 
+class GetAlbumDetailArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    album_id: int = Field(gt=0, description="从实体搜索取得的真实专辑 ID。")
+
+
 class GetSongLyricsArgs(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -289,6 +295,31 @@ class PlaylistDetailResult(BaseModel):
     cover_url: str
     creator: NonBlankText
     track_count: int = Field(ge=0)
+    songs: list[MusicTrack]
+
+
+class SpringAlbumDetail(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    album: MusicEntity
+    songs: list[MusicTrack]
+
+
+class SpringAlbumDetailResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: int
+    message: str
+    data: SpringAlbumDetail
+
+
+class AlbumDetailResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    album_id: int = Field(gt=0)
+    name: NonBlankText
+    artist: str
+    cover_url: str
     songs: list[MusicTrack]
 
 

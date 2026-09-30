@@ -3,7 +3,14 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    model_serializer,
+    model_validator,
+)
 
 from app.schemas.music import MusicTrack
 from app.schemas.player import PlayMode
@@ -20,6 +27,11 @@ class ClientActionName(StrEnum):
     SEEK_BY = "seek_by"
     SET_PLAY_MODE = "set_play_mode"
     PLAY_SONG = "play_song"
+    INSERT_NEXT_TRACK = "insert_next_track"
+    APPEND_TO_QUEUE = "append_to_queue"
+    PLAY_ALBUM = "play_album"
+    PLAY_PLAYLIST = "play_playlist"
+    JUMP_TO_QUEUE_ITEM = "jump_to_queue_item"
     SET_LIKED = "set_liked"
     OPEN_LYRICS = "open_lyrics"
 
@@ -64,6 +76,47 @@ class PlaySongArguments(BaseModel):
     song: MusicTrack
 
 
+class PlayAlbumArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    album_id: int = Field(gt=0)
+    name: str = Field(min_length=1, max_length=300)
+    tracks: list[MusicTrack] = Field(min_length=1, max_length=1000)
+
+
+class PlayPlaylistArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    playlist_id: int = Field(gt=0)
+    name: str = Field(min_length=1, max_length=300)
+    tracks: list[MusicTrack] = Field(min_length=1, max_length=1000)
+
+
+class JumpToQueueItemArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    song_id: int | None = Field(default=None, gt=0)
+    index: int | None = Field(
+        default=None,
+        gt=0,
+        description="从 1 开始的队列位置。",
+    )
+
+    @model_validator(mode="after")
+    def require_exactly_one_target(self) -> "JumpToQueueItemArguments":
+        if (self.song_id is None) == (self.index is None):
+            raise ValueError("provide exactly one of song_id or index")
+        return self
+
+    @model_serializer(mode="wrap")
+    def omit_unused_target(self, handler):
+        return {
+            key: value
+            for key, value in handler(self).items()
+            if value is not None
+        }
+
+
 class SetLikedArguments(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -79,6 +132,9 @@ ClientActionArguments = Annotated[
     | SeekByArguments
     | SetPlayModeArguments
     | PlaySongArguments
+    | PlayAlbumArguments
+    | PlayPlaylistArguments
+    | JumpToQueueItemArguments
     | SetLikedArguments,
     Field(union_mode="left_to_right"),
 ]
@@ -95,6 +151,11 @@ _EXPECTED_ARGUMENT_TYPE: dict[ClientActionName, type[BaseModel]] = {
     ClientActionName.SEEK_BY: SeekByArguments,
     ClientActionName.SET_PLAY_MODE: SetPlayModeArguments,
     ClientActionName.PLAY_SONG: PlaySongArguments,
+    ClientActionName.INSERT_NEXT_TRACK: PlaySongArguments,
+    ClientActionName.APPEND_TO_QUEUE: PlaySongArguments,
+    ClientActionName.PLAY_ALBUM: PlayAlbumArguments,
+    ClientActionName.PLAY_PLAYLIST: PlayPlaylistArguments,
+    ClientActionName.JUMP_TO_QUEUE_ITEM: JumpToQueueItemArguments,
     ClientActionName.SET_LIKED: SetLikedArguments,
     ClientActionName.OPEN_LYRICS: EmptyActionArguments,
 }

@@ -72,6 +72,7 @@ class SongAssistantTests(unittest.TestCase):
                 "get_song_lyrics",
                 "get_user_playlists",
                 "get_playlist_detail_tool",
+                "get_album_detail_tool",
                 "add_song_to_playlist",
             ],
         )

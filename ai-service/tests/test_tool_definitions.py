@@ -4,6 +4,7 @@ from pydantic import ValidationError
 
 from app.schemas.music import (
     AddSongToPlaylistArgs,
+    GetAlbumDetailArgs,
     GetPlaylistDetailArgs,
     SearchEntitiesArgs,
     SearchMusicArgs,
@@ -34,6 +35,7 @@ class SearchMusicToolDefinitionTests(unittest.TestCase):
             "get_song_lyrics": {"song_id"},
             "get_user_playlists": set(),
             "get_playlist_detail_tool": {"playlist_id"},
+            "get_album_detail_tool": {"album_id"},
             "add_song_to_playlist": {"playlist_id", "song_id"},
         }
 
@@ -62,6 +64,8 @@ class SearchMusicToolDefinitionTests(unittest.TestCase):
             SearchEntitiesArgs(query="学习", entity_type="genre")
         with self.assertRaises(ValidationError):
             GetPlaylistDetailArgs(playlist_id=0)
+        with self.assertRaises(ValidationError):
+            GetAlbumDetailArgs(album_id=0)
 
 
 if __name__ == "__main__":

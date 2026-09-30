@@ -32,6 +32,7 @@ from app.agent.foundation.subgraphs.tool_calling.graph import (
 )
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
+    AlbumDetailResult,
     AddSongToPlaylistArgs,
     SearchMusicArgs,
     MusicEntity,
@@ -174,6 +175,137 @@ def add_to_playlist_tool(calls: list[dict]) -> BaseTool:
 
 
 class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
+    async def test_queue_insert_append_and_jump_emit_client_actions(self) -> None:
+        song_payload = {
+            "song_id": 101,
+            "name": "测试歌曲",
+            "artists": ["测试歌手"],
+            "album": "测试专辑",
+            "cover_url": "https://example.test/cover.jpg",
+            "duration": 180000,
+        }
+        graph = create_tool_calling_subgraph(
+            tools=[search_tool(), *CLIENT_ACTION_TOOLS],
+            assistant=scripted_assistant([
+                tool_call("search_music", "queue-search", {"keyword": "测试歌曲"}),
+                tool_call("insert_next_track", "queue-insert", {"song": song_payload}),
+                tool_call("append_to_queue", "queue-append", {"song": song_payload}),
+                tool_call("jump_to_queue_item", "queue-jump", {"index": 3}),
+                AIMessage(content="已发送队列操作。"),
+            ]),
+        )
+
+        result = await invoke(
+            graph,
+            text="把测试歌曲放到下一首，随后加到末尾，再跳到第 3 首",
+            context=RoutingContext(queue_size=5, current_index=0),
+        )
+
+        actions = result["task_result"].data["client_actions"]
+        self.assertEqual(
+            [action["name"] for action in actions],
+            ["insert_next_track", "append_to_queue", "jump_to_queue_item"],
+        )
+        self.assertEqual(actions[0]["arguments"]["song"]["song_id"], 101)
+        self.assertEqual(actions[2]["arguments"], {"index": 3})
+
+    async def test_queue_jump_rejects_out_of_range_index(self) -> None:
+        graph = create_tool_calling_subgraph(
+            tools=CLIENT_ACTION_TOOLS,
+            assistant=scripted_assistant([
+                tool_call("jump_to_queue_item", "bad-jump", {"index": 6}),
+                AIMessage(content="目标位置超出队列范围。"),
+            ]),
+        )
+
+        result = await invoke(
+            graph,
+            text="跳到播放列表第 6 首",
+            context=RoutingContext(queue_size=5, current_index=0),
+        )
+
+        self.assertEqual(result["task_result"].status, TaskStatus.FAILED)
+        self.assertEqual(result["task_result"].data["client_actions"], [])
+
+    async def test_album_detail_can_replace_queue_with_full_album(self) -> None:
+        album_track = MusicTrack(
+            song_id=185809, name="晴天", artists=["周杰伦"],
+            album="叶惠美", duration=269000,
+        )
+
+        async def fake_search_entities(client, keyword, *, entity_type=None, limit=5):
+            return [MusicEntity(
+                entity_id=18905, entity_type="album", name="叶惠美",
+                artist="周杰伦", album="叶惠美",
+            )]
+
+        async def fake_get_album_detail(client, album_id):
+            return AlbumDetailResult(
+                album_id=album_id, name="叶惠美", artist="周杰伦",
+                cover_url="", songs=[album_track],
+            )
+
+        graph = create_tool_calling_subgraph(assistant=scripted_assistant([
+            tool_call("search_entities_tool", "album-search", {
+                "query": "周杰伦 叶惠美", "entity_type": "album",
+            }),
+            tool_call("get_album_detail_tool", "album-detail", {"album_id": 18905}),
+            tool_call("play_album", "album-play", {
+                "album_id": 18905,
+                "name": "叶惠美",
+                "tracks": [album_track.model_dump(mode="json")],
+            }),
+            AIMessage(content="已请求播放整张《叶惠美》。"),
+        ]))
+        with (
+            patch.object(MusicServiceClient, "search_entities", fake_search_entities),
+            patch.object(MusicServiceClient, "get_album_detail", fake_get_album_detail),
+        ):
+            result = await invoke(graph, text="播放周杰伦的《叶惠美》这张专辑")
+
+        action = result["task_result"].data["client_actions"][0]
+        self.assertEqual(action["name"], "play_album")
+        self.assertEqual(action["arguments"]["tracks"][0]["song_id"], 185809)
+
+    async def test_playlist_detail_can_replace_queue_with_full_playlist(self) -> None:
+        playlist_track = MusicTrack(
+            song_id=185809, name="晴天", artists=["周杰伦"], album="叶惠美",
+        )
+
+        async def fake_get_user_playlists(client):
+            return UserPlaylistsResult(playlists=[
+                UserPlaylist(playlist_id=77, name="私人收藏", editable=True),
+            ])
+
+        async def fake_get_playlist_detail(client, playlist_id):
+            return PlaylistDetailResult(
+                playlist_id=playlist_id, name="私人收藏", description="",
+                cover_url="", creator="测试用户", track_count=1,
+                songs=[playlist_track],
+            )
+
+        graph = create_tool_calling_subgraph(assistant=scripted_assistant([
+            tool_call("get_user_playlists", "playlist-list"),
+            tool_call("get_playlist_detail_tool", "playlist-detail", {
+                "playlist_id": 77,
+            }),
+            tool_call("play_playlist", "playlist-play", {
+                "playlist_id": 77,
+                "name": "私人收藏",
+                "tracks": [playlist_track.model_dump(mode="json")],
+            }),
+            AIMessage(content="已请求播放私人收藏歌单。"),
+        ]))
+        with (
+            patch.object(MusicServiceClient, "get_user_playlists", fake_get_user_playlists),
+            patch.object(MusicServiceClient, "get_playlist_detail", fake_get_playlist_detail),
+        ):
+            result = await invoke(graph, text="播放我的私人收藏歌单")
+
+        action = result["task_result"].data["client_actions"][0]
+        self.assertEqual(action["name"], "play_playlist")
+        self.assertEqual(action["arguments"]["playlist_id"], 77)
+
     def test_reference_models_share_id_name_type_and_reject_mismatch(self) -> None:
         references = [
             ArtistReference(position=1, id=6452, name="周杰伦"),

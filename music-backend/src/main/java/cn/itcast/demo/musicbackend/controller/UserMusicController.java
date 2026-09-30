@@ -4,6 +4,7 @@ import java.util.List;
 
 import cn.itcast.demo.musicbackend.common.ApiResponse;
 import cn.itcast.demo.musicbackend.dto.CurrentSongContextData;
+import cn.itcast.demo.musicbackend.dto.AlbumDetailData;
 import cn.itcast.demo.musicbackend.dto.MusicEntityData;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
@@ -68,6 +69,11 @@ public class UserMusicController {
     @GetMapping("/songs/{id}")
     public ApiResponse<SongData> getSong(@PathVariable long id) {
         return ApiResponse.success(neteaseMusicService.getSongDetail(id));
+    }
+
+    @GetMapping("/albums/{id}")
+    public ApiResponse<AlbumDetailData> getAlbum(@PathVariable long id) {
+        return ApiResponse.success(neteaseMusicService.getAlbumDetail(id));
     }
 
     @GetMapping("/songs/{id}/context")

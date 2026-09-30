@@ -8,6 +8,9 @@ from app.schemas.client_actions import (
     ClientActionArguments,
     ClientActionName,
     EmptyActionArguments,
+    JumpToQueueItemArguments,
+    PlayAlbumArguments,
+    PlayPlaylistArguments,
     PlaySongArguments,
     SeekByArguments,
     SeekToArguments,
@@ -32,6 +35,7 @@ class SongReference(BaseModel):
     cover_url: str = ""
     duration: int = Field(default=0, ge=0)
     playable: bool = True
+    queueable: bool = False
 
     @model_validator(mode="after")
     def synchronize_id(self) -> "SongReference":
@@ -135,6 +139,9 @@ __all__ = [
     "ArtistReference",
     "AlbumReference",
     "PendingClientActionPayload",
+    "JumpToQueueItemArguments",
+    "PlayAlbumArguments",
+    "PlayPlaylistArguments",
     "PlaySongArguments",
     "PlaylistReference",
     "ReferencedEntities",

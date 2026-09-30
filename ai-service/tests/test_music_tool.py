@@ -172,6 +172,34 @@ class MusicServiceClientTests(unittest.TestCase):
         self.assertEqual(result.songs[0].song_id, 185809)
         self.assertEqual(result.songs[0].artists, ["周杰伦"])
 
+    def test_get_album_detail_returns_complete_tracks(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            self.assertEqual(request.url.path, "/api/albums/18905")
+            return httpx.Response(200, json={
+                "code": 200, "message": "success", "data": {
+                    "album": {
+                        "id": 18905, "entityType": "album", "name": "叶惠美",
+                        "artist": "周杰伦", "album": "叶惠美", "coverUrl": "",
+                        "metadata": {"size": 2}, "relatedEntities": [],
+                    },
+                    "songs": [
+                        {"id": 185809, "name": "晴天", "artists": ["周杰伦"],
+                         "album": "叶惠美", "coverUrl": "", "duration": 269000},
+                        {"id": 185811, "name": "以父之名", "artists": ["周杰伦"],
+                         "album": "叶惠美", "coverUrl": "", "duration": 342000},
+                    ],
+                },
+            })
+
+        result = run_with_transport(
+            httpx.MockTransport(handler),
+            lambda: MusicServiceClient().get_album_detail(18905),
+        )
+
+        self.assertEqual(result.album_id, 18905)
+        self.assertEqual(result.name, "叶惠美")
+        self.assertEqual([song.song_id for song in result.songs], [185809, 185811])
+
     def test_get_playlist_detail_rejects_wrong_id_and_invalid_argument(self) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(200, json={
