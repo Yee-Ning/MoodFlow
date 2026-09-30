@@ -22,6 +22,11 @@ assert.match(
   'chat panel must retain a sufficiently opaque dark glass surface over detailed backgrounds',
 )
 assert.match(
+  css,
+  /\.liquid-glass-surface\.ai-chat-panel\.is-mineradio-liquid\s*\{[^}]*--saved-panel-glass-bg:\s*rgba\(4,\s*10,\s*14,\s*0\.76\);[^}]*--saved-panel-glass-filter:\s*blur\(32px\)/s,
+  'chat readability overrides must outrank the shared two-class glass surface selector regardless of stylesheet order',
+)
+assert.match(
   messageList,
   /ref=\{listRef\}[\s\S]*onScroll=\{handleScroll\}/,
   'message history must track its own scroll position',
