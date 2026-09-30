@@ -1,0 +1,66 @@
+.search-page { min-width: 0; min-height: 100%; padding: 38px clamp(16px, 4vw, 52px) 80px; color: rgba(246, 250, 252, 0.94); }
+.search-page__heading { margin-bottom: 26px; }
+.search-page__heading > p { display: flex; align-items: center; gap: 9px; margin: 0 0 14px; color: rgba(163, 220, 232, 0.7); font-size: 0.6rem; font-weight: 650; letter-spacing: 0.17em; }
+.search-page__heading h1 { margin: 0 0 14px; font-size: clamp(2.6rem, 5vw, 4.7rem); font-weight: 450; letter-spacing: -0.055em; line-height: 1.04; }
+.search-page__heading > div { overflow-wrap: anywhere; color: rgba(228, 240, 244, 0.58); font-size: 0.86rem; }
+.search-page__heading strong { color: rgba(247, 251, 252, 0.86); font-weight: 500; }
+.search-categories { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 25px; }
+.search-categories button, .search-text-button, .search-icon-button { border: 1px solid rgba(226, 244, 251, 0.1); border-radius: 999px; color: rgba(234, 246, 250, 0.78); background: rgba(216, 241, 248, 0.045); font: inherit; cursor: pointer; }
+.search-categories button { min-height: 38px; padding: 8px 20px; font-size: 0.8rem; }
+.search-categories button[aria-pressed="true"] { color: #09171c; background: rgba(237, 249, 251, 0.94); border-color: transparent; }
+.search-text-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 34px; padding: 7px 13px; font-size: 0.72rem; }
+.search-text-button:disabled { opacity: 0.4; cursor: default; }
+.search-icon-button { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; flex: 0 0 auto; }
+.search-page button:hover:not(:disabled) { filter: brightness(1.15); }
+.search-page button:focus-visible { outline: 2px solid rgba(179, 234, 244, 0.88); outline-offset: 3px; }
+.search-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 230px; padding: 36px 18px; border: 1px solid rgba(219, 242, 247, 0.065); border-radius: 25px; background: rgba(6, 15, 20, 0.48); text-align: center; }
+.search-empty > svg { color: rgba(174, 218, 230, 0.6); margin-bottom: 18px; }
+.search-empty h2 { margin: 0 0 12px; font-size: 1.3rem; font-weight: 480; letter-spacing: -0.02em; }
+.search-empty p { max-width: 48ch; margin: 0; color: rgba(222, 238, 244, 0.6); font-size: 0.8rem; line-height: 1.7; }
+.search-empty > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 24px; }
+.search-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; color: rgba(217, 238, 245, 0.55); font-size: 0.75rem; }
+.search-results { margin-bottom: 34px; min-width: 0; }
+.search-results > header, .search-album-preview > header { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+.search-results h2 { margin: 0; font-size: 1.24rem; font-weight: 500; }
+.search-results h2 > span { margin-left: 8px; color: rgba(204, 231, 240, 0.4); font-size: 0.75rem; font-weight: 400; }
+.search-song-list { padding: 6px; border: 1px solid rgba(224, 241, 247, 0.07); border-radius: 23px; background: rgba(4, 11, 16, 0.55); }
+.search-song { min-width: 0; display: grid; grid-template-columns: 48px minmax(0, 1.3fr) minmax(0, 0.8fr) 42px 36px; gap: 14px; align-items: center; min-height: 72px; padding: 10px 12px; border-radius: 17px; }
+.search-song:hover { background: rgba(224, 242, 246, 0.05); }
+.search-song.is-active { background: rgba(136, 220, 216, 0.09); }
+.search-song__play { position: relative; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; overflow: hidden; border: 0; border-radius: 12px; color: rgba(243, 251, 253, 0.92); background: rgba(199, 229, 238, 0.08); cursor: pointer; }
+.search-song__play img { width: 100%; height: 100%; object-fit: cover; }
+.search-song__play > span { display: grid; place-items: center; position: absolute; inset: 0; background: rgba(3, 9, 13, 0.38); }
+.search-song__identity { min-width: 0; }
+.search-song h3, .search-entity h3 { margin: 0 0 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.86rem; font-weight: 520; }
+.search-song p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(218, 239, 246, 0.53); font-size: 0.73rem; }
+.search-song__duration { color: rgba(218, 239, 246, 0.43); font-size: 0.69rem; text-align: right; }
+.search-entity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; }
+.search-entity { min-width: 0; padding: 12px; border: 1px solid rgba(223, 242, 247, 0.07); border-radius: 22px; background: rgba(5, 13, 18, 0.56); }
+.search-entity__cover { display: grid; place-items: center; position: relative; width: 100%; aspect-ratio: 1; padding: 0; margin-bottom: 16px; overflow: hidden; border: 0; border-radius: 15px; color: rgba(216, 242, 248, 0.6); background: rgba(219, 240, 247, 0.06); cursor: pointer; }
+.search-entity--artist .search-entity__cover { border-radius: 50%; }
+.search-entity__cover img { width: 100%; height: 100%; object-fit: cover; }
+.search-entity__cover > span { display: grid; place-items: center; position: absolute; bottom: 8px; right: 8px; width: 34px; height: 34px; border-radius: 50%; color: #e4f6fa; background: rgba(3, 11, 16, 0.75); }
+.search-entity p { margin: 0 0 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(218, 239, 246, 0.55); font-size: 0.73rem; }
+.search-entity small { color: rgba(218, 239, 246, 0.45); font-size: 0.66rem; }
+.search-notice, .search-error { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 13px 16px; margin: 0 0 18px; border-radius: 16px; color: rgba(231, 245, 248, 0.88); background: rgba(62, 116, 129, 0.22); font-size: 0.76rem; line-height: 1.6; overflow-wrap: anywhere; }
+.search-error { background: rgba(152, 81, 76, 0.16); }
+.search-album-preview { margin-bottom: 30px; padding: 22px; border: 1px solid rgba(179, 229, 235, 0.16); border-radius: 24px; background: rgba(7, 19, 25, 0.85); }
+.search-album-preview h2 { margin: 0; font-size: 1.35rem; }
+.search-album-preview p { color: rgba(218, 239, 246, 0.65); font-size: 0.76rem; }
+.search-album-preview__actions { display: flex; align-items: center; gap: 18px; margin-bottom: 12px; color: rgba(218, 239, 246, 0.55); font-size: 0.76rem; }
+.search-spinner { animation: search-spin 1s linear infinite; }
+@keyframes search-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .search-spinner { animation: none; } }
+@media (max-width: 720px) {
+  .search-page { padding: 24px 14px 42px; }
+  .search-page__heading h1 { font-size: 2.9rem; }
+  .search-categories { gap: 6px; }
+  .search-categories button { min-height: 36px; padding: 7px 14px; }
+  .search-song { grid-template-columns: 44px minmax(0, 1fr) 36px; gap: 10px; padding: 9px 6px; }
+  .search-song__play { width: 44px; height: 44px; }
+  .search-song__album, .search-song__duration { display: none; }
+  .search-entity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .search-entity { padding: 10px; border-radius: 18px; }
+  .search-entity h3 { font-size: 0.8rem; }
+  .search-album-preview { padding: 16px 10px; }
+}

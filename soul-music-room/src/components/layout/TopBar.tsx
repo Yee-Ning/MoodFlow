@@ -1,15 +1,38 @@
 import { ChevronLeft, ChevronRight, Search, UserRound } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getCurrentUserProfile } from '../../api/musicLibrary'
+import { parseSearchCategory, searchUrl } from '../../api/musicSearch'
 import { useAuthStore } from '../../store/authStore'
 import LiquidGlassSurface from '../liquid-glass/LiquidGlassSurface'
 import NeteaseImage from '../music/NeteaseImage'
 
+function SearchForm({ initialQuery }: { initialQuery: string }) {
+  const [query, setQuery] = useState(initialQuery)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const category = location.pathname === '/search'
+      ? parseSearchCategory(new URLSearchParams(location.search).get('type')) : 'all'
+    navigate(searchUrl(query, category))
+  }
+  return (
+    <form className="topbar__search" role="search" onSubmit={submitSearch}>
+      <Search size={17} strokeWidth={1.6} aria-hidden="true" />
+      <input aria-label="搜索 MoodFlow" placeholder="搜索歌曲、歌手、专辑或歌单"
+        type="search" maxLength={200} value={query}
+        onChange={(event) => setQuery(event.target.value)} />
+      <button className="topbar__search-submit" type="submit" aria-label="提交音乐搜索">搜索</button>
+    </form>
+  )
+}
+
 function TopBar() {
-  const [query, setQuery] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
+  const searchQuery = location.pathname === '/search' ? new URLSearchParams(location.search).get('q') ?? '' : ''
   const loggedIn = useAuthStore((state) => state.loggedIn)
 
   useEffect(() => {
@@ -23,11 +46,6 @@ function TopBar() {
     return () => controller.abort()
   }, [loggedIn])
 
-  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    navigate('/search', query.trim() ? { state: { query: query.trim() } } : undefined)
-  }
-
   return (
     <header className="topbar">
       <LiquidGlassSurface className="topbar__surface" preset="panel" radius={24} intensity={0.56}>
@@ -40,15 +58,7 @@ function TopBar() {
           </button>
         </div>
 
-        <form className="topbar__search" role="search" onSubmit={submitSearch}>
-          <Search size={17} strokeWidth={1.6} aria-hidden="true" />
-          <input
-            aria-label="搜索 MoodFlow"
-            placeholder="搜索歌曲、歌手或歌单"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </form>
+        <SearchForm key={searchQuery} initialQuery={searchQuery} />
 
         <button
           className={`topbar__profile${loggedIn ? ' is-authenticated' : ''}`}

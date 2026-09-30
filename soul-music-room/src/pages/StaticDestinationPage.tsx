@@ -5,7 +5,6 @@ import {
   History,
   Library,
   Music2,
-  Search,
   Sparkles,
 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
@@ -33,13 +32,6 @@ const pages = {
     description: '从一首歌曲出发，沿风格、情绪、乐器与年代浏览不同的音乐方向。',
     icon: Disc3,
     prompts: ['Style Route', 'Mood Route', 'Era Route'],
-  },
-  search: {
-    eyebrow: 'SEARCH THE OCEAN',
-    title: 'Search',
-    description: '搜索歌曲、艺人、专辑或歌单。当前阶段展示静态搜索入口。',
-    icon: Search,
-    prompts: ['Songs', 'Artists', 'Albums'],
   },
   library: {
     eyebrow: 'YOUR COLLECTION',

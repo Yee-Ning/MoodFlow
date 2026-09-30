@@ -11,6 +11,7 @@
     "test:ai-layout": "node scripts/test-ai-chat-layout.mjs",
     "test:ai-stream": "node scripts/test-ai-chat-stream.mjs",
     "test:music-assets": "node scripts/test-music-assets.mjs",
+    "test:search": "node scripts/test-music-search.mjs",
     "test:ai-trigger": "node scripts/test-ai-chat-trigger.mjs",
     "test:worldline": "node scripts/test-worldline-flow.mjs && node scripts/test-worldline-view.mjs",
     "preview": "vite preview"

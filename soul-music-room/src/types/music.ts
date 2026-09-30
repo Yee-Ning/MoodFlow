@@ -42,3 +42,24 @@ export interface LyricLine {
 }
 
 export type LyricsStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'instrumental' | 'error'
+
+export type MusicEntityType = 'song' | 'artist' | 'album' | 'playlist'
+
+export interface MusicEntityReference {
+  id: number
+  entityType: MusicEntityType
+  name: string
+  artist: string
+  album: string
+}
+
+export interface MusicEntity extends MusicEntityReference {
+  coverUrl: string
+  metadata: Record<string, unknown>
+  relatedEntities: MusicEntityReference[]
+}
+
+export interface AlbumDetail {
+  album: MusicEntity
+  songs: SongSummary[]
+}

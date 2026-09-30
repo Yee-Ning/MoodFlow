@@ -16,6 +16,7 @@ import JazzHipHopPage from './pages/jazz-hiphop/JazzHipHopPage'
 import LoginPage from './pages/LoginPage'
 import LibraryPage from './pages/LibraryPage'
 import PlaylistDetailPage from './pages/PlaylistDetailPage'
+import SearchPage from './pages/SearchPage'
 import { useAuthStore } from './store/authStore'
 import {
   getPhaseDuration,
@@ -69,7 +70,7 @@ function App() {
           <Route path="/discover" element={<StaticDestinationPage page="discover" />} />
           <Route path="/session/create" element={<StaticDestinationPage page="session" />} />
           <Route path="/worldline" element={<WorldLinePage />} />
-          <Route path="/search" element={<StaticDestinationPage page="search" />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
           <Route path="/liked" element={<StaticDestinationPage page="liked" />} />
