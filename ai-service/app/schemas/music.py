@@ -68,6 +68,27 @@ class AddSongToPlaylistArgs(BaseModel):
     song_id: int = Field(gt=0, description="要加入歌单的真实歌曲 ID。")
 
 
+class RemoveSongFromPlaylistArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    playlist_id: int = Field(gt=0, description="当前用户可编辑的真实歌单 ID。")
+    song_id: int = Field(gt=0, description="歌单详情中的真实歌曲 ID。")
+
+
+class CreatePlaylistArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: NonBlankText = Field(max_length=40, description="用户指定的新歌单名称。")
+    privacy: Literal[0, 10] = Field(default=0, description="0 公开，10 私密。")
+
+
+class SetSongLikedArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    song_id: int = Field(gt=0, description="上下文或工具结果中的真实歌曲 ID。")
+    liked: bool = Field(strict=True, description="明确设置云端红心状态，不使用切换。")
+
+
 class MusicTrack(BaseModel):
     """Normalized track data returned to the model by search_music."""
 
@@ -219,6 +240,49 @@ class AddSongToPlaylistResult(BaseModel):
     message: NonBlankText
 
 
+class RemoveSongFromPlaylistResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    playlist_id: int = Field(gt=0)
+    song_id: int = Field(gt=0)
+    status: Literal["removed", "not_found", "forbidden"]
+    message: NonBlankText
+
+
+class CreatedPlaylistResult(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    playlist_id: int = Field(gt=0, validation_alias=AliasChoices("playlist_id", "playlistId"))
+    name: NonBlankText
+    status: Literal["created"]
+    message: NonBlankText
+
+
+class SongLikeResult(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    song_id: int = Field(gt=0, validation_alias=AliasChoices("song_id", "songId"))
+    liked: bool = Field(strict=True)
+    status: Literal["synced"]
+    message: NonBlankText
+
+
+class SpringCreatedPlaylistResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: int
+    message: str
+    data: CreatedPlaylistResult
+
+
+class SpringSongLikeResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: int
+    message: str
+    data: SongLikeResult
+
+
 class ToolFailure(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -326,7 +390,7 @@ class AlbumDetailResult(BaseModel):
 class SpringPlaylistMutation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["added", "duplicate", "forbidden"]
+    status: Literal["added", "duplicate", "forbidden", "removed", "not_found"]
     message: NonBlankText
 
 

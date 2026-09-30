@@ -121,15 +121,13 @@ export async function executeClientAction(action: ClientAction): Promise<void> {
       return
     }
     case 'set_liked': {
-      const latest = usePlayerStore.getState()
-      const knownSong = latest.currentSong?.id === action.arguments.song_id
-        || latest.queue.some((song) => song.id === action.arguments.song_id)
-      if (!knownSong) {
-        throw new AiClientActionError('AI 喜欢操作未执行：目标歌曲不在当前播放器中')
-      }
-      await latest.setLiked(action.arguments.song_id, action.arguments.liked)
+      // The server has already persisted this explicit state; do not write twice.
+      player.applyLikedState(action.arguments.song_id, action.arguments.liked)
       return
     }
+    case 'clear_queue':
+      player.clearQueue()
+      return
     case 'open_lyrics':
       requireCurrentSong()
       player.openLyrics()

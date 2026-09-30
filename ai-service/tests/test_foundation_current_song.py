@@ -282,6 +282,19 @@ class FoundationCurrentSongTests(unittest.IsolatedAsyncioTestCase):
         provider.get_song.assert_not_awaited()
         assistant.assert_not_awaited()
 
+    async def test_clear_queue_does_not_analyze_the_removed_current_song(self) -> None:
+        clear = ClientAction(
+            action_id="tool-task:clear", task_id="tool-task",
+            name=ClientActionName.CLEAR_QUEUE, arguments=EmptyActionArguments(),
+        )
+        provider, assistant = AsyncMock(), AsyncMock()
+        result = await create_current_song_subgraph(
+            provider=provider, assistant=assistant,
+        ).ainvoke(current_state(prior_task_results=[action_result(clear)]))
+        self.assertEqual(result["task_result"].status, TaskStatus.NEEDS_INPUT)
+        provider.get_song.assert_not_awaited()
+        assistant.assert_not_awaited()
+
     async def test_default_assistant_uses_bounded_history_and_untrusted_lyrics(self) -> None:
         captured = {}
         model = SimpleNamespace()

@@ -384,15 +384,13 @@ try {
     }),
     /目标歌曲不在当前播放队列中/,
   )
-  await assert.rejects(
-    executeClientAction({
-      action_id: 'action-unknown-like',
+  await executeClientAction({
+      action_id: 'action-synced-nonplaying-like',
       task_id: 'task-player',
       name: 'set_liked',
       arguments: { song_id: 999, liked: true },
-    }),
-    /目标歌曲不在当前播放器中/,
-  )
+    })
+  assert.equal(usePlayerStore.getState().likedSongIds.has(999), true)
 
   globalThis.fetch = async () => streamResponse([
     sse('action', {

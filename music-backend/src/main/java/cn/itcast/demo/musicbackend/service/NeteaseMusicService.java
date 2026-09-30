@@ -18,6 +18,8 @@ import cn.itcast.demo.musicbackend.dto.MusicEntityReferenceData;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
+import cn.itcast.demo.musicbackend.dto.CreatedPlaylistData;
+import cn.itcast.demo.musicbackend.dto.SongLikeData;
 import cn.itcast.demo.musicbackend.dto.SongData;
 import cn.itcast.demo.musicbackend.dto.SongLyricsData;
 import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
@@ -33,6 +35,7 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
@@ -363,6 +366,78 @@ public class NeteaseMusicService {
         return new PlaylistMutationData("added", "已添加到歌单");
     }
 
+    public SongLikeData setSongLiked(long songId, boolean liked, HttpServletRequest request) {
+        if (songId <= 0) {
+            throw new BadRequestException("歌曲 id 必须大于 0");
+        }
+        String cookie = requireCookie(request);
+        post("/like", Map.of("id", songId, "like", liked), cookie);
+        return new SongLikeData(songId, liked, "synced",
+                liked ? "已同步到网易云我喜欢的音乐" : "已取消网易云红心收藏");
+    }
+
+    public List<Long> getLikedSongIds(HttpServletRequest request) {
+        String cookie = requireCookie(request);
+        UserProfileData profile = getProfile(cookie);
+        Map<String, Object> response = get("/likelist", Map.of("uid", profile.userId()), cookie);
+        if (!(response.get("ids") instanceof List<?> ids)) {
+            throw invalidResponse("ids");
+        }
+        List<Long> result = new ArrayList<>();
+        for (Object id : ids) {
+            if (!(id instanceof Number number) || number.longValue() <= 0) {
+                throw invalidResponse("ids");
+            }
+            result.add(number.longValue());
+        }
+        return List.copyOf(result);
+    }
+
+    public CreatedPlaylistData createPlaylist(String name, int privacy, HttpServletRequest request) {
+        String normalizedName = name == null ? "" : name.trim();
+        if (normalizedName.isBlank() || normalizedName.length() > 40) {
+            throw new BadRequestException("歌单名称必须为 1 到 40 个字符");
+        }
+        if (privacy != 0 && privacy != 10) {
+            throw new BadRequestException("privacy 必须是 0（公开）或 10（私密）");
+        }
+        String cookie = requireCookie(request);
+        Map<String, Object> response = post("/playlist/create",
+                Map.of("name", normalizedName, "privacy", privacy, "type", "NORMAL"), cookie);
+        Map<String, Object> playlist = requiredMap(response, "playlist");
+        long playlistId = requiredLong(playlist, "id");
+        String createdName = requiredString(playlist, "name");
+        if (playlistId <= 0 || !createdName.equals(normalizedName)) {
+            throw new NeteaseApiException("网易云 API 返回了不匹配的新建歌单数据");
+        }
+        return new CreatedPlaylistData(playlistId, createdName, "created", "已新建歌单");
+    }
+
+    public PlaylistMutationData removeSongFromPlaylist(
+            long playlistId, long songId, HttpServletRequest request) {
+        if (playlistId <= 0 || songId <= 0) {
+            throw new BadRequestException("歌单和歌曲 id 必须大于 0");
+        }
+        String cookie = requireCookie(request);
+        UserProfileData profile = getProfile(cookie);
+        Map<String, Object> response = get("/playlist/detail", Map.of("id", playlistId), cookie);
+        Map<String, Object> playlist = requiredMap(response, "playlist");
+        if (requiredLong(playlist, "id") != playlistId) {
+            throw new NeteaseApiException("网易云 API 返回了不匹配的歌单数据");
+        }
+        long creatorId = requiredLong(requiredMap(playlist, "creator"), "userId");
+        if (creatorId != profile.userId() || Boolean.TRUE.equals(playlist.get("subscribed"))) {
+            return new PlaylistMutationData("forbidden", "该歌单不可编辑");
+        }
+        // A missing track list cannot prove that a destructive operation is safe.
+        requiredList(playlist, "trackIds");
+        if (!playlistContainsSong(playlist, songId)) {
+            return new PlaylistMutationData("not_found", "歌曲不在该歌单中，无需移除");
+        }
+        post("/playlist/tracks", Map.of("op", "del", "pid", playlistId, "tracks", songId), cookie);
+        return new PlaylistMutationData("removed", "已从歌单移除歌曲");
+    }
+
     private SongPlaybackData unavailablePlayback(long songId) {
         return new SongPlaybackData(
                 songId,
@@ -634,8 +709,18 @@ public class NeteaseMusicService {
             String path,
             Map<String, Object> queryParams,
             String cookie) {
+        return request(HttpMethod.GET, path, queryParams, cookie);
+    }
+
+    private Map<String, Object> post(String path, Map<String, Object> queryParams, String cookie) {
+        return request(HttpMethod.POST, path, queryParams, cookie);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> request(
+            HttpMethod method, String path, Map<String, Object> queryParams, String cookie) {
         try {
-            var requestSpec = neteaseRestClient.get()
+            var requestSpec = neteaseRestClient.method(method)
                     .uri(uriBuilder -> {
                         uriBuilder.path(path);
                         queryParams.forEach(uriBuilder::queryParam);

@@ -1,10 +1,10 @@
 import logging
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 import httpx
 from langchain_core.tools import BaseTool, tool
 from langgraph.prebuilt import ToolRuntime
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, StringConstraints, ValidationError
 
 from app.config.settings import get_settings
 from app.schemas.context import MusicAgentContext
@@ -12,6 +12,14 @@ from app.schemas.music import (
     AlbumDetailResult,
     AddSongToPlaylistArgs,
     AddSongToPlaylistResult,
+    CreatePlaylistArgs,
+    CreatedPlaylistResult,
+    RemoveSongFromPlaylistArgs,
+    RemoveSongFromPlaylistResult,
+    SetSongLikedArgs,
+    SongLikeResult,
+    SpringCreatedPlaylistResponse,
+    SpringSongLikeResponse,
     EntitySearchItem,
     EntitySearchResult,
     GetAlbumDetailArgs,
@@ -311,6 +319,40 @@ class MusicServiceClient:
             message=parsed.data.message,
         )
 
+    async def set_song_liked(self, song_id: int, liked: bool) -> SongLikeResult:
+        args = SetSongLikedArgs(song_id=song_id, liked=liked)
+        payload = await self._request(
+            "POST", f"/api/songs/{args.song_id}/like",
+            params={"liked": str(args.liked).lower()},
+        )
+        parsed = self._validate_response(payload, SpringSongLikeResponse)
+        assert isinstance(parsed, SpringSongLikeResponse)
+        if parsed.data.song_id != args.song_id or parsed.data.liked != args.liked:
+            raise MusicServiceError("invalid_response", "音乐服务返回了不匹配的红心状态。")
+        return parsed.data
+
+    async def create_playlist(self, name: str, privacy: int = 0) -> CreatedPlaylistResult:
+        args = CreatePlaylistArgs(name=name, privacy=privacy)
+        payload = await self._request("POST", "/api/playlists", params=args.model_dump())
+        parsed = self._validate_response(payload, SpringCreatedPlaylistResponse)
+        assert isinstance(parsed, SpringCreatedPlaylistResponse)
+        if parsed.data.name != args.name:
+            raise MusicServiceError("invalid_response", "音乐服务返回了不匹配的新建歌单。")
+        return parsed.data
+
+    async def remove_song_from_playlist(
+        self, playlist_id: int, song_id: int,
+    ) -> RemoveSongFromPlaylistResult:
+        args = RemoveSongFromPlaylistArgs(playlist_id=playlist_id, song_id=song_id)
+        payload = await self._request(
+            "DELETE", f"/api/playlists/{args.playlist_id}/songs/{args.song_id}"
+        )
+        parsed = self._validate_response(payload, SpringPlaylistMutationResponse)
+        assert isinstance(parsed, SpringPlaylistMutationResponse)
+        return RemoveSongFromPlaylistResult(
+            **args.model_dump(), status=parsed.data.status, message=parsed.data.message,
+        )
+
 
 async def search_music(keyword: str, limit: int = 10) -> MusicSearchResult:
     """Compatibility entry point for direct search execution and existing callers."""
@@ -447,6 +489,39 @@ async def add_song_to_playlist_tool(
     return result.model_dump_json()
 
 
+@tool("set_song_liked_tool")
+async def set_song_liked_tool(
+    song_id: Annotated[int, Field(gt=0)],
+    liked: Annotated[bool, Field(strict=True)],
+    runtime: ToolRuntime[MusicAgentContext, Any],
+) -> str:
+    """设置网易云云端红心状态。ID 来自当前歌曲或可信工具结果；成功后自动更新播放器红心。"""
+    result = await _authenticated_client(runtime).set_song_liked(song_id, liked)
+    return result.model_dump_json()
+
+
+@tool("create_playlist_tool")
+async def create_playlist_tool(
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40, pattern=r"\S")],
+    runtime: ToolRuntime[MusicAgentContext, Any],
+    privacy: Literal[0, 10] = 0,
+) -> str:
+    """按用户指定名称新建自建歌单，privacy 为 0 公开或 10 私密；返回可信歌单 ID 可继续添加歌曲。"""
+    result = await _authenticated_client(runtime).create_playlist(name, privacy)
+    return result.model_dump_json()
+
+
+@tool("remove_song_from_playlist_tool")
+async def remove_song_from_playlist_tool(
+    playlist_id: Annotated[int, Field(gt=0)],
+    song_id: Annotated[int, Field(gt=0)],
+    runtime: ToolRuntime[MusicAgentContext, Any],
+) -> str:
+    """从当前用户可编辑歌单移除一首歌。先读用户歌单，再读取目标歌单详情确认歌曲 ID 和归属。"""
+    result = await _authenticated_client(runtime).remove_song_from_playlist(playlist_id, song_id)
+    return result.model_dump_json()
+
+
 MUSIC_AGENT_TOOLS: list[BaseTool] = [
     search_music_tool,
     search_entities_tool,
@@ -455,6 +530,9 @@ MUSIC_AGENT_TOOLS: list[BaseTool] = [
     get_playlist_detail_tool,
     get_album_detail_tool,
     add_song_to_playlist_tool,
+    set_song_liked_tool,
+    create_playlist_tool,
+    remove_song_from_playlist_tool,
 ]
 
 

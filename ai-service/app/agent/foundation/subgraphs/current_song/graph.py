@@ -70,6 +70,7 @@ def _previous_action_target(
             if action.name in {
                 ClientActionName.PLAY_NEXT,
                 ClientActionName.PLAY_PREVIOUS,
+                ClientActionName.CLEAR_QUEUE,
             }:
                 return None, True
     return None, False

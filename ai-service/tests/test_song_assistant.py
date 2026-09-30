@@ -74,6 +74,9 @@ class SongAssistantTests(unittest.TestCase):
                 "get_playlist_detail_tool",
                 "get_album_detail_tool",
                 "add_song_to_playlist",
+                "set_song_liked_tool",
+                "create_playlist_tool",
+                "remove_song_from_playlist_tool",
             ],
         )
         self.assertEqual(bound_tools, MUSIC_AGENT_TOOLS)

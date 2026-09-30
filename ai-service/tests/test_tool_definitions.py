@@ -4,6 +4,9 @@ from pydantic import ValidationError
 
 from app.schemas.music import (
     AddSongToPlaylistArgs,
+    CreatePlaylistArgs,
+    RemoveSongFromPlaylistArgs,
+    SetSongLikedArgs,
     GetAlbumDetailArgs,
     GetPlaylistDetailArgs,
     SearchEntitiesArgs,
@@ -37,6 +40,9 @@ class SearchMusicToolDefinitionTests(unittest.TestCase):
             "get_playlist_detail_tool": {"playlist_id"},
             "get_album_detail_tool": {"album_id"},
             "add_song_to_playlist": {"playlist_id", "song_id"},
+            "set_song_liked_tool": {"song_id", "liked"},
+            "create_playlist_tool": {"name", "privacy"},
+            "remove_song_from_playlist_tool": {"playlist_id", "song_id"},
         }
 
         self.assertEqual(
@@ -56,6 +62,16 @@ class SearchMusicToolDefinitionTests(unittest.TestCase):
 
         self.assertEqual(set(schema["required"]), {"playlist_id", "song_id"})
         self.assertFalse(schema["additionalProperties"])
+
+    def test_asset_arguments_reject_invalid_or_private_fields(self) -> None:
+        for arguments in ({"name": "  "}, {"name": "x" * 41}, {"name": "学习", "privacy": 1},
+                          {"name": "学习", "session_cookie": "fake"}):
+            with self.subTest(arguments=arguments), self.assertRaises(ValidationError):
+                CreatePlaylistArgs.model_validate(arguments)
+        with self.assertRaises(ValidationError):
+            RemoveSongFromPlaylistArgs(playlist_id=1, song_id=0)
+        with self.assertRaises(ValidationError):
+            SetSongLikedArgs(song_id=1, liked="false")
 
     def test_entity_search_and_playlist_detail_reject_invalid_arguments(self) -> None:
         with self.assertRaises(ValidationError):

@@ -34,6 +34,7 @@ class ClientActionName(StrEnum):
     JUMP_TO_QUEUE_ITEM = "jump_to_queue_item"
     SET_LIKED = "set_liked"
     OPEN_LYRICS = "open_lyrics"
+    CLEAR_QUEUE = "clear_queue"
 
 
 class EmptyActionArguments(BaseModel):
@@ -158,6 +159,7 @@ _EXPECTED_ARGUMENT_TYPE: dict[ClientActionName, type[BaseModel]] = {
     ClientActionName.JUMP_TO_QUEUE_ITEM: JumpToQueueItemArguments,
     ClientActionName.SET_LIKED: SetLikedArguments,
     ClientActionName.OPEN_LYRICS: EmptyActionArguments,
+    ClientActionName.CLEAR_QUEUE: EmptyActionArguments,
 }
 
 

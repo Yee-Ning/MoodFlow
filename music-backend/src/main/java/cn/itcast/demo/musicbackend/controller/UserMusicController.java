@@ -9,6 +9,8 @@ import cn.itcast.demo.musicbackend.dto.MusicEntityData;
 import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
+import cn.itcast.demo.musicbackend.dto.CreatedPlaylistData;
+import cn.itcast.demo.musicbackend.dto.SongLikeData;
 import cn.itcast.demo.musicbackend.dto.SongData;
 import cn.itcast.demo.musicbackend.dto.SongLyricsData;
 import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
@@ -17,6 +19,7 @@ import cn.itcast.demo.musicbackend.service.NeteaseMusicService;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -109,5 +112,30 @@ public class UserMusicController {
             HttpServletRequest request) {
         return ApiResponse.success(
                 neteaseMusicService.addSongToPlaylist(playlistId, songId, request));
+    }
+
+    @PostMapping("/songs/{id}/like")
+    public ApiResponse<SongLikeData> setSongLiked(
+            @PathVariable long id, @RequestParam boolean liked, HttpServletRequest request) {
+        return ApiResponse.success(neteaseMusicService.setSongLiked(id, liked, request));
+    }
+
+    @GetMapping("/user/liked-songs")
+    public ApiResponse<List<Long>> getLikedSongs(HttpServletRequest request) {
+        return ApiResponse.success(neteaseMusicService.getLikedSongIds(request));
+    }
+
+    @PostMapping("/playlists")
+    public ApiResponse<CreatedPlaylistData> createPlaylist(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "0") int privacy,
+            HttpServletRequest request) {
+        return ApiResponse.success(neteaseMusicService.createPlaylist(name, privacy, request));
+    }
+
+    @DeleteMapping("/playlists/{playlistId}/songs/{songId}")
+    public ApiResponse<PlaylistMutationData> removeSongFromPlaylist(
+            @PathVariable long playlistId, @PathVariable long songId, HttpServletRequest request) {
+        return ApiResponse.success(neteaseMusicService.removeSongFromPlaylist(playlistId, songId, request));
     }
 }

@@ -2,10 +2,14 @@ import { create } from 'zustand'
 import { BackendApiError } from '../api/client'
 import { getSongPlaybackSource } from '../api/playback'
 import { getGlobalAudioElement } from '../services/audio'
-import { syncSongLikePreference } from '../services/songLikes'
+import { getCloudLikedSongIds, syncSongLikePreference } from '../services/songLikes'
 import type { LyricLine, LyricsStatus, SongSummary } from '../types/music'
 
 export type PlayMode = 'sequence' | 'list-loop' | 'single-loop' | 'shuffle'
+
+let likeSessionVersion = 0
+let likeStateVersion = 0
+const pendingLikeWrites = new Map<number, Promise<void>>()
 
 interface PlayerState {
   currentSong: SongSummary | null
@@ -49,6 +53,9 @@ interface PlayerState {
   togglePlayMode: () => void
   toggleLike: (songId: number) => Promise<void>
   setLiked: (songId: number, liked: boolean) => Promise<void>
+  applyLikedState: (songId: number, liked: boolean) => void
+  refreshLikedSongs: () => Promise<void>
+  resetLikedSongs: () => void
   playQueueItem: (index: number) => Promise<void>
   removeQueueItem: (index: number) => Promise<void>
   clearQueue: () => void
@@ -452,22 +459,56 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   setLiked: async (songId, liked) => {
-    const previousIds = get().likedSongIds
-    if (previousIds.has(songId) === liked) return
-    const nextIds = new Set(previousIds)
+    const sessionVersion = likeSessionVersion
+    const priorWrite = pendingLikeWrites.get(songId) ?? Promise.resolve()
+    const write = priorWrite.catch(() => {}).then(async () => {
+      if (sessionVersion !== likeSessionVersion) return
+      await syncSongLikePreference(songId, liked)
+      if (sessionVersion === likeSessionVersion) {
+        get().applyLikedState(songId, liked)
+        set({ notice: '' })
+      }
+    })
+    pendingLikeWrites.set(songId, write)
+    try {
+      await write
+    } catch (error) {
+      if (sessionVersion === likeSessionVersion) {
+        set({ notice: error instanceof Error ? error.message : '网易云红心同步失败，请稍后重试' })
+      }
+    } finally {
+      if (pendingLikeWrites.get(songId) === write) pendingLikeWrites.delete(songId)
+    }
+  },
 
+  applyLikedState: (songId, liked) => {
+    likeStateVersion += 1
+    const nextIds = new Set(get().likedSongIds)
     if (liked) nextIds.add(songId)
     else nextIds.delete(songId)
-
     set({ likedSongIds: nextIds })
+  },
 
+  refreshLikedSongs: async () => {
+    const sessionVersion = likeSessionVersion
+    const stateVersion = likeStateVersion
     try {
-      await syncSongLikePreference(songId, liked)
-    } catch {
-      set({
-        notice: '喜欢状态已在播放器中更新，网易云同步暂时失败',
-      })
+      const ids = await getCloudLikedSongIds()
+      if (sessionVersion === likeSessionVersion && stateVersion === likeStateVersion) {
+        set({ likedSongIds: new Set(ids) })
+      }
+    } catch (error) {
+      if (sessionVersion === likeSessionVersion) {
+        set({ notice: error instanceof Error ? error.message : '网易云红心列表读取失败' })
+      }
     }
+  },
+
+  resetLikedSongs: () => {
+    likeSessionVersion += 1
+    likeStateVersion += 1
+    pendingLikeWrites.clear()
+    set({ likedSongIds: new Set() })
   },
 
   playQueueItem: async (index) => {

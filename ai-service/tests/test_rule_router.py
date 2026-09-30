@@ -35,7 +35,7 @@ class RuleRouterTestCase(unittest.TestCase):
             "播放周杰伦的《范特西》这张专辑": "play_collection",
             "播放我的《私人收藏》歌单": "play_collection",
             "切到队列里的《晴天》": "jump_to_queue_item",
-            "跳到播放列表第 5 首": "jump_to_queue_item",
+            "跳到播放列表第 5 首": "jump_to_queue_index",
         }
         for query, sub_intent in cases.items():
             with self.subTest(query=query):

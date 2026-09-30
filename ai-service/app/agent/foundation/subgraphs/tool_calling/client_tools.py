@@ -133,7 +133,7 @@ async def jump_to_queue_item_tool(
 
 @tool("set_liked", args_schema=SetLikedArguments)
 async def set_liked_tool(song_id: int, liked: bool) -> str:
-    """明确设置浏览器中当前歌曲的喜欢状态，song_id 不得猜测。"""
+    """仅更新浏览器红心；必须已有 set_song_liked_tool 的同目标云端成功结果。"""
     return _pending("set_liked", {"song_id": song_id, "liked": liked})
 
 
@@ -141,6 +141,12 @@ async def set_liked_tool(song_id: int, liked: bool) -> str:
 async def open_lyrics_tool() -> str:
     """展开当前浏览器播放器的歌词面板。"""
     return _pending("open_lyrics", {})
+
+
+@tool("clear_queue", args_schema=EmptyActionArguments)
+async def clear_queue_tool() -> str:
+    """清空浏览器播放队列并停止当前播放。"""
+    return _pending("clear_queue", {})
 
 
 CLIENT_ACTION_TOOLS: list[BaseTool] = [
@@ -161,5 +167,6 @@ CLIENT_ACTION_TOOLS: list[BaseTool] = [
     jump_to_queue_item_tool,
     set_liked_tool,
     open_lyrics_tool,
+    clear_queue_tool,
 ]
 CLIENT_ACTION_TOOL_NAMES = frozenset(item.name for item in CLIENT_ACTION_TOOLS)

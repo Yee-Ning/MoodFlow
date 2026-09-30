@@ -62,6 +62,7 @@ type EmptyClientActionName =
   | 'play_next'
   | 'play_previous'
   | 'open_lyrics'
+  | 'clear_queue'
 
 export type ClientAction =
   | (ClientActionBase & {
@@ -237,6 +238,7 @@ function parseClientAction(payload: unknown): ClientAction {
     case 'play_next':
     case 'play_previous':
     case 'open_lyrics':
+    case 'clear_queue':
       if (!hasExactKeys(args, [])) break
       return { ...base, name: payload.name, arguments: {} }
     case 'set_volume':

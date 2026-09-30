@@ -149,7 +149,7 @@ def _project_tool_result(raw: Any) -> Any:
         "status", "error", "message", "song_id", "album_id", "playlist_id", "name", "artists",
         "artist", "album", "cover_url", "duration", "editable", "songs", "playlists",
         "entities", "entity_type", "type", "tracks", "lyrics", "original_lyrics",
-        "translated_lyrics", "song", "client_action",
+        "translated_lyrics", "song", "client_action", "liked", "privacy",
         "total", "count", "result", "data", "id", "title", "keyword", "limit", "success",
     }
     return {key: _project_tool_result(value) for key, value in raw.items() if key in keys}

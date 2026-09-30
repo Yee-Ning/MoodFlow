@@ -1,7 +1,7 @@
 import json
 import unittest
 from collections.abc import Sequence
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import BaseTool, tool
@@ -38,6 +38,7 @@ from app.schemas.music import (
     MusicEntity,
     MusicTrack,
     PlaylistDetailResult,
+    SongLikeResult,
     UserPlaylist,
     UserPlaylistsResult,
 )
@@ -535,21 +536,22 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
         graph = create_tool_calling_subgraph(
             assistant=scripted_assistant([])
         )
-        result = await invoke(
-            graph,
-            intents=[
-                routing_intent("lower_volume", order=0),
-                routing_intent("favorite_song", order=1),
-            ],
-            context=RoutingContext(
-                has_current_song=True,
-                current_song_id=101,
-                volume=0.1,
-                queue_size=1,
-                current_index=0,
-                current_song_liked=False,
-            ),
-        )
+        with patch.object(MusicServiceClient, "set_song_liked", AsyncMock(return_value=SongLikeResult(
+            song_id=101, liked=True, status="synced", message="已同步",
+        ))) as sync:
+            result = await invoke(
+                graph,
+                intents=[
+                    routing_intent("lower_volume", order=0),
+                    routing_intent("favorite_song", order=1),
+                ],
+                context=RoutingContext(
+                    has_current_song=True, current_song_id=101, volume=0.1,
+                    queue_size=1, current_index=0, current_song_liked=False,
+                ),
+            )
+        sync.assert_awaited_once_with(101, True)
+        self.assertEqual(result["task_result"].data["tool_calls"], 1)
 
         actions = result["task_result"].data["client_actions"]
         self.assertEqual([item["name"] for item in actions], ["set_volume", "set_liked"])
