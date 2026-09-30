@@ -1,4 +1,9 @@
+import asyncio
 import unittest
+from unittest.mock import AsyncMock
+
+from langchain_core.language_models.fake_chat_models import FakeListChatModel
+from langchain_core.messages import AIMessageChunk
 
 from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.main_graph import build_main_graph
@@ -12,6 +17,8 @@ from app.agent.foundation.routing import (
     RoutingContext,
 )
 from app.agent.foundation.streaming import stream_foundation_assistant
+from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
+from app.agent.foundation.subgraphs.current_song import create_current_song_subgraph
 from app.agent.foundation.subgraphs.tool_calling.models import (
     ClientAction,
     ClientActionName,
@@ -20,8 +27,10 @@ from app.agent.foundation.subgraphs.tool_calling.models import (
 from app.schemas.chat import (
     ClientActionStreamEvent,
     FinalStreamEvent,
+    MessageStreamEvent,
     UpdateStreamEvent,
 )
+from app.schemas.context import SongContext
 
 
 class CountingFoundationGraph:
@@ -78,6 +87,126 @@ class CountingFoundationGraph:
 
 
 class FoundationStreamingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_nested_chat_streams_tokens_before_subgraph_finishes(self) -> None:
+        answer = "真正逐步生成的回答"
+        model = FakeListChatModel(responses=[answer], sleep=0.01)
+        graph = build_main_graph(
+            development_routes=[RouteKey.GENERAL_CHAT],
+            general_chat_subgraph=create_general_chat_subgraph(model=model),
+        ).compile()
+        stream = stream_foundation_assistant(
+            "聊聊天", "nested-stream", RoutingContext(), graph=graph,
+        )
+        events = []
+        async with asyncio.timeout(10):
+            async for event in stream:
+                events.append(event)
+                if isinstance(event, MessageStreamEvent):
+                    break
+        self.assertIsInstance(events[-1], MessageStreamEvent)
+        self.assertFalse(any(
+            isinstance(event, UpdateStreamEvent) and event.node == "general_chat_subgraph"
+            for event in events
+        ), "The first token must arrive before the nested subgraph completes")
+        events.extend([event async for event in stream])
+        deltas = [event.delta for event in events if isinstance(event, MessageStreamEvent)]
+        self.assertGreater(len(deltas), 1)
+        self.assertEqual("".join(deltas), answer)
+        self.assertEqual(events[-1].response.message, answer)
+
+    async def test_nested_current_song_streams_model_deltas(self) -> None:
+        answer = "从歌词来看，这首歌表达了怀念。"
+        provider = AsyncMock()
+        provider.get_song.return_value = SongContext(
+            song_id=1, name="测试歌曲", artist="测试歌手", album="测试专辑",
+            original_lyrics="测试歌词", translated_lyrics="", lyrics_status="AVAILABLE",
+        )
+        graph = build_main_graph(
+            development_routes=[RouteKey.CURRENT_SONG],
+            current_song_subgraph=create_current_song_subgraph(
+                provider=provider, model=FakeListChatModel(responses=[answer]),
+            ),
+        ).compile()
+        events = [event async for event in stream_foundation_assistant(
+            "分析这首歌", "nested-song-stream",
+            RoutingContext(has_current_song=True, current_song_id=1), graph=graph,
+        )]
+        deltas = [event.delta for event in events if isinstance(event, MessageStreamEvent)]
+        self.assertGreater(len(deltas), 1)
+        self.assertEqual("".join(deltas), answer)
+        self.assertEqual(events[-1].response.message, answer)
+        provider.get_song.assert_awaited_once_with(1)
+
+    async def test_nested_private_updates_and_non_answer_tokens_are_not_public(self) -> None:
+        class NestedGraph:
+            async def astream(self, *args, **kwargs):
+                self.subgraphs = kwargs.get("subgraphs")
+                yield {"type": "updates", "ns": ("child:1",), "data": {
+                    "final_response": {"final_response": "private nested state"},
+                    "tool_calling_subgraph": {"task_results": ["private tool data"]},
+                }}
+                for node, integration, text in (
+                    ("intent_router", "langchain_chat_model", "private router JSON"),
+                    ("agent", "", "private replay"),
+                    ("agent", "langchain_chat_model", "visible answer"),
+                ):
+                    yield {"type": "messages", "ns": ("general_chat_subgraph:1",), "data": (
+                        AIMessageChunk(content=text),
+                        {"langgraph_node": node, "ls_integration": integration},
+                    )}
+                yield {"type": "updates", "ns": (), "data": {
+                    "final_response": {"final_response": "visible answer"},
+                }}
+
+        graph = NestedGraph()
+        events = [event async for event in stream_foundation_assistant(
+            "聊天", "private-updates", RoutingContext(), graph=graph,
+        )]
+        self.assertTrue(graph.subgraphs)
+        self.assertEqual(
+            [event.delta for event in events if isinstance(event, MessageStreamEvent)],
+            ["visible answer"],
+        )
+        self.assertEqual(
+            [event.node for event in events if isinstance(event, UpdateStreamEvent)],
+            ["final_response"],
+        )
+        self.assertNotIn("private", "".join(event.model_dump_json() for event in events))
+
+    async def test_tool_text_waits_for_validated_result_and_task_texts_are_separated(self) -> None:
+        class MixedGraph:
+            async def astream(self, *args, **kwargs):
+                yield {"type": "messages", "ns": ("tool_calling_subgraph:1",), "data": (
+                    AIMessageChunk(content="错误地声称云端操作成功"),
+                    {"langgraph_node": "agent", "ls_integration": "langchain_chat_model"},
+                )}
+                yield {"type": "updates", "ns": (), "data": {"tool_calling_subgraph": {
+                    "task_results": [TaskResult(
+                        task_id="tool-task", route_key=RouteKey.TOOL_CALLING,
+                        status=TaskStatus.FAILED, content="云端操作失败。", error="upstream unavailable",
+                    )],
+                }}}
+                yield {"type": "messages", "ns": ("general_chat_subgraph:2",), "data": (
+                    AIMessageChunk(content="聊天回答。"),
+                    {"langgraph_node": "agent", "ls_integration": "langchain_chat_model"},
+                )}
+                yield {"type": "updates", "ns": (), "data": {"general_chat_subgraph": {
+                    "task_results": [TaskResult(
+                        task_id="chat-task", route_key=RouteKey.GENERAL_CHAT,
+                        status=TaskStatus.SUCCESS, content="聊天回答。",
+                    )],
+                }}}
+                yield {"type": "updates", "ns": (), "data": {
+                    "final_response": {"final_response": "云端操作失败。\n聊天回答。"},
+                }}
+
+        events = [event async for event in stream_foundation_assistant(
+            "复合任务", "mixed-stream", RoutingContext(), graph=MixedGraph(),
+        )]
+        deltas = [event.delta for event in events if isinstance(event, MessageStreamEvent)]
+        self.assertEqual("".join(deltas), "云端操作失败。\n聊天回答。")
+        self.assertNotIn("错误地声称", "".join(event.model_dump_json() for event in events))
+
     async def test_real_main_graph_direct_action_reaches_stream(self) -> None:
         class PauseRouter:
             async def route(self, text, context):

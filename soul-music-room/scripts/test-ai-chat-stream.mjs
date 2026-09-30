@@ -139,6 +139,51 @@ try {
   assert.equal(completed.status, 'idle')
   unsubscribe()
 
+  // Keep the transport open to prove deltas are rendered before final/EOF.
+  const encoder = new TextEncoder()
+  let liveController
+  let notifyResponseReady
+  const responseReady = new Promise((resolve) => { notifyResponseReady = resolve })
+  globalThis.fetch = async () => new Response(new ReadableStream({
+    start(controller) {
+      liveController = controller
+      notifyResponseReady()
+    },
+  }), { headers: { 'Content-Type': 'text/event-stream; charset=utf-8' } })
+  function waitForContent(content) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        stop()
+        reject(new Error(`Stream did not expose partial content: ${content}`))
+      }, 2000)
+      const stop = useAiChatStore.subscribe((state) => {
+        if (state.messages.at(-1)?.content !== content) return
+        clearTimeout(timer)
+        stop()
+        resolve()
+      })
+    })
+  }
+  useAiChatStore.getState().clearConversation()
+  const liveRequest = useAiChatStore.getState().sendMessage('验证实时流式回答', playerContext())
+  await responseReady
+  const firstDelta = waitForContent('回答正在')
+  liveController.enqueue(encoder.encode(sse('message', { delta: '回答正在' })))
+  await firstDelta
+  assert.equal(useAiChatStore.getState().isSending, true)
+  assert.equal(useAiChatStore.getState().status, 'generating')
+  const secondDelta = waitForContent('回答正在逐步生成')
+  liveController.enqueue(encoder.encode(sse('message', { delta: '逐步生成' })))
+  await secondDelta
+  assert.equal(useAiChatStore.getState().isSending, true)
+  liveController.enqueue(encoder.encode(sse('final', {
+    type: 'chat', message: '回答正在逐步生成', search_query: null,
+  }) + sse('done', {})))
+  liveController.close()
+  await liveRequest
+  assert.equal(useAiChatStore.getState().isSending, false)
+  assert.equal(useAiChatStore.getState().messages.at(-1).content, '回答正在逐步生成')
+
   const { usePlayerStore } = await server.ssrLoadModule('/src/store/playerStore.ts')
   const currentSong = {
     id: 185809,
