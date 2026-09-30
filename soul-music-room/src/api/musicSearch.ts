@@ -1,5 +1,5 @@
 import { apiRequest, BackendApiError } from './client'
-import type { AlbumDetail, MusicEntity, MusicEntityType, SongSummary } from '../types/music'
+import type { AlbumDetail, MusicEntity, MusicEntityReference, MusicEntityType, SongSummary } from '../types/music'
 
 export const ENTITY_TYPES: MusicEntityType[] = ['song', 'artist', 'album', 'playlist']
 export type SearchCategory = MusicEntityType | 'all'
@@ -21,6 +21,19 @@ export function emptySearchResults(): SearchResults {
   return { song: [], artist: [], album: [], playlist: [] }
 }
 
+function validReference(reference: MusicEntityReference) {
+  return reference && Number.isSafeInteger(reference.id) && reference.id > 0
+    && ENTITY_TYPES.includes(reference.entityType)
+    && typeof reference.name === 'string' && Boolean(reference.name.trim())
+    && typeof reference.artist === 'string' && typeof reference.album === 'string'
+}
+
+function validEntity(entity: MusicEntity, type: MusicEntityType) {
+  return validReference(entity) && entity.entityType === type && typeof entity.coverUrl === 'string'
+    && Array.isArray(entity.relatedEntities) && entity.relatedEntities.every(validReference)
+    && entity.metadata && typeof entity.metadata === 'object' && !Array.isArray(entity.metadata)
+}
+
 export async function searchEntities(
   query: string, type: MusicEntityType, limit: number, signal?: AbortSignal,
 ) {
@@ -31,14 +44,9 @@ export async function searchEntities(
   }
   const params = new URLSearchParams({ keyword, type, limit: String(limit) })
   const entities = await apiRequest<MusicEntity[]>(`/api/music/entities/search?${params}`, signal)
-  if (!Array.isArray(entities) || entities.some((entity) =>
-    !entity || !Number.isSafeInteger(entity.id) || entity.id <= 0
-    || entity.entityType !== type || typeof entity.name !== 'string' || !entity.name.trim()
-    || typeof entity.artist !== 'string' || typeof entity.album !== 'string'
-    || typeof entity.coverUrl !== 'string' || !Array.isArray(entity.relatedEntities)
-    || !entity.metadata || typeof entity.metadata !== 'object' || Array.isArray(entity.metadata)
-    || entity.relatedEntities.some((reference) => !reference || typeof reference.name !== 'string'),
-  )) throw new BackendApiError('音乐搜索返回了无效的实体数据')
+  if (!Array.isArray(entities) || entities.some((entity) => !validEntity(entity, type))) {
+    throw new BackendApiError('音乐搜索返回了无效的实体数据')
+  }
   return entities
 }
 
@@ -73,7 +81,7 @@ export function songFromEntity(entity: MusicEntity): SongSummary {
 export async function getAlbumDetail(id: number, signal?: AbortSignal) {
   if (!Number.isSafeInteger(id) || id <= 0) throw new BackendApiError('专辑地址无效', 400)
   const detail = await apiRequest<AlbumDetail>(`/api/albums/${id}`, signal)
-  if (!detail?.album || detail.album.id !== id || detail.album.entityType !== 'album' || !Array.isArray(detail.songs)
+  if (!detail?.album || !validEntity(detail.album, 'album') || detail.album.id !== id || !Array.isArray(detail.songs)
     || detail.songs.some((song) => !song || !Number.isSafeInteger(song.id) || song.id <= 0
       || typeof song.name !== 'string' || !song.name.trim() || !Array.isArray(song.artists)
       || song.artists.some((artist) => typeof artist !== 'string') || typeof song.album !== 'string'

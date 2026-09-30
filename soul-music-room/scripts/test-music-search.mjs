@@ -104,6 +104,25 @@ try {
   assert.equal(player.getState().queue[0].id, 101)
   assert.equal(player.getState().isPlaying, false, 'adding a search result must not interrupt playback')
 
+  // Provider regression: a real song with no album must survive the 50-row category request.
+  const unreleased = { ...entity('song', 2148728095, 'EVERYBODY'), album: '', metadata: { duration: 180000 } }
+  globalThis.fetch = async () => response(Array.from({ length: 50 }, (_, index) =>
+    index === 14 ? unreleased : entity('song', index + 1000, `Track ${index}`)))
+  for (const query of ['kanye', 'Kanye West']) {
+    store.getState().loadSearch(query, 'song')
+    await ready(store)
+    assert.equal(store.getState().results.song.length, 50)
+    assert.equal(Object.keys(store.getState().errors).length, 0)
+    markupForMissingAlbum(query)
+  }
+  function markupForMissingAlbum(query) {
+    const markup = renderSearch(api.searchUrl(query, 'song'))
+    assert.match(markup, /50 条结果/)
+    assert.match(markup, /EVERYBODY/)
+    assert.match(markup, /未知专辑/)
+    assert.doesNotMatch(markup, /暂时无法搜索/)
+  }
+
   globalThis.fetch = async (url) => {
     const type = new URL(url).searchParams.get('type')
     return type === 'album' ? response(null, 503, '上游服务暂时不可用') : response([entity(type)])
@@ -152,8 +171,21 @@ try {
   assert.equal(store.getState().status, 'idle')
   assert.equal(store.getState().results.song.length, 0)
 
+  // The page effect owns retries as well as initial requests and cancels the active request on exit.
+  const retry = deferred()
+  let retrySignal
+  globalThis.fetch = async (_url, options) => { retrySignal = options.signal; return retry.promise }
+  const cancelRetry = store.getState().loadSearch('kanye', 'song')
+  cancelRetry()
+  retry.resolve(response([unreleased]))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(retrySignal.aborted, true)
+  assert.equal(store.getState().results.song.length, 0, 'cancelled retry must not apply late results')
+
   for (const bad of [null, {}, [{ ...entity('song'), id: -1 }], [entity('album')],
-    [{ ...entity('song'), metadata: null }], [{ ...entity('song'), relatedEntities: [null] }]]) {
+    [{ ...entity('song'), metadata: null }], [{ ...entity('song'), relatedEntities: [null] }],
+    ...[{ id: 0 }, { name: '' }, { entityType: 'fake' }, { artist: null }].map((fields) =>
+      [{ ...entity('song'), relatedEntities: [{ ...entity('song').relatedEntities[0], ...fields }] }])]) {
     globalThis.fetch = async () => response(bad)
     await assert.rejects(api.searchEntities('x', 'song', 1), /无效的实体/)
   }
@@ -171,7 +203,9 @@ try {
   assert.equal((await api.getAlbumDetail(101)).songs[0].id, 101)
   await assert.rejects(api.getAlbumDetail(0), /专辑地址无效/)
   for (const bad of [{ album: entity('album', 999), songs: [song] }, { album: entity('album'), songs: null },
-    { album: entity('album'), songs: [{ ...song, id: -1 }] }]) {
+    { album: entity('album'), songs: [{ ...song, id: -1 }] },
+    { album: { ...entity('album'), name: '' }, songs: [song] },
+    { album: { ...entity('album'), relatedEntities: [null] }, songs: [song] }]) {
     globalThis.fetch = async () => response(bad)
     await assert.rejects(api.getAlbumDetail(101), /不匹配/)
   }
@@ -190,6 +224,10 @@ try {
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.match(app, /path="\/search" element=\{<SearchPage \/>\}/)
   assert.doesNotMatch(app, /StaticDestinationPage page="search"/)
+  const page = await readFile(new URL('../src/pages/SearchPage.tsx', import.meta.url), 'utf8')
+  assert.match(page, /useEffect\(\(\) => loadSearch\(query, category\), \[query, category, loadSearch, searchAttempt\]\)/)
+  assert.match(page, /onClick=\{\(\) => setSearchAttempt\(/)
+  assert.doesNotMatch(page, /search\.loadSearch\(query, category\)/, 'retry must retain the effect cleanup')
   console.log('Music search API, categories, rendering, queue, validation, partial failures, retry and cancellation checks passed.')
 } finally {
   globalThis.fetch = originalFetch

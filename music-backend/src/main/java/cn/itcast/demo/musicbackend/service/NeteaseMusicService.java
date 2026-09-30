@@ -511,13 +511,11 @@ public class NeteaseMusicService {
     }
 
     private SongData toSong(Map<String, Object> source) {
-        List<String> artists = requiredList(source, "ar").stream()
-                .map(artist -> requiredString(artist, "name"))
-                .toList();
-        Map<String, Object> album = requiredMap(source, "al");
+        List<String> artists = artistNames(requiredList(source, "ar"));
+        Map<String, Object> album = optionalMap(source, "al");
 
         return new SongData(
-                requiredLong(source, "id"),
+                requiredEntityId(source),
                 requiredString(source, "name"),
                 artists,
                 optionalString(album, "name"),
@@ -573,32 +571,32 @@ public class NeteaseMusicService {
 
     private MusicEntityData toSongEntity(Map<String, Object> source) {
         List<Map<String, Object>> artistSources = requiredList(source, "ar");
-        List<String> artists = artistSources.stream()
-                .map(artist -> requiredString(artist, "name"))
-                .toList();
-        Map<String, Object> album = requiredMap(source, "al");
+        List<String> artists = artistNames(artistSources);
+        Map<String, Object> album = optionalMap(source, "al");
+        String albumName = optionalString(album, "name");
+        long albumId = optionalLong(album, "id");
 
-        List<MusicEntityReferenceData> related = new ArrayList<>();
-        artistSources.stream().map(this::toArtistReference).forEach(related::add);
-        related.add(new MusicEntityReferenceData(
-                requiredLong(album, "id"),
-                "album",
-                requiredString(album, "name"),
-                String.join("、", artists),
-                ""));
+        List<MusicEntityReferenceData> artistReferences = artistReferences(artistSources);
+        List<MusicEntityReferenceData> related = new ArrayList<>(artistReferences);
 
         Map<String, Object> metadata = new LinkedHashMap<>();
         metadata.put("duration", optionalLong(source, "dt"));
-        metadata.put("artist_ids", artistSources.stream()
-                .map(artist -> requiredLong(artist, "id"))
+        metadata.put("artist_ids", artistReferences.stream()
+                .map(MusicEntityReferenceData::id)
                 .toList());
-        metadata.put("album_id", requiredLong(album, "id"));
+        // Some real songs have an unreleased/unknown album (id=0, name="").
+        // Keep the song; expose a link only when the provider identifies the album.
+        if (albumId > 0 && !albumName.isBlank()) {
+            related.add(new MusicEntityReferenceData(
+                    albumId, "album", albumName, String.join("、", artists), ""));
+            metadata.put("album_id", albumId);
+        }
         return new MusicEntityData(
-                requiredLong(source, "id"),
+                requiredEntityId(source),
                 "song",
                 requiredString(source, "name"),
                 String.join("、", artists),
-                requiredString(album, "name"),
+                albumName,
                 optionalString(album, "picUrl"),
                 Map.copyOf(metadata),
                 List.copyOf(related));
@@ -634,11 +632,9 @@ public class NeteaseMusicService {
         if (artistSources.isEmpty() && source.get("artist") instanceof Map<?, ?>) {
             artistSources = List.of(requiredMap(source, "artist"));
         }
-        List<String> artists = artistSources.stream()
-                .map(artist -> requiredString(artist, "name"))
-                .toList();
-        List<MusicEntityReferenceData> related = new ArrayList<>();
-        artistSources.stream().map(this::toArtistReference).forEach(related::add);
+        List<String> artists = artistNames(artistSources);
+        List<MusicEntityReferenceData> artistReferences = artistReferences(artistSources);
+        List<MusicEntityReferenceData> related = new ArrayList<>(artistReferences);
         related.addAll(relatedSongs);
 
         Map<String, Object> metadata = new LinkedHashMap<>();
@@ -646,8 +642,8 @@ public class NeteaseMusicService {
         metadata.put("company", optionalString(source, "company"));
         metadata.put("description", optionalString(source, "description"));
         metadata.put("size", optionalLong(source, "size"));
-        metadata.put("artist_ids", artistSources.stream()
-                .map(artist -> requiredLong(artist, "id"))
+        metadata.put("artist_ids", artistReferences.stream()
+                .map(MusicEntityReferenceData::id)
                 .toList());
         return new MusicEntityData(
                 requiredLong(source, "id"),
@@ -671,16 +667,31 @@ public class NeteaseMusicService {
     }
 
     private MusicEntityReferenceData toSongReference(Map<String, Object> source) {
-        List<String> artists = requiredList(source, "ar").stream()
-                .map(artist -> requiredString(artist, "name"))
-                .toList();
-        Map<String, Object> album = requiredMap(source, "al");
+        List<String> artists = artistNames(requiredList(source, "ar"));
+        Map<String, Object> album = optionalMap(source, "al");
         return new MusicEntityReferenceData(
-                requiredLong(source, "id"),
+                requiredEntityId(source),
                 "song",
                 requiredString(source, "name"),
                 String.join("、", artists),
-                requiredString(album, "name"));
+                optionalString(album, "name"));
+    }
+
+    private List<String> artistNames(List<Map<String, Object>> sources) {
+        return sources.stream().map(source -> optionalString(source, "name"))
+                .filter(name -> !name.isBlank()).toList();
+    }
+
+    private List<MusicEntityReferenceData> artistReferences(List<Map<String, Object>> sources) {
+        return sources.stream()
+                .filter(source -> optionalLong(source, "id") > 0 && !optionalString(source, "name").isBlank())
+                .map(this::toArtistReference).toList();
+    }
+
+    private long requiredEntityId(Map<String, Object> source) {
+        long id = requiredLong(source, "id");
+        if (id <= 0) throw invalidResponse("id");
+        return id;
     }
 
     private void validateMusicEntityType(String entityType) {

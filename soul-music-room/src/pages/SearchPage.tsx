@@ -94,6 +94,7 @@ function SearchPage() {
   const loggedIn = useAuthStore((state) => state.loggedIn)
   const [notice, setNotice] = useState<{ key: string; message: string; login?: boolean } | null>(null)
   const [selectedAlbum, setSelectedAlbum] = useState<{ key: string; entity: MusicEntity } | null>(null)
+  const [searchAttempt, setSearchAttempt] = useState(0)
   const searchKey = `${query}:${category}`
   const isCurrent = search.query === query && search.category === category
   const loading = Boolean(query) && (!isCurrent || search.status === 'loading')
@@ -101,7 +102,7 @@ function SearchPage() {
   const total = isCurrent ? types.reduce((count, type) => count + search.results[type].length, 0) : 0
   const hasErrors = isCurrent && Object.keys(search.errors).length > 0
 
-  useEffect(() => loadSearch(query, category), [query, category, loadSearch])
+  useEffect(() => loadSearch(query, category), [query, category, loadSearch, searchAttempt])
 
   const selectCategory = (next: SearchCategory) => navigate(searchUrl(query, next))
   const requestPlayback = (song: SongSummary, songs: SongSummary[]) => {
@@ -140,7 +141,7 @@ function SearchPage() {
       {loading && <section className="search-empty" role="status"><LoaderCircle className="search-spinner" size={28} /><h2>正在寻找音乐…</h2><p>搜索“{query}”</p></section>}
       {query && !loading && isCurrent && <>
         <div className="search-summary" aria-live="polite"><span>{total} 条结果{category !== 'all' ? ' · 最多展示 50 条' : ''}</span>
-          {hasErrors && <button className="search-text-button" type="button" onClick={() => { search.loadSearch(query, category) }}>重试搜索</button>}
+          {hasErrors && <button className="search-text-button" type="button" onClick={() => setSearchAttempt((value) => value + 1)}>重试搜索</button>}
         </div>
         {selectedAlbum?.key === searchKey && <AlbumPreview key={`${searchKey}:${selectedAlbum.entity.id}`} entity={selectedAlbum.entity}
           onClose={() => setSelectedAlbum(null)} onPlay={requestPlayback} onQueue={queueSong} />}
