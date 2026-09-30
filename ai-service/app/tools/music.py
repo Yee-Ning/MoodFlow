@@ -11,14 +11,20 @@ from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
     AddSongToPlaylistArgs,
     AddSongToPlaylistResult,
+    EntitySearchItem,
+    EntitySearchResult,
+    GetPlaylistDetailArgs,
     GetSongLyricsArgs,
     MusicSearchResult,
     SearchMusicArgs,
+    SearchEntitiesArgs,
+    PlaylistDetailResult,
     SongLyricsResult,
     SpringMusicSearchResponse,
     SpringMusicEntityDetailResponse,
     SpringMusicEntitySearchResponse,
     SpringPlaylistMutationResponse,
+    SpringPlaylistDetailResponse,
     SpringSongLyricsResponse,
     SpringUserPlaylistsResponse,
     ToolFailure,
@@ -164,7 +170,7 @@ class MusicServiceClient:
             "limit": search_input.limit,
         }
         if entity_type is not None:
-            if entity_type not in {"song", "artist", "album"}:
+            if entity_type not in {"song", "artist", "album", "playlist"}:
                 raise ValueError("unsupported music entity type")
             params["type"] = entity_type
         payload = await self._request(
@@ -237,6 +243,28 @@ class MusicServiceClient:
             ]
         )
 
+    async def get_playlist_detail(self, playlist_id: int) -> PlaylistDetailResult:
+        detail_input = GetPlaylistDetailArgs(playlist_id=playlist_id)
+        payload = await self._request(
+            "GET", f"/api/playlists/{detail_input.playlist_id}"
+        )
+        parsed = self._validate_response(payload, SpringPlaylistDetailResponse)
+        assert isinstance(parsed, SpringPlaylistDetailResponse)
+        playlist = parsed.data.playlist
+        if playlist.playlist_id != detail_input.playlist_id:
+            raise MusicServiceError(
+                "invalid_response", "音乐服务返回了不匹配的歌单数据。"
+            )
+        return PlaylistDetailResult(
+            playlist_id=playlist.playlist_id,
+            name=playlist.name,
+            description=parsed.data.description,
+            cover_url=playlist.cover_img_url,
+            creator=playlist.creator,
+            track_count=playlist.track_count,
+            songs=parsed.data.songs,
+        )
+
     async def add_song_to_playlist(
         self,
         playlist_id: int,
@@ -290,6 +318,42 @@ async def search_music_tool(keyword: str, limit: int = 10) -> str:
 
 
 @tool(
+    "search_entities_tool",
+    args_schema=SearchEntitiesArgs,
+    description=(
+        "按 query 搜索真实音乐实体，可指定 entity_type 为 artist、album、playlist 或 song。"
+        "返回统一的实体 ID、名称、类型及元数据；搜索歌手、专辑或歌单时优先调用。"
+    ),
+)
+async def search_entities_tool(
+    query: str,
+    entity_type: str | None = None,
+    limit: int = 5,
+) -> str:
+    search_input = SearchEntitiesArgs(
+        query=query, entity_type=entity_type, limit=limit
+    )
+    entities = await MusicServiceClient().search_entities(
+        search_input.query,
+        entity_type=search_input.entity_type,
+        limit=search_input.limit,
+    )
+    return EntitySearchResult(
+        query=search_input.query,
+        entity_type=search_input.entity_type,
+        entities=[EntitySearchItem(
+            id=entity.entity_id,
+            name=entity.name,
+            type=entity.entity_type,
+            artist=entity.artist,
+            album=entity.album,
+            cover_url=entity.cover_url,
+            metadata=entity.metadata,
+        ) for entity in entities],
+    ).model_dump_json()
+
+
+@tool(
     "get_song_lyrics",
     description="根据真实 song_id 获取完整原文歌词、翻译和歌词状态。",
 )
@@ -316,6 +380,21 @@ async def get_user_playlists_tool(
 
 
 @tool(
+    "get_playlist_detail_tool",
+    description=(
+        "用从 search_entities_tool 或 get_user_playlists 取得的真实 playlist_id "
+        "读取歌单基本信息和完整歌曲列表。个人歌单应先调用 get_user_playlists。"
+    ),
+)
+async def get_playlist_detail_tool(
+    playlist_id: Annotated[int, Field(gt=0, description="可信来源的真实歌单 ID。")],
+    runtime: ToolRuntime[MusicAgentContext, Any],
+) -> str:
+    result = await _authenticated_client(runtime).get_playlist_detail(playlist_id)
+    return result.model_dump_json()
+
+
+@tool(
     "add_song_to_playlist",
     description=(
         "把真实 song_id 加入真实 playlist_id。必须先从搜索/历史工具结果取得歌曲 ID，"
@@ -336,8 +415,10 @@ async def add_song_to_playlist_tool(
 
 MUSIC_AGENT_TOOLS: list[BaseTool] = [
     search_music_tool,
+    search_entities_tool,
     get_song_lyrics_tool,
     get_user_playlists_tool,
+    get_playlist_detail_tool,
     add_song_to_playlist_tool,
 ]
 

@@ -19,6 +19,15 @@ from app.agent.foundation.rule_routing.rule_registry import get_default_rules
 
 
 class RuleRouterTestCase(unittest.TestCase):
+    def test_routes_music_entity_and_playlist_detail_requests(self) -> None:
+        self.assert_intents(
+            "搜索周杰伦", [(IntentType.TOOL_CALLING, "search_music")]
+        )
+        self.assert_intents(
+            "查看我的学习歌单里面有哪些歌",
+            [(IntentType.TOOL_CALLING, "get_playlist_detail")],
+        )
+
     def test_routes_explicit_entity_worldline(self) -> None:
         for query in (
             "构建歌曲《七里香》的音乐世界线",

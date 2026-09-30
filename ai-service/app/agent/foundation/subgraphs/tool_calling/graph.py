@@ -27,6 +27,8 @@ from app.agent.foundation.subgraphs.tool_calling.direct_actions import (
     resolve_direct_actions,
 )
 from app.agent.foundation.subgraphs.tool_calling.models import (
+    AlbumReference,
+    ArtistReference,
     ClientAction,
     PendingClientActionPayload,
     PlaylistReference,
@@ -42,7 +44,14 @@ from app.agent.structured_output import (
 )
 from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
 from app.schemas.context import MusicAgentContext
-from app.schemas.music import MusicSearchResult, MusicTrack, ToolFailure, UserPlaylistsResult
+from app.schemas.music import (
+    EntitySearchResult,
+    MusicSearchResult,
+    MusicTrack,
+    PlaylistDetailResult,
+    ToolFailure,
+    UserPlaylistsResult,
+)
 from app.tools.music import handle_music_tool_error
 
 MAX_TOOL_CALLS = 5
@@ -74,8 +83,12 @@ def _read_json(content: Any) -> dict[str, Any] | None:
 
 def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
     songs: list[SongReference] = []
+    artists: list[ArtistReference] = []
+    albums: list[AlbumReference] = []
     playlists: list[PlaylistReference] = []
     seen_song_ids: set[int] = set()
+    seen_artist_ids: set[int] = set()
+    seen_album_ids: set[int] = set()
     seen_playlist_ids: set[int] = set()
     for result in tool_results:
         content = result.get("content")
@@ -85,15 +98,56 @@ def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
             except ValueError:
                 continue
             for song in parsed.songs:
-                if song.song_id in seen_song_ids:
+                existing = next(
+                    (index for index, item in enumerate(songs)
+                     if item.song_id == song.song_id), None
+                )
+                position = existing + 1 if existing is not None else len(songs) + 1
+                reference = SongReference(
+                    position=position,
+                    **song.model_dump(mode="json"),
+                )
+                if existing is not None:
+                    songs[existing] = reference
                     continue
                 seen_song_ids.add(song.song_id)
-                songs.append(
-                    SongReference(
-                        position=len(songs) + 1,
-                        **song.model_dump(mode="json"),
-                    )
-                )
+                songs.append(reference)
+        elif result.get("name") == "search_entities_tool" and isinstance(content, str):
+            try:
+                parsed_entities = EntitySearchResult.model_validate_json(content)
+            except ValueError:
+                continue
+            for entity in parsed_entities.entities:
+                if entity.type == "artist" and entity.id not in seen_artist_ids:
+                    seen_artist_ids.add(entity.id)
+                    artists.append(ArtistReference(
+                        position=len(artists) + 1, id=entity.id,
+                        name=entity.name, cover_url=entity.cover_url,
+                    ))
+                elif entity.type == "album" and entity.id not in seen_album_ids:
+                    seen_album_ids.add(entity.id)
+                    albums.append(AlbumReference(
+                        position=len(albums) + 1, id=entity.id,
+                        name=entity.name, artist=entity.artist,
+                        cover_url=entity.cover_url,
+                    ))
+                elif entity.type == "playlist" and entity.id not in seen_playlist_ids:
+                    seen_playlist_ids.add(entity.id)
+                    playlists.append(PlaylistReference(
+                        position=len(playlists) + 1,
+                        playlist_id=entity.id, name=entity.name,
+                    ))
+                elif entity.type == "song" and entity.id not in seen_song_ids:
+                    seen_song_ids.add(entity.id)
+                    duration = entity.metadata.get("duration")
+                    songs.append(SongReference(
+                        position=len(songs) + 1, song_id=entity.id,
+                        name=entity.name,
+                        artists=[name for name in entity.artist.split("、") if name],
+                        album=entity.album, cover_url=entity.cover_url,
+                        duration=duration if isinstance(duration, int) and duration >= 0 else 0,
+                        playable=False,
+                    ))
         elif result.get("name") == "get_user_playlists" and isinstance(content, str):
             try:
                 parsed = UserPlaylistsResult.model_validate_json(content)
@@ -101,6 +155,14 @@ def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
                 continue
             for playlist in parsed.playlists:
                 if playlist.playlist_id in seen_playlist_ids:
+                    index = next(
+                        index for index, item in enumerate(playlists)
+                        if item.playlist_id == playlist.playlist_id
+                    )
+                    playlists[index] = PlaylistReference(
+                        position=index + 1,
+                        **playlist.model_dump(mode="json"),
+                    )
                     continue
                 seen_playlist_ids.add(playlist.playlist_id)
                 playlists.append(
@@ -109,7 +171,29 @@ def _extract_entities(tool_results: list[dict[str, Any]]) -> ReferencedEntities:
                         **playlist.model_dump(mode="json"),
                     )
                 )
-    return ReferencedEntities(songs=songs, playlists=playlists)
+        elif result.get("name") == "get_playlist_detail_tool" and isinstance(content, str):
+            try:
+                detail = PlaylistDetailResult.model_validate_json(content)
+            except ValueError:
+                continue
+            if detail.playlist_id not in seen_playlist_ids:
+                seen_playlist_ids.add(detail.playlist_id)
+                playlists.append(PlaylistReference(
+                    position=len(playlists) + 1,
+                    playlist_id=detail.playlist_id, name=detail.name,
+                ))
+            for song in detail.songs:
+                if song.song_id in seen_song_ids:
+                    continue
+                seen_song_ids.add(song.song_id)
+                songs.append(SongReference(
+                    position=len(songs) + 1,
+                    playable=False,
+                    **song.model_dump(mode="json"),
+                ))
+    return ReferencedEntities(
+        songs=songs, artists=artists, albums=albums, playlists=playlists
+    )
 
 
 def _extract_client_actions(
@@ -147,7 +231,7 @@ def _known_references(
     state: ToolCallingState,
 ) -> tuple[dict[int, SongReference], dict[int, PlaylistReference]]:
     current = _extract_entities(state.get("tool_results", []))
-    groups = [current, *state.get("prior_entities", [])]
+    groups = [*state.get("prior_entities", []), current]
     songs = {
         song.song_id: song
         for group in groups
@@ -163,7 +247,8 @@ def _known_references(
 
 def _track_matches_reference(track: MusicTrack, reference: SongReference) -> bool:
     return (
-        track.song_id == reference.song_id
+        reference.playable
+        and track.song_id == reference.song_id
         and track.name == reference.name
         and track.artists == reference.artists
         and track.album == reference.album
@@ -195,6 +280,10 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
             reference = songs.get(track.song_id)
             if reference is None or not _track_matches_reference(track, reference):
                 errors[call_id] = "播放歌曲必须完整使用 search_music 或历史结果；请先搜索。"
+        elif name == "get_playlist_detail_tool":
+            playlist_id = args.get("playlist_id")
+            if isinstance(playlist_id, int) and playlist_id not in playlists:
+                errors[call_id] = "歌单 ID 没有可信来源；请先搜索歌单或读取当前用户歌单。"
         elif name == "add_song_to_playlist":
             song_id = args.get("song_id")
             playlist_id = args.get("playlist_id")

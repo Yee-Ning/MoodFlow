@@ -261,10 +261,43 @@ class NeteaseMusicServiceTests {
     }
 
     @Test
+    void shouldSearchPlaylistEntities() {
+        server.expect(request -> {
+                    assertRequest(request.getURI(), "/cloudsearch",
+                            "keywords=学习", "type=1000", "limit=3");
+                    assertNull(request.getHeaders().getFirst(HttpHeaders.COOKIE));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "code": 200,
+                          "result": {
+                            "playlistCount": 1,
+                            "playlists": [{
+                              "id": 77,
+                              "name": "学习歌单",
+                              "coverImgUrl": "https://img.test/playlist.jpg",
+                              "trackCount": 2,
+                              "creator": {"nickname": "测试用户"}
+                            }]
+                          }
+                        }
+                        """, APPLICATION_JSON));
+
+        List<MusicEntityData> entities = musicService.searchMusicEntities("学习", "playlist", 3);
+
+        assertEquals(1, entities.size());
+        assertEquals(77L, entities.getFirst().id());
+        assertEquals("playlist", entities.getFirst().entityType());
+        assertEquals("学习歌单", entities.getFirst().name());
+        assertEquals(2, entities.getFirst().metadata().get("track_count"));
+        server.verify();
+    }
+
+    @Test
     void shouldRejectUnsupportedEntityTypeBeforeCallingUpstream() {
         assertThrows(
                 BadRequestException.class,
-                () -> musicService.searchMusicEntities("周杰伦", "playlist", 3));
+                () -> musicService.searchMusicEntities("周杰伦", "genre", 3));
         server.verify();
     }
 

@@ -152,6 +152,15 @@ DEFAULT_RULES: tuple[RuleSpec, ...] = (
         exclusions=(rf"{_NEGATION}(?:查看|显示|获取|打开)[^,.;!?]{{0,8}}歌词",),
     ),
     _rule(
+        "get_playlist_detail",
+        IntentType.TOOL_CALLING,
+        "get_playlist_detail",
+        (r"(?:查看|看看|看一下)(?:我的)?[^,.;!?]{0,30}歌单[^,.;!?]{0,12}(?:歌|歌曲)",),
+        priority=231,
+        confidence=0.98,
+        exclusions=(rf"{_NEGATION}(?:查看|看看|看一下)[^,.;!?]{{0,40}}歌单",),
+    ),
+    _rule(
         "get_user_playlists",
         IntentType.TOOL_CALLING,
         "get_user_playlists",
@@ -179,6 +188,7 @@ DEFAULT_RULES: tuple[RuleSpec, ...] = (
         (
             r"(?:帮我)?(?:搜索|查找)(?:一下)?(?:歌曲|歌手|专辑)"
             r"[^,.;!?]{1,40}",
+            r"(?:帮我)?(?:搜索|查找)(?:一下)?[^,.;!?]{1,40}",
         ),
         priority=225,
         confidence=0.96,

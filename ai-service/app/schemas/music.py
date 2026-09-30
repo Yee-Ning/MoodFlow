@@ -31,6 +31,20 @@ class SearchMusicArgs(BaseModel):
     )
 
 
+class SearchEntitiesArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: NonBlankText = Field(max_length=100, description="音乐实体搜索关键词。")
+    entity_type: Literal["song", "artist", "album", "playlist"] | None = None
+    limit: int = Field(default=5, ge=1, le=50)
+
+
+class GetPlaylistDetailArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    playlist_id: int = Field(gt=0, description="从搜索或当前用户歌单取得的真实歌单 ID。")
+
+
 class GetSongLyricsArgs(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -86,7 +100,7 @@ class MusicEntityReference(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     entity_id: int = Field(validation_alias=AliasChoices("entity_id", "id"), gt=0)
-    entity_type: Literal["song", "artist", "album"] = Field(
+    entity_type: Literal["song", "artist", "album", "playlist"] = Field(
         validation_alias=AliasChoices("entity_type", "entityType")
     )
     name: NonBlankText
@@ -105,7 +119,7 @@ class MusicEntity(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     entity_id: int = Field(validation_alias=AliasChoices("entity_id", "id"), gt=0)
-    entity_type: Literal["song", "artist", "album"] = Field(
+    entity_type: Literal["song", "artist", "album", "playlist"] = Field(
         validation_alias=AliasChoices("entity_type", "entityType")
     )
     name: NonBlankText
@@ -141,6 +155,27 @@ class SpringMusicEntityDetailResponse(BaseModel):
     code: int
     message: str
     data: MusicEntity
+
+
+class EntitySearchItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: int = Field(gt=0)
+    name: NonBlankText
+    type: Literal["song", "artist", "album", "playlist"]
+    source: Literal["netease"] = "netease"
+    artist: str = ""
+    album: str = ""
+    cover_url: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class EntitySearchResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: NonBlankText
+    entity_type: Literal["song", "artist", "album", "playlist"] | None = None
+    entities: list[EntitySearchItem]
 
 
 class SongLyricsResult(BaseModel):
@@ -227,6 +262,34 @@ class SpringUserPlaylistsResponse(BaseModel):
     code: int
     message: str
     data: list[SpringPlaylist]
+
+
+class SpringPlaylistDetail(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    playlist: SpringPlaylist
+    description: str
+    songs: list[MusicTrack]
+
+
+class SpringPlaylistDetailResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: int
+    message: str
+    data: SpringPlaylistDetail
+
+
+class PlaylistDetailResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    playlist_id: int = Field(gt=0)
+    name: NonBlankText
+    description: str
+    cover_url: str
+    creator: NonBlankText
+    track_count: int = Field(ge=0)
+    songs: list[MusicTrack]
 
 
 class SpringPlaylistMutation(BaseModel):

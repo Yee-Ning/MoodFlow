@@ -42,7 +42,7 @@ public class NeteaseMusicService {
 
     private static final Logger log = LoggerFactory.getLogger(NeteaseMusicService.class);
     private static final int PLAYLIST_LIMIT = 1000;
-    private static final List<String> MUSIC_ENTITY_TYPES = List.of("song", "artist", "album");
+    private static final List<String> MUSIC_ENTITY_TYPES = List.of("song", "artist", "album", "playlist");
 
     private final RestClient neteaseRestClient;
 
@@ -131,6 +131,9 @@ public class NeteaseMusicService {
                 ? ""
                 : entityType.trim().toLowerCase(Locale.ROOT);
         validateMusicEntityType(normalizedType);
+        if ("playlist".equals(normalizedType)) {
+            throw new BadRequestException("歌单详情请使用 /api/playlists/{id}");
+        }
 
         return switch (normalizedType) {
             case "song" -> {
@@ -435,12 +438,14 @@ public class NeteaseMusicService {
             case "song" -> 1;
             case "album" -> 10;
             case "artist" -> 100;
+            case "playlist" -> 1000;
             default -> throw new IllegalStateException("unreachable entity type");
         };
         String resultField = switch (entityType) {
             case "song" -> "songs";
             case "album" -> "albums";
             case "artist" -> "artists";
+            case "playlist" -> "playlists";
             default -> throw new IllegalStateException("unreachable entity type");
         };
         Map<String, Object> response = get("/cloudsearch", Map.of(
@@ -453,8 +458,22 @@ public class NeteaseMusicService {
             case "song" -> items.stream().map(this::toSongEntity).toList();
             case "album" -> items.stream().map(item -> toAlbumEntity(item, List.of())).toList();
             case "artist" -> items.stream().map(item -> toArtistEntity(item, List.of())).toList();
+            case "playlist" -> items.stream().map(this::toPlaylistEntity).toList();
             default -> throw new IllegalStateException("unreachable entity type");
         };
+    }
+
+    private MusicEntityData toPlaylistEntity(Map<String, Object> source) {
+        Map<String, Object> creator = requiredMap(source, "creator");
+        return new MusicEntityData(
+                requiredLong(source, "id"),
+                "playlist",
+                requiredString(source, "name"),
+                optionalString(creator, "nickname"),
+                "",
+                optionalString(source, "coverImgUrl"),
+                Map.of("track_count", optionalInt(source, "trackCount")),
+                List.of());
     }
 
     private MusicEntityData toSongEntity(Map<String, Object> source) {
@@ -571,7 +590,7 @@ public class NeteaseMusicService {
 
     private void validateMusicEntityType(String entityType) {
         if (!MUSIC_ENTITY_TYPES.contains(entityType)) {
-            throw new BadRequestException("type 必须是 song、artist 或 album");
+            throw new BadRequestException("type 必须是 song、artist、album 或 playlist");
         }
     }
 

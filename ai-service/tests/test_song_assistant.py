@@ -68,8 +68,10 @@ class SongAssistantTests(unittest.TestCase):
             [item.name for item in bound_tools],
             [
                 "search_music",
+                "search_entities_tool",
                 "get_song_lyrics",
                 "get_user_playlists",
+                "get_playlist_detail_tool",
                 "add_song_to_playlist",
             ],
         )
