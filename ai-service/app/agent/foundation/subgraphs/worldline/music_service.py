@@ -76,7 +76,12 @@ class JavaMusicEntityService:
             ),
             limit=limit,
         )
-        return [_resolved_entity(entity) for entity in entities]
+        # Unified catalog search also returns playlists. Worldline currently
+        # models only songs, artists and albums, so adapt that richer contract.
+        return [
+            _resolved_entity(entity) for entity in entities
+            if entity.entity_type in {item.value for item in EntityType}
+        ]
 
     async def load_entity_facts(
         self,
