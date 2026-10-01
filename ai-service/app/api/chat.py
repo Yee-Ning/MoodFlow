@@ -14,6 +14,7 @@ from app.agent.foundation.streaming import (
 )
 from app.config.settings import get_settings
 from app.agent.handoff.streaming import invoke_handoff_assistant, stream_handoff_assistant
+from app.agent.handoff.rollout import select_chat_graph
 from app.context.identity import UserIdentityProvider
 from app.schemas.chat import (
     ChatRequest,
@@ -94,7 +95,7 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
     async def generate_events() -> AsyncIterator[str]:
         try:
             thread_id = chat_request.thread_id or str(uuid4())
-            mode = get_settings().agent_graph_mode
+            mode = select_chat_graph(get_settings(), chat_request.thread_id)
             if mode in {"foundation", "handoff"}:
                 user_id = await UserIdentityProvider().resolve(session_cookie)
                 stream = stream_handoff_assistant if mode == "handoff" else stream_foundation_assistant

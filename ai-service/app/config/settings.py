@@ -49,6 +49,9 @@ class Settings(BaseSettings):
         default="foundation",
         validation_alias="AI_AGENT_GRAPH_MODE",
     )
+    handoff_canary_enabled: bool = Field(default=False, validation_alias="HANDOFF_CANARY_ENABLED")
+    handoff_canary_percentage: float = Field(default=10, ge=0, le=100, validation_alias="HANDOFF_CANARY_PERCENTAGE")
+    handoff_canary_salt: str = Field(default="moodflow-handoff-v1", min_length=1, max_length=128, validation_alias="HANDOFF_CANARY_SALT")
     typesafe_api_key: SecretStr | None = Field(default=None, validation_alias="TYPESAFE_API_KEY")
     jev_enabled: bool = Field(default=False, validation_alias="JEV_ENABLED")
     jev_shadow_mode: bool = Field(default=True, validation_alias="JEV_SHADOW_MODE")
