@@ -68,6 +68,12 @@ class Settings(BaseSettings):
     jev_model: str = Field(default="jev-latest", min_length=1, validation_alias="JEV_MODEL")
     jev_timeout_seconds: float = Field(default=5, gt=0, le=60, validation_alias="JEV_TIMEOUT_SECONDS")
     jev_router_confidence_threshold: float = Field(default=0.8, ge=0, le=1, validation_alias="JEV_ROUTER_CONFIDENCE_THRESHOLD")
+    jev_handoff_router_enabled: bool = Field(default=False, validation_alias="JEV_HANDOFF_ROUTER_ENABLED")
+    jev_handoff_router_shadow_mode: bool = Field(default=True, validation_alias="JEV_HANDOFF_ROUTER_SHADOW_MODE")
+    jev_handoff_guard_enabled: bool = Field(default=True, validation_alias="JEV_HANDOFF_GUARD_ENABLED")
+    jev_handoff_guard_shadow_mode: bool = Field(default=True, validation_alias="JEV_HANDOFF_GUARD_SHADOW_MODE")
+    jev_handoff_guard_threshold: float = Field(default=0.8, ge=0, le=1, validation_alias="JEV_HANDOFF_GUARD_THRESHOLD")
+    jev_handoff_injection_threshold: float = Field(default=0.2, ge=0, le=1, validation_alias="JEV_HANDOFF_INJECTION_THRESHOLD")
     jev_memory_filter_threshold: float = Field(default=0.5, ge=0, le=1, validation_alias="JEV_MEMORY_FILTER_THRESHOLD")
     jev_context_select_threshold: float = Field(default=0.5, ge=0, le=1, validation_alias="JEV_CONTEXT_SELECT_THRESHOLD")
 

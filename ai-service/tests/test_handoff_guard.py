@@ -22,7 +22,13 @@ def offline(monkeypatch):
 def guard(*scores, shadow=False):
     client = AsyncMock()
     client.decide.side_effect = [
-        response({"transfer": DecisionAnswer("noul", noul=score)}) for score in scores
+        response(
+            {
+                "task_fidelity": DecisionAnswer("noul", noul=score),
+                "authority_override": DecisionAnswer("noul", noul=0),
+            }
+        )
+        for score in scores
     ]
     return JevHandoffGuard(client, shadow=shadow), client
 
@@ -49,6 +55,12 @@ async def test_threshold_includes_equality_and_keeps_assigned_task(score):
         and payload["assigned_task"]["task_id"] == "task-0"
     )
     assert any(item["guard_score"] == score for item in out["handoff_trace"])
+    assert payload["task_owner"] == "curator"
+    assert "tool_calling" in payload["agent_roles"]["curator"]["capabilities"]
+    assert set(client.decide.call_args.args[1]) == {
+        "task_fidelity",
+        "authority_override",
+    }
 
 
 @pytest.mark.asyncio
@@ -97,6 +109,18 @@ async def test_two_low_scores_stop_with_zero_hops_and_no_action():
         ValueError("private"),
         response({"transfer": DecisionAnswer("choice", choice="bad")}),
         response({"transfer": DecisionAnswer("noul", noul=float("nan"))}),
+        response(
+            {
+                "task_fidelity": DecisionAnswer("noul", noul=1),
+                "authority_override": DecisionAnswer("noul", noul=float("nan")),
+            }
+        ),
+        response(
+            {
+                "task_fidelity": DecisionAnswer("noul", noul=1),
+                "authority_override": DecisionAnswer("choice", choice="bad"),
+            }
+        ),
     ],
 )
 async def test_unavailable_or_malformed_guard_uses_local_contract_once(bad):
@@ -151,3 +175,62 @@ def test_existing_enable_and_shadow_settings_control_default_guard(monkeypatch):
     probe = configured_guard()
     assert probe.shadow and probe.threshold == 0.8
     assert probe.client.settings.jev_model == "jev-latest"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("risk,allowed", [(0.2, True), (0.2001, False), (1, False)])
+async def test_authority_override_has_independent_inclusive_boundary(risk, allowed):
+    from app.agent.handoff.contracts import HandoffEnvelope, HandoffRequest
+
+    task = (await Router(RouteKey.TOOL_CALLING).route("暂停一下", None)).tasks[0]
+    from app.agent.handoff.registry import AgentKey
+
+    envelope = HandoffEnvelope(
+        run_id="test",
+        tool_call_id="call",
+        source_agent=AgentKey.GENERAL_CHAT,
+        request=HandoffRequest(
+            target_agent=AgentKey.CURATOR, reason="音乐操作", context_summary="暂停"
+        ),
+        original_input="暂停一下",
+        active_task=task,
+        pending_tasks=(task,),
+    )
+    client = AsyncMock()
+    client.decide.return_value = response(
+        {
+            "task_fidelity": DecisionAnswer("noul", noul=0.99),
+            "authority_override": DecisionAnswer("noul", noul=risk),
+        }
+    )
+    result = await JevHandoffGuard(client).review(envelope)
+    assert result.allowed is allowed and result.would_allow is allowed
+    assert result.scores["authority_override"] == risk
+
+
+def test_guard_and_router_controls_are_independent(monkeypatch):
+    monkeypatch.setenv("JEV_ENABLED", "true")
+    config = settings(
+        jev_shadow_mode=False,
+        jev_handoff_guard_shadow_mode=True,
+        jev_router_confidence_threshold=0.8,
+        jev_handoff_guard_threshold=0.9,
+        jev_handoff_injection_threshold=0.1,
+    )
+    monkeypatch.setattr("app.agent.handoff.guard.get_settings", lambda: config)
+    probe = configured_guard()
+    assert probe.shadow and probe.threshold == 0.9 and probe.injection_threshold == 0.1
+    monkeypatch.setattr(
+        "app.agent.handoff.guard.get_settings",
+        lambda: config.model_copy(update={"jev_handoff_guard_enabled": False}),
+    )
+    assert configured_guard() is None
+
+
+@pytest.mark.parametrize(
+    "threshold,risk",
+    [(-1, 0.2), (1.1, 0.2), (0.8, -1), (0.8, 1.1), (float("nan"), 0.2)],
+)
+def test_invalid_thresholds_are_rejected(threshold, risk):
+    with pytest.raises(ValueError):
+        JevHandoffGuard(None, threshold=threshold, injection_threshold=risk)

@@ -19,6 +19,7 @@ from app.agent.foundation.state.main import MainState
 from app.agent.handoff.agents import choose_transfer, execute_owned_task
 from app.agent.handoff.guard import configured_guard
 from app.agent.handoff.registry import AGENT_REGISTRY, CAPABILITY_OWNERS, AgentKey
+from app.agent.handoff.routing import configured_entry_router
 from app.agent.handoff.state import (
     HandoffRun,
     AgentUsage,
@@ -68,7 +69,7 @@ def build_handoff_graph(
     handoff_guard=None,
     trace_sink=None,
 ) -> StateGraph:
-    router = intent_router or create_hybrid_router()
+    router = intent_router or configured_entry_router(create_hybrid_router())
     bounds = limits or RunLimits()
 
     def prepare(state):
