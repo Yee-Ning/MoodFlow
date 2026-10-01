@@ -744,6 +744,10 @@ def build_tool_calling_subgraph(
                 state.get("prior_entities", []),
                 model=bound_model,
                 continuity_context=state.get("continuity_context"),
+                search_only=bool(graph_tools) and all(
+                    item.name in {"search_music", "search_entities_tool"}
+                    for item in graph_tools
+                ),
             )
 
         if result.invalid_tool_calls or any(

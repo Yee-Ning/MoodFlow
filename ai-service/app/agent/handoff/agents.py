@@ -18,6 +18,7 @@ from app.agent.foundation.subgraphs.general_chat import create_general_chat_subg
 from app.agent.foundation.subgraphs.tool_calling import create_tool_calling_subgraph
 from app.agent.foundation.subgraphs.tool_calling.assistant import all_tool_calling_tools
 from app.agent.handoff.song_context import SongContextRead, create_song_context_tool
+from app.agent.handoff.search_scope import scoped_search_tools
 from app.agent.handoff.context import exploration_projection
 from app.agent.handoff.explorer import execute_exploration, get_worldline_subgraph
 from app.agent.handoff.state import HandoffRun
@@ -183,10 +184,10 @@ async def execute_owned_task(
         # Bind the same allowlist to model and executor, including the read tool.
         graph = create_tool_calling_subgraph(
             model=instrument_chat_model(curator_model or get_base_chat_model()),
-            tools=[
+            tools=scoped_search_tools(task.input_text, [
                 *(tool_tools if tool_tools is not None else all_tool_calling_tools()),
                 context_tool,
-            ],
+            ]),
         )
     else:
 
