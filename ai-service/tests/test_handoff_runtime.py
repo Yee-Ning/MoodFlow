@@ -367,22 +367,45 @@ async def test_invalid_transfer_is_paired_and_cannot_execute_business_tools(fail
         ((RouteKey.TOOL_CALLING, RouteKey.WORLDLINE), "暂停一下；探索时代"),
     ],
 )
-async def test_explorer_unavailable_fails_before_any_partial_music_operation(
+async def test_explorer_dependency_failure_preserves_completed_music_results(
     routes, text
 ):
-    transfer_model = ToolModel(responses=[call()])
+    from app.agent.foundation.subgraphs.worldline.graph import create_worldline_subgraph
+    from tests.test_worldline_graph import (
+        EmptyRetriever,
+        FakeGenerator,
+        FakeMusicService,
+    )
+
+    transfer_model = ToolModel(
+        responses=[call(), call("transfer_to_explorer_agent", call_id="explore")]
+    )
+    worldline = create_worldline_subgraph(
+        music_service=FakeMusicService(
+            None, search_error=RuntimeError("private music failure")
+        ),
+        retriever=EmptyRetriever(),
+        generator=FakeGenerator(),
+    )
     graph = build_handoff_graph(
-        intent_router=Router(*routes), transfer_model=transfer_model
+        intent_router=Router(*routes),
+        transfer_model=transfer_model,
+        worldline_subgraph=worldline,
     ).compile()
     response = await invoke_handoff_assistant(
         message=text,
         thread_id="unsupported",
-        routing_context=RoutingContext(),
+        routing_context=player_context(),
         graph=graph,
     )
-    assert response.status == TaskStatus.FAILED and response.results == []
-    assert "探索" in response.message
-    assert transfer_model.seen_messages == []
+    assert response.status == TaskStatus.FAILED and len(response.results) == len(routes)
+    assert response.results[-1].subgraph == "worldline"
+    assert response.results[-1].status == TaskStatus.FAILED
+    assert "private" not in response.model_dump_json()
+    if len(routes) == 2:
+        assert (
+            response.results[0].metadata["client_actions"][0]["name"] == "pause_player"
+        )
 
 
 @pytest.mark.asyncio

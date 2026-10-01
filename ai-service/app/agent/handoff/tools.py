@@ -10,6 +10,7 @@ from langchain_core.tools import BaseTool, tool
 from langgraph.types import Command
 
 from app.agent.handoff.contracts import TransferArguments
+from app.agent.handoff.context import latest_entities
 from app.agent.handoff.messages import parse_transfer_call, transfer_message_pair
 from app.agent.handoff.registry import AGENT_REGISTRY, AgentKey, transfer_tool_name
 from app.agent.handoff.state import HandoffRun, StopReason, finish_run, request_handoff
@@ -97,6 +98,7 @@ def create_transfer_tools(
                     source_agent=source,
                     tool_call_id=message.tool_calls[0]["id"],
                     now=clock(),
+                    entities=latest_entities(run.results),
                 )
                 pair = transfer_message_pair(
                     message, result, source=source, run_id=run.run_id

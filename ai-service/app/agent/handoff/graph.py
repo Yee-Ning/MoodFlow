@@ -1,4 +1,4 @@
-"""Phase 2 parent graph: GeneralChat and Curator with Command handoff."""
+"""Parent graph for the GeneralChat / Curator / Explorer business network."""
 
 import asyncio
 from collections.abc import Callable
@@ -14,7 +14,7 @@ from langgraph.types import Command
 from app.agent.checkpointing import create_runtime_checkpointer
 from app.agent.foundation.main_graph import create_hybrid_router
 from app.agent.foundation.models import TaskResult, TaskStatus
-from app.agent.foundation.routing import RouteDecision, RouteKey
+from app.agent.foundation.routing import RouteDecision
 from app.agent.foundation.state.main import MainState
 from app.agent.handoff.agents import choose_transfer, execute_owned_task
 from app.agent.handoff.registry import AGENT_REGISTRY, CAPABILITY_OWNERS, AgentKey
@@ -31,7 +31,6 @@ from app.agent.handoff.tools import execute_transfer, utc_now
 from app.schemas.context import MusicAgentContext
 
 EXECUTION_FAILURE = "本次音乐或聊天任务暂时无法完成，请稍后再试。"
-EXPLORATION_UNAVAILABLE = "当前无法完成这次探索请求，请稍后再试。"
 
 
 class HandoffGraphState(MainState):
@@ -51,6 +50,7 @@ def build_handoff_graph(
     general_model=None,
     curator_model=None,
     song_model=None,
+    worldline_subgraph=None,
     provider=None,
     tool_tools=None,
     subgraphs=None,
@@ -93,12 +93,6 @@ def build_handoff_graph(
                 entry_agent=AgentKey.GENERAL_CHAT,
                 limits=bounds,
             )
-            if run.status is RunStatus.RUNNING and any(
-                task.route_key is RouteKey.WORLDLINE for task in decision.tasks
-            ):
-                run = finish_run(
-                    run, EXPLORATION_UNAVAILABLE, reason=StopReason.INVALID_TRANSFER
-                )
         except Exception:
             return Command(
                 goto="final_response",
@@ -138,6 +132,7 @@ def build_handoff_graph(
                     general_model=general_model,
                     curator_model=curator_model,
                     song_model=song_model,
+                    worldline_subgraph=worldline_subgraph,
                     provider=provider,
                     tool_tools=tool_tools,
                     subgraphs=subgraphs,
@@ -200,11 +195,12 @@ def build_handoff_graph(
     builder.add_node(
         "intent_router", route, destinations=("general_chat_agent", "final_response")
     )
-    for name in ("general_chat_agent", "curator_agent"):
+    for spec in AGENT_REGISTRY.values():
         builder.add_node(
-            name,
+            spec.node_name,
             agent,
-            destinations=("general_chat_agent", "curator_agent", "final_response"),
+            destinations=tuple(item.node_name for item in AGENT_REGISTRY.values())
+            + ("final_response",),
         )
     builder.add_node("final_response", final)
     builder.add_edge(START, "prepare_context")

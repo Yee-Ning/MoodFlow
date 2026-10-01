@@ -18,6 +18,8 @@ from app.agent.foundation.subgraphs.general_chat import create_general_chat_subg
 from app.agent.foundation.subgraphs.tool_calling import create_tool_calling_subgraph
 from app.agent.foundation.subgraphs.tool_calling.assistant import all_tool_calling_tools
 from app.agent.handoff.song_context import SongContextRead, create_song_context_tool
+from app.agent.handoff.context import exploration_projection
+from app.agent.handoff.explorer import execute_exploration, get_worldline_subgraph
 from app.agent.handoff.state import HandoffRun
 from app.agent.handoff.tools import create_transfer_tools
 from app.llm.client import get_base_chat_model
@@ -40,6 +42,13 @@ def task_view(state: dict, run: HandoffRun) -> dict:
         for result in state.get("task_results", [])
         if result.task_id not in active_ids
     ]
+    continuity = dict(state.get("continuity_context", {}))
+    projection = exploration_projection(run.results)
+    if projection is not None:
+        continuity["handoff"] = {
+            "window_handoff": continuity.get("handoff"),
+            "completed_exploration": projection,
+        }
     return {
         **state,
         "messages": history,
@@ -48,6 +57,7 @@ def task_view(state: dict, run: HandoffRun) -> dict:
         # Adapter dispatch must use this run's completion prefix. Keep older
         # entity context only when it cannot masquerade as a completed task.
         "task_results": [*prior_results, *run.results],
+        "continuity_context": continuity,
     }
 
 
@@ -94,6 +104,7 @@ async def execute_owned_task(
     general_model=None,
     curator_model=None,
     song_model=None,
+    worldline_subgraph=None,
     provider=None,
     tool_tools=None,
     subgraphs=None,
@@ -108,6 +119,14 @@ async def execute_owned_task(
     context_tool = create_song_context_tool(
         state["routing_context"], run.results, provider=provider
     )
+    if task.route_key is RouteKey.WORLDLINE:
+        return await execute_exploration(
+            view,
+            run,
+            runtime,
+            graph=worldline_subgraph or get_worldline_subgraph(),
+            context_tool=context_tool,
+        )
     if task.route_key is RouteKey.CURRENT_SONG:
         read = SongContextRead.model_validate_json(await context_tool.ainvoke({}))
         if read.status is not TaskStatus.SUCCESS:
@@ -125,7 +144,7 @@ async def execute_owned_task(
             read.song,
             state["routing_context"],
             model=song_model,
-            continuity_context=state.get("continuity_context"),
+            continuity_context=view.get("continuity_context"),
         )
         if (
             response.tool_calls
@@ -184,7 +203,7 @@ async def execute_owned_task(
                         ],
                         ensure_ascii=False,
                     ),
-                    continuity_context=state.get("continuity_context"),
+                    continuity_context=view.get("continuity_context"),
                 )
                 response = await bound.ainvoke(pack.messages)
                 if not isinstance(response, AIMessage) or response.invalid_tool_calls:

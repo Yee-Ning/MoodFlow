@@ -218,7 +218,7 @@ async def stream_foundation_assistant(
 ) -> AsyncIterator[SongAssistantStreamEvent]:
     execution_thread_id = f"handoff:v1:{thread_id}" if graph_mode == "handoff" else thread_id
     selected_graph = graph or (get_handoff_graph() if graph_mode == "handoff" else get_foundation_graph())
-    update_nodes = FOUNDATION_UPDATE_NODES | ({"general_chat_agent", "curator_agent"} if graph_mode == "handoff" else set())
+    update_nodes = FOUNDATION_UPDATE_NODES | ({"general_chat_agent", "curator_agent", "explorer_agent"} if graph_mode == "handoff" else set())
     execution_failed = False
     execution_needs_input = False
     final_response: str | None = None
@@ -311,6 +311,8 @@ async def stream_foundation_assistant(
             if graph_mode == "handoff":
                 if node == "general_chat_agent":
                     public_node = "general_chat_subgraph"
+                elif node == "explorer_agent":
+                    public_node = "worldline_subgraph"
                 elif node == "curator_agent":
                     results = _task_results(update)
                     public_node = "current_song_subgraph" if results and results[0].route_key == "current_song" else "tool_calling_subgraph"
@@ -335,7 +337,7 @@ async def stream_foundation_assistant(
                             request_id=request_id,
                         )
 
-            if node.endswith("_subgraph") or (graph_mode == "handoff" and node in {"general_chat_agent", "curator_agent"}):
+            if node.endswith("_subgraph") or (graph_mode == "handoff" and node in {"general_chat_agent", "curator_agent", "explorer_agent"}):
                 new_results = _task_results(update)
                 task_results.extend(new_results)
                 # Tool/worldline outputs need grounding/schema validation before
