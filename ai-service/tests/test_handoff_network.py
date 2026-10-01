@@ -24,6 +24,10 @@ from app.agent.handoff.streaming import (
     stream_handoff_assistant,
 )
 from app.main import app
+from app.rag.query_understanding.analyzer import QueryAnalyzer, QueryTypeOutput
+from app.rag.query_understanding.config import load_query_understanding_config
+from app.rag.query_understanding.models import QueryType
+from app.rag.query_understanding.service import QueryUnderstandingService
 from app.schemas.chat import (
     ClientActionStreamEvent,
     MessageStreamEvent,
@@ -85,11 +89,21 @@ def offline_models(monkeypatch):
 
 
 def worldline(*, service=None, retriever=None, generator=None):
+    class OfflineQueryRuntime:
+        async def analyze(self, query):
+            # Scene-only queries use the analyzer's LLM fallback. Keep this
+            # controlled business-network suite independent of provider calls.
+            return QueryTypeOutput(query_types=[QueryType.EXPLORATORY], confidence=0.94)
+
+    config = load_query_understanding_config()
     return create_worldline_subgraph(
         music_service=service
         or FakeMusicService(entity(21, EntityType.ARTIST, "周杰伦")),
         retriever=retriever or EmptyRetriever(),
         generator=generator or FakeGenerator(grounded=True),
+        query_understanding=QueryUnderstandingService(
+            analyzer=QueryAnalyzer(config, runtime=OfflineQueryRuntime()),
+        ),
     )
 
 
