@@ -23,6 +23,7 @@ from app.agent.handoff.explorer import execute_exploration, get_worldline_subgra
 from app.agent.handoff.state import HandoffRun
 from app.agent.handoff.tools import create_transfer_tools
 from app.llm.client import get_base_chat_model
+from app.llm.runtime import instrument_chat_model
 
 
 def task_view(state: dict, run: HandoffRun) -> dict:
@@ -61,7 +62,9 @@ def task_view(state: dict, run: HandoffRun) -> dict:
     }
 
 
-async def choose_transfer(state: dict, run: HandoffRun, *, model=None) -> AIMessage:
+async def choose_transfer(
+    state: dict, run: HandoffRun, *, model=None, feedback=None
+) -> AIMessage:
     tools = create_transfer_tools(run.current_agent, run)
     task = run.pending_tasks[0]
     summaries = [
@@ -75,7 +78,12 @@ async def choose_transfer(state: dict, run: HandoffRun, *, model=None) -> AIMess
     pack = await build_context_async(
         task.route_key,
         query=task.input_text,
-        system="你是 MoodFlow 的 Agent 协作节点。下一项待办不属于你，请使用允许的 transfer 工具交给其能力执行者；必要时经过 Curator 中转。不要执行业务工具、改写任务、授权新动作或输出隐藏推理。reason 简短，context_summary 只总结已知事实。",
+        system="你是 MoodFlow 的 Agent 协作节点。下一项待办不属于你，请使用允许的 transfer 工具交给其能力执行者；必要时经过 Curator 中转。不要执行业务工具、改写任务、授权新动作或输出隐藏推理。reason 简短，context_summary 只总结已知事实。"
+        + (
+            "\n上次转交被护栏拒绝，请根据原任务重新检查一次理由与摘要。"
+            if feedback
+            else ""
+        ),
         messages=[],
         business_state=json.dumps(
             {
@@ -89,7 +97,9 @@ async def choose_transfer(state: dict, run: HandoffRun, *, model=None) -> AIMess
         continuity_context=state.get("continuity_context"),
     )
     response = (
-        await (model or get_base_chat_model()).bind_tools(tools).ainvoke(pack.messages)
+        await instrument_chat_model(model or get_base_chat_model())
+        .bind_tools(tools)
+        .ainvoke(pack.messages)
     )
     if not isinstance(response, AIMessage):
         raise ValueError("transfer model returned an invalid message")
@@ -143,7 +153,7 @@ async def execute_owned_task(
             task.input_text,
             read.song,
             state["routing_context"],
-            model=song_model,
+            model=instrument_chat_model(song_model or get_base_chat_model()),
             continuity_context=view.get("continuity_context"),
         )
         if (
@@ -172,7 +182,7 @@ async def execute_owned_task(
     if task.route_key is RouteKey.TOOL_CALLING:
         # Bind the same allowlist to model and executor, including the read tool.
         graph = create_tool_calling_subgraph(
-            model=curator_model or get_base_chat_model(),
+            model=instrument_chat_model(curator_model or get_base_chat_model()),
             tools=[
                 *(tool_tools if tool_tools is not None else all_tool_calling_tools()),
                 context_tool,
@@ -184,7 +194,9 @@ async def execute_owned_task(
             history = list(messages)
             if history and isinstance(history[-1], HumanMessage):
                 history.pop()
-            bound = (general_model or get_base_chat_model()).bind_tools([context_tool])
+            bound = instrument_chat_model(
+                general_model or get_base_chat_model()
+            ).bind_tools([context_tool])
             for attempt in range(3):
                 pack = await build_context_async(
                     RouteKey.GENERAL_CHAT,

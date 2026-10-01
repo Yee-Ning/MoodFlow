@@ -72,6 +72,9 @@ class AgentUsage(ContractModel):
     agent: AgentKey
     tokens: int = Field(default=0, ge=0, strict=True)
     retries: int = Field(default=0, ge=0, strict=True)
+    reported_tokens: int = Field(default=0, ge=0, strict=True)
+    estimated_tokens: int = Field(default=0, ge=0, strict=True)
+    model_calls: int = Field(default=0, ge=0, strict=True)
 
 
 class HandoffHop(ContractModel):

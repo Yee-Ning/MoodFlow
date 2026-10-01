@@ -11,6 +11,7 @@ from openai.types.responses import Response
 from app.config.settings import get_settings
 from app.schemas.chat import STRUCTURED_OUTPUT_ADAPTER
 from app.tools.definitions import MUSIC_TOOLS
+from app.llm.runtime import accounted_call, active_ledger
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ async def _create_response(
             api_key=settings.api_key.get_secret_value(),
             base_url=str(settings.base_url),
             timeout=settings.timeout_seconds,
-            max_retries=0 if output_format is not None else 2,
+            max_retries=0 if output_format is not None or active_ledger.get() is not None else 2,
         ) as client:
             request: dict[str, Any] = {
                 "model": model or settings.model,
@@ -99,9 +100,16 @@ async def _create_response(
                 request["tools"] = MUSIC_TOOLS
                 request["tool_choice"] = "auto"
 
-            return await client.responses.create(**request)
-    except OpenAIError:
-        logger.exception("DeepSeek Responses API request failed")
+            return await accounted_call(
+                lambda: client.responses.create(**request),
+                {key: value for key, value in request.items() if key != "model"},
+                output_tokens=request["max_output_tokens"],
+            )
+    except OpenAIError as exc:
+        if active_ledger.get() is not None:
+            logger.warning("LLM request failed error_type=%s", type(exc).__name__)
+        else:
+            logger.exception("DeepSeek Responses API request failed")
         raise
 
 

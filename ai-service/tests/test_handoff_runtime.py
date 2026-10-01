@@ -59,7 +59,21 @@ class ToolModel(FakeMessagesListChatModel):
 
     def _generate(self, messages, stop=None, run_manager=None, **kwargs):
         self.seen_messages.append(list(messages))
-        return super()._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
+        result = super()._generate(
+            messages, stop=stop, run_manager=run_manager, **kwargs
+        )
+        for generation in result.generations:
+            if generation.message.usage_metadata is None:
+                generation.message = generation.message.model_copy(
+                    update={
+                        "usage_metadata": {
+                            "input_tokens": 80,
+                            "output_tokens": 20,
+                            "total_tokens": 100,
+                        },
+                    }
+                )
+        return result
 
 
 @pytest.fixture(autouse=True)
@@ -941,7 +955,7 @@ async def test_hop_limit_preserves_completed_action_and_stops_remaining_task():
 @pytest.mark.asyncio
 async def test_total_deadline_stops_before_model_or_business_tools():
     start = datetime(2026, 10, 1, tzinfo=timezone.utc)
-    ticks = iter([start, start + timedelta(seconds=120)])
+    ticks = iter([start, start, start + timedelta(seconds=120)])
     model = ToolModel(responses=[call()])
     graph = build_handoff_graph(
         intent_router=Router(RouteKey.TOOL_CALLING),

@@ -520,6 +520,16 @@ async def build_context_async(node: RouteKey, *, policy: ContextPolicy | None = 
     """Apply Jev before the unchanged dedup, budget, compression and assembly stages."""
     token_counter = counter or UnicodeHeuristicTokenCounter()
     collected = ContextCollector(token_counter).collect(**sources)
+    from app.llm.runtime import active_ledger
+    ledger = active_ledger.get()
+    if ledger is not None:
+        selected_policy = policy or POLICIES[node]
+        policy = selected_policy.model_copy(update={
+            "total_input_budget": max(
+                selected_policy.reserved_output_tokens + selected_policy.safety_margin + 1,
+                min(selected_policy.total_input_budget, ledger.remaining),
+            ),
+        })
     from app.config.settings import get_settings, jev_requested
     if jev_client is not None or jev_requested():
         settings = get_settings()
@@ -533,6 +543,13 @@ async def build_context_async(node: RouteKey, *, policy: ContextPolicy | None = 
             client=jev_client or JevClient(settings),
             trace_id=(trace_context or {}).get("request_id"),
         )
-    return ContextSelector(token_counter).build(
-        collected, policy or POLICIES[node], trace_context=trace_context,
-    )
+    try:
+        return ContextSelector(token_counter).build(
+            collected, policy or POLICIES[node], trace_context=trace_context,
+        )
+    except ValueError:
+        if ledger is not None:
+            from app.llm.runtime import RuntimeLimitError
+            ledger.blocked = "token_limit"
+            raise RuntimeLimitError("token_limit") from None
+        raise

@@ -103,6 +103,18 @@ class HandoffCode(StrEnum):
     TOKEN_LIMIT = "token_limit"
     RUN_TIMEOUT = "run_timeout"
     RUN_NOT_RUNNING = "run_not_running"
+    GUARD_REJECTED = "guard_rejected"
+    GUARD_UNAVAILABLE = "guard_unavailable"
+    GUARD_SHADOW = "guard_shadow"
+    INVALID_TRANSFER = "invalid_transfer"
+    MODEL_CALL = "model_call"
+    RETRY = "retry"
+    RETRY_LIMIT = "retry_limit"
+    TIME_LIMIT = "time_limit"
+    TASK_FAILED = "task_failed"
+    CANCELLED = "cancelled"
+    ALL_TASKS_DONE = "all_tasks_done"
+    CLARIFICATION = "clarification"
 
 
 class HandoffResult(ContractModel):
