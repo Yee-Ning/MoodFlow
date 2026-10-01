@@ -14,6 +14,11 @@ from app.agent.foundation.subgraphs.worldline.models import (
     ResolvedEntity,
 )
 from app.config.settings import ENV_FILE
+from app.agent.foundation.subgraphs.worldline.retrieval_scope import (
+    root_candidates,
+    root_knowledge_id,
+    scope_root_plan,
+)
 from app.rag.context_packing import (
     ContextPack,
     ContextPackBuilder,
@@ -330,7 +335,13 @@ class HybridMusicKnowledgeRetriever:
         entity: ResolvedEntity,
         plan: SearchPlan,
     ) -> list[MusicKnowledgeDocument]:
+        knowledge_id = root_knowledge_id(entity, plan)
+        if knowledge_id is None:
+            logger.info("worldline.knowledge_scope root_status=unmapped catalog_only=true")
+            return []
+        plan = scope_root_plan(plan, knowledge_id)
         candidate_pool = await self.candidate_provider.retrieve(plan)
+        candidate_pool = root_candidates(candidate_pool, knowledge_id)
         _log_retrieval_result(candidate_pool, shadow=False)
         if self.rerank_mode == "off":
             return self.context_adapter.adapt(candidate_pool, plan)

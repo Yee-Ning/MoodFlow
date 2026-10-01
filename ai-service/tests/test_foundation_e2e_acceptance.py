@@ -19,6 +19,7 @@ from app.agent.foundation.subgraphs.tool_calling.graph import create_tool_callin
 from app.agent.foundation.subgraphs.worldline.graph import create_worldline_subgraph
 from app.agent.foundation.subgraphs.worldline.models import EntityType, MusicKnowledgeDocument
 from app.agent.foundation.subgraphs.worldline.retrieval import HybridMusicKnowledgeRetriever
+from app.agent.foundation.subgraphs.worldline.retrieval_scope import root_knowledge_id
 from app.rag.query_understanding.service import QueryUnderstandingService
 from app.rag.retrieval import RetrievalResult, RetrievalStatus
 from app.main import app
@@ -293,13 +294,16 @@ class FoundationE2EAcceptanceTests(unittest.TestCase):
 
             async def retrieve(self, plan):
                 self.calls += 1
+                knowledge_id = root_knowledge_id(root, plan)
+                assert knowledge_id == "song:qing_tian"
+                assert plan.metadata_filter.root.children[0].value == knowledge_id
                 return RetrievalResult(
                     status=RetrievalStatus.SUCCESS,
                     plan_id=plan.plan_id,
                     index_profile=plan.index_profile,
                     candidates=[
                         candidate(index).model_copy(
-                            update={"entity_ids": [root.entity_id]}
+                            update={"entity_ids": [knowledge_id]}
                         )
                         for index in range(1, 21)
                     ],

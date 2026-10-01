@@ -15,6 +15,9 @@ from app.agent.foundation.subgraphs.worldline.retrieval import (
     create_worldline_retrieval_runtime,
 )
 from app.rag.query_understanding.models import (
+    CatalogReference,
+    QueryEntityStatus,
+    ResolvedQueryEntity,
     IndexProfile,
     MetadataFilter,
     QueryType,
@@ -51,6 +54,12 @@ def plan() -> SearchPlan:
         original_query="晴天创作背景",
         standalone_query="晴天创作背景",
         query_types=[QueryType.FACT],
+        entities=[ResolvedQueryEntity(
+            surface="晴天", canonical_name="晴天", entity_type="song",
+            knowledge_entity_id="song:qing_tian", status=QueryEntityStatus.RESOLVED,
+            confidence=1,
+            catalog_reference=CatalogReference(provider="netease",entity_id="185809",entity_type="song",name="晴天"),
+        )],
         queries=[
             QueryVariant(
                 text="晴天创作背景",
@@ -115,7 +124,7 @@ class FakeRetrievalService:
 
     async def retrieve(self, search_plan: SearchPlan) -> RetrievalResult:
         self.calls += 1
-        return self.result
+        return self.result.model_copy(update={"plan_id":search_plan.plan_id})
 
 
 class FakeReranker:
