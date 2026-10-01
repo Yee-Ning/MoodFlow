@@ -13,6 +13,7 @@ from app.agent.foundation.streaming import (
     stream_foundation_assistant,
 )
 from app.config.settings import get_settings
+from app.agent.handoff.streaming import invoke_handoff_assistant, stream_handoff_assistant
 from app.context.identity import UserIdentityProvider
 from app.schemas.chat import (
     ChatRequest,
@@ -69,6 +70,23 @@ async def foundation_chat(chat_request: ChatRequest, request: Request) -> Founda
         ) from exc
 
 
+@router.post("/handoff", response_model=FoundationResponse)
+async def handoff_chat(chat_request: ChatRequest, request: Request) -> FoundationResponse:
+    try:
+        session_cookie = _spring_session_cookie(request)
+        user_id = await UserIdentityProvider().resolve(session_cookie)
+        return await invoke_handoff_assistant(
+            message=chat_request.message,
+            thread_id=chat_request.thread_id or str(uuid4()),
+            routing_context=chat_request.resolved_routing_context(),
+            session_cookie=session_cookie, user_id=user_id,
+            telemetry_sample_kind=_telemetry_sample_kind(request),
+        )
+    except Exception as exc:
+        logger.warning("Handoff JSON request failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=502, detail="MoodFlow AI 暂时离线，请稍后再试") from exc
+
+
 @router.post("/chat", response_class=StreamingResponse)
 async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse:
     session_cookie = _spring_session_cookie(request)
@@ -76,9 +94,11 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
     async def generate_events() -> AsyncIterator[str]:
         try:
             thread_id = chat_request.thread_id or str(uuid4())
-            if get_settings().agent_graph_mode == "foundation":
+            mode = get_settings().agent_graph_mode
+            if mode in {"foundation", "handoff"}:
                 user_id = await UserIdentityProvider().resolve(session_cookie)
-                event_stream = stream_foundation_assistant(
+                stream = stream_handoff_assistant if mode == "handoff" else stream_foundation_assistant
+                event_stream = stream(
                     message=chat_request.message,
                     thread_id=thread_id,
                     routing_context=chat_request.resolved_routing_context(),

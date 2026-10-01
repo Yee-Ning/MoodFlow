@@ -45,7 +45,7 @@ class Settings(BaseSettings):
         le=60,
         validation_alias="SPRING_BOOT_TIMEOUT_SECONDS",
     )
-    agent_graph_mode: Literal["legacy", "foundation"] = Field(
+    agent_graph_mode: Literal["legacy", "foundation", "handoff"] = Field(
         default="foundation",
         validation_alias="AI_AGENT_GRAPH_MODE",
     )

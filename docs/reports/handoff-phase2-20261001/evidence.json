@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-01",
+  "timezone": "Asia/Shanghai",
+  "baseline_commit": "5b8f532",
+  "branch": "codex/parse-normalize-corpus-v1",
+  "scope": "Phase 2 opt-in GeneralChat/Curator runtime and controlled HTTP/SSE E2E; default foundation",
+  "controlled_environment": "Offline LLM placeholder; JEV/live Postgres disabled; memory checkpoints, SQLite continuity, memory backend disabled; no .env changes",
+  "checks": {
+    "application": {
+      "command": ".venv/Scripts/python.exe -m pytest tests -q -ra --tb=short",
+      "exit_code": 0,
+      "summary": "1472 passed, 14 skipped, 1 warning, 286 subtests passed in 507.27s (0:08:27)",
+      "junit_totals": {
+        "tests": 1772,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 14
+      },
+      "log_sha256": "a2ad0beb480f6295c3a545aa00c9891eefe6302cd708984ac6e7d0d301c81949",
+      "junit_sha256": "9828ec4075175bae4dae2a8e14978a89a3b1427f1e77035c92584161914b6e47"
+    },
+    "evaluation_framework": {
+      "command": ".venv/Scripts/python.exe -m pytest evals/tests/test_*.py excluding test_judges.py -q -ra --tb=short",
+      "exit_code": 0,
+      "summary": "173 passed in 103.58s (0:01:43)",
+      "junit_totals": {
+        "tests": 173,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "log_sha256": "48c33a6cef6873d4d5f5d11fcd0d29151fc80b359462b2f235eeed251718a50a",
+      "junit_sha256": "fe75ec2040557c2ae27af8aa2729f29536d97bb3f11613c10983e744c99d10c0"
+    },
+    "judges": {
+      "command": ".venv-eval/Scripts/python.exe -m pytest evals/tests/test_judges.py -q -ra --tb=short",
+      "exit_code": 0,
+      "summary": "4 passed in 1.53s",
+      "junit_totals": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "log_sha256": "475d508fe041e1e558a6e7ee8cd936119b9b37f24bfba1f62701197fcaa407fb",
+      "junit_sha256": "8b694068af008e7b9bb6a7f8808f44cc5f6b18b4f178b097bbeea46a780f8920"
+    },
+    "handoff_runtime": {
+      "test_file": "tests/test_handoff_runtime.py",
+      "passed": 43,
+      "included_in_application_suite": true
+    },
+    "ruff_changed": {
+      "command": ".venv/Scripts/python.exe -m ruff check app/agent/handoff app/agent/foundation/streaming.py app/api/chat.py app/config/settings.py tests/test_handoff_contracts.py tests/test_handoff_runtime.py",
+      "exit_code": 0,
+      "log_sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0"
+    },
+    "format": {
+      "command": ".venv/Scripts/python.exe -m ruff format --check app/agent/handoff tests/test_handoff_contracts.py tests/test_handoff_runtime.py",
+      "exit_code": 0,
+      "log_sha256": "f4df356f54142a2e3c946c1edb9bd298eeb51c147d1b924fc3e1364102cb2c2d"
+    },
+    "compileall": {
+      "command": ".venv/Scripts/python.exe -m compileall -q app tests evals scripts",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "pip_check": {
+      "command": ".venv/Scripts/python.exe -m pip check",
+      "exit_code": 0,
+      "log_sha256": "672aec65a45bed50e70229c70934a7eebf0462595c459b83023027645d57cccf"
+    },
+    "frontend-stream": {
+      "command": "npm run test:ai-stream",
+      "workdir": "soul-music-room",
+      "exit_code": 0,
+      "log_sha256": "970e420c00cfb3523659bfa5885c7490545e04e9cfec09f851f41e0b54b86f61"
+    },
+    "frontend-lint": {
+      "command": "npm run lint",
+      "workdir": "soul-music-room",
+      "exit_code": 0,
+      "log_sha256": "ddc2ddc5695dd0474dd4a2f35b28a51e4ba0b7029b79ae72a004f32a05054336"
+    },
+    "frontend-build": {
+      "command": "npm run build",
+      "workdir": "soul-music-room",
+      "exit_code": 0,
+      "log_sha256": "dfd05737af08855fd22286db5202c47f0162b5800a2fccc26c0c6f3f13734754"
+    }
+  },
+  "earlier_attempts": {
+    "core-initial": {
+      "summary": "13 failed, 146 passed, 1 warning, 32 subtests passed in 95.73s (0:01:35)",
+      "log_sha256": "25ecf7b9092353a7e2e6390a848526f352888fb6e1d5ae417ca7533c31556c7f"
+    },
+    "runtime-repair": {
+      "summary": "1 failed, 32 passed in 33.18s",
+      "log_sha256": "61460887460ca5d2d2a055d4f4fbd9e492ecc3bf4624f2c9121251d3f45923a3"
+    },
+    "targeted": {
+      "summary": "2 failed, 165 passed, 3 warnings, 32 subtests passed in 76.56s (0:01:16)",
+      "log_sha256": "27c9bc6e9c18b71aaf94cacb7e869c2f730c65ec12c46360dca930ce9d71c135"
+    },
+    "continuity": {
+      "summary": "1 failed, 1 passed, 1 warning in 42.12s",
+      "log_sha256": "7f17bd48d71f3461ff2f8004d70285581e0bd3c82318eafb6c894bc9e2eef7cf"
+    },
+    "runtime": {
+      "summary": "42 passed, 1 warning in 32.29s",
+      "log_sha256": "762dbc98bb767f4c350ad31abc3b6b60a9bfa6f86735062e93fc4f7d562162b4"
+    },
+    "application": {
+      "summary": "1470 passed, 14 skipped, 1 warning, 286 subtests passed in 629.09s (0:10:29)",
+      "log_sha256": "5f79d2f920437c0021e6127baf968a25de2be1855554a747c73a4fb236c860d5"
+    }
+  },
+  "lint_baseline_comparison": {
+    "exit_code": 1,
+    "command": ".venv/Scripts/python.exe -m ruff check . --output-format json",
+    "baseline_findings": 45,
+    "current_findings": 45,
+    "differences": 0
+  },
+  "worktree_protection": {
+    "unrelated_status_unchanged": true,
+    "protected_file_hash_unchanged": true,
+    "protected_file_sha256": "23dfc590a1068a4211c1d689fdca7c4e57a83bdc6841e631f1cbf22785a529c8"
+  },
+  "source_sha256": {
+    "ai-service/app/agent/foundation/streaming.py": "a50c0b3c471226152a3db266d5b6aa1fd0b2986cd88aa6e38bdf52996267c537",
+    "ai-service/app/api/chat.py": "877c75507cc68a9ab7aeaa83097b55e5743e6683219b09e2d143b196d8031888",
+    "ai-service/app/config/settings.py": "2a930dd7181ff62c48580bd8ef24f7566f0dbeadc35bcf95912413b7fcbeb8e8",
+    "ai-service/app/agent/handoff/agents.py": "ff929680e775dcd4c20f9061558855a3bbc4f2546b7a756a2d627cc860aad27a",
+    "ai-service/app/agent/handoff/graph.py": "8034b40833b24c1bad210766daff887822403b345326d6b403e932e230aece58",
+    "ai-service/app/agent/handoff/song_context.py": "e669619773aa9e01a3a8782cf0b4011cab926067a41ceaa0698f7eed529d7e5f",
+    "ai-service/app/agent/handoff/streaming.py": "c03c0194d2dc0784f37cc4f9761233f34f0e96f35530aba0efdd710d6e2562d5",
+    "ai-service/app/agent/handoff/tools.py": "e83e9be153a5589a7e46d5a99fed6dbf5de586df34f9ae621cf2250142702539",
+    "ai-service/tests/test_handoff_runtime.py": "814809bc31b78c8a89a0f6bac3314ee2d5f7114d2bff68f6ba89ceea7db5d08d",
+    "docs/architecture/handoff-runtime-phase2.md": "b34437f714bcf69fddb1f850ca63447ed205e4b0c4a0f96b5b80dae1474bd1bb",
+    "docs/reports/handoff-phase2-20261001/validation.md": "25ff6bbbc2d10e28a8a6633eb0405736e9fa08bbbd98101b685905934bb2016c"
+  },
+  "not_verified": [
+    "Explorer runtime (phase 3)",
+    "actual cumulative token usage, retries, trace and JEV transfer guard (phase 4)",
+    "live LLM/JEV quality/cost/latency",
+    "PostgreSQL checkpoint restart and cloud mutation idempotency",
+    "real Qdrant integration in this phase",
+    "authenticated live music APIs",
+    "browser audio/interaction and responsive visuals"
+  ]
+}

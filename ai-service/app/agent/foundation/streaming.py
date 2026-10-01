@@ -3,7 +3,7 @@
 import logging
 from collections.abc import AsyncIterator
 from functools import lru_cache
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from langchain_core.messages import HumanMessage
@@ -13,7 +13,7 @@ from app.agent.foundation.long_horizon.models import HistoryEventType
 from app.agent.foundation.long_horizon.runtime import get_long_horizon_service
 from app.agent.memory.models import MemoryRetrievalRequest
 from app.agent.memory.runtime import get_memory_runtime
-from app.agent.foundation.models import TaskResult
+from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.response import foundation_response
 from app.agent.foundation.routing import RouteDecision, RoutingContext
 from app.agent.foundation.state.main import create_main_state
@@ -50,6 +50,17 @@ logger = logging.getLogger(__name__)
 def get_foundation_graph():
     """Build the model router and checkpointer once when Foundation is enabled."""
     return create_main_graph()
+
+
+@lru_cache
+def get_handoff_graph():
+    from app.agent.handoff.graph import create_handoff_graph
+    return create_handoff_graph()
+
+
+def _public_response(message, results, *, needs_clarification=False, execution_failed=False):
+    response = foundation_response(message, results, needs_clarification=needs_clarification)
+    return response.model_copy(update={"status": TaskStatus.FAILED}) if execution_failed else response
 
 
 def _task_results(update: Any) -> list[TaskResult]:
@@ -203,7 +214,13 @@ async def stream_foundation_assistant(
     user_id: str | None = None,
     memory_runtime: Any | None = None,
     telemetry_sample_kind: str = "production",
+    graph_mode: Literal["foundation", "handoff"] = "foundation",
 ) -> AsyncIterator[SongAssistantStreamEvent]:
+    execution_thread_id = f"handoff:v1:{thread_id}" if graph_mode == "handoff" else thread_id
+    selected_graph = graph or (get_handoff_graph() if graph_mode == "handoff" else get_foundation_graph())
+    update_nodes = FOUNDATION_UPDATE_NODES | ({"general_chat_agent", "curator_agent"} if graph_mode == "handoff" else set())
+    execution_failed = False
+    execution_needs_input = False
     final_response: str | None = None
     task_results: list[TaskResult] = []
     route_decision: RouteDecision | None = None
@@ -212,7 +229,7 @@ async def stream_foundation_assistant(
     visible_scope: str | None = None
     has_visible_text = False
     continuity, graph_thread_id, continuity_context, session = await _continuity_start(
-        thread_id,
+        execution_thread_id,
         routing_context,
         enabled=graph is None,
         user_id=user_id,
@@ -246,7 +263,7 @@ async def stream_foundation_assistant(
         continuity_context={**continuity_context, "telemetry_sample_kind": telemetry_sample_kind},
     )
 
-    async for part in (graph or get_foundation_graph()).astream(
+    async for part in selected_graph.astream(
         initial_state,
         _graph_config(graph_thread_id, session),
         context=MusicAgentContext(session_cookie=session_cookie, user_id=user_id),
@@ -255,6 +272,10 @@ async def stream_foundation_assistant(
         version="v2",
     ):
         if part["type"] == "messages":
+            # Handoff control/business calls share Agent nodes. Publish only
+            # validated parent TaskResults, never raw model/tool-call chunks.
+            if graph_mode == "handoff":
+                continue
             message_chunk, metadata = part["data"]
             namespace = part.get("ns", ())
             scope = namespace[0] if namespace else ""
@@ -284,9 +305,19 @@ async def stream_foundation_assistant(
             continue
 
         for node, update in part["data"].items():
-            if node not in FOUNDATION_UPDATE_NODES:
+            if node not in update_nodes:
                 continue
-            yield UpdateStreamEvent(node=node, status="completed")
+            public_node = node
+            if graph_mode == "handoff":
+                if node == "general_chat_agent":
+                    public_node = "general_chat_subgraph"
+                elif node == "curator_agent":
+                    results = _task_results(update)
+                    public_node = "current_song_subgraph" if results and results[0].route_key == "current_song" else "tool_calling_subgraph"
+            yield UpdateStreamEvent(node=public_node, status="completed")
+            if graph_mode == "handoff" and isinstance(update, dict):
+                execution_failed = bool(update.get("handoff_failed", execution_failed))
+                execution_needs_input = bool(update.get("handoff_needs_input", execution_needs_input))
 
             if node in {"intent_router", "development_route"} and isinstance(update, dict):
                 raw_decision = update.get("route_decision")
@@ -304,7 +335,7 @@ async def stream_foundation_assistant(
                             request_id=request_id,
                         )
 
-            if node.endswith("_subgraph"):
+            if node.endswith("_subgraph") or (graph_mode == "handoff" and node in {"general_chat_agent", "curator_agent"}):
                 new_results = _task_results(update)
                 task_results.extend(new_results)
                 # Tool/worldline outputs need grounding/schema validation before
@@ -321,8 +352,10 @@ async def stream_foundation_assistant(
                     for result in new_results:
                         _record_result(continuity, session, result, request_id)
 
-            if node == "tool_calling_subgraph":
+            if node == "tool_calling_subgraph" or (graph_mode == "handoff" and node == "curator_agent"):
                 for result in _task_results(update):
+                    if result.route_key != "tool_calling":
+                        continue
                     for raw_action in result.data.get("client_actions", []):
                         action = ClientAction.model_validate(raw_action)
                         if action.action_id in emitted_action_ids:
@@ -352,13 +385,14 @@ async def stream_foundation_assistant(
         memory_runtime=memory_runtime,
     )
     yield FinalStreamEvent(
-        response=foundation_response(
+        response=_public_response(
             final_response,
             task_results,
             needs_clarification=(
-                route_decision.needs_clarification
+                route_decision.needs_clarification or execution_needs_input
                 if route_decision is not None else False
             ),
+            execution_failed=execution_failed,
         )
     )
 
@@ -373,9 +407,11 @@ async def invoke_foundation_assistant(
     user_id: str | None = None,
     memory_runtime: Any | None = None,
     telemetry_sample_kind: str = "production",
+    graph_mode: Literal["foundation", "handoff"] = "foundation",
 ) -> FoundationResponse:
+    execution_thread_id = f"handoff:v1:{thread_id}" if graph_mode == "handoff" else thread_id
     continuity, graph_thread_id, continuity_context, session = await _continuity_start(
-        thread_id,
+        execution_thread_id,
         routing_context,
         enabled=graph is None,
         user_id=user_id,
@@ -402,7 +438,8 @@ async def invoke_foundation_assistant(
             event_type=HistoryEventType.USER_MESSAGE,
             node="input", source="user", payload={"text": message}, request_id=request_id,
         )
-    output = await (graph or get_foundation_graph()).ainvoke(
+    selected_graph = graph or (get_handoff_graph() if graph_mode == "handoff" else get_foundation_graph())
+    output = await selected_graph.ainvoke(
         create_main_state(
             message,
             messages=[HumanMessage(content=message)],
@@ -425,6 +462,9 @@ async def invoke_foundation_assistant(
         if (item.task_id if isinstance(item, TaskResult) else item.get("task_id"))
         in active_ids
     ]
+    if graph_mode == "handoff" and output.get("handoff_run") is not None:
+        from app.agent.handoff.state import HandoffRun
+        results = list(HandoffRun.model_validate(output["handoff_run"]).results)
     if continuity is not None:
         if decision is not None:
             continuity.record_event(
@@ -448,8 +488,9 @@ async def invoke_foundation_assistant(
         enabled=graph is None,
         memory_runtime=memory_runtime,
     )
-    return foundation_response(
+    return _public_response(
         message_text.strip(),
         results,
-        needs_clarification=decision.needs_clarification if decision else False,
+        needs_clarification=(decision.needs_clarification if decision else False) or (bool(output.get("handoff_needs_input")) if graph_mode == "handoff" else False),
+        execution_failed=bool(output.get("handoff_failed", False)) if graph_mode == "handoff" else False,
     )
