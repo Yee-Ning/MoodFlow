@@ -198,6 +198,15 @@ def cases():
             routes=["worldline"],
             sources=True,
         ),
+        dict(
+            id="explorer_to_curator_sse",
+            endpoint="chat",
+            message="先探索周杰伦的音乐世界线，然后暂停播放",
+            routes=["worldline", "tool_calling"],
+            actions=["pause_player"],
+            player_context=player,
+            sources=True,
+        ),
     ]
 
 

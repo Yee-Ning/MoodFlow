@@ -4,10 +4,26 @@ import pytest
 
 from scripts.handoff_acceptance import (
     assert_public,
+    cases,
     parse_sse,
     run_acceptance,
     validate_exchange,
 )
+
+
+def test_real_explorer_to_curator_case_preserves_original_requests():
+    suite = cases()
+    search = next(item for item in suite if item["id"] == "search_read_only")
+    assert search["message"] == "搜索周杰伦的晴天，不要播放"
+    worldline = next(item for item in suite if item["id"] == "worldline_grounding")
+    assert worldline["message"] == "探索周杰伦的音乐世界线"
+    compound = next(item for item in suite if item["id"] == "explorer_to_curator_sse")
+    assert compound["message"] == "先探索周杰伦的音乐世界线，然后暂停播放"
+    assert compound["endpoint"] == "chat"
+    assert compound["routes"] == ["worldline", "tool_calling"]
+    assert compound["actions"] == ["pause_player"]
+    assert compound["sources"] is True
+    assert compound["player_context"]["has_current_song"] is True
 
 
 def response():

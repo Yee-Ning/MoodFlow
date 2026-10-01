@@ -825,11 +825,13 @@ def build_tool_calling_subgraph(
         messages: list[ToolMessage] = []
         for call in _latest_tool_calls(state):
             call_id = str(call.get("id", ""))
-            if call_id in argument_errors:
-                error_code, message = argument_errors[call_id]
-            elif call_id in action_errors:
+            # A scoped-out write is still an unauthorized action. Preserve
+            # the authority diagnostic independently of the schema allowlist.
+            if call_id in action_errors:
                 error_code = "unauthorized_action"
                 message = action_errors[call_id]
+            elif call_id in argument_errors:
+                error_code, message = argument_errors[call_id]
             elif call_id in reference_errors:
                 error_code = "untrusted_entity_reference"
                 message = reference_errors[call_id]

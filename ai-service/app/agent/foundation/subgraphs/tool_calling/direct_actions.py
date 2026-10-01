@@ -8,7 +8,8 @@ from typing import Any
 from langgraph.runtime import Runtime
 
 from app.agent.foundation.models import TaskResult, TaskStatus
-from app.agent.foundation.routing import RouteKey
+from app.agent.foundation.routing import IntentType, RouteKey
+from app.agent.foundation.rule_routing import RuleRouter
 from app.agent.foundation.subgraphs.tool_calling.models import (
     ClientAction,
     ClientActionName,
@@ -99,6 +100,18 @@ async def resolve_direct_actions(
     state: ToolCallingState, runtime: Runtime[MusicAgentContext],
 ) -> dict[str, Any]:
     intents = state.get("routing_intents", [])
+    # Semantic routing may identify the domain without a sub-intent. Refine
+    # only this assigned clause, and only when existing rules cover it fully.
+    # History, prior Explorer output and transfer summaries grant no authority.
+    if intents and all(
+        item.intent is IntentType.TOOL_CALLING and item.sub_intent is None
+        for item in intents
+    ):
+        decision = RuleRouter().route(state["current_input"], state["routing_context"])
+        if decision.is_complete and all(
+            item.sub_intent in DIRECT_SUB_INTENTS for item in decision.intents
+        ):
+            intents = decision.intents
     sub_intents = list(dict.fromkeys(item.sub_intent for item in intents))
     if not sub_intents or any(item not in DIRECT_SUB_INTENTS for item in sub_intents):
         return {"direct_complete": False}

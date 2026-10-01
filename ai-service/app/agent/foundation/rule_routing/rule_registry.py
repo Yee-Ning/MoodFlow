@@ -299,6 +299,15 @@ DEFAULT_RULES: tuple[RuleSpec, ...] = (
         confidence=0.99,
     ),
     _rule(
+        "general_companionship",
+        IntentType.GENERAL_CHAT,
+        "companionship",
+        (r"陪我聊聊|陪我说说话|和我聊聊天",),
+        priority=100,
+        confidence=0.99,
+        exclusions=(rf"{_NEGATION}(?:陪我|和我)",),
+    ),
+    _rule(
         "general_thanks",
         IntentType.GENERAL_CHAT,
         "thanks",
