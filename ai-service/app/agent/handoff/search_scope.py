@@ -3,6 +3,7 @@
 import re
 
 from app.agent.foundation.rule_routing import RuleRouter
+from app.rag.query_understanding.context import _CURRENT_SONG_REFERENCE
 
 SEARCH_TOOLS = frozenset({"search_music", "search_entities_tool"})
 _CLAUSES = re.compile(r"[,，。;；]|然后|接着|随后|并且|同时|以及")
@@ -21,6 +22,8 @@ def scoped_search_tools(text, tools):
     if len(clauses) != 1 or not _SEARCH.match(clauses[0]):
         return original
     if _ADDITIONAL_READ.search(clauses[0]):
+        return original
+    if _CURRENT_SONG_REFERENCE.search(text):
         return original
     decision = RuleRouter().route(text)
     if not decision.is_complete or any(

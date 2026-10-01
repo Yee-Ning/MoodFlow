@@ -39,6 +39,9 @@ def test_read_only_search_binds_catalog_tools_without_mutation_schemas(text):
         "不要搜索晴天",
         "分析当前歌曲",
         "搜索晴天；搜索十年",
+        "搜索当前这首歌",
+        "搜索正在播放的歌曲",
+        "搜索这首歌",
     ],
 )
 def test_mixed_negated_or_non_search_tasks_keep_existing_tool_domain(text):
