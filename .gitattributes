@@ -7,3 +7,14 @@ ai-service/evals/handoff_jev.py text eol=lf
 ai-service/evals/tests/test_handoff_jev.py text eol=lf
 docs/architecture/handoff-runtime-phase5.md text eol=lf
 docs/reports/handoff-phase5-20261001/** text eol=lf
+# Preserve phase6 acceptance evidence without transforming browser screenshots.
+ai-service/scripts/handoff_acceptance.py text eol=lf
+ai-service/scripts/handoff_checkpoint_acceptance.py text eol=lf
+ai-service/tests/test_handoff_acceptance.py text eol=lf
+ai-service/tests/test_handoff_checkpoint_acceptance.py text eol=lf
+ai-service/tests/test_handoff_network.py text eol=lf
+docs/architecture/handoff-runtime-phase6.md text eol=lf
+docs/reports/handoff-phase6-20261001/*.md text eol=lf
+docs/reports/handoff-phase6-20261001/*.json text eol=lf
+docs/reports/handoff-phase6-20261001/*.jsonl text eol=lf
+docs/reports/handoff-phase6-20261001/*.jpg -text
