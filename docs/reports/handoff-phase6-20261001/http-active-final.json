@@ -1,0 +1,195 @@
+{
+  "at": "2026-10-01T11:09:33.819204+00:00",
+  "synthetic_http_inputs": true,
+  "service_or_result_overrides": false,
+  "prefix": "phase6:2ea883307537",
+  "cases": [
+    {
+      "id": "health",
+      "passed": true
+    },
+    {
+      "id": "validation_0",
+      "http_status": 422,
+      "passed": true
+    },
+    {
+      "id": "validation_1",
+      "http_status": 422,
+      "passed": true
+    },
+    {
+      "id": "validation_2",
+      "http_status": 422,
+      "passed": true
+    },
+    {
+      "id": "foundation_compat",
+      "thread_id": "phase6:2ea883307537:foundation_compat",
+      "endpoint": "foundation",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "general_chat"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 1805.84
+    },
+    {
+      "id": "handoff_chat",
+      "thread_id": "phase6:2ea883307537:handoff_chat",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "general_chat"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 2301.69
+    },
+    {
+      "id": "missing_song",
+      "thread_id": "phase6:2ea883307537:missing_song",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "needs_input",
+      "routes": [],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 629.49
+    },
+    {
+      "id": "song_read_only",
+      "thread_id": "phase6:2ea883307537:song_read_only",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "current_song"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 14244.2
+    },
+    {
+      "id": "search_read_only",
+      "thread_id": "phase6:2ea883307537:search_read_only",
+      "endpoint": "handoff",
+      "passed": false,
+      "http_status": 200,
+      "error_type": "ValueError",
+      "failure_code": "unexpected_response_status",
+      "observed_response": {
+        "type": "chat",
+        "status": "failed",
+        "message": "本次音乐或聊天任务暂时无法完成，请稍后再试。",
+        "search_query": null,
+        "results": [
+          {
+            "task_id": "6c83f34d46384213b7dba923f5087ad4:tool_calling:0",
+            "status": "failed",
+            "subgraph": "tool_calling",
+            "answer": "本次音乐或聊天任务暂时无法完成，请稍后再试。",
+            "citations": [],
+            "sources": [],
+            "tool_calls": [],
+            "metadata": {}
+          }
+        ]
+      },
+      "latency_ms": 20658.49
+    },
+    {
+      "id": "pause_sse",
+      "thread_id": "phase6:2ea883307537:pause_sse",
+      "endpoint": "chat",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "tool_calling"
+      ],
+      "action_names": [
+        "pause_player"
+      ],
+      "event_names": [
+        "update",
+        "update",
+        "update",
+        "update",
+        "message",
+        "action",
+        "update",
+        "final",
+        "done"
+      ],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 2397.1
+    },
+    {
+      "id": "multi_agent_sse",
+      "thread_id": "phase6:2ea883307537:multi_agent_sse",
+      "endpoint": "chat",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "tool_calling",
+        "general_chat"
+      ],
+      "action_names": [
+        "pause_player"
+      ],
+      "event_names": [
+        "update",
+        "update",
+        "update",
+        "update",
+        "message",
+        "action",
+        "update",
+        "update",
+        "message",
+        "message",
+        "update",
+        "final",
+        "done"
+      ],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 19891.45
+    },
+    {
+      "id": "worldline_grounding",
+      "thread_id": "phase6:2ea883307537:worldline_grounding",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "worldline"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 7,
+      "citation_count": 2,
+      "latency_ms": 33723.01
+    }
+  ],
+  "passed": false
+}

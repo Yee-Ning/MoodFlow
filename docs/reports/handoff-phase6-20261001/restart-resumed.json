@@ -1,0 +1,98 @@
+{
+  "mode": "resume",
+  "thread_id": "phase6:resume:5c6a9c2209",
+  "service_or_result_overrides": false,
+  "interruption": "before_curator_node",
+  "before": {
+    "run_id": "b257c8fc1ad9464cadff8cb93fbebf19",
+    "status": "running",
+    "stop_reason": null,
+    "handoff_count": 1,
+    "handoff_chain": [
+      "general_chat",
+      "curator"
+    ],
+    "usage": [
+      {
+        "agent": "general_chat",
+        "tokens": 1743,
+        "retries": 0,
+        "reported_tokens": 1743,
+        "estimated_tokens": 0,
+        "model_calls": 2
+      },
+      {
+        "agent": "curator",
+        "tokens": 0,
+        "retries": 0,
+        "reported_tokens": 0,
+        "estimated_tokens": 0,
+        "model_calls": 0
+      },
+      {
+        "agent": "explorer",
+        "tokens": 0,
+        "retries": 0,
+        "reported_tokens": 0,
+        "estimated_tokens": 0,
+        "model_calls": 0
+      }
+    ],
+    "transfer_call_count": 1,
+    "transfer_reply_count": 1,
+    "all_calls_paired": true,
+    "actions": [],
+    "result_statuses": []
+  },
+  "after": {
+    "run_id": "b257c8fc1ad9464cadff8cb93fbebf19",
+    "status": "completed",
+    "stop_reason": "all_tasks_done",
+    "handoff_count": 1,
+    "handoff_chain": [
+      "general_chat",
+      "curator"
+    ],
+    "usage": [
+      {
+        "agent": "general_chat",
+        "tokens": 1743,
+        "retries": 0,
+        "reported_tokens": 1743,
+        "estimated_tokens": 0,
+        "model_calls": 2
+      },
+      {
+        "agent": "curator",
+        "tokens": 0,
+        "retries": 0,
+        "reported_tokens": 0,
+        "estimated_tokens": 0,
+        "model_calls": 0
+      },
+      {
+        "agent": "explorer",
+        "tokens": 0,
+        "retries": 0,
+        "reported_tokens": 0,
+        "estimated_tokens": 0,
+        "model_calls": 0
+      }
+    ],
+    "transfer_call_count": 1,
+    "transfer_reply_count": 1,
+    "all_calls_paired": true,
+    "actions": [
+      {
+        "action_id": "fac217f3fab04e90a7442d4595f0e36e:tool_calling:0:direct:0",
+        "task_id": "fac217f3fab04e90a7442d4595f0e36e:tool_calling:0",
+        "name": "pause_player",
+        "arguments": {}
+      }
+    ],
+    "result_statuses": [
+      "success"
+    ]
+  },
+  "passed": true
+}

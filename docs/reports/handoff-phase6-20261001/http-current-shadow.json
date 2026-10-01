@@ -1,0 +1,198 @@
+{
+  "at": "2026-10-01T10:55:33.252440+00:00",
+  "synthetic_http_inputs": true,
+  "service_or_result_overrides": false,
+  "prefix": "phase6:3191027f9a9d",
+  "cases": [
+    {
+      "id": "health",
+      "passed": true
+    },
+    {
+      "id": "validation_0",
+      "http_status": 422,
+      "passed": true
+    },
+    {
+      "id": "validation_1",
+      "http_status": 422,
+      "passed": true
+    },
+    {
+      "id": "validation_2",
+      "http_status": 422,
+      "passed": true
+    },
+    {
+      "id": "foundation_compat",
+      "thread_id": "phase6:3191027f9a9d:foundation_compat",
+      "endpoint": "foundation",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "general_chat"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 53321.25
+    },
+    {
+      "id": "handoff_chat",
+      "thread_id": "phase6:3191027f9a9d:handoff_chat",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "general_chat"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 4122.11
+    },
+    {
+      "id": "missing_song",
+      "thread_id": "phase6:3191027f9a9d:missing_song",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "needs_input",
+      "routes": [
+        "current_song"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 3109.7
+    },
+    {
+      "id": "song_read_only",
+      "thread_id": "phase6:3191027f9a9d:song_read_only",
+      "endpoint": "handoff",
+      "passed": false,
+      "http_status": 200,
+      "error_type": "ValueError",
+      "failure_code": "unexpected_response_status",
+      "observed_response": {
+        "type": "chat",
+        "status": "failed",
+        "message": "当前歌曲资料暂时无法加载，请稍后再试。\n部分任务执行失败，我还在这里。你可以稍后重试，或把请求拆成更小的步骤。",
+        "search_query": null,
+        "results": [
+          {
+            "task_id": "76219cc8fbf743489fef4e5f2ba5af5f:current_song:0",
+            "status": "failed",
+            "subgraph": "current_song",
+            "answer": "当前歌曲资料暂时无法加载，请稍后再试。",
+            "citations": [],
+            "sources": [],
+            "tool_calls": [],
+            "metadata": {
+              "reason": "context_unavailable"
+            }
+          }
+        ]
+      },
+      "latency_ms": 12332.83
+    },
+    {
+      "id": "search_read_only",
+      "thread_id": "phase6:3191027f9a9d:search_read_only",
+      "endpoint": "handoff",
+      "passed": false,
+      "http_status": 200,
+      "error_type": "ValueError",
+      "failure_code": "unexpected_response_status",
+      "observed_response": {
+        "type": "chat",
+        "status": "failed",
+        "message": "本次音乐或聊天任务暂时无法完成，请稍后再试。",
+        "search_query": null,
+        "results": [
+          {
+            "task_id": "449449b327624c04a8dfe631075bc208:tool_calling:0",
+            "status": "failed",
+            "subgraph": "tool_calling",
+            "answer": "本次音乐或聊天任务暂时无法完成，请稍后再试。",
+            "citations": [],
+            "sources": [],
+            "tool_calls": [],
+            "metadata": {}
+          }
+        ]
+      },
+      "latency_ms": 16837.91
+    },
+    {
+      "id": "pause_sse",
+      "thread_id": "phase6:3191027f9a9d:pause_sse",
+      "endpoint": "chat",
+      "passed": false,
+      "http_status": 200,
+      "error_type": "ValueError",
+      "failure_code": "unexpected_response_status",
+      "observed_response": {
+        "type": "chat",
+        "status": "failed",
+        "message": "本次任务转交未能完成，请稍后重试或将请求拆成更小的任务。",
+        "search_query": null,
+        "results": []
+      },
+      "latency_ms": 1950.87
+    },
+    {
+      "id": "multi_agent_sse",
+      "thread_id": "phase6:3191027f9a9d:multi_agent_sse",
+      "endpoint": "chat",
+      "passed": false,
+      "http_status": 200,
+      "error_type": "ValueError",
+      "failure_code": "unexpected_response_status",
+      "observed_response": {
+        "type": "chat",
+        "status": "needs_input",
+        "message": "我还不能确定“先”具体希望我做什么，请补充说明。",
+        "search_query": null,
+        "results": []
+      },
+      "latency_ms": 9455.96
+    },
+    {
+      "id": "worldline_grounding",
+      "thread_id": "phase6:3191027f9a9d:worldline_grounding",
+      "endpoint": "handoff",
+      "passed": false,
+      "http_status": 200,
+      "error_type": "ValueError",
+      "failure_code": "unexpected_response_status",
+      "observed_response": {
+        "type": "chat",
+        "status": "failed",
+        "message": "音乐实体资料暂时无法加载，请稍后再试。\n部分任务执行失败，我还在这里。你可以稍后重试，或把请求拆成更小的步骤。",
+        "search_query": null,
+        "results": [
+          {
+            "task_id": "31e315bb41f24804ab792a2eb523e565:worldline:0",
+            "status": "failed",
+            "subgraph": "worldline",
+            "answer": "音乐实体资料暂时无法加载，请稍后再试。",
+            "citations": [],
+            "sources": [],
+            "tool_calls": [],
+            "metadata": {
+              "reason": "entity_search_failed"
+            }
+          }
+        ]
+      },
+      "latency_ms": 11655.35
+    }
+  ],
+  "passed": false
+}

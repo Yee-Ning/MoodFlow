@@ -1,0 +1,376 @@
+{
+  "checkpoint_rows": [
+    {
+      "case_id": "same_id_foundation",
+      "thread_id": "phase6:6f3fefe69730:handoff_chat",
+      "session_id": "session:2a99a276883c4a808ac39069de081008",
+      "checkpoint_id": "1f1bd8a4-b9bf-644e-8005-22170a6fcabb",
+      "checkpoint_hash": "431cea67cb6eacddd977b6e1621f233eabc72e8be2afcc55fdc363cddf58f714",
+      "run_id": null,
+      "run_status": null,
+      "stop_reason": null,
+      "handoff_chain": null,
+      "handoff_count": null,
+      "usage": null,
+      "trace": [],
+      "task_result_statuses": [],
+      "tool_call_ids": [],
+      "tool_reply_ids": [],
+      "all_calls_paired": true,
+      "history_count": 4
+    },
+    {
+      "case_id": "explorer_to_curator",
+      "thread_id": "handoff:v1:phase6:extra:a4c991a11c0c",
+      "session_id": "session:7baef366723749758178c4c41387e775",
+      "checkpoint_id": "1f1bd8a5-497b-6968-8006-c86404e69338",
+      "checkpoint_hash": "2ece8f67e642925bfb3fc9aa1c4aa7993e9b4b04dd3f028e5cc34add1150172a",
+      "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+      "run_status": "needs_input",
+      "stop_reason": "clarification",
+      "handoff_chain": null,
+      "handoff_count": null,
+      "usage": [
+        {
+          "agent": "general_chat",
+          "tokens": 5172,
+          "retries": 0,
+          "reported_tokens": 5172,
+          "estimated_tokens": 0,
+          "model_calls": 4
+        },
+        {
+          "agent": "curator",
+          "tokens": 2154,
+          "retries": 0,
+          "reported_tokens": 2154,
+          "estimated_tokens": 0,
+          "model_calls": 2
+        },
+        {
+          "agent": "explorer",
+          "tokens": 0,
+          "retries": 0,
+          "reported_tokens": 0,
+          "estimated_tokens": 0,
+          "model_calls": 0
+        }
+      ],
+      "trace": [
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "c48a216b5ec46e99b6dedadb11496c60c6c247d5a634a8ad01f5235307c04c53",
+          "source_agent": "general_chat",
+          "target_agent": "general_chat",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 494,
+          "tokens": 1931
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "c0150d568afeb062003eff0cfdfb0f55d2f81de37ff0a035cbc3b1403726896e",
+          "source_agent": "general_chat",
+          "target_agent": "general_chat",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 515,
+          "tokens": 1350
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "44c458cbdfef182036219d237383be8bfbb04dd2b01ea50fcec8cf93f5ed6ccd",
+          "source_agent": "general_chat",
+          "target_agent": "general_chat",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 3153,
+          "tokens": 751
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "7d125c992e07f735480030a3149858fb5f447002785279f346265936d14f95e5",
+          "source_agent": "general_chat",
+          "target_agent": "general_chat",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 561,
+          "tokens": 1140
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "244dd25313b5cf63f95e01844c7ea306268bf743e826a0b75861b1929cf85584",
+          "source_agent": "general_chat",
+          "target_agent": "curator",
+          "code": "guard_shadow",
+          "guard_score": 0.79,
+          "duration_ms": 0,
+          "tokens": 0
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "8f04b9ea2d0580d87ece3d9283703c90ade82f0891e5f3a2baf02128a0673a3f",
+          "source_agent": "general_chat",
+          "target_agent": "curator",
+          "code": "accepted",
+          "guard_score": 0.79,
+          "duration_ms": 581,
+          "tokens": 0
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "6735fcf36f9537871488fec695a8566b6cdff685b9f2d6cf9378f6b2862e74dd",
+          "source_agent": "curator",
+          "target_agent": "curator",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 2923,
+          "tokens": 970
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "235d842f51d0b88568600fb54cf8424671059dde0e6d1c3d071217f7fd83a267",
+          "source_agent": "curator",
+          "target_agent": "curator",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 462,
+          "tokens": 1184
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "55aedc4d3cda8feb63f28e1d5727cf66e47fb37fe45697617db684fc234fadc5",
+          "source_agent": "curator",
+          "target_agent": "explorer",
+          "code": "guard_shadow",
+          "guard_score": 0.89,
+          "duration_ms": 0,
+          "tokens": 0
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "b6bbeb994364b7fdbe3340118f13d128c46a1be1fb0ace17da69501ae58c9d66",
+          "source_agent": "curator",
+          "target_agent": "explorer",
+          "code": "accepted",
+          "guard_score": 0.89,
+          "duration_ms": 480,
+          "tokens": 0
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "run_id": "2f4949d4c9e1407097497a04a4e40ad0",
+          "tool_call_id": "d6cd906222a5e7e91f4f0d884bfaaf0dbebb77c35933c8e3773c7e7c6e21eeaa",
+          "source_agent": "explorer",
+          "target_agent": "explorer",
+          "code": "clarification",
+          "guard_score": null,
+          "duration_ms": 0,
+          "tokens": 0
+        }
+      ],
+      "task_result_statuses": [
+        {
+          "route_key": "worldline",
+          "status": "needs_input",
+          "error": null
+        }
+      ],
+      "tool_call_ids": [
+        "call_00_FR5S39ctVn0BmGYNMlcW8843",
+        "call_00_2F971CtUNPJv9t9nzeBI0247"
+      ],
+      "tool_reply_ids": [
+        "call_00_FR5S39ctVn0BmGYNMlcW8843",
+        "call_00_2F971CtUNPJv9t9nzeBI0247"
+      ],
+      "all_calls_paired": true,
+      "history_count": 4
+    },
+    {
+      "case_id": "available_catalog_search",
+      "thread_id": "handoff:v1:phase6:extra:79daa39656f7",
+      "session_id": "session:355237be2da34d0ebc90fe3fc0ee1e46",
+      "checkpoint_id": "1f1bd8a5-b61e-6e03-8005-8d14502f5439",
+      "checkpoint_hash": "aea87575746043f1cf86a77c87ecea1305f52f08961c371e18f58a59a9cf77bc",
+      "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+      "run_status": "completed",
+      "stop_reason": "all_tasks_done",
+      "handoff_chain": null,
+      "handoff_count": null,
+      "usage": [
+        {
+          "agent": "general_chat",
+          "tokens": 2987,
+          "retries": 0,
+          "reported_tokens": 2987,
+          "estimated_tokens": 0,
+          "model_calls": 3
+        },
+        {
+          "agent": "curator",
+          "tokens": 10314,
+          "retries": 0,
+          "reported_tokens": 10314,
+          "estimated_tokens": 0,
+          "model_calls": 3
+        },
+        {
+          "agent": "explorer",
+          "tokens": 0,
+          "retries": 0,
+          "reported_tokens": 0,
+          "estimated_tokens": 0,
+          "model_calls": 0
+        }
+      ],
+      "trace": [
+        {
+          "schema_version": 1,
+          "trace_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "tool_call_id": "32785fc3089d5828ffd0166630cf257b16b31bd0be012ec6c7bd52024cad9cd3",
+          "source_agent": "general_chat",
+          "target_agent": "general_chat",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 847,
+          "tokens": 1094
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "tool_call_id": "52e525db3da2b32d8991be8c1c06181e721ec05cea4b09d5166c564976cbe89a",
+          "source_agent": "general_chat",
+          "target_agent": "general_chat",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 2556,
+          "tokens": 779
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "tool_call_id": "bd11221a7b4bef3529ffdf0b5b0cd42d0389ce1311ed3c538b12f9cfcdb6478f",
+          "source_agent": "general_chat",
+          "target_agent": "general_chat",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 451,
+          "tokens": 1114
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "tool_call_id": "ff9bf3b1ebe5ee190d0cfdd2b4123c4a786013d4784d6a4fec6ebb50396fea44",
+          "source_agent": "general_chat",
+          "target_agent": "curator",
+          "code": "guard_shadow",
+          "guard_score": 0.76,
+          "duration_ms": 0,
+          "tokens": 0
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "tool_call_id": "6d71f5e1930b9699db073d1d694575fe214693c10a0568a01fb0d0eef1bb1bda",
+          "source_agent": "general_chat",
+          "target_agent": "curator",
+          "code": "accepted",
+          "guard_score": 0.76,
+          "duration_ms": 471,
+          "tokens": 0
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "tool_call_id": "1fe0ad3438012d9aca085718198cd095360ec36c40afe0371b64a4b0f03bf1df",
+          "source_agent": "curator",
+          "target_agent": "curator",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 1668,
+          "tokens": 4484
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "tool_call_id": "24c4f7e867aa63980af38735237f2fbdfddc1911baef605c8be5c892d1514b2a",
+          "source_agent": "curator",
+          "target_agent": "curator",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 505,
+          "tokens": 382
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "tool_call_id": "efb7cc2d35c50b92adc86ff2993f81705a33b97413c465bbea0aeb52d63dcb29",
+          "source_agent": "curator",
+          "target_agent": "curator",
+          "code": "model_call",
+          "guard_score": null,
+          "duration_ms": 2292,
+          "tokens": 5448
+        },
+        {
+          "schema_version": 1,
+          "trace_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "run_id": "a1c8c944aad34b4f90ef7e1dfda66e52",
+          "tool_call_id": "954d671f25b4386aa52c45a98a1659811352eb4321e1f60d385da8a8428a4f43",
+          "source_agent": "curator",
+          "target_agent": "curator",
+          "code": "all_tasks_done",
+          "guard_score": null,
+          "duration_ms": 0,
+          "tokens": 0
+        }
+      ],
+      "task_result_statuses": [
+        {
+          "route_key": "tool_calling",
+          "status": "success",
+          "error": null
+        }
+      ],
+      "tool_call_ids": [
+        "call_00_tm0Ae6xe67dNHNqNsmXN9935"
+      ],
+      "tool_reply_ids": [
+        "call_00_tm0Ae6xe67dNHNqNsmXN9935"
+      ],
+      "all_calls_paired": true,
+      "history_count": 4
+    }
+  ],
+  "read_only": true
+}
