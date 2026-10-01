@@ -1,0 +1,217 @@
+{
+  "at": "2026-10-01T13:56:42.454553+00:00",
+  "synthetic_http_inputs": true,
+  "service_or_result_overrides": false,
+  "prefix": "phase6:3156a74dfe40",
+  "cases": [
+    {
+      "id": "health",
+      "passed": true
+    },
+    {
+      "id": "validation_0",
+      "http_status": 422,
+      "passed": true
+    },
+    {
+      "id": "validation_1",
+      "http_status": 422,
+      "passed": true
+    },
+    {
+      "id": "validation_2",
+      "http_status": 422,
+      "passed": true
+    },
+    {
+      "id": "foundation_compat",
+      "thread_id": "phase6:3156a74dfe40:foundation_compat",
+      "endpoint": "foundation",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "general_chat"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 3064.43
+    },
+    {
+      "id": "handoff_chat",
+      "thread_id": "phase6:3156a74dfe40:handoff_chat",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "general_chat"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 2773.49
+    },
+    {
+      "id": "missing_song",
+      "thread_id": "phase6:3156a74dfe40:missing_song",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "needs_input",
+      "routes": [],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 1025.01
+    },
+    {
+      "id": "song_read_only",
+      "thread_id": "phase6:3156a74dfe40:song_read_only",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "current_song"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 13503.78
+    },
+    {
+      "id": "search_read_only",
+      "thread_id": "phase6:3156a74dfe40:search_read_only",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "tool_calling"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 15366.16
+    },
+    {
+      "id": "pause_sse",
+      "thread_id": "phase6:3156a74dfe40:pause_sse",
+      "endpoint": "chat",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "tool_calling"
+      ],
+      "action_names": [
+        "pause_player"
+      ],
+      "event_names": [
+        "update",
+        "update",
+        "update",
+        "update",
+        "message",
+        "action",
+        "update",
+        "final",
+        "done"
+      ],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 3449.58
+    },
+    {
+      "id": "multi_agent_sse",
+      "thread_id": "phase6:3156a74dfe40:multi_agent_sse",
+      "endpoint": "chat",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "tool_calling",
+        "general_chat"
+      ],
+      "action_names": [
+        "pause_player"
+      ],
+      "event_names": [
+        "update",
+        "update",
+        "update",
+        "update",
+        "message",
+        "action",
+        "update",
+        "update",
+        "message",
+        "message",
+        "update",
+        "final",
+        "done"
+      ],
+      "source_count": 0,
+      "citation_count": 0,
+      "latency_ms": 21300.67
+    },
+    {
+      "id": "worldline_grounding",
+      "thread_id": "phase6:3156a74dfe40:worldline_grounding",
+      "endpoint": "handoff",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "worldline"
+      ],
+      "action_names": [],
+      "event_names": [],
+      "source_count": 1,
+      "citation_count": 1,
+      "latency_ms": 21451.67
+    },
+    {
+      "id": "explorer_to_curator_sse",
+      "thread_id": "phase6:3156a74dfe40:explorer_to_curator_sse",
+      "endpoint": "chat",
+      "passed": true,
+      "http_status": 200,
+      "status": "success",
+      "routes": [
+        "worldline",
+        "tool_calling"
+      ],
+      "action_names": [
+        "pause_player"
+      ],
+      "event_names": [
+        "update",
+        "update",
+        "update",
+        "update",
+        "update",
+        "message",
+        "update",
+        "update",
+        "message",
+        "message",
+        "action",
+        "update",
+        "final",
+        "done"
+      ],
+      "source_count": 1,
+      "citation_count": 1,
+      "latency_ms": 33485.0
+    }
+  ],
+  "passed": true
+}

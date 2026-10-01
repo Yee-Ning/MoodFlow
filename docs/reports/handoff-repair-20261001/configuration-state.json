@@ -1,0 +1,7 @@
+{
+  "agent_graph_mode": "foundation",
+  "handoff_canary_enabled": false,
+  "handoff_canary_percentage": 10.0,
+  "handoff_canary_salt": "moodflow-handoff-v1",
+  "jev_handoff_guard_shadow_mode": true
+}

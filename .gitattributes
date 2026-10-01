@@ -18,3 +18,8 @@ docs/reports/handoff-phase6-20261001/*.md text eol=lf
 docs/reports/handoff-phase6-20261001/*.json text eol=lf
 docs/reports/handoff-phase6-20261001/*.jsonl text eol=lf
 docs/reports/handoff-phase6-20261001/*.jpg -text
+# Preserve repair replay evidence hashes across platforms.
+docs/architecture/handoff-repair-and-canary.md text eol=lf
+docs/reports/handoff-repair-20261001/*.md text eol=lf
+docs/reports/handoff-repair-20261001/*.json text eol=lf
+docs/reports/handoff-repair-20261001/*.jsonl text eol=lf

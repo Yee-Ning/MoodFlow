@@ -1,0 +1,12 @@
+{
+  "owned_processes_stopped": [
+    30308,
+    8116,
+    30496
+  ],
+  "owned_ports_released": true,
+  "isolated_postgres_stopped": true,
+  "isolated_postgres_data_preserved": true,
+  "original_qdrant_listening": true,
+  "original_services_modified": false
+}
