@@ -1,0 +1,1075 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-01T10:53:10+08:00",
+  "scope": "Stage 0 baseline; no application/source/test/dependency changes",
+  "host": {
+    "node_version": "v22.21.1",
+    "npm_version": "10.9.4",
+    "maven_version": "3.9.4",
+    "default_java_version": "17.0.1",
+    "verification_java_version": "21.0.1",
+    "verification_java_home": "D:/code/JDKall/openjdk-21.0.1",
+    "docker_cli_available": true,
+    "docker_server_available": true,
+    "observed_listening_ports": [
+      18088,
+      6333
+    ],
+    "frontend_lock_sha256": "09b00dd80785e8cba69cbaf806c2a596f2c454d449e203a38bbc21526bd330f4",
+    "baseline_commit": "e4e78cd6e2f040cf60df7ed06688e82600903fb8",
+    "branch": "codex/parse-normalize-corpus-v1",
+    "initial_docker_probe": "unavailable; Docker Desktop pipe absent",
+    "docker_server_version": "29.7.2",
+    "observed_containers": [
+      "moodflow-rehearsal-20260928-frontend-1 | Up 12 minutes (healthy) | 127.0.0.1:18088->80/tcp",
+      "moodflow-rehearsal-20260928-ai-service-1 | Up 11 minutes (healthy) | 8001/tcp",
+      "moodflow-rehearsal-20260928-java-1 | Up 12 minutes (healthy) | 8080/tcp",
+      "moodflow-rehearsal-20260928-netease-1 | Up 12 minutes (healthy) | 3000/tcp",
+      "moodflow-rehearsal-20260928-postgres-1 | Up 12 minutes (healthy) | 5432/tcp",
+      "moodflow-rehearsal-20260928-qdrant-1 | Up 12 minutes (healthy) | 6333-6334/tcp",
+      "ai-service-qdrant-1 | Up 12 minutes | 127.0.0.1:6333-6334->6333-6334/tcp"
+    ],
+    "qdrant_root_probe": {
+      "title": "qdrant - vector search engine",
+      "version": "1.19.0",
+      "url": "http://127.0.0.1:6333/"
+    }
+  },
+  "python": {
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "runtime_requirements": [
+      {
+        "requirement": "fastapi>=0.115,<1.0",
+        "installed": "0.141.1",
+        "satisfied": true
+      },
+      {
+        "requirement": "beautifulsoup4>=4.15,<5.0",
+        "installed": "4.15.0",
+        "satisfied": true
+      },
+      {
+        "requirement": "charset-normalizer>=3.5.1,<4.0",
+        "installed": "3.5.1",
+        "satisfied": true
+      },
+      {
+        "requirement": "httpx>=0.28,<1.0",
+        "installed": "0.28.1",
+        "satisfied": true
+      },
+      {
+        "requirement": "langgraph>=1.2,<2.0",
+        "installed": "1.2.11",
+        "satisfied": true
+      },
+      {
+        "requirement": "langgraph-checkpoint-postgres>=3.1,<4.0",
+        "installed": "3.1.2",
+        "satisfied": true
+      },
+      {
+        "requirement": "langchain-openai>=1.6,<2.0",
+        "installed": "1.6.0",
+        "satisfied": true
+      },
+      {
+        "requirement": "langchain-text-splitters==1.1.2",
+        "installed": "1.1.2",
+        "satisfied": true
+      },
+      {
+        "requirement": "numpy>=1.26,<3.0",
+        "installed": "2.5.2",
+        "satisfied": true
+      },
+      {
+        "requirement": "openai>=2.54,<3.0",
+        "installed": "2.54.0",
+        "satisfied": true
+      },
+      {
+        "requirement": "markdown-it-py>=4.2,<5.0",
+        "installed": "4.2.0",
+        "satisfied": true
+      },
+      {
+        "requirement": "pydantic-settings>=2.0,<3.0",
+        "installed": "2.15.0",
+        "satisfied": true
+      },
+      {
+        "requirement": "python-dotenv>=1.0,<2.0",
+        "installed": "1.2.3",
+        "satisfied": true
+      },
+      {
+        "requirement": "psycopg[binary]>=3.2,<4.0",
+        "installed": "3.3.6",
+        "satisfied": true
+      },
+      {
+        "requirement": "psycopg-pool>=3.2,<4.0",
+        "installed": "3.3.2",
+        "satisfied": true
+      },
+      {
+        "requirement": "qdrant-client>=1.19,<1.20",
+        "installed": "1.19.0",
+        "satisfied": true
+      },
+      {
+        "requirement": "protego>=0.6.2,<1.0",
+        "installed": "0.6.2",
+        "satisfied": true
+      },
+      {
+        "requirement": "pymupdf4llm>=1.28.2,<2.0",
+        "installed": "1.28.2",
+        "satisfied": true
+      },
+      {
+        "requirement": "PyYAML>=6.0.3,<7.0",
+        "installed": "6.0.3",
+        "satisfied": true
+      },
+      {
+        "requirement": "scikit-learn>=1.5,<2.0",
+        "installed": "1.9.0",
+        "satisfied": true
+      },
+      {
+        "requirement": "torch>=2.5,<3.0",
+        "installed": "2.14.0+cu126",
+        "satisfied": true
+      },
+      {
+        "requirement": "transformers>=4.51,<6.0",
+        "installed": "5.16.1",
+        "satisfied": true
+      },
+      {
+        "requirement": "typesafe-sdk==0.7.1",
+        "installed": "0.7.1",
+        "satisfied": true
+      },
+      {
+        "requirement": "uvicorn[standard]>=0.30,<1.0",
+        "installed": "0.52.4",
+        "satisfied": true
+      }
+    ],
+    "test_tools": {
+      "pytest": "9.1.1",
+      "pytest-asyncio": "1.4.0",
+      "ruff": "0.13.2",
+      "deepeval": null,
+      "langchain-core": "1.6.1",
+      "pydantic": "2.13.4"
+    },
+    "application_test_files": 156,
+    "evaluation_test_files": 21
+  },
+  "environment_profile": {
+    "CHECKPOINT_BACKEND": "memory",
+    "PERSISTENCE_BACKEND": "sqlite",
+    "MEMORY_BACKEND": "disabled",
+    "JEV_ENABLED": "false",
+    "JEV_LIVE_TEST": "0",
+    "RUN_LIVE_POSTGRES_SMOKE": "0",
+    "RUN_WORLDLINE_POSTGRES_RESTART": "0",
+    "DATABASE_URL": "empty",
+    "TYPESAFE_API_KEY": "unset for corrected application/settings runs; empty for earlier runs",
+    "LLM_API_KEY": "non-secret offline placeholder",
+    "PYTHONUTF8": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "DEEPEVAL_TELEMETRY_OPT_OUT": "YES (judge process only)",
+    "QDRANT_INTEGRATION_URL": "http://127.0.0.1:6333 (two additional integration cases only)",
+    "NO_PROXY": "127.0.0.1,localhost (successful additional Qdrant integration run only)"
+  },
+  "checks": [
+    {
+      "id": "foundation-corrected",
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_graph_foundation.py tests/test_hybrid_graph.py tests/test_foundation_current_song.py tests/test_foundation_response.py tests/test_foundation_streaming.py tests/test_foundation_e2e_acceptance.py tests/test_general_chat_subgraph.py tests/test_tool_calling_subgraph.py tests/test_tool_action_authorization.py tests/test_tool_calling_contracts.py tests/test_context_engineering.py tests/test_long_horizon_context.py tests/test_jev_router_v5.py tests/test_jev_router_v5_e2e.py tests/test_api.py tests/test_worldline_api.py -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit_code": 0,
+      "duration_seconds": 139.55,
+      "junit": {
+        "tests": 214,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 177
+      },
+      "summary": "177 passed, 1 warning, 37 subtests passed in 135.65s (0:02:15)",
+      "pytest_counts": {
+        "passed": 177,
+        "warning": 1,
+        "subtests_passed": 37
+      },
+      "skips": [],
+      "unsuccessful_test_ids": [],
+      "local_log": ".dev/handoff-phase0-20261001/foundation-corrected.txt"
+    },
+    {
+      "id": "repository",
+      "command": ".venv/Scripts/python.exe -m pytest -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit_code": 2,
+      "duration_seconds": 18.12,
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 1,
+        "skipped": 0,
+        "passed": 0
+      },
+      "summary": "1 error in 14.74s",
+      "pytest_counts": {
+        "error": 1
+      },
+      "skips": [],
+      "unsuccessful_test_ids": [
+        "::evals.tests.test_judges"
+      ],
+      "local_log": ".dev/handoff-phase0-20261001/repository.txt"
+    },
+    {
+      "id": "application-corrected",
+      "command": ".venv/Scripts/python.exe -m pytest tests -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit_code": 0,
+      "duration_seconds": 132.76,
+      "junit": {
+        "tests": 1635,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 14,
+        "passed": 1335
+      },
+      "summary": "1335 passed, 14 skipped, 1 warning, 286 subtests passed in 129.62s (0:02:09)",
+      "pytest_counts": {
+        "passed": 1335,
+        "skipped": 14,
+        "warning": 1,
+        "subtests_passed": 286
+      },
+      "skips": [
+        {
+          "test": "tests.test_jev_live::test_live_system_one_choice",
+          "reason": "set JEV_LIVE_TEST=1 to use the real TypeSafe API"
+        },
+        {
+          "test": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "test": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "test": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "test": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "test": "tests.test_postgres_persistence.PostgresPersistenceTests::test_business_store_persists_all_continuity_records",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "test": "tests.test_postgres_persistence.PostgresPersistenceTests::test_pgvector_memory_persists_and_isolates_users",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "test": "tests.test_postgres_persistence.PostgresPersistenceTests::test_restart_recovers_checkpoint_and_context_in_new_process",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "test": "tests.test_postgres_persistence.PostgresPersistenceTests::test_store_transaction_rolls_back_partial_writes",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "test": "tests.test_rag_indexing.QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "test": "tests.test_retrieval_fusion_qdrant.QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "test": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "test": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "test": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        }
+      ],
+      "unsuccessful_test_ids": [],
+      "local_log": ".dev/handoff-phase0-20261001/application-corrected.txt"
+    },
+    {
+      "id": "evaluation-application",
+      "command": ".venv/Scripts/python.exe -m pytest evals/tests/test_conflict_handling_targeted_repair_report.py evals/tests/test_influence_context_input_repair.py evals/tests/test_semantic_relations_baseline_r4.py evals/tests/test_semantic_relations_baseline_r6.py evals/tests/test_semantic_relations_evaluation.py evals/tests/test_semantic_relations_review.py evals/tests/test_semantic_relations_review_r2.py evals/tests/test_semantic_relations_review_r3.py evals/tests/test_semantic_relations_review_r4.py evals/tests/test_semantic_relations_review_r5.py evals/tests/test_semantic_relations_review_r6.py evals/tests/test_worldline_eval_dataset.py evals/tests/test_worldline_eval_metrics.py evals/tests/test_worldline_eval_runner.py evals/tests/test_worldline_gold_candidate_review.py evals/tests/test_worldline_gold_v11.py evals/tests/test_worldline_gold_v1_adapter.py evals/tests/test_worldline_gold_v1_loader.py evals/tests/test_worldline_gold_v1_promoter.py evals/tests/test_worldline_gold_v1_runner.py -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit_code": 0,
+      "duration_seconds": 33.59,
+      "test_file_count": 20,
+      "junit": {
+        "tests": 173,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 173
+      },
+      "summary": "173 passed in 31.47s",
+      "pytest_counts": {
+        "passed": 173
+      },
+      "skips": [],
+      "unsuccessful_test_ids": [],
+      "local_log": ".dev/handoff-phase0-20261001/evaluation-application.txt"
+    },
+    {
+      "id": "judges",
+      "command": ".venv-eval/Scripts/python.exe -m pytest evals/tests/test_judges.py -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit_code": 0,
+      "junit": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 4
+      },
+      "summary": "4 passed in 0.49s",
+      "pytest_counts": {
+        "passed": 4
+      },
+      "skips": [],
+      "unsuccessful_test_ids": [],
+      "local_log": ".dev/handoff-phase0-20261001/judges.txt"
+    },
+    {
+      "id": "settings-corrected",
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_jev_settings.py -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit_code": 0,
+      "junit": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 3
+      },
+      "summary": "3 passed in 0.30s",
+      "pytest_counts": {
+        "passed": 3
+      },
+      "skips": [],
+      "unsuccessful_test_ids": [],
+      "local_log": ".dev/handoff-phase0-20261001/settings-corrected.txt"
+    },
+    {
+      "id": "qdrant-direct",
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit_code": 0,
+      "duration_seconds": 8.81,
+      "junit": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 2
+      },
+      "summary": "2 passed in 6.75s",
+      "pytest_counts": {
+        "passed": 2
+      },
+      "skips": [],
+      "unsuccessful_test_ids": [],
+      "local_log": ".dev/handoff-phase0-20261001/qdrant-direct.txt"
+    },
+    {
+      "command": "npm run test:ai-layout",
+      "exit_code": 0,
+      "duration_seconds": 1.5,
+      "log": "frontend-test-ai-layout.txt",
+      "cwd": "soul-music-room"
+    },
+    {
+      "command": "npm run test:ai-stream",
+      "exit_code": 0,
+      "duration_seconds": 1.98,
+      "log": "frontend-test-ai-stream.txt",
+      "cwd": "soul-music-room"
+    },
+    {
+      "command": "npm run test:music-assets",
+      "exit_code": 0,
+      "duration_seconds": 1.77,
+      "log": "frontend-test-music-assets.txt",
+      "cwd": "soul-music-room"
+    },
+    {
+      "command": "npm run test:search",
+      "exit_code": 0,
+      "duration_seconds": 2.0,
+      "log": "frontend-test-search.txt",
+      "cwd": "soul-music-room"
+    },
+    {
+      "command": "npm run test:ai-trigger",
+      "exit_code": 0,
+      "duration_seconds": 1.51,
+      "log": "frontend-test-ai-trigger.txt",
+      "cwd": "soul-music-room"
+    },
+    {
+      "command": "npm run test:worldline",
+      "exit_code": 0,
+      "duration_seconds": 2.4,
+      "log": "frontend-test-worldline.txt",
+      "cwd": "soul-music-room"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "duration_seconds": 9.83,
+      "log": "frontend-lint.txt",
+      "cwd": "soul-music-room"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "duration_seconds": 7.13,
+      "log": "frontend-build.txt",
+      "cwd": "soul-music-room"
+    },
+    {
+      "id": "java-verify",
+      "command": "mvn.cmd --batch-mode --no-transfer-progress -o verify",
+      "cwd": "music-backend",
+      "exit_code": 0,
+      "duration_seconds": 31.79,
+      "java_home": "D:/code/JDKall/openjdk-21.0.1",
+      "summary": "75 tests, 0 failures, 0 errors, 0 skipped; BUILD SUCCESS"
+    },
+    {
+      "id": "static",
+      "cwd": "ai-service",
+      "ruff_exit_code": 1,
+      "compileall_exit_code": 0,
+      "commands": [
+        ".venv/Scripts/python.exe -m ruff check . --output-format json",
+        ".venv/Scripts/python.exe -m compileall -q app tests evals scripts"
+      ]
+    },
+    {
+      "id": "application-dependency-check",
+      "command": ".venv/Scripts/python.exe -m pip check",
+      "cwd": "ai-service",
+      "exit_code": 0,
+      "summary": "No broken requirements found (captured tool result)"
+    },
+    {
+      "id": "evaluation-dependency-check",
+      "command": ".venv-eval/Scripts/python.exe -m pip check",
+      "cwd": "ai-service",
+      "exit_code": 0,
+      "summary": "No broken requirements found."
+    },
+    {
+      "id": "frontend-dependency-check",
+      "command": "npm.cmd ls --depth=0 --json",
+      "cwd": "soul-music-room",
+      "exit_code": 0,
+      "summary": "Installed dependency tree returned successfully"
+    }
+  ],
+  "lint_baseline": {
+    "total": 45,
+    "files": 18,
+    "by_code": {
+      "F401": 4,
+      "F841": 1,
+      "E402": 40
+    },
+    "findings": [
+      {
+        "code": "F401",
+        "path": "ai-service/app/agent/foundation/routing.py",
+        "line": 5,
+        "message": "`app.schemas.player.PlayMode` imported but unused"
+      },
+      {
+        "code": "F401",
+        "path": "ai-service/app/agent/foundation/routing.py",
+        "line": 5,
+        "message": "`app.schemas.player.PlayerState` imported but unused"
+      },
+      {
+        "code": "F841",
+        "path": "ai-service/app/rag/parse_normalize/pdf/adapters.py",
+        "line": 568,
+        "message": "Local variable `item_type` is assigned to but never used"
+      },
+      {
+        "code": "F401",
+        "path": "ai-service/app/rag/source_ingestion/auto_service.py",
+        "line": 7,
+        "message": "`pathlib.Path` imported but unused"
+      },
+      {
+        "code": "F401",
+        "path": "ai-service/app/rag/source_ingestion/service.py",
+        "line": 12,
+        "message": "`.models.SourceNotApprovedError` imported but unused"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_clean.py",
+        "line": 17,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_clean.py",
+        "line": 18,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_clean.py",
+        "line": 19,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_clean.py",
+        "line": 24,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_clean.py",
+        "line": 25,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_clean.py",
+        "line": 26,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_clean.py",
+        "line": 31,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_clean.py",
+        "line": 32,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_parse.py",
+        "line": 17,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/run_parse_corpus.py",
+        "line": 16,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/clean_dataset.py",
+        "line": 10,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/evaluate_model.py",
+        "line": 10,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/evaluate_model.py",
+        "line": 11,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/generate_dataset.py",
+        "line": 10,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/predict_intent.py",
+        "line": 10,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/predict_intent.py",
+        "line": 11,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/split_dataset.py",
+        "line": 10,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/test_hybrid_router.py",
+        "line": 11,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/test_hybrid_router.py",
+        "line": 12,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/test_hybrid_router.py",
+        "line": 13,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/test_hybrid_router.py",
+        "line": 14,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/test_hybrid_router.py",
+        "line": 15,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/test_model_router.py",
+        "line": 11,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/train_model.py",
+        "line": 9,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/train_model.py",
+        "line": 10,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/intent/validate_dataset.py",
+        "line": 10,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion.py",
+        "line": 14,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion.py",
+        "line": 18,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion.py",
+        "line": 22,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion.py",
+        "line": 23,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion.py",
+        "line": 24,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion_v2.py",
+        "line": 17,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion_v2.py",
+        "line": 21,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion_v2.py",
+        "line": 22,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion_v2.py",
+        "line": 23,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion_v2.py",
+        "line": 27,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion_v2.py",
+        "line": 28,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion_v2.py",
+        "line": 29,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion_v2.py",
+        "line": 30,
+        "message": "Module level import not at top of file"
+      },
+      {
+        "code": "E402",
+        "path": "ai-service/scripts/source_ingestion_v2.py",
+        "line": 31,
+        "message": "Module level import not at top of file"
+      }
+    ]
+  },
+  "qdrant_network_diagnostic": {
+    "probes": [
+      {
+        "trust_env": true,
+        "status": 502
+      },
+      {
+        "trust_env": false,
+        "status": 200
+      }
+    ],
+    "proxy_variables_present": {
+      "HTTP_PROXY": false,
+      "HTTPS_PROXY": false,
+      "ALL_PROXY": false,
+      "NO_PROXY": false
+    },
+    "test_collections_before_retry": [],
+    "id": "qdrant-corrected",
+    "command": ".venv/Scripts/python.exe -m pytest two real-Qdrant integration cases without local proxy bypass",
+    "cwd": "ai-service",
+    "exit_code": 1,
+    "duration_seconds": 11.0,
+    "junit": {
+      "tests": 2,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 0
+    },
+    "summary": "2 failed, 2 warnings in 8.83s",
+    "pytest_counts": {
+      "failed": 2,
+      "warnings": 2
+    },
+    "skips": [],
+    "unsuccessful_test_ids": [
+      "tests.test_rag_indexing.QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+      "tests.test_retrieval_fusion_qdrant.QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs"
+    ],
+    "local_log": ".dev/handoff-phase0-20261001/qdrant-corrected.txt",
+    "classification": "HTTPX environment-aware loopback path returned 502; trust_env=False returned 200",
+    "resolution": "Set NO_PROXY=127.0.0.1,localhost only in the test process; both original test bodies passed",
+    "temporary_collections_after_retry": []
+  },
+  "discarded_harness_runs": [
+    {
+      "id": "foundation",
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_graph_foundation.py tests/test_hybrid_graph.py tests/test_foundation_current_song.py tests/test_foundation_response.py tests/test_foundation_streaming.py tests/test_foundation_e2e_acceptance.py tests/test_general_chat_subgraph.py tests/test_tool_calling_subgraph.py tests/test_tool_action_authorization.py tests/test_tool_calling_contracts.py tests/test_context_engineering.py tests/test_long_horizon_context.py tests/test_jev_router_v5.py tests/test_jev_router_v5_e2e.py tests/test_api.py tests/test_worldline_api.py -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit_code": 1,
+      "duration_seconds": 75.12,
+      "junit": {
+        "tests": 214,
+        "failures": 14,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 163
+      },
+      "summary": "14 failed, 163 passed, 1 warning, 37 subtests passed in 70.42s (0:01:10)",
+      "pytest_counts": {
+        "passed": 163,
+        "failed": 14,
+        "warning": 1,
+        "subtests_passed": 37
+      },
+      "skips": [],
+      "unsuccessful_test_ids": [
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_current_song_backend_failure_is_sanitized",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_current_song_needs_input_without_player",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_current_song_normal_and_context_change",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_general_chat_normal_and_history",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_general_chat_receives_prior_task_summary",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_general_chat_without_tools_completes_directly",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_tool_calling_boundary_needs_song_without_action",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_tool_calling_executes_tool_and_returns_result",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_tool_calling_timeout_returns_failure",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_worldline_frozen_rag_stages_reach_main_response",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_worldline_plan_retrieval_generation_and_sources",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_worldline_retrieval_failure_falls_back_to_catalog",
+        "tests.test_foundation_e2e_acceptance.FoundationE2EAcceptanceTests::test_worldline_unknown_entity_needs_input",
+        "tests.test_api.ApiTests::test_foundation_json_and_sse_share_task_contract"
+      ],
+      "local_log": ".dev/handoff-phase0-20261001/foundation.txt",
+      "classification": "Operator test-profile error; invalid PERSISTENCE_BACKEND=memory",
+      "resolution": "Corrected to supported sqlite; same complete target suite rerun without code/test edits"
+    },
+    {
+      "id": "application",
+      "command": ".venv/Scripts/python.exe -m pytest tests -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit_code": 1,
+      "duration_seconds": 140.47,
+      "junit": {
+        "tests": 1635,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 14,
+        "passed": 1334
+      },
+      "summary": "1 failed, 1334 passed, 14 skipped, 1 warning, 286 subtests passed in 137.15s (0:02:17)",
+      "pytest_counts": {
+        "passed": 1334,
+        "failed": 1,
+        "skipped": 14,
+        "warning": 1,
+        "subtests_passed": 286
+      },
+      "skips": [
+        {
+          "test": "tests.test_jev_live::test_live_system_one_choice",
+          "reason": "set JEV_LIVE_TEST=1 to use the real TypeSafe API"
+        },
+        {
+          "test": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "test": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "test": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "test": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "test": "tests.test_postgres_persistence.PostgresPersistenceTests::test_business_store_persists_all_continuity_records",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "test": "tests.test_postgres_persistence.PostgresPersistenceTests::test_pgvector_memory_persists_and_isolates_users",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "test": "tests.test_postgres_persistence.PostgresPersistenceTests::test_restart_recovers_checkpoint_and_context_in_new_process",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "test": "tests.test_postgres_persistence.PostgresPersistenceTests::test_store_transaction_rolls_back_partial_writes",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "test": "tests.test_rag_indexing.QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "test": "tests.test_retrieval_fusion_qdrant.QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "test": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "test": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "test": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        }
+      ],
+      "unsuccessful_test_ids": [
+        "tests.test_jev_settings::test_jev_fields_use_existing_settings_and_hide_key"
+      ],
+      "local_log": ".dev/handoff-phase0-20261001/application.txt",
+      "classification": "Operator test-profile conflict: empty TYPESAFE_API_KEY shadows a test's temporary .env fixture",
+      "resolution": "Unset only the process override; targeted settings tests and the entire application suite rerun without code/test edits"
+    },
+    {
+      "id": "qdrant",
+      "command": ".venv/Scripts/python.exe -m pytest two initially misnamed integration node IDs",
+      "cwd": "ai-service",
+      "exit_code": 4,
+      "duration_seconds": 7.03,
+      "junit": {
+        "tests": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 0
+      },
+      "summary": "",
+      "pytest_counts": {},
+      "skips": [],
+      "unsuccessful_test_ids": [],
+      "local_log": ".dev/handoff-phase0-20261001/qdrant.txt",
+      "classification": "Operator selector error; two test class names did not exist, so no test body ran",
+      "resolution": "Verified actual class names in source; reran both exact integration node IDs"
+    }
+  ],
+  "working_tree": {
+    "initial_status": [
+      " M ai-service/evals/reports/gold_review_v0_blind_pack.md",
+      " D context_engineering_v1_phase1_report.md",
+      " D context_engineering_v1_phase2_long_horizon_report.md",
+      " D foundation_subgraph_e2e_acceptance.md",
+      " D structured_output_v1_implementation_report.md",
+      "?? ai-service/data/chunked/v1/",
+      "?? ai-service/data/chunked/worldline-final-native-20260927/",
+      "?? ai-service/data/chunked/worldline-final-native-closure-20260927/",
+      "?? ai-service/data/chunked/worldline-native-positive-20260927/",
+      "?? ai-service/data/chunked/worldline-native-positive-v2-20260927/",
+      "?? ai-service/data/chunked/worldline-native-positive-v3-20260927/",
+      "?? ai-service/data/enriched/v1/",
+      "?? ai-service/data/enriched/worldline-final-native-20260927/",
+      "?? ai-service/data/enriched/worldline-final-native-closure-20260927/",
+      "?? ai-service/data/enriched/worldline-native-positive-20260927/",
+      "?? ai-service/data/enriched/worldline-native-positive-v2-20260927/",
+      "?? ai-service/data/enriched/worldline-native-positive-v3-20260927/",
+      "?? ai-service/data/knowledge/production-qa/worldline-final-native-20260927/",
+      "?? ai-service/data/knowledge/production-qa/worldline-final-native-closure-20260927/",
+      "?? ai-service/data/knowledge/releases/worldline-final-native-release-20260927/entity_registry_candidates.jsonl",
+      "?? ai-service/data/knowledge/releases/worldline-final-native-release-20260927/knowledge_corpus_manifest.jsonl",
+      "?? ai-service/data/knowledge/releases/worldline-final-native-release-20260927/knowledge_enriched_chunks.jsonl",
+      "?? ai-service/data/knowledge/releases/worldline-final-native-release-20260927/knowledge_quality_report.json",
+      "?? ai-service/data/knowledge/releases/worldline-final-native-release-20260927/knowledge_release_manifest.json",
+      "?? ai-service/data/knowledge/releases/worldline-final-native-release-20260927/qa/",
+      "?? ai-service/data/knowledge/review-v2/",
+      "?? ai-service/data/knowledge/v1/",
+      "?? ai-service/data/knowledge/v2/",
+      "?? ai-service/data/knowledge/worldline-final-native-20260927/",
+      "?? ai-service/data/knowledge/worldline-final-native-closure-20260927/",
+      "?? ai-service/data/knowledge/worldline-native-positive-20260927/",
+      "?? ai-service/data/knowledge/worldline-native-positive-v2-20260927/entity_registry_candidates.jsonl",
+      "?? ai-service/data/knowledge/worldline-native-positive-v2-20260927/knowledge_corpus_manifest.jsonl",
+      "?? ai-service/data/knowledge/worldline-native-positive-v2-20260927/knowledge_enriched_chunks.jsonl",
+      "?? ai-service/data/knowledge/worldline-native-positive-v3-20260927/entity_registry_candidates.jsonl",
+      "?? ai-service/data/knowledge/worldline-native-positive-v3-20260927/knowledge_corpus_manifest.jsonl",
+      "?? ai-service/data/knowledge/worldline-native-positive-v3-20260927/knowledge_enriched_chunks.jsonl",
+      "?? ai-service/data/knowledge/worldline/",
+      "?? ai-service/data/raw/worldline-source-context-v4-20260926/",
+      "?? ai-service/data/source_context/",
+      "?? ai-service/data/source_ingestion/worldline-final-native-20260927/",
+      "?? ai-service/data/source_ingestion/worldline-final-native-closure-20260927/",
+      "?? ai-service/data/source_ingestion/worldline-native-positive-20260926/wl-positive-001.dom.txt",
+      "?? ai-service/data/source_ingestion/worldline-native-positive-20260926/wl-positive-001.gb-dom.txt",
+      "?? ai-service/data/source_ingestion/worldline-native-positive-20260926/wl-positive-002.dom.txt",
+      "?? ai-service/evals/reports/context_engineering_v1_phase1_report.md",
+      "?? ai-service/evals/reports/context_engineering_v1_phase2_long_horizon_report.md",
+      "?? ai-service/evals/reports/foundation_subgraph_e2e_acceptance.md",
+      "?? ai-service/evals/reports/structured_output_v1_implementation_report.md",
+      "?? docs/audits/",
+      "?? docs/reports/worldline-final-acceptance/narrow-continuation-response.json",
+      "?? docs/reports/worldline-final-acceptance/narrow-create-network.json",
+      "?? docs/reports/worldline-final-acceptance/narrow-create-response.json",
+      "?? docs/reports/worldline-final-acceptance/narrow-explore-alternative-response.json",
+      "?? docs/reports/worldline-final-acceptance/narrow-explore-before-restart-response.json",
+      "?? docs/reports/worldline-final-acceptance/narrow-recover-response.json",
+      "?? docs/reports/worldline-final-native-20260927/frontend_revision3.jpg",
+      "?? docs/reports/worldline-final-native-20260927/frontend_revision3.png"
+    ],
+    "unrelated_status_preserved": true,
+    "existing_tracked_modification_hashes_preserved": true,
+    "initial_index_empty": true
+  },
+  "not_verified": [
+    "Live PostgreSQL/pgvector persistence and process restart",
+    "Representative retrieval quality on the production knowledge index (two fixture-based real-Qdrant integration cases are covered)",
+    "Live LLM/JEV quality, latency, cost and production shadow window",
+    "Authenticated NetEase upstream calls and browser audio playback",
+    "Browser responsive/visual inspection",
+    "New handoff graph, old checkpoint migration and graph-mode rollback (not yet implemented)"
+  ],
+  "local_log_sha256": {
+    "application-corrected.txt": "dccf91e20db9d09b00ac7311c7da7b05f2db16b3a267aba504c5d23d73a5d241",
+    "application.txt": "6776fbd81b30c926baa2189ec251974ad5a7b3e0911e278a64b5d9084022164c",
+    "compileall.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "eval-pip-check.txt": "672aec65a45bed50e70229c70934a7eebf0462595c459b83023027645d57cccf",
+    "evaluation-application.txt": "2986da0546c3b1e9173534d34a54e4b00c901af344216b2e1b1de433a5fa83bc",
+    "foundation-corrected.txt": "5e3ee85f355c90c3344fcaaef3f5105300c1852238b0503e781b7c67d032b660",
+    "foundation.txt": "dba3028cdfc7493ee445b7c4f5b39f3ae2a8273475b8c6d7b1bff01830cf691f",
+    "frontend-build.txt": "75c55784c9fd0215de7cc1f5a1940c17a313d766f3d06f291bfaa9742d77441a",
+    "frontend-lint.txt": "ddc2ddc5695dd0474dd4a2f35b28a51e4ba0b7029b79ae72a004f32a05054336",
+    "frontend-test-ai-layout.txt": "feb5087a3ad27ed326f7038249f5121576677e4734f1a3cbccd7875ac12a8db7",
+    "frontend-test-ai-stream.txt": "970e420c00cfb3523659bfa5885c7490545e04e9cfec09f851f41e0b54b86f61",
+    "frontend-test-ai-trigger.txt": "f1cd9b13da35f39ec05cea175fd8d94837f98a8e0b9737b4faba9ad78cb0bb05",
+    "frontend-test-music-assets.txt": "f1f46a65dd0ad787d7ff3e43a3ec712fb7395b96b05b8f8c1f9b9c5aef4f4b19",
+    "frontend-test-search.txt": "cb51a569a6eb0c55bf0e8dbb088226d91097965cc844175702dc33c8e108e730",
+    "frontend-test-worldline.txt": "4c5dc69a82ca8fef09f811b805887d8cca30632d0512763600452affd7e93701",
+    "initial-status.txt": "4c946282ec56c9ec2ba02adc0a2aace625e8b461a5c9c9edc899c61ade0a9576",
+    "java-verify.txt": "cec09e8546b6a6b3fcfa6c47559e5e03c0eee7cd80b6e45d5d80324fbbe423bd",
+    "judges.txt": "b18df6ba2de02e9553388428425643d9b7cb1979af2c5334833d768064aa25c8",
+    "qdrant-corrected.txt": "2c2daf69f61ff704866c271de68495769b5cd48fd0d90841b7c546574c811c20",
+    "qdrant-direct.txt": "85a3ea6f213b2cba110896d94daf6500c6819a88600458e3ed2087ff3f0505f3",
+    "qdrant.txt": "c1fbcbf32f6d106335308d87cf716434a38015a0888d86f2491b3eec70c35f1d",
+    "repository.txt": "c4ed5203b0bd15147dccd6e47a8c3938cf151b321e7adc4c20b7b936b6d7d08e",
+    "settings-corrected.txt": "5fc7ce8151c9417273d916259f79ee68d5f60e54c2397e6fca4549e7b3fd0a3f",
+    "status-after-checks.txt": "4c946282ec56c9ec2ba02adc0a2aace625e8b461a5c9c9edc899c61ade0a9576",
+    "status-before-report.txt": "4c946282ec56c9ec2ba02adc0a2aace625e8b461a5c9c9edc899c61ade0a9576"
+  }
+}
