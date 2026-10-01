@@ -19,6 +19,7 @@
 | `.venv/Scripts/python.exe -m pytest tests -q -ra --tb=short` | **1607 passed，14 skipped，1 warning，286 subtests passed**；退出 0，615.85 秒 |
 | 初轮 handoff/guard/预算/运行保障/网络/settings 相关集合 | **174 passed，1 warning**；退出 0；后续新增 settings 校验由全量覆盖 |
 | 应用环境执行全部 `evals/tests`，除 `test_judges.py` | **193 passed**；退出 0，124.77 秒；加上独立 Judge 为 197 项评测框架测试通过 |
+| 最后检出换行修复后 `.venv/Scripts/python.exe -m pytest evals/tests/test_handoff_jev.py -q -ra --tb=short` | **21 passed**；退出 0，66.89 秒；包含新增 LF/冻结哈希回归，其余为上述评测子集 |
 | `.venv-eval/Scripts/python.exe -m pytest evals/tests/test_judges.py -q -ra --tb=short` | **4 passed**；退出 0；受控客户端 |
 | 修改文件 Ruff check | All checks passed；退出 0 |
 | handoff 包、新/修改测试与回放文件 Ruff format check | 通过；Settings 沿用原文件风格，没有全文件重排 |
@@ -47,10 +48,12 @@ $phase5EvalFiles = @(Get-ChildItem -LiteralPath evals/tests -Filter test_*.py -F
 | 数据 | SHA-256 | 用途 |
 |---|---|---|
 | 既有 `router_e2e_blind_v5.jsonl`，30 条 | `24d190d630614a611f19ac2ea1b7fc61cbf529b4222dfe826ec1b2b64f5e6daf` | 独立检查完整能力、任务片段、顺序、依赖和澄清 |
-| `handoff_guard_v1.jsonl`，64 条 | `903b4bc760fb9e7808fa201b34bae62a0ec83e647b9820541c9c9514b9600cf9` | 初轮诊断；28 条 dev / 36 条初始保留 |
-| `handoff_guard_confirmation_v1.jsonl`，64 条 | `603041a9c73fe8a445c6bdd82c4d79501a0d1dd7f68736e0f764a5d6de370671` | 复用 28 条 dev，重新编写 32 条语义确认及 4 条非法交接 |
+| `handoff_guard_v1.jsonl`，64 条，固定 LF | `68ad2a406e0bc4dee2db3b6d0674202f071235efa46c1156909696c5af662f09` | 初轮诊断；28 条 dev / 36 条初始保留 |
+| `handoff_guard_confirmation_v1.jsonl`，64 条，固定 LF | `3c84ddce473d5fc00bab6cd7d7cf879a1092847fbf96e680d88405a6cfce4999` | 复用 28 条 dev，重新编写 32 条语义确认及 4 条非法交接 |
 
 数据在相应真实调用前冻结；确认集文本与初始集语义样例不重合。数据由本次手工编写和标注，包含正常控制/聊天/只读分析/WorldLine、允许中转、当前任务片段、否定保留、引用文字、额外动作、伪造审批、reason 注入和非法边。并非真实生产标注或外部独立审查。
+
+提交后复查发现 Windows 工作文件为 CRLF，而 Git blob 为 LF。两份数据逐条 JSON 内容相同；最终通过范围限定的 `.gitattributes` 固定数据、回放源码和证据的 LF，并更新 byte-hash 校验。历史回放记录中的原始 CRLF SHA 分别为 `903b4bc760fb9e7808fa201b34bae62a0ec83e647b9820541c9c9514b9600cf9` / `603041a9c73fe8a445c6bdd82c4d79501a0d1dd7f68736e0f764a5d6de370671`，保留为调用时证据。表中为最终可检出文件的 SHA；换行规范化没有更改任何模型输入或标签，不重跑真实 API 来覆盖历史结果。
 
 只用 dev 修改题目和选阈值。固定网格中，在 dev 零错误候选里最大化两类保真分数到阈值的最小间隔，得到 0.7 / 0.2。未根据确认集逐条调整阈值或修改错误标签。确认集复验仍是同一确认集，不能称为额外新的盲测。
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "recorded_at": "2026-10-01T09:31:20.499359+00:00",
+  "recorded_at": "2026-10-01T09:42:30.495772+00:00",
   "baseline_commit": "4598c1f",
   "runtime_commit": "c33372a",
   "runtime_configuration": {
@@ -29,6 +29,13 @@
       "errors": "0",
       "skipped": "0",
       "time": "124.226"
+    },
+    "line_ending_regression": {
+      "tests": "21",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "60.679"
     },
     "static": {
       "judges": 0,
@@ -1812,21 +1819,22 @@
     "unrelated_changes_preserved": true
   },
   "artifact_sha256": {
-    "docs/reports/handoff-phase5-20261001/validation.md": "682168c1dba83b726a5d7e0b38cc44cd5ea0c453e57586bfe4041afec5d038e5",
-    "docs/reports/handoff-phase5-20261001/calibrated/guard-results.jsonl": "218e9ef54474bba45f22f57490804a905f3ebfb8f632cc1b13f33cdc4ba315a0",
-    "docs/reports/handoff-phase5-20261001/calibrated/metrics.json": "49c6f8445dd2aeb5e2910c593d954eedcade85e02afd2014c18c0cd489e16d2f",
-    "docs/reports/handoff-phase5-20261001/confirmation/guard-results.jsonl": "e112f5ae628da83c45b07a504a201fcff3442cc484c0f48347bdfcccca69cdc7",
-    "docs/reports/handoff-phase5-20261001/confirmation/metrics.json": "8f81e0fd09669ac4758f918018a3f31ab88098f5585f9dc4ce32da2b7549524a",
-    "docs/reports/handoff-phase5-20261001/entry-confirmation/entry-results.jsonl": "808bba00a078cde6d9757c619b2bb6e7a80003d8ff442f556668508eec6c46d6",
-    "docs/reports/handoff-phase5-20261001/entry-confirmation/metrics.json": "19afc29fdf702b5196131f024237720bfe139e59870a698756f2f8917f45c4de",
-    "docs/reports/handoff-phase5-20261001/live/entry-results.jsonl": "b142dcb6bc1fe158519f45221d6b0cc54e3dd5c484d68bc9a5283a2d8d394750",
-    "docs/reports/handoff-phase5-20261001/live/guard-results.jsonl": "c13768099b8451bac2bb31ac2fe111915f44967fc574db18e2c5a26323553a7c",
-    "docs/reports/handoff-phase5-20261001/live/metrics.json": "88ea94201f9b523cfa10113808e7532cd214d36a3e4246854550e216613e81ab",
-    "docs/architecture/handoff-runtime-phase5.md": "37a74878a8d0f21037e7928070c715acea806ac06e4c8e98a7271f47d116e3f6",
-    "ai-service/evals/handoff_jev.py": "b806a00f8549c49cbb3fdaef6b56bd7da9f8a9001bd7649c5bcc3195eef4adb9",
-    "ai-service/evals/tests/test_handoff_jev.py": "477c4855895962f4263a15b457fb091f4bf7953f43a0b0de073e9aec8baa5f87",
-    "ai-service/evals/datasets/handoff_guard_v1.jsonl": "903b4bc760fb9e7808fa201b34bae62a0ec83e647b9820541c9c9514b9600cf9",
-    "ai-service/evals/datasets/handoff_guard_confirmation_v1.jsonl": "603041a9c73fe8a445c6bdd82c4d79501a0d1dd7f68736e0f764a5d6de370671"
+    "docs/reports/handoff-phase5-20261001/validation.md": "d068e5dddc9cf215ade33cbd5a426d2f57dc5633afd5c9721daae5a58b2be806",
+    "docs/reports/handoff-phase5-20261001/calibrated/guard-results.jsonl": "1db228c6e246eb8354f50c8f5df67d5027735aa3893303d66c20af6bba3d0548",
+    "docs/reports/handoff-phase5-20261001/calibrated/metrics.json": "b016323f22074e0f6a5f09f8c4e493fa4a02d62acf6d9d32672152f7ef81954d",
+    "docs/reports/handoff-phase5-20261001/confirmation/guard-results.jsonl": "aabdd274a4d7756c8342d128d9f55e4802e7ca36334b148fe2cd7c73c19263ac",
+    "docs/reports/handoff-phase5-20261001/confirmation/metrics.json": "38934562c64c98878d2c092a898f9845e362723402c653e280e0f27f75f14256",
+    "docs/reports/handoff-phase5-20261001/entry-confirmation/entry-results.jsonl": "67965e66b07f9239a64d5d55452f2f93d825b7dcd7a2c004b63aee43ba5a5ef4",
+    "docs/reports/handoff-phase5-20261001/entry-confirmation/metrics.json": "c858a75142255991ecc4bc3a861ba7989afb15bb71da5d047e6e1a254909116e",
+    "docs/reports/handoff-phase5-20261001/live/entry-results.jsonl": "ef6358fb20d26ce848a76c417031e95f58c4dfa43b2178ef51024cfe66c3ea11",
+    "docs/reports/handoff-phase5-20261001/live/guard-results.jsonl": "638cabc80128264014a26a113bbdc091aeb759826fc82e96cad73e0c1b2d5fe4",
+    "docs/reports/handoff-phase5-20261001/live/metrics.json": "16781286e028974f9366105424307aef747872b6179f96fa8b412471064dd925",
+    ".gitattributes": "4c903de1dbd72a9f0770eaea80622bee759d60df10f55bea22496a7e4ca78ed3",
+    "docs/architecture/handoff-runtime-phase5.md": "cb57e1328a50753ad59a4cadae0ee819b5355523eab20abf6a495f37e21c1b8f",
+    "ai-service/evals/handoff_jev.py": "dd692d13a9ce6b067dc59af2262116e50263ec2d1d533d6266ee009f9014b51f",
+    "ai-service/evals/tests/test_handoff_jev.py": "aedb0c09ace0f5580e11cf72636cdf473315223d865480fe612efe23a45a0c0c",
+    "ai-service/evals/datasets/handoff_guard_v1.jsonl": "68ad2a406e0bc4dee2db3b6d0674202f071235efa46c1156909696c5af662f09",
+    "ai-service/evals/datasets/handoff_guard_confirmation_v1.jsonl": "3c84ddce473d5fc00bab6cd7d7cf879a1092847fbf96e680d88405a6cfce4999"
   },
   "local_log_sha256": {
     "application-final.log": "e070ca8dc8abb70fa403e44cfd23e607e7aab3f319be3041d09627993f099016",
@@ -1844,6 +1852,7 @@
     "frontend-test-ai-stream.log": "970e420c00cfb3523659bfa5885c7490545e04e9cfec09f851f41e0b54b86f61",
     "frontend-test-worldline.log": "4c5dc69a82ca8fef09f811b805887d8cca30632d0512763600452affd7e93701",
     "judges.log": "23f24d44f8413509e597d391076e980ba8b98ac1a6173d3456a36edb6c9272e0",
+    "line-ending-regression.log": "b7868cdfa0325909c3eedcfb694ae2ea403bbfb7e3fc653537cdebb9041eb40e",
     "live-replay.log": "e29a4c58b2c0ee0654915661035adbe9c80584a0438f0f3fa5619fc31a41f1cc",
     "ruff-changed.log": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
     "targeted.log": "19c106ecf3d430370ba4d9131cefb04011c926de59dd9f5ded2d8904e45883d0"

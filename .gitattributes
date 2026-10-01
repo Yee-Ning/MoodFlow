@@ -1,0 +1,9 @@
+# Preserve phase5 frozen datasets and evidence hashes across platforms.
+.gitattributes text eol=lf
+ai-service/evals/datasets/router_e2e_blind_v5.jsonl text eol=lf
+ai-service/evals/datasets/handoff_guard_v1.jsonl text eol=lf
+ai-service/evals/datasets/handoff_guard_confirmation_v1.jsonl text eol=lf
+ai-service/evals/handoff_jev.py text eol=lf
+ai-service/evals/tests/test_handoff_jev.py text eol=lf
+docs/architecture/handoff-runtime-phase5.md text eol=lf
+docs/reports/handoff-phase5-20261001/** text eol=lf

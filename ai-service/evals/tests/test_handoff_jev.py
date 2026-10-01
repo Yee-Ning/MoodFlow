@@ -3,6 +3,7 @@
 import argparse
 import json
 import logging
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
@@ -50,6 +51,23 @@ def test_dataset_freeze_balanced_splits_and_local_permission_boundaries():
                 envelope_for_case(case)
         else:
             assert envelope_for_case(case).active_task.input_text == case["task_input"]
+
+
+def test_frozen_datasets_keep_lf_bytes_for_git_checkout_reproducibility():
+    from evals.handoff_jev import GUARD_DATASET
+
+    for path in (GUARD_DATASET, CONFIRMATION_DATASET):
+        assert b"\r" not in path.read_bytes()
+        read_guard_cases(path)
+    attributes = Path(__file__).resolve().parents[3] / ".gitattributes"
+    assert (
+        "ai-service/evals/datasets/handoff_guard_v1.jsonl text eol=lf"
+        in attributes.read_text(encoding="utf-8")
+    )
+    assert (
+        "ai-service/evals/datasets/handoff_guard_confirmation_v1.jsonl text eol=lf"
+        in attributes.read_text(encoding="utf-8")
+    )
 
 
 @pytest.mark.parametrize("modify", ["duplicate", "missing", "label", "one_split"])

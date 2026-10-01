@@ -80,6 +80,8 @@ API 异常不当成低分、不计作正确拒绝。非法 envelope 必须在本
 
 以下命令在 ai-service 中执行。确认数据与提示词哈希固定，普通测试使用离线占位配置；只有显式回放加载真实 JEV 配置。
 
+范围限定的 `.gitattributes` 固定本阶段冻结数据、入口复用的 V5 数据、回放源码及证据的 LF 换行，使 Windows/Linux 检出后的 byte-hash 一致。历史 API 记录保留调用时的 CRLF 数据哈希；规范化前后逐条 JSON 内容一致，最终数据哈希见验证报告。
+
 ```powershell
 # 独立入口回放；输出到新目录，保留历史结果。
 & .venv/Scripts/python.exe -m evals.handoff_jev --component entry --output ../.dev/phase5-entry-replay --require-gates

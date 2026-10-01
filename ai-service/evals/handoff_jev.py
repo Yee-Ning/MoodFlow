@@ -31,11 +31,11 @@ from evals.jev_router_e2e_v5 import DATASET_SHA256 as ENTRY_DATASET_SHA256
 ROOT = Path(__file__).resolve().parents[1]
 GUARD_DATASET = ROOT / "evals/datasets/handoff_guard_v1.jsonl"
 GUARD_DATASET_SHA256 = (
-    "903b4bc760fb9e7808fa201b34bae62a0ec83e647b9820541c9c9514b9600cf9"
+    "68ad2a406e0bc4dee2db3b6d0674202f071235efa46c1156909696c5af662f09"
 )
 CONFIRMATION_DATASET = ROOT / "evals/datasets/handoff_guard_confirmation_v1.jsonl"
 CONFIRMATION_DATASET_SHA256 = (
-    "603041a9c73fe8a445c6bdd82c4d79501a0d1dd7f68736e0f764a5d6de370671"
+    "3c84ddce473d5fc00bab6cd7d7cf879a1092847fbf96e680d88405a6cfce4999"
 )
 
 
