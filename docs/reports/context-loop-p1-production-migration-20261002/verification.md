@@ -337,3 +337,19 @@ REHEARSAL_PREFLIGHT_READONLY_FINISHED; no_restore_or_migration_run
 ```
 
 主机资源及各项计时见执行报告第 12 节。已准备独立容器恢复和迁移演练；生产六项 §3 查询仍全部未执行，没有生产迁移成功结论。后续回传的副本复验需另记环境，不能覆盖生产结果。
+# 最新进展：真实备份副本演练已通过，生产复验待执行
+
+门控 2 回传证据为 `codex-clipboard-db04a722-c345-4a54-8048-df09ba5af7ff.png`，SHA-256 `F73C6822273EC3F6EFC68E3CB89A8BE73ADE1BC6227E88A5543CC42AA1B16B8E`；远端完整演练报告：`/secure/moodflow/migration-rehearsals/context-loop-20261002-yopxiydv/report.json`。本代理依据截图复核，没有直接连接生产。
+
+| 演练摘要复验项 | 回传结果 |
+| --- | --- |
+| migration ledger | 001 / 002 / 003 / 004 均在 restored_after.ledger |
+| execution 表 | restored_after.execution_exists=true |
+| event_seq | 存在，missing_sequence=0 |
+| duplicate replay key groups | 0 |
+| duplicate sequence groups | 0 |
+| 不可变触发器 | immutable_trigger_enabled=true |
+| 序列及 execution 权限 | sequence_usage / execution_select / execution_insert / execution_update 均为 true |
+| 数据保持 | 历史 328 行和备份核心表计数保持，vector 0.8.6 |
+
+这些结果属于实际备份恢复后的隔离副本，**不是生产迁移后查询输出**。截图显示六项 SQL 已被演练脚本执行并保存至远端 `readonly-postchecks.txt`，截图只展示 report 摘要；本报告不伪造未回传的逐项原始文本。生产 §3 仍待 [最后脚本](gate3-production-migration.sh) 执行并回传。该脚本会输出六项 SQL 的编号和原始结果；真实写复验仍跳过，原因是暂无专用测试账号。备份目前有效且已再次完整恢复验证，恢复负责人唐艺宁。

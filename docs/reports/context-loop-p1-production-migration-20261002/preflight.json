@@ -1,14 +1,14 @@
 {
-  "recorded_at": "2026-10-02T17:51:32+08:00",
+  "recorded_at": "2026-10-02T20:07:15+08:00",
   "timezone": "Asia/Shanghai",
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "gate_2_readonly_preparation_completed_awaiting_isolated_rehearsal",
+  "status": "gate_0_1_2_passed_awaiting_combined_production_execution",
   "production_connection_established": true,
   "database_sql_sent": true,
   "migration_executed": false,
-  "backup_status": "valid_postgres_backup_confirmed_from_integrity_and_recorded_restore_evidence",
+  "backup_status": "valid_postgres_backup_confirmed_integrity_and_fresh_isolated_restore",
   "backup_gate_entered": true,
   "rehearsal_gate_entered": true,
   "low_traffic_gate_entered": false,
@@ -31,9 +31,18 @@
       "PGSYSCONFDIR": false
     },
     "service_files": [
-      {"path": "%APPDATA%/postgresql/.pg_service.conf", "exists": false},
-      {"path": "%APPDATA%/postgresql/pg_service.conf", "exists": false},
-      {"path": "%USERPROFILE%/.pg_service.conf", "exists": false}
+      {
+        "path": "%APPDATA%/postgresql/.pg_service.conf",
+        "exists": false
+      },
+      {
+        "path": "%APPDATA%/postgresql/pg_service.conf",
+        "exists": false
+      },
+      {
+        "path": "%USERPROFILE%/.pg_service.conf",
+        "exists": false
+      }
     ]
   },
   "existing_local_client_container": {
@@ -69,12 +78,17 @@
   },
   "rehearsal_measurements": {
     "lock_hold_seconds": null,
-    "wal_bytes": null,
-    "disk_bytes": null,
+    "lock_window_upper_bound_seconds": 0.085249,
+    "transaction_elapsed_ms": 87.304,
+    "wal_bytes": 69336,
+    "database_growth_bytes": 90112,
+    "disk_apparent_growth_bytes": 90112,
+    "host_free_decrease_bytes": 98304,
     "replication_lag_seconds": null,
-    "migration_duration_seconds": null,
-    "lock_timeout_selected": null,
-    "statement_timeout_selected": null
+    "migration_duration_seconds": 0.264991,
+    "restore_duration_seconds": 8.09383,
+    "lock_timeout_selected": "5s",
+    "statement_timeout_selected": "60s"
   },
   "remote_terminal_followup": {
     "recorded_at": "2026-10-02T18:13:01+08:00",
@@ -110,10 +124,26 @@
     "production_gate_0_evidence": false,
     "production_scale_migration_rehearsal": false,
     "shell_syntax_passed": true,
-    "success": {"exit_code": 0, "wall_time_seconds": 0.297, "cleanup_passed": true},
-    "wrong_database": {"exit_code": 1, "wall_time_seconds": 0.250, "cleanup_passed": true},
-    "invalid_role_name": {"exit_code": 1, "wall_time_seconds": 0.234, "cleanup_passed": true},
-    "connection_failure": {"exit_code": 2, "wall_time_seconds": 0.250, "cleanup_passed": true},
+    "success": {
+      "exit_code": 0,
+      "wall_time_seconds": 0.297,
+      "cleanup_passed": true
+    },
+    "wrong_database": {
+      "exit_code": 1,
+      "wall_time_seconds": 0.25,
+      "cleanup_passed": true
+    },
+    "invalid_role_name": {
+      "exit_code": 1,
+      "wall_time_seconds": 0.234,
+      "cleanup_passed": true
+    },
+    "connection_failure": {
+      "exit_code": 2,
+      "wall_time_seconds": 0.25,
+      "cleanup_passed": true
+    },
     "readonly_transaction_observed": true,
     "application_output_limited_to_six_nonsecret_settings": true,
     "migration_003_004_executed": false,
@@ -128,20 +158,49 @@
     "current_user": "moodflow",
     "server_version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2)",
     "transaction_read_only": "on",
-    "ledger_versions": ["001_agent_continuity.sql", "002_long_term_memory.sql"],
+    "ledger_versions": [
+      "001_agent_continuity.sql",
+      "002_long_term_memory.sql"
+    ],
     "history_column_count": 8,
     "execution_columns_returned": false,
     "execution_table_existence_confirmed": false,
-    "history_index_names": ["agent_history_event_pkey", "agent_history_task_timestamp", "agent_history_task_type_timestamp"],
-    "history_trigger": {"name": "agent_history_event_immutable", "enabled": "O", "before_delete_or_update": true, "row_level": true, "reject_sqlstate": "55000"},
-    "checkpoint_tables_observed": ["checkpoints", "checkpoint_blobs", "checkpoint_writes", "checkpoint_migrations"],
+    "history_index_names": [
+      "agent_history_event_pkey",
+      "agent_history_task_timestamp",
+      "agent_history_task_type_timestamp"
+    ],
+    "history_trigger": {
+      "name": "agent_history_event_immutable",
+      "enabled": "O",
+      "before_delete_or_update": true,
+      "row_level": true,
+      "reject_sqlstate": "55000"
+    },
+    "checkpoint_tables_observed": [
+      "checkpoints",
+      "checkpoint_blobs",
+      "checkpoint_writes",
+      "checkpoint_migrations"
+    ],
     "required_table_rows_total": 10,
-    "table_rows_missing_from_screenshots": ["agent_handoff", "agent_long_term_memory"],
+    "table_rows_missing_from_screenshots": [
+      "agent_handoff",
+      "agent_long_term_memory"
+    ],
     "vector_version": "0.8.6",
     "history_select": true,
     "history_insert": true,
-    "app_config_visible": {"CHECKPOINT_BACKEND": "postgres", "PERSISTENCE_POOL_MAX_SIZE": "<unset>"},
-    "app_config_missing_from_screenshots": ["POSTGRES_DB", "POSTGRES_USER", "MEMORY_BACKEND", "PERSISTENCE_BACKEND"],
+    "app_config_visible": {
+      "CHECKPOINT_BACKEND": "postgres",
+      "PERSISTENCE_POOL_MAX_SIZE": "<unset>"
+    },
+    "app_config_missing_from_screenshots": [
+      "POSTGRES_DB",
+      "POSTGRES_USER",
+      "MEMORY_BACKEND",
+      "PERSISTENCE_BACKEND"
+    ],
     "pool_deployed_code_default_confirmed": false,
     "pool_configured_capacity": null,
     "rollback_observed": true,
@@ -149,7 +208,13 @@
     "temporary_file_deletion_independently_confirmed": false,
     "shell_exit_code": null,
     "total_wall_time_seconds": null,
-    "runbook_query_ms": {"identity": 0.344, "ledger": 0.577, "columns": 15.164, "index_names": 3.741, "trigger": 1.073},
+    "runbook_query_ms": {
+      "identity": 0.344,
+      "ledger": 0.577,
+      "columns": 15.164,
+      "index_names": 3.741,
+      "trigger": 1.073
+    },
     "screenshot_sha256": {
       "codex-clipboard-d830724c-af50-4858-97b5-ae6404a8fa6f.png": "7675A2C67FD25CE36CA8FCC7774994002FDEC1E55939A404C1F9092A22008BFA",
       "codex-clipboard-2d1e962d-def2-4255-ab61-7e35484ba412.png": "41F57A749CA72B7C38E41FEFF2BF502EC35385C64D8113B1FB5178FE00402291",
@@ -295,9 +360,23 @@
     "postgres_cpu_percent": 0.68,
     "postgres_memory_mib": 107.2,
     "postgres_image": "pgvector/pgvector:pg16-trixie@sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b",
-    "migration_files_on_server": {"003": "missing", "004": "missing"},
-    "ledger_versions": ["001_agent_continuity.sql", "002_long_term_memory.sql"],
-    "query_ms": {"identity_size": 1.702, "history": 9.070, "senders": 1.931, "replication": 0.733, "slots": 0.550, "ledger": 0.483, "rollback": 0.086},
+    "migration_files_on_server": {
+      "003": "missing",
+      "004": "missing"
+    },
+    "ledger_versions": [
+      "001_agent_continuity.sql",
+      "002_long_term_memory.sql"
+    ],
+    "query_ms": {
+      "identity_size": 1.702,
+      "history": 9.07,
+      "senders": 1.931,
+      "replication": 0.733,
+      "slots": 0.55,
+      "ledger": 0.483,
+      "rollback": 0.086
+    },
     "rollback_observed": true,
     "finished_marker_observed": true,
     "shell_exit_code": null,
@@ -306,10 +385,10 @@
   "isolated_rehearsal_preparation": {
     "command_file": "gate2-isolated-rehearsal.sh",
     "execution_guide": "gate2-isolated-rehearsal.md",
-    "production_host_execution_confirmed": false,
-    "production_backup_restored": false,
+    "production_host_execution_confirmed": true,
+    "production_backup_restored": true,
     "production_migrations_executed": false,
-    "production_migration_timeouts_selected": false,
+    "production_migration_timeouts_selected": true,
     "local_validation": {
       "full_suite_tests_passed": 9,
       "full_suite_seconds": 40.777,
@@ -326,5 +405,113 @@
     "docs/operations/context-loop-p1-postgres-migration-20261002.md": "4162164E1A925E6E22599F4196ECF8478829063F46F3183477798F9DB0AC0ACA",
     "ai-service/migrations/postgresql/003_context_loop_history.sql": "DB21752BCB86AFFAE039634342E5B6DF8EC113053AA5ECB213F07C854ACB67B3",
     "ai-service/migrations/postgresql/004_continuity_execution.sql": "5622723C341F6782085039AD2D0872D35ED93303A6F1114D7878E96EB0A388D2"
+  },
+  "production_backup_rehearsal_evidence": {
+    "source": "user_supplied_ecs_terminal_screenshot",
+    "direct_remote_connection_by_agent": false,
+    "screenshot_sha256": {
+      "codex-clipboard-db04a722-c345-4a54-8048-df09ba5af7ff.png": "F73C6822273EC3F6EFC68E3CB89A8BE73ADE1BC6227E88A5543CC42AA1B16B8E"
+    },
+    "report_path": "/secure/moodflow/migration-rehearsals/context-loop-20261002-yopxiydv/report.json",
+    "status": "passed",
+    "cleanup": "passed",
+    "production_modified": false,
+    "production_migrations_executed": false,
+    "container": "mf-context-rehearsal-a730c24a17d8",
+    "started_at_utc": "2026-10-02T11:47:39.029188+00:00",
+    "completed_at_utc": "2026-10-02T11:47:52.762324+00:00",
+    "total_wall_seconds": 13.733136,
+    "restore_wall_seconds": 8.09383,
+    "migration_wall_seconds": 0.264991,
+    "restored_before_database_bytes": 54025239,
+    "restored_after_database_bytes": 54115351,
+    "restored_before_history_bytes": 901120,
+    "restored_after_history_bytes": 933888,
+    "history_rows_before_and_after": 328,
+    "ledger_before": [
+      "001_agent_continuity.sql",
+      "002_long_term_memory.sql"
+    ],
+    "ledger_after": [
+      "001_agent_continuity.sql",
+      "002_long_term_memory.sql",
+      "003_context_loop_history.sql",
+      "004_continuity_execution.sql"
+    ],
+    "core_counts_before_and_after": {
+      "agent_session": 58,
+      "agent_task": 55,
+      "agent_long_term_memory": 11,
+      "checkpoints": 775,
+      "checkpoint_blobs": 1028,
+      "checkpoint_writes": 1901
+    },
+    "metrics": {
+      "transaction_elapsed_ms": 87.304,
+      "lock_window_upper_bound_ms": 85.249,
+      "wal_bytes": 69336,
+      "database_before_bytes": 54025239,
+      "database_after_bytes": 54115351
+    },
+    "disk_before": {
+      "data_directory_apparent_bytes": 144395194,
+      "wal_directory_apparent_bytes": 67108864
+    },
+    "disk_after": {
+      "data_directory_apparent_bytes": 144485306,
+      "wal_directory_apparent_bytes": 67108864
+    },
+    "host_free_before_bytes": 21626261504,
+    "host_free_after_bytes": 21626163200,
+    "resource_limits": {
+      "cpus": 0.5,
+      "memory_bytes": 1073741824
+    },
+    "readonly_postchecks": {
+      "missing_sequence": 0,
+      "duplicate_key_groups": 0,
+      "duplicate_sequence_groups": 0,
+      "immutable_trigger_enabled": true,
+      "sequence_usage": true,
+      "execution_select": true,
+      "execution_insert": true,
+      "execution_update": true
+    },
+    "replication_lag_seconds": null,
+    "replication_note": "no_senders_or_slots_observed_in_production_preflight; isolated_container_has_no_replica",
+    "migration_sha256": {
+      "003_context_loop_history.sql": "db21752bcb86affae039634342e5b6df8ec113053aa5ecb213f07c854acb67b3",
+      "004_continuity_execution.sql": "5622723c341f6782085039ad2d0872d35ed93303a6f1114d7878e96eb0a388d2"
+    },
+    "raw_six_queries_returned_in_screenshot": false,
+    "summary_postchecks_returned": true,
+    "gate_2_passed": true
+  },
+  "combined_production_execution_preparation": {
+    "command_file": "gate3-production-migration.sh",
+    "execution_guide": "gate3-production-migration.md",
+    "production_execution_confirmed": false,
+    "low_peak_gate_completed": false,
+    "migration_commit_confirmed": false,
+    "production_postchecks_confirmed": false,
+    "selected_timeouts": {
+      "lock_timeout": "5s",
+      "statement_timeout": "60s"
+    },
+    "local_validation": {
+      "full_suite_tests_passed": 5,
+      "full_suite_seconds": 22.467,
+      "payload_and_shell_test_passed": 1,
+      "payload_and_shell_seconds": 0.616,
+      "busy_gate_no_transaction": true,
+      "latest_checkpoint_pending_checked": true,
+      "historical_writes_not_counted_as_pending": true,
+      "actual_error_rollback_schema_and_ledger": true,
+      "normal_wrapper_commit_and_postchecks": true,
+      "exact_temporary_profile_cleanup": true,
+      "repeat_attempt_stopped": true,
+      "test_data": "isolated_synthetic_fixture_only",
+      "production_schema_execution": false
+    }
   }
 }

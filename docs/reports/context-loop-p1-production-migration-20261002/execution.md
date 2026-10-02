@@ -1,9 +1,9 @@
 # Context Loop P1：003 / 004 生产迁移执行报告
 
-记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–12 节。
+记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–13 节。
 报告对象：West；由本次请求方转交，本轮没有对外发送消息。
 
-**最新结论：门控 0 / 1 通过，门控 2 的只读准备结果已回传。生产库 53,894,167 bytes、历史 328 行；资源检查符合隔离演练准备条件。服务器缺少 003 / 004 文件，已准备附固定哈希 SQL 的独立容器演练脚本，等待 ECS 执行。生产迁移、真实备份副本演练及生产复验仍未执行。**
+**最新结论：门控 0 / 1 / 2 已通过。实际备份隔离恢复后执行 003 / 004，通过副本复验与清理；事务 87.304 ms、锁窗口上限 85.249 ms、WAL 69,336 bytes。生产超时选为演练验证过的 5s / 60s。最后的低峰检查、生产事务和只读复验已合并为一份脚本，等待 ECS 执行结果；目前尚无生产迁移提交或生产复验完成的证据。备份有效，恢复负责人唐艺宁；真实写复验继续跳过。**
 
 ## 1. 批准与执行依据
 
@@ -186,3 +186,34 @@
 本地验证使用同一镜像的新建隔离夹具库（假数据），没有生产备份或数据：首次测试因测试 ROOT 路径多退一级而失败，已修正并重跑；之后加强了已存在 event_seq 的恢复状态门槛，最终完整 suite 9 tests / 40.777 s 通过。正常路径验证实际 pg_restore → 003 / 004 → ledger / 六项只读复验 / 锁与 WAL 指标 → 清理；中途错误验证显式 ROLLBACK，新增 schema 与 ledger 均回退，源夹具库未改变。固定 SQL 哈希、损坏备份、错误目标、规模 / schema 不符、资源标签不符及精确清理目标等门槛也通过。追加的低磁盘 / 低内存测试 1 test / 0.026 s 通过，确认拒绝时不创建 Docker 资源。本地带本轮标签的容器和 volume 列表均为空。
 
 检查命令：`python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_rehearsal_runner.py -v`；资源边界补充为同命令加 `-k low_resources`；Python 编译、完整脚本与 runner 内容一致性、`sh -n`、来源哈希与报告一致性、范围内 `git diff --check` 均已通过。应用代码无变化，不运行应用构建或前后端验收；生产规模演练尚待用户在 ECS 执行，全部演练指标仍未填入生产结果，门控 3、生产迁移和 §3 复验继续等待。真实写复验按约定跳过。
+
+## 13. 真实备份副本演练通过，生产最后脚本就绪
+
+用户回传实际 ECS 演练输出截图 `codex-clipboard-db04a722-c345-4a54-8048-df09ba5af7ff.png`，SHA-256 为 `F73C6822273EC3F6EFC68E3CB89A8BE73ADE1BC6227E88A5543CC42AA1B16B8E`。报告保存在 `/secure/moodflow/migration-rehearsals/context-loop-20261002-yopxiydv/report.json`。开始与完成时间分别为 2026-10-02 11:47:39.029188 UTC、11:47:52.762324 UTC（北京时间 19:47:39–19:47:52），总计 13.733136 s。截图显示 status=passed、cleanup=passed 和正常 root 提示符，production_modified / production_migrations_executed 均为 false。本代理依据回传结果审阅，没有直接登录生产。
+
+| 项目 | 实际演练结果 |
+| --- | --- |
+| 恢复源 | 已确认的 `20261001T234103Z-3a11237c.json` 对应 custom dump，恢复耗时 8.09383 s |
+| 环境 | 与生产相同的固定 digest 镜像；独立新卷、无网络 / 无端口；0.5 CPU / 1 GiB |
+| 规模 | 恢复库 54,025,239 bytes，约比生产 53,894,167 bytes 大 0.24%；历史同为 328 行 |
+| 核心表计数 | session=58、task=55、memory=11、checkpoints=775、blobs=1028、writes=1901，与备份一致，迁移后保持 |
+| 执行 | 003 / 004 文件哈希匹配；事务 87.304 ms；迁移客户端 wall time 0.264991 s |
+| 锁 | include 003 前至 COMMIT 返回后的保守持有上限 85.249 ms；不声称测得精确授予 / 释放时刻 |
+| WAL | insert LSN 增量 69,336 bytes，约 67.71 KiB；可包含区间内后台 WAL |
+| 数据库体积 | 54,025,239 → 54,115,351 bytes，增加 90,112 bytes |
+| data / pg_wal apparent bytes | data 144,395,194 → 144,485,306；pg_wal 67,108,864 → 67,108,864（预分配目录体积未变化） |
+| 主机空闲磁盘 | 21,626,261,504 → 21,626,163,200 bytes，减少 98,304 bytes |
+| 副本复验 | missing_sequence / duplicate_key_groups / duplicate_sequence_groups 均为 0；不可变触发器启用、序列 USAGE、execution SELECT / INSERT / UPDATE 均为 true |
+| schema / ledger | event_seq 和 execution 出现；ledger 为 001 / 002 / 003 / 004；历史 328 行保持 |
+| 复制延迟 | NULL / 不可测；生产准备时 sender / slot 均为 0，隔离副本无复制连接。不能据此排除断开的外部副本 |
+| 清理 | 本轮隔离容器及卷清理通过；受限目录中的报告保留 |
+
+门控 2 通过，生产 timeout 选择 5s / 60s：真实恢复数据规模接近生产，在受限资源下事务不足 0.1 s，当前值留有余量；仍不将演练时长当作生产 ETA。生产不放宽超时试跑，发生 SQL 错误即回滚和核对 ledger，不自动重试。
+
+已交付 [生产最后脚本](gate3-production-migration.sh)，操作说明见 [执行说明](gate3-production-migration.md)。脚本先重新校验备份与演练证据，再在约 10 s 内做 6 次只读观测：当前数据库、旧 ledger / schema、非本连接的活跃或未结束事务、advisory locks、最新 run_progress 状态、最新 checkpoint 的 pending writes / 控制通道与旧格式 pending sends，以及 AI 服务 8001 的已建立入站连接。只输出计数，不读取消息或凭据，不反序列化 checkpoint 中的类。未知状态、忙碌、规模改变或复制拓扑改变均停止。历史 checkpoint_writes 不是直接阻断依据，已消费的旧记录不会当作 pending。
+
+通过后只尝试一次 BEGIN READ WRITE → 5s / 60s → 手册 advisory lock → 事务内再次检查数据库执行状态 → include 003 / 004 → ledger → COMMIT。随后逐项输出带编号的手册 §3 六项查询及附加权限检查，写入受限报告目录，清理仅本次创建的临时 profile / SQL。重复执行若已存在新 schema / ledger，会停止。观测是采样和事务内复查，没有冻结 HTTP 入口，不能证明未来不会出现新请求；当前没有提供生产门控 3 或事务的实际结果。
+
+本地隔离验证命令 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v`：最终 5 tests / 22.467 s 通过，覆盖门控忙碌 / 未知 / 错误身份、最新与历史 writes 区分、控制通道、run_progress、实际 SQL 中途错误回滚、完整 wrapper 成功提交 / 复验 / profile 清理及重复尝试停止。独立 payload / shell 语法测试使用同命令加 `-k standalone`，1 test / 0.616 s 通过。源 SQL 与手册未修改；没有运行应用构建、业务账号写入验收、部署或 push。
+
+当前未完成项：门控 3 的生产结果、生产 COMMIT 与 §3 原始输出仍待远端回传；业务 JSON / SSE、同 run 恢复、namespace 迁移、真实歌单写入、播放器 ACK、费用和期限、并发容量未验收。真实写复验依约跳过（专用测试账号暂无）。备份状态已从未知更新为有效，并经过本轮再次完整隔离恢复验证。迁移完成后仍需 West 独立决定部署 / 开闸，本次不操作开关、默认图或 `.env`。
