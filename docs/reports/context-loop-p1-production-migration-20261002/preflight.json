@@ -4,12 +4,12 @@
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "gate_0_partial_readonly_checks_completed_awaiting_supplement",
+  "status": "gate_0_database_config_passed_gate_1_awaiting_backup_output",
   "production_connection_established": true,
   "database_sql_sent": true,
   "migration_executed": false,
   "backup_status": "unknown_valid_backup_not_confirmed",
-  "backup_gate_entered": false,
+  "backup_gate_entered": true,
   "rehearsal_gate_entered": false,
   "low_traffic_gate_entered": false,
   "post_migration_sql_executed": false,
@@ -155,6 +155,51 @@
       "codex-clipboard-2d1e962d-def2-4255-ab61-7e35484ba412.png": "41F57A749CA72B7C38E41FEFF2BF502EC35385C64D8113B1FB5178FE00402291",
       "codex-clipboard-4d5bb0d5-65e0-40a2-9748-48deb1b104f4.png": "93F324E1887900EB1E875D5E46FC24F1876F9204CFDC1F68402E278B76521ECE",
       "codex-clipboard-1ba7c62e-3ed1-409c-b467-26c75fe0d15c.png": "012AE5CCABFD4940222684A07A374D4080D6D9D3F4FC87A6464356FE38C479C8"
+    }
+  },
+  "production_supplement_screenshot_evidence": {
+    "source": "user_supplied_fifth_terminal_screenshot",
+    "reviewed_at": "2026-10-02T18:58:49+08:00",
+    "execution_timestamp": null,
+    "shell_exit_code": null,
+    "total_wall_time_seconds": null,
+    "app_config": {
+      "POSTGRES_DB": "moodflow_agent",
+      "POSTGRES_USER": "moodflow",
+      "MEMORY_BACKEND": "postgres",
+      "PERSISTENCE_BACKEND": "postgres",
+      "CHECKPOINT_BACKEND": "postgres",
+      "PERSISTENCE_POOL_MAX_SIZE": "<unset>"
+    },
+    "pool_deployed_source_default": 10,
+    "pool_configured_capacity": 10,
+    "live_pool_object_inspected": false,
+    "handoff_table": "agent_handoff",
+    "memory_table": "agent_long_term_memory",
+    "execution_table": null,
+    "execution_table_absent_confirmed": true,
+    "history_owner": "moodflow",
+    "history_owned_by_current_role": true,
+    "can_create_in_public": true,
+    "rollback_observed": true,
+    "gate_0_database_config_passed": true,
+    "screenshot_sha256": {
+      "codex-clipboard-7f76c57f-9d29-49e0-b3a2-5e05f2e23f6e.png": "76A9A553A0AF0B689D76A2E6B3FEED373BE44F1190A56CF880BC13C2E07683BC"
+    }
+  },
+  "backup_check_preparation": {
+    "mechanism_source": "repository_deploy_backup_py",
+    "postgres_dump_format": "custom",
+    "production_readonly_inspection_executed": false,
+    "command_document": "gate1-backup-readonly-command.md",
+    "latest_valid_backup_time": null,
+    "latest_valid_backup_restore_verified": null,
+    "recovery_responsible_confirmed": false,
+    "local_command_validation": {
+      "shell_syntax_passed": true,
+      "fixture_cases_passed": 10,
+      "wall_time_seconds": 1.396,
+      "production_backup_evidence": false
     }
   },
   "source_sha256": {

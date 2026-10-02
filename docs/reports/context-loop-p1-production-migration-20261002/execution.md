@@ -1,9 +1,9 @@
 # Context Loop P1：003 / 004 生产迁移执行报告
 
-记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–9 节。
+记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–10 节。
 报告对象：West；由本次请求方转交，本轮没有对外发送消息。
 
-**最新结论：生产连接及手册五项只读查询已由用户执行，数据库结果符合迁移前状态；门控 0 仍待补齐应用配置、连接池默认值及截图中截断的两条表记录。003 / 004 未执行。备份状态仍为未知，门控 1 未进入。**
+**最新结论：生产只读查询及补充截图已审阅，门控 0 的数据库与配置前置检查通过。进入门控 1，已准备备份只读检查命令，等待 ECS 回传；有效备份仍未确认。003 / 004、生产规模演练及迁移后复验均未执行。**
 
 ## 1. 批准与执行依据
 
@@ -124,3 +124,17 @@
 门控 0 尚不判定通过：截图上方未显示应用 `POSTGRES_DB`、`POSTGRES_USER`、`MEMORY_BACKEND`、`PERSISTENCE_BACKEND`；仅看到 `CHECKPOINT_BACKEND=postgres`、`PERSISTENCE_POOL_MAX_SIZE=<unset>`。不能用本地代码默认值替代部署代码。表清单中的 `agent_handoff`、`agent_long_term_memory` 两行位于截图缺口，不能根据总行数 10 就认定两张表均存在。`agent_execution` 未返回列记录，但仍需 `to_regclass` 复核其存在性。
 
 已准备 [门控 0 补充命令](gate0-supplement-command.md)，只读获取缺失配置、实际部署源码中的 pool 默认值、两张被截断的表及历史表 owner / schema CREATE 权限。本地正常配置、容量小于 2、非整数配置三条路径，以及补充 catalog 查询和临时清理验证均通过。生产补充结果仍待回传；门控 1–3、迁移及 §3 复验均未执行。
+
+## 10. 补充截图通过与备份检查准备
+
+用户回传第五张截图 `codex-clipboard-7f76c57f-9d29-49e0-b3a2-5e05f2e23f6e.png`，SHA-256 为 `76A9A553A0AF0B689D76A2E6B3FEED373BE44F1190A56CF880BC13C2E07683BC`。截图未显示执行时间、查询耗时或 shell 退出码；审阅记录时间为 2026-10-02 18:58:49 +08:00，不能替代执行时间。
+
+应用目标库 / 角色为 `moodflow_agent` / `moodflow`；Memory、persistence、checkpoint backend 均为 postgres。pool 环境变量未设置，部署源码默认值及最终配置容量均为 10，满足至少 2 的配置前提；没有独立检查运行中连接池对象。`agent_handoff` / `agent_long_term_memory` 存在；`agent_execution` 的 to_regclass 结果为 NULL，是 004 尚未执行的预期状态。历史表 owner=moodflow，当前角色拥有该表且具有 public schema CREATE 权限。截图显示 ROLLBACK 后返回 shell，未见报错。
+
+结合第 9 节，门控 0 的数据库与配置前置检查通过。新增对象的序列 USAGE 与 execution 权限需迁移后核对；生产临时文件删除仍未独立检查。备份和恢复负责人、演练、执行窗口的即时负载及业务验证均不能由这张截图推定通过。
+
+进入门控 1，仅查阅仓库既有备份机制并准备 [备份只读检查命令](gate1-backup-readonly-command.md)。仓库方案使用 custom-format pg_dump，完整备份清单记录隔离恢复结果、完成时间和 SHA-256。Sep29 历史备份信息不能证明本日最新备份有效；当前结论仍为未知 / 无法确认有效备份。没有运行备份创建、恢复、清理或迁移。
+
+命令本地验证：`sh -n` 通过；Python 正常、无清单、仅失败清单、目标库不符、SHA-256 不符、dump 缺失、恢复证据不全、无时区时间、损坏 JSON、最新备份损坏共 10 个临时夹具场景通过（正常 exit 0，失败均 exit 1；不泄露模拟敏感 failure 字段）。本地验证耗时 1.396 s。未连接生产，也不构成备份可恢复性或迁移演练证据。等待用户回传命令输出再作备份结论；备份门槛未通过，003 / 004 继续停止。
+
+本次报告校验 exit 0：门控状态、来源及截图哈希、Markdown 链接均通过。全仓 `git diff --check` 发现用户既有无关文件 `ai-service/evals/reports/gold_review_v0_blind_pack.md:26` 的尾随空白；未修改或暂存该文件。本次仅为执行文档更新，未运行应用测试、构建或静态检查；生产备份、演练、迁移及复验仍受环境回传限制。

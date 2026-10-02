@@ -1,6 +1,6 @@
 # Context Loop P1：前置查询与迁移后复验结果
 
-日期：2026-10-02，Asia/Shanghai。**最新状态：生产 §1 五项只读 SQL 已执行并由用户回传截图；门控 0 尚待补齐配置及截断记录。003 / 004 未执行，§3 复验仍全部未执行。**
+日期：2026-10-02，Asia/Shanghai。**最新状态：生产 §1 五项 SQL 及补充只读检查已由用户执行并回传截图，门控 0 数据库与配置检查通过。门控 1 等待备份检查回传；003 / 004 未执行，§3 复验仍全部未执行。**
 
 依据：[生产迁移手册](../../operations/context-loop-p1-postgres-migration-20261002.md) §1 / §3。执行过程及停止原因见 [执行报告](execution.md)。
 
@@ -244,3 +244,30 @@ Container service files:
 截图中的 CREATE 字样来自 SELECT 查询返回的对象定义，不是本轮执行了 DDL。脚本正常返回且未见清理错误；临时配置删除未在生产另行列目录确认。
 
 截图上方四项应用配置未显示，pool 环境变量为 `<unset>`，不能推定部署源码默认值。补充检查见 [命令](gate0-supplement-command.md)。在补充结果审阅前不进入备份门控；§3 六项 SQL 仍全部未执行，无输出。
+
+## 8. 生产补充只读检查结果
+
+以下为第五张截图中可见的输出转录（去除终端输入回显）：
+
+```text
+POSTGRES_DB=moodflow_agent
+POSTGRES_USER=moodflow
+MEMORY_BACKEND=postgres
+PERSISTENCE_BACKEND=postgres
+CHECKPOINT_BACKEND=postgres
+PERSISTENCE_POOL_MAX_SIZE=<unset>
+POOL_SOURCE_DEFAULT=10
+POOL_CONFIG_MAX_SIZE=10
+BEGIN
+SET
+SET
+handoff_table | memory_table | execution_table
+agent_handoff | agent_long_term_memory | [NULL / psql 空白]
+(1 row)
+history_owner | history_owned_by_current_role | can_create_in_public
+moodflow | t | t
+(1 row)
+ROLLBACK
+```
+
+补充结果符合迁移前状态，门控 0 的数据库与配置检查通过。截图未提供计时和退出码；pool 证据是配置容量，临时配置清理没有独立复验。备份只读查询尚未在生产执行；备份仍未知；§3 的六项查询仍未执行。真实写操作复验继续按请求跳过。
