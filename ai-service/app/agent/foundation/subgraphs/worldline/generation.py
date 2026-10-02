@@ -3,7 +3,7 @@ import logging
 from types import SimpleNamespace
 from typing import Any, Protocol
 
-from app.agent.foundation.context_engineering import build_context_async
+from app.agent.foundation.model_input import prepare_model_input
 from app.agent.foundation.routing import RouteKey
 from app.agent.foundation.subgraphs.worldline.grounding import (
     WorldLineGroundingError,
@@ -86,8 +86,38 @@ class ProviderWorldLineRuntime:
             for fact in payload.get("catalog_facts", [])
             for evidence_id in fact.get("evidence_ids", [])
         }
-        pack = await build_context_async(
+        source_metadata = {
+            source["id"]: {key: str(source[key])[:512 if key == "url" else 160]
+                           for key in ("source_type", "source", "url") if source.get(key)}
+            for source in source_rows
+        }
+
+        def render(pack):
+            projected, sources, context = {}, [], []
+            system = ""
+            for item in pack.items:
+                if item.type == "system":
+                    system = item.content
+                elif item.type == "structured_output":
+                    projected.update(json.loads(item.content))
+                elif item.type == "user_query":
+                    projected["user_query"] = item.content
+                elif item.type == "search_plan":
+                    projected["search_plan"] = json.loads(item.content)
+                elif item.type == "rag_evidence":
+                    evidence_id = item.metadata["evidence_id"]
+                    sources.append({"id": evidence_id, "title": item.metadata["title"][:160],
+                                    "excerpt": item.content, **source_metadata.get(evidence_id, {})})
+                else:
+                    context.append({"type": item.type, "content": item.content})
+            projected["sources"] = sources
+            if context:
+                projected["context"] = context
+            return [{"role": "user", "content": json.dumps(projected, ensure_ascii=False, separators=(",", ":"))}], system
+
+        model_input = await prepare_model_input(
             RouteKey.WORLDLINE,
+            schema=schema, schema_name=schema_name, renderer=render,
             query=str(payload.get("user_query") or payload.get("root_entity", {}).get("name") or "音乐世界线"),
             system=instructions,
             structured_output={key: value for key, value in payload.items()
@@ -102,35 +132,12 @@ class ProviderWorldLineRuntime:
                 if payload.get("continuity_context") and key in payload["continuity_context"]
             },
         )
-        selected = {
-            item.metadata["evidence_id"]: item
-            for item in pack.items if item.type == "rag_evidence"
-        }
-        payload = {
-            **payload,
-            "sources": [
-                {**{key: value for key, value in source.items() if key != "evidence_span"},
-                 **({"excerpt": selected[source["id"]].content} if source.get("excerpt") else {})}
-                for source in source_rows if source["id"] in selected
-            ],
-        }
-        if not any(item.type == "search_plan" for item in pack.items):
-            payload.pop("search_plan", None)
-        payload.pop("continuity_context", None)
         response = await create_generation_response(
-            [
-                {
-                    "role": "user",
-                    "content": json.dumps(
-                        payload,
-                        ensure_ascii=False,
-                        separators=(",", ":"),
-                    ),
-                }
-            ],
-            instructions,
+            model_input.input_items,
+            model_input.instructions,
             schema,
             schema_name=schema_name,
+            request_budget=model_input.budget,
         )
         return model_output_from_response(response)
 

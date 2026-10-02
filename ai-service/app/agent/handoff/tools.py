@@ -189,10 +189,13 @@ def create_transfer_tools(
 
 
 async def execute_transfer(
-    message: AIMessage, run: HandoffRun, *, clock=utc_now, guard=None, trace=None
+    message: AIMessage, run: HandoffRun, *, clock=utc_now, guard=None, trace=None,
+    journal=None, identity=None,
 ) -> Command:
     try:
         request = parse_transfer_call(message, run.current_agent)
+        if journal is not None:
+            journal.observe_transfer(identity, run, {"messages": [message]}, phase="proposed")
         selected = next(
             item
             for item in create_transfer_tools(
@@ -205,9 +208,12 @@ async def execute_transfer(
             )
             if item.name == transfer_tool_name(request.target_agent)
         )
-        return await selected.ainvoke(
+        command = await selected.ainvoke(
             {"reason": request.reason, "context_summary": request.context_summary}
         )
+        if journal is not None and command.update.get("transfer_envelope") is None:
+            journal.observe_transfer(identity, run, command, phase="rejected")
+        return command
     except (ValueError, StopIteration):
         if trace is not None:
             trace.emit(code="invalid_transfer")

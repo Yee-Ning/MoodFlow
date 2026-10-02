@@ -4,6 +4,7 @@ import asyncio
 import json
 from contextlib import contextmanager
 from contextvars import ContextVar
+from dataclasses import dataclass
 from time import monotonic, perf_counter
 
 from openai import APIConnectionError, APIStatusError
@@ -28,6 +29,25 @@ def estimate_tokens(value):
 
     text = json.dumps(value, ensure_ascii=False, default=encode)
     return UnicodeHeuristicTokenCounter().count(text) + 32
+
+
+@dataclass(frozen=True)
+class ProviderBudget:
+    """Validate the serialized final request, including format/schema framing."""
+
+    input_tokens: int
+    total_tokens: int
+    safety_margin: int
+
+    def validate(self, payload, *, output_tokens):
+        tokens = estimate_tokens(payload)
+        if tokens > self.input_tokens or tokens + output_tokens + self.safety_margin > self.total_tokens:
+            ledger = active_ledger.get()
+            if ledger is not None:
+                ledger.blocked = "token_limit"
+                raise RuntimeLimitError("token_limit")
+            raise ValueError("final model payload exceeds token budget")
+        return tokens
 
 
 def reported_tokens(response):

@@ -17,7 +17,9 @@ from .models import (
     ArtifactRecord,
     ColdStartContext,
     HandoffDraft,
+    HandoffDraftV2,
     HandoffProjection,
+    HandoffProjectionV2,
     HistoryEvent,
     HistoryEventType,
     HistoryPointer,
@@ -198,7 +200,7 @@ class LongHorizonContextService:
             "last_known_state": {**prior.last_known_state, **draft.last_known_state},
         })
 
-    def build_handoff(self, session_id: str, draft: HandoffDraft) -> HandoffProjection:
+    def build_handoff(self, session_id: str, draft: HandoffDraft | HandoffDraftV2) -> HandoffProjection | HandoffProjectionV2:
         session = self.store.require_session(session_id)
         if session.closed_at is not None:
             raise ValueError("cannot hand off a closed session")
@@ -207,14 +209,35 @@ class LongHorizonContextService:
                                          *draft.decision_refs.values()] for pointer in values]
         self.store.validate_pointers([*draft.key_message_refs, *draft.evidence_refs, *linked],
                                      task_id=session.task_id)
+        if isinstance(draft, HandoffDraftV2):
+            progress = draft.agent_progress
+            extra_refs = [*progress.progress_refs, *progress.earlier_chain_refs]
+            extra_refs.extend(ref for ref in (progress.pending_transfer_ref, progress.run_state_ref) if ref)
+            self.store.validate_pointers(extra_refs, task_id=session.task_id)
+            if draft.source_checkpoint_ref:
+                source = self.store.require_session(draft.source_checkpoint_ref.session_id)
+                if (source.task_id, source.conversation_id) != (session.task_id, session.conversation_id):
+                    raise ValueError("projection source checkpoint scope mismatch")
+                if (draft.source_checkpoint_ref.execution_thread_id, draft.source_checkpoint_ref.checkpoint_ns) != (source.conversation_id, source.session_id):
+                    raise ValueError("projection source checkpoint namespace mismatch")
         for ref in draft.artifact_refs:
             artifact = self.store.get_artifact(ref)
             if artifact is None or artifact.task_id != session.task_id:
                 raise ValueError(f"unresolvable artifact pointer:{ref}")
         values = draft.model_dump(mode="json")
         dropped: list[str] = []
+        envelope = dict(
+            handoff_id=f"handoff:{uuid4().hex}", task_id=session.task_id,
+            session_id=session.session_id, created_at=self._now(),
+            token_count=0, token_budget=self.policy.handoff_token_budget,
+            dropped_fields=dropped,
+        )
+        projection_type = HandoffProjectionV2 if isinstance(draft, HandoffDraftV2) else HandoffProjection
 
         def tokens() -> int:
+            if projection_type is HandoffProjectionV2:
+                candidate = HandoffProjectionV2(**values, **envelope)
+                return self.counter.count(candidate.model_dump_json(exclude_none=True))
             return self.counter.count(json.dumps(values, ensure_ascii=False, separators=(",", ":")))
 
         # Handoff remains structured. Trim low-value projections before required state.
@@ -230,15 +253,22 @@ class LongHorizonContextService:
                     dropped.append(field)
         if tokens() > self.policy.handoff_token_budget:
             raise ValueError("required handoff fields exceed token budget")
-        return HandoffProjection(
-            **values, handoff_id=f"handoff:{uuid4().hex}", task_id=session.task_id,
-            session_id=session.session_id, created_at=self._now(),
-            token_count=tokens(), token_budget=self.policy.handoff_token_budget,
-            dropped_fields=dropped,
-        )
+        envelope["token_count"] = tokens()
+        if projection_type is HandoffProjectionV2:
+            # Count the actual complete envelope, including the final counter value.
+            for _ in range(4):
+                count = tokens()
+                if count == envelope["token_count"]:
+                    break
+                envelope["token_count"] = count
+            if tokens() > self.policy.handoff_token_budget:
+                raise ValueError("required handoff fields exceed token budget")
+        return projection_type(**values, **envelope)
 
     def rollover(self, session_id: str, draft: HandoffDraft,
-                 reason: RolloverReason) -> RolloverResult:
+                 reason: RolloverReason, *, automatic: bool = False) -> RolloverResult:
+        if automatic and not getattr(self.store, "supports_atomic_rollover", False):
+            raise ValueError("automatic rollover requires an atomic persistence backend")
         with self.store.transaction():
             session = self.store.require_session(session_id)
             handoff = self.build_handoff(session_id, draft)
@@ -250,7 +280,7 @@ class LongHorizonContextService:
             self.store.put_handoff(handoff)
             self.record_event(
                 task_id=session.task_id, session_id=session_id,
-                event_type=HistoryEventType.HANDOFF, node="rollover", source="handoff_projection",
+                event_type=HistoryEventType.SESSION_HANDOFF, node="rollover", source="handoff_projection",
                 payload={"handoff_id": handoff.handoff_id, "token_count": handoff.token_count},
                 references=[HistoryPointer(kind="event", target_id=checkpoint.event_id)],
             )

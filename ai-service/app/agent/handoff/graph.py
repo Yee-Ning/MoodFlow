@@ -3,6 +3,7 @@
 import asyncio
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from time import monotonic
 from typing import Any, NotRequired
 from uuid import uuid4
 
@@ -68,6 +69,7 @@ def build_handoff_graph(
     clock: Callable[[], datetime] = utc_now,
     handoff_guard=None,
     trace_sink=None,
+    transfer_journal=None,
 ) -> StateGraph:
     router = intent_router or configured_entry_router(create_hybrid_router())
     bounds = limits or RunLimits()
@@ -197,9 +199,14 @@ def build_handoff_graph(
         try:
             with request_scope(ledger):
                 ledger.check()
+                if transfer_journal is not None:
+                    await transfer_journal.await_committed(
+                        _continuity_identity(state, run), run, timeout=max(0, node_window),
+                    )
+                    ledger.check()
                 if ledger.remaining <= 0:
                     raise RuntimeLimitError("token_limit")
-                async with asyncio.timeout(max(0, node_window)):
+                async with asyncio.timeout(max(0, ledger.deadline - monotonic())):
                     if CAPABILITY_OWNERS[task.route_key] != run.current_agent:
                         response = await choose_transfer(
                             state,
@@ -217,6 +224,11 @@ def build_handoff_graph(
                             clock=clock,
                             guard=handoff_guard or configured_guard(),
                             trace=trace,
+                            journal=transfer_journal,
+                            identity=(
+                                _continuity_identity(state, run)
+                                if transfer_journal is not None else None
+                            ),
                         )
                     else:
                         result = await execute_owned_task(
@@ -372,8 +384,21 @@ def build_handoff_graph(
 def create_handoff_graph(
     *, checkpointer=None, checkpointer_factory=create_runtime_checkpointer, **kwargs
 ):
-    return build_handoff_graph(**kwargs).compile(
-        checkpointer=checkpointer
-        if checkpointer is not None
-        else checkpointer_factory()
+    saver = checkpointer if checkpointer is not None else checkpointer_factory()
+    if kwargs.get("transfer_journal") is not None:
+        from app.agent.handoff.continuity import JournalCheckpointer
+
+        saver = JournalCheckpointer(saver, kwargs["transfer_journal"])
+    return build_handoff_graph(**kwargs).compile(checkpointer=saver)
+
+
+def _continuity_identity(state, run):
+    from app.agent.foundation.long_horizon.models import ContinuityIdentity
+
+    context = state["continuity_context"]
+    return ContinuityIdentity(
+        conversation_id=context["conversation_id"], continuity_task_id=context["task_id"],
+        session_id=context["session_id"], request_id=context["request_id"],
+        graph_mode="handoff", run_id=run.run_id,
+        route_task_id=run.pending_tasks[0].task_id,
     )

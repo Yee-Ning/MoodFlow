@@ -11,7 +11,7 @@ from openai.types.responses import Response
 from app.config.settings import get_settings
 from app.schemas.chat import STRUCTURED_OUTPUT_ADAPTER
 from app.tools.definitions import MUSIC_TOOLS
-from app.llm.runtime import accounted_call, active_ledger
+from app.llm.runtime import ProviderBudget, accounted_call, active_ledger
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +76,7 @@ async def _create_response(
     output_format: dict[str, Any] | None = None,
     model: str | None = None,
     max_output_tokens: int | None = None,
+    request_budget: ProviderBudget | None = None,
 ) -> Response:
     settings = get_settings()
 
@@ -99,6 +100,9 @@ async def _create_response(
             if enable_tools:
                 request["tools"] = MUSIC_TOOLS
                 request["tool_choice"] = "auto"
+
+            if request_budget is not None:
+                request_budget.validate(request, output_tokens=request["max_output_tokens"])
 
             return await accounted_call(
                 lambda: client.responses.create(**request),
@@ -138,6 +142,7 @@ async def create_routing_response(
     input_items: list[dict[str, Any]],
     instructions: str,
     schema: dict[str, Any],
+    *, request_budget: ProviderBudget | None = None,
 ) -> Response:
     """Reuse provider settings with an independent tool-free routing schema."""
     return await create_structured_response(
@@ -145,6 +150,7 @@ async def create_routing_response(
         instructions,
         schema,
         schema_name="intent_routing",
+        request_budget=request_budget,
     )
 
 
@@ -156,6 +162,7 @@ async def create_structured_response(
     schema_name: str,
     model: str | None = None,
     max_output_tokens: int | None = None,
+    request_budget: ProviderBudget | None = None,
 ) -> Response:
     """Run a strict, tool-free JSON Schema request with shared provider settings."""
     return await _create_response(
@@ -167,6 +174,7 @@ async def create_structured_response(
             "schema": _provider_compatible_schema(schema), "strict": True,
         },
         model=model,
+        request_budget=request_budget,
         **({"max_output_tokens": max_output_tokens} if max_output_tokens is not None else {}),
     )
 
@@ -177,6 +185,7 @@ async def create_generation_response(
     schema: dict[str, Any],
     *,
     schema_name: str,
+    request_budget: ProviderBudget | None = None,
 ) -> Response:
     """Run answer generation with its independently configurable model."""
     return await create_structured_response(
@@ -185,6 +194,7 @@ async def create_generation_response(
         schema,
         schema_name=schema_name,
         model=get_settings().generation_model,
+        request_budget=request_budget,
     )
 
 

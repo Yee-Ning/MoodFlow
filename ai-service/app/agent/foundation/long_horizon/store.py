@@ -1,18 +1,24 @@
 from __future__ import annotations
 
+import json
+
 import sqlite3
 from collections.abc import Iterable
 from contextlib import contextmanager
 from pathlib import Path
+from threading import RLock
 from typing import ContextManager, Protocol
 
 from .models import (
     ArtifactRecord,
     HandoffProjection,
+    HandoffProjectionV2,
     HistoryEvent,
     HistoryPointer,
     SessionRecord,
     TaskRecord,
+    read_handoff_projection,
+    same_event_content,
 )
 
 
@@ -31,6 +37,7 @@ class ContinuityStore(Protocol):
     def active_session(self, task_id: str) -> SessionRecord | None: ...
     def sessions_for_task(self, task_id: str) -> list[SessionRecord]: ...
     def append_event(self, event: HistoryEvent) -> None: ...
+    def append_event_once(self, event: HistoryEvent) -> HistoryEvent: ...
     def get_history_event(self, event_id: str) -> HistoryEvent | None: ...
     def query_task_history(
         self,
@@ -40,11 +47,12 @@ class ContinuityStore(Protocol):
         session_id: str | None = None,
         keyword: str | None = None,
         limit: int = 100,
+        after_seq: int | None = None,
     ) -> list[HistoryEvent]: ...
     def put_artifact(self, artifact: ArtifactRecord) -> None: ...
     def get_artifact(self, ref: str) -> ArtifactRecord | None: ...
-    def put_handoff(self, handoff: HandoffProjection) -> None: ...
-    def get_handoff(self, handoff_id: str) -> HandoffProjection | None: ...
+    def put_handoff(self, handoff: HandoffProjection | HandoffProjectionV2) -> None: ...
+    def get_handoff(self, handoff_id: str) -> HandoffProjection | HandoffProjectionV2 | None: ...
     def validate_pointers(
         self, pointers: Iterable[HistoryPointer], *, task_id: str
     ) -> None: ...
@@ -54,11 +62,14 @@ class ContinuityStore(Protocol):
 class SQLiteContinuityStore:
     """Local/test adapter; history, artifacts and handoffs are append-only."""
 
+    supports_atomic_rollover = False
+
     def __init__(self, path: Path | str):
         self.path = Path(path)
         if str(path) != ":memory:":
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self._connection: sqlite3.Connection | None = None
+        self._event_lock = RLock()
         self._initialize()
 
     def _connect(self) -> sqlite3.Connection:
@@ -121,6 +132,18 @@ class SQLiteContinuityStore:
                 CREATE TRIGGER IF NOT EXISTS immutable_handoff_delete BEFORE DELETE ON handoffs
                 BEGIN SELECT RAISE(ABORT, 'handoffs are immutable'); END;
             """)
+            history_columns = {
+                row["name"] for row in connection.execute("PRAGMA table_info(history_events)")
+            }
+            for column, sql_type in (("event_key", "TEXT"), ("event_seq", "INTEGER")):
+                if column not in history_columns:
+                    connection.execute(f"ALTER TABLE history_events ADD COLUMN {column} {sql_type}")
+            connection.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS history_event_key ON history_events(event_key)"
+            )
+            connection.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS history_event_seq ON history_events(event_seq)"
+            )
             session_columns = {
                 row["name"]
                 for row in connection.execute("PRAGMA table_info(sessions)").fetchall()
@@ -306,6 +329,18 @@ class SQLiteContinuityStore:
             "SELECT * FROM sessions WHERE task_id=? ORDER BY created_at", (task_id,))]
 
     def append_event(self, event: HistoryEvent) -> None:
+        self._append_event(event, idempotent=False)
+
+    def append_event_once(self, event: HistoryEvent) -> HistoryEvent:
+        if event.event_key is None:
+            raise ValueError("idempotent history requires event_key")
+        return self._append_event(event, idempotent=True)
+
+    def _append_event(self, event: HistoryEvent, *, idempotent: bool) -> HistoryEvent:
+        with self._event_lock:
+            return self._append_locked_event(event, idempotent=idempotent)
+
+    def _append_locked_event(self, event: HistoryEvent, *, idempotent: bool) -> HistoryEvent:
         session = self.require_session(event.session_id)
         if session.task_id != event.task_id:
             raise ValueError("event task/session mismatch")
@@ -314,9 +349,38 @@ class SQLiteContinuityStore:
             artifact = self.get_artifact(event.storage_ref)
             if artifact is None or artifact.task_id != event.task_id:
                 raise ValueError(f"unresolvable storage_ref:{event.storage_ref}")
-        self._insert("history_events", (event.event_id, event.task_id, event.session_id,
-                     event.event_type.value, event.timestamp.isoformat(), event.node,
-                     event.source, self._json(event)))
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            if idempotent:
+                row = connection.execute(
+                    "SELECT body FROM history_events WHERE event_key=?", (event.event_key,)
+                ).fetchone()
+                if row:
+                    existing = HistoryEvent.model_validate_json(row["body"])
+                    if not same_event_content(existing, event):
+                        raise ValueError("history event key conflict")
+                    connection.commit()
+                    return existing
+            seq = connection.execute(
+                "SELECT COALESCE(MAX(event_seq), 0) + 1 FROM history_events"
+            ).fetchone()[0]
+            stored = event.model_copy(update={"event_seq": seq})
+            connection.execute(
+                "INSERT INTO history_events(event_id, task_id, session_id, event_type, "
+                "timestamp, node, source, body, event_key, event_seq) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                (stored.event_id, stored.task_id, stored.session_id, stored.event_type.value,
+                 stored.timestamp.isoformat(), stored.node, stored.source, self._json(stored),
+                 stored.event_key, seq),
+            )
+            connection.commit()
+            return stored
+        except BaseException:
+            connection.rollback()
+            raise
+        finally:
+            if self._connection is None:
+                connection.close()
 
     def get_history_event(self, event_id: str) -> HistoryEvent | None:
         row = self._one("SELECT body FROM history_events WHERE event_id=?", (event_id,))
@@ -324,7 +388,7 @@ class SQLiteContinuityStore:
 
     def query_task_history(self, task_id: str, *, event_type: str | None = None,
                            session_id: str | None = None, keyword: str | None = None,
-                           limit: int = 100) -> list[HistoryEvent]:
+                           limit: int = 100, after_seq: int | None = None) -> list[HistoryEvent]:
         clauses, values = ["task_id=?"], [task_id]
         if event_type:
             clauses.append("event_type=?")
@@ -335,9 +399,13 @@ class SQLiteContinuityStore:
         if keyword:
             clauses.append("body LIKE ?")
             values.append(f"%{keyword}%")
+        if after_seq is not None:
+            clauses.append("event_seq > ?")
+            values.append(after_seq)
         values.append(str(limit))
         rows = self._all(
-            f"SELECT body FROM history_events WHERE {' AND '.join(clauses)} ORDER BY timestamp LIMIT ?",
+            f"SELECT body FROM history_events WHERE {' AND '.join(clauses)} "
+            "ORDER BY event_seq, timestamp, event_id LIMIT ?",
             tuple(values),
         )
         return [HistoryEvent.model_validate_json(row["body"]) for row in rows]
@@ -354,7 +422,7 @@ class SQLiteContinuityStore:
         row = self._one("SELECT body FROM artifacts WHERE artifact_id=?", (artifact_id,))
         return ArtifactRecord.model_validate_json(row["body"]) if row else None
 
-    def put_handoff(self, handoff: HandoffProjection) -> None:
+    def put_handoff(self, handoff: HandoffProjection | HandoffProjectionV2) -> None:
         session = self.require_session(handoff.session_id)
         if session.task_id != handoff.task_id:
             raise ValueError("handoff task/session mismatch")
@@ -369,9 +437,9 @@ class SQLiteContinuityStore:
         self._insert("handoffs", (handoff.handoff_id, handoff.task_id, handoff.session_id,
                      handoff.created_at.isoformat(), self._json(handoff)))
 
-    def get_handoff(self, handoff_id: str) -> HandoffProjection | None:
+    def get_handoff(self, handoff_id: str) -> HandoffProjection | HandoffProjectionV2 | None:
         row = self._one("SELECT body FROM handoffs WHERE handoff_id=?", (handoff_id,))
-        return HandoffProjection.model_validate_json(row["body"]) if row else None
+        return read_handoff_projection(json.loads(row["body"])) if row else None
 
     def validate_pointers(self, pointers: Iterable[HistoryPointer], *, task_id: str) -> None:
         for pointer in pointers:
@@ -381,6 +449,10 @@ class SQLiteContinuityStore:
                 raise ValueError(f"unresolvable {pointer.kind} pointer:{pointer.target_id}")
 
     def _insert(self, table: str, values: tuple) -> None:
+        with self._event_lock:
+            self._insert_locked(table, values)
+
+    def _insert_locked(self, table: str, values: tuple) -> None:
         placeholders = ",".join("?" for _ in values)
         connection = self._connect()
         try:
@@ -391,6 +463,10 @@ class SQLiteContinuityStore:
                 connection.close()
 
     def _one(self, sql: str, values: tuple) -> sqlite3.Row | None:
+        with self._event_lock:
+            return self._one_locked(sql, values)
+
+    def _one_locked(self, sql: str, values: tuple) -> sqlite3.Row | None:
         connection = self._connect()
         try:
             return connection.execute(sql, values).fetchone()
@@ -399,6 +475,10 @@ class SQLiteContinuityStore:
                 connection.close()
 
     def _all(self, sql: str, values: tuple) -> list[sqlite3.Row]:
+        with self._event_lock:
+            return self._all_locked(sql, values)
+
+    def _all_locked(self, sql: str, values: tuple) -> list[sqlite3.Row]:
         connection = self._connect()
         try:
             return list(connection.execute(sql, values).fetchall())
