@@ -4,13 +4,13 @@
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "gate_0_database_config_passed_gate_1_awaiting_backup_output",
+  "status": "gate_0_and_1_passed_gate_2_awaiting_readonly_preparation",
   "production_connection_established": true,
   "database_sql_sent": true,
   "migration_executed": false,
-  "backup_status": "unknown_valid_backup_not_confirmed",
+  "backup_status": "valid_postgres_backup_confirmed_from_integrity_and_recorded_restore_evidence",
   "backup_gate_entered": true,
-  "rehearsal_gate_entered": false,
+  "rehearsal_gate_entered": true,
   "low_traffic_gate_entered": false,
   "post_migration_sql_executed": false,
   "real_write_verification": "skipped_no_dedicated_test_account",
@@ -190,17 +190,84 @@
   "backup_check_preparation": {
     "mechanism_source": "repository_deploy_backup_py",
     "postgres_dump_format": "custom",
-    "production_readonly_inspection_executed": false,
+    "production_readonly_inspection_executed": true,
     "command_document": "gate1-backup-readonly-command.md",
-    "latest_valid_backup_time": null,
-    "latest_valid_backup_restore_verified": null,
-    "recovery_responsible_confirmed": false,
+    "latest_valid_backup_time": "2026-10-01T23:41:24.275303+00:00",
+    "latest_valid_backup_restore_verified": true,
+    "recovery_responsible_confirmed": true,
+    "recovery_responsible": "唐艺宁",
+    "recovery_responsible_source": "explicit_user_reply",
     "local_command_validation": {
       "shell_syntax_passed": true,
       "fixture_cases_passed": 10,
       "wall_time_seconds": 1.396,
       "production_backup_evidence": false
     }
+  },
+  "production_backup_screenshot_evidence": {
+    "source": "user_supplied_ecs_terminal_screenshot",
+    "direct_remote_connection_by_agent": false,
+    "checked_at_utc": "2026-10-02T11:08:21.880066+00:00",
+    "checked_at_asia_shanghai": "2026-10-02T19:08:21.880066+08:00",
+    "timer": {
+      "load_state": "loaded",
+      "active_state": "active",
+      "unit_file_state": "enabled",
+      "last_trigger_asia_shanghai": "2026-10-02T07:41:02+08:00",
+      "next_trigger_asia_shanghai": "2026-10-03T03:22:14+08:00"
+    },
+    "service": {
+      "result": "success",
+      "exit_code": 0,
+      "active_state": "inactive",
+      "start_asia_shanghai": "2026-10-02T07:41:02+08:00",
+      "exit_asia_shanghai": "2026-10-02T07:41:24+08:00"
+    },
+    "recent_manifests_complete_restore_verified": [
+      "20260930T015036Z-3a11237c.json",
+      "20260930T233948Z-3a11237c.json",
+      "20261001T234103Z-3a11237c.json"
+    ],
+    "selected_manifest": "20261001T234103Z-3a11237c.json",
+    "database": "moodflow_agent",
+    "started_at_utc": "2026-10-01T23:41:03.627511+00:00",
+    "completed_at_utc": "2026-10-01T23:41:24.275303+00:00",
+    "backup_duration_seconds_from_manifest": 20.647792,
+    "backup_age_hours": 11.46,
+    "dump_bytes": 23814211,
+    "dump_format": "custom",
+    "dump_size_matches_manifest": true,
+    "dump_sha256_matches_manifest": true,
+    "dump_sha256_value_shown": false,
+    "recorded_restore_verified": true,
+    "new_restore_run_this_turn": false,
+    "recorded_restore_counts": {
+      "agent_session": 58,
+      "agent_task": 55,
+      "agent_long_term_memory": 11,
+      "checkpoints": 775,
+      "checkpoint_blobs": 1028,
+      "checkpoint_writes": 1901
+    },
+    "backup_disk_free_bytes": 21777116544,
+    "finished_marker_observed": true,
+    "stop_marker_observed": false,
+    "shell_continuation_prompt_observed": true,
+    "shell_exit_code": null,
+    "inspection_total_wall_time_seconds": null,
+    "gate_1_valid_backup_passed": true,
+    "screenshot_sha256": {
+      "codex-clipboard-67fccebd-4705-4459-a992-bfdbc81f55db.png": "3CB2CBDD7176EE97865E172BB104EB1C4EA42EEC49885963FBED7103B6979F7F"
+    }
+  },
+  "rehearsal_readonly_preparation": {
+    "command_file": "gate2-rehearsal-preflight.sh",
+    "production_executed": false,
+    "isolated_restore_executed": false,
+    "migrations_executed": false,
+    "shell_syntax_passed": true,
+    "local_readonly_paths_passed": 3,
+    "local_validation_wall_time_seconds": 2.535
   },
   "source_sha256": {
     "docs/operations/context-loop-p1-postgres-migration-20261002.md": "4162164E1A925E6E22599F4196ECF8478829063F46F3183477798F9DB0AC0ACA",

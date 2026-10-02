@@ -1,6 +1,6 @@
 # Context Loop P1：前置查询与迁移后复验结果
 
-日期：2026-10-02，Asia/Shanghai。**最新状态：生产 §1 五项 SQL 及补充只读检查已由用户执行并回传截图，门控 0 数据库与配置检查通过。门控 1 等待备份检查回传；003 / 004 未执行，§3 复验仍全部未执行。**
+日期：2026-10-02，Asia/Shanghai。**最新状态：门控 0 数据库与配置检查、门控 1 有效备份检查通过；门控 2 处于只读准备。003 / 004 未执行，§3 复验仍全部未执行。**
 
 依据：[生产迁移手册](../../operations/context-loop-p1-postgres-migration-20261002.md) §1 / §3。执行过程及停止原因见 [执行报告](execution.md)。
 
@@ -271,3 +271,40 @@ ROLLBACK
 ```
 
 补充结果符合迁移前状态，门控 0 的数据库与配置检查通过。截图未提供计时和退出码；pool 证据是配置容量，临时配置清理没有独立复验。备份只读查询尚未在生产执行；备份仍未知；§3 的六项查询仍未执行。真实写操作复验继续按请求跳过。
+
+## 9. 备份只读检查输出
+
+以下为用户最新截图的输出转录，省略终端中的脚本输入回显：
+
+```text
+NextElapseUSecRealtime=Sat 2026-10-03 03:22:14 CST
+LastTriggerUSec=Fri 2026-10-02 07:41:02 CST
+LoadState=loaded
+ActiveState=active
+UnitFileState=enabled
+Result=success
+ExecMainStartTimestamp=Fri 2026-10-02 07:41:02 CST
+ExecMainExitTimestamp=Fri 2026-10-02 07:41:24 CST
+ExecMainStatus=0
+ActiveState=inactive
+CHECKED_AT_UTC=2026-10-02T11:08:21.880066+00:00
+RECENT_BACKUP={"manifest": "20260930T015036Z-3a11237c.json", "status": "complete", "restore_verified": true}
+RECENT_BACKUP={"manifest": "20260930T233948Z-3a11237c.json", "status": "complete", "restore_verified": true}
+RECENT_BACKUP={"manifest": "20261001T234103Z-3a11237c.json", "status": "complete", "restore_verified": true}
+SELECTED_MANIFEST=20261001T234103Z-3a11237c.json
+BACKUP_STARTED_UTC=2026-10-01T23:41:03.627511+00:00
+BACKUP_COMPLETED_UTC=2026-10-01T23:41:24.275303+00:00
+BACKUP_AGE_HOURS=11.46
+BACKUP_DATABASE=moodflow_agent
+POSTGRES_DUMP_BYTES=23814211
+POSTGRES_DUMP_SHA256_MATCH=true
+POSTGRES_DUMP_FORMAT=custom
+RECORDED_RESTORE_VERIFIED=true
+RECORDED_RESTORE_TABLE_COUNTS={"agent_session": 58, "agent_task": 55, "agent_long_term_memory": 11, "checkpoints": 775, "checkpoint_blobs": 1028, "checkpoint_writes": 1901}
+BACKUP_DISK_FREE_BYTES=21777116544
+BACKUP_READONLY_INSPECTION_FINISHED; no_new_restore_run; migration_not_executed
+>
+>
+```
+
+门控 1 的有效备份检查通过。尾部为 shell 续行提示；已提醒用户 Ctrl+C 返回正常终端。实际退出码和总检查耗时未显示。本轮未再次恢复，也未执行 003 / 004 或任何 §3 复验 SQL；真实写操作继续跳过。
