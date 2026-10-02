@@ -1,6 +1,6 @@
 # Context Loop P1：前置查询与迁移后复验结果
 
-日期：2026-10-02，Asia/Shanghai。**最新状态：门控 0 数据库与配置检查、门控 1 有效备份检查通过；门控 2 处于只读准备。003 / 004 未执行，§3 复验仍全部未执行。**
+日期：2026-10-02，Asia/Shanghai。**最新状态：门控 0 / 1 通过，门控 2 的生产规模及资源只读查询已回传；隔离演练脚本准备完成。生产 003 / 004 未执行，生产 §3 复验仍全部未执行。**
 
 依据：[生产迁移手册](../../operations/context-loop-p1-postgres-migration-20261002.md) §1 / §3。执行过程及停止原因见 [执行报告](execution.md)。
 
@@ -308,3 +308,32 @@ BACKUP_READONLY_INSPECTION_FINISHED; no_new_restore_run; migration_not_executed
 ```
 
 门控 1 的有效备份检查通过。尾部为 shell 续行提示；已提醒用户 Ctrl+C 返回正常终端。实际退出码和总检查耗时未显示。本轮未再次恢复，也未执行 003 / 004 或任何 §3 复验 SQL；真实写操作继续跳过。
+
+## 10. 演练前生产只读查询结果
+
+用户回传的关键查询输出转录如下；无截图文件哈希，来源是本轮聊天中的原始文本：
+
+```text
+BACKUP_DATABASE_SIZE_BYTES=53894167
+003_context_loop_history.sql_SHA256=missing
+004_continuity_execution.sql_SHA256=missing
+current_database=moodflow_agent
+current_user=moodflow
+clock_timestamp=2026-10-02 11:18:21.81137+00
+read_only=on
+is_standby=f
+database_bytes=53894167
+history_rows=328
+history_total_bytes=696320
+replication_senders=0
+state | sync_state | write_lag | flush_lag | replay_lag
+(0 rows)
+replication_slots=0
+active_slots=0
+001_agent_continuity.sql
+002_long_term_memory.sql
+ROLLBACK
+REHEARSAL_PREFLIGHT_READONLY_FINISHED; no_restore_or_migration_run
+```
+
+主机资源及各项计时见执行报告第 12 节。已准备独立容器恢复和迁移演练；生产六项 §3 查询仍全部未执行，没有生产迁移成功结论。后续回传的副本复验需另记环境，不能覆盖生产结果。
