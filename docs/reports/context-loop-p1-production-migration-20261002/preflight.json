@@ -1,17 +1,17 @@
 {
-  "recorded_at": "2026-10-02T20:38:12+08:00",
+  "recorded_at": "2026-10-02T20:54:04+08:00",
   "timezone": "Asia/Shanghai",
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "interruption_audit_no_production_migration_report_lookup_fixed_awaiting_execution",
+  "status": "gate_3_stopped_pending_control_and_unknown_storage_awaiting_readonly_diagnostics",
   "production_connection_established": true,
   "database_sql_sent": true,
   "migration_executed": false,
-  "backup_status": "valid_postgres_backup_confirmed_integrity_and_fresh_isolated_restore",
+  "backup_status": "valid_backup_rechecked_integrity_and_verified_rehearsal_report_on_production_host",
   "backup_gate_entered": true,
   "rehearsal_gate_entered": true,
-  "low_traffic_gate_entered": false,
+  "low_traffic_gate_entered": true,
   "post_migration_sql_executed": false,
   "real_write_verification": "skipped_no_dedicated_test_account",
   "windows_client_discovery": {
@@ -486,7 +486,7 @@
     "raw_six_queries_returned_in_screenshot": false,
     "summary_postchecks_returned": true,
     "gate_2_passed": true,
-    "report_path_note": "corrected_digit_0_from_original_screenshot; automated_discovery_verifies_report_before_execution"
+    "report_path_note": "actual_path_verified_by_successful_server_report_lookup_2026_10_02_1241_utc"
   },
   "combined_production_execution_preparation": {
     "command_file": "gate3-production-migration.sh",
@@ -577,5 +577,92 @@
     "production_migrations_effective": false,
     "full_business_quiet_gate_confirmed": false,
     "finished_marker_observed": true
+  },
+  "production_gate_3_first_stop": {
+    "source": "user_pasted_ecs_terminal_output",
+    "direct_remote_connection_by_agent": false,
+    "report_path": "/secure/moodflow/migration-executions/context-loop-20261002-eueymc3q/report.json",
+    "source_result_file": "gate3-first-stop-result.json",
+    "result": {
+      "backup_completed_at_utc": "2026-10-01T23:41:24.275303+00:00",
+      "backup_integrity_rechecked": true,
+      "backup_manifest": "20261001T234103Z-3a11237c.json",
+      "backup_restore_verified": true,
+      "completed_at_utc": "2026-10-02T12:41:04.788161+00:00",
+      "gate_3_observations": [
+        {
+          "database": "moodflow_agent",
+          "role": "moodflow",
+          "checked_at": "2026-10-02T12:41:04.33921+00:00",
+          "readonly": "on",
+          "standby": false,
+          "ledger": [
+            "001_agent_continuity.sql",
+            "002_long_term_memory.sql"
+          ],
+          "history_rows": 328,
+          "database_bytes": 53894167,
+          "execution_exists": false,
+          "event_seq_exists": false,
+          "immutable_enabled": true,
+          "active_sessions": 0,
+          "advisory_locks": 0,
+          "active_runs": 0,
+          "pending_runs": 0,
+          "unknown_runs": 0,
+          "latest_pending_writes": 0,
+          "legacy_pending_sends": 0,
+          "pending_controls": 1,
+          "unknown_checkpoints": 423,
+          "replication_senders": 0,
+          "replication_slots": 0,
+          "ai_listeners": 1,
+          "ai_inbound_established": 0
+        }
+      ],
+      "lock_timeout": "5s",
+      "migration_sha256": {
+        "003_context_loop_history.sql": "db21752bcb86affae039634342e5b6df8ec113053aa5ecb213f07c854acb67b3",
+        "004_continuity_execution.sql": "5622723c341f6782085039ad2d0872d35ed93303a6f1114d7878e96eb0a388d2"
+      },
+      "production_commit_confirmed": false,
+      "production_transaction_attempted": false,
+      "real_write_verification": "skipped_no_dedicated_test_account",
+      "reason": "gate_3_not_quiet_pending_controls_no_migration",
+      "recovery_responsible": "唐艺宁",
+      "rehearsal_report": "/secure/moodflow/migration-rehearsals/context-loop-20261002-y0pxiydv/report.json",
+      "replication_lag_seconds": null,
+      "started_at_utc": "2026-10-02T12:41:03.687717+00:00",
+      "statement_timeout": "60s",
+      "status": "stopped_or_failed",
+      "temporary_profile_cleanup": "passed"
+    },
+    "elapsed_seconds_from_report_timestamps": 1.100444,
+    "observations_completed": 1,
+    "complete_low_peak_window_passed": false
+  },
+  "checkpoint_storage_diagnostic": {
+    "command_file": "gate3-checkpoint-readonly.sh",
+    "production_executed": false,
+    "migration_gate_changed": false,
+    "production_checkpoint_deserialization": false,
+    "local_primary_source_versions": {
+      "langgraph": "1.2.11",
+      "langgraph-checkpoint": "4.2.0",
+      "langgraph-checkpoint-postgres": "3.1.2"
+    },
+    "potential_false_positives": [
+      "inline_primitive_without_blob",
+      "unavailable_channel_without_blob",
+      "empty_named_barrier_set_stored_in_nonempty_typed_blob"
+    ],
+    "local_validation": {
+      "tests_passed": 1,
+      "seconds": 11.824,
+      "shell_syntax_passed": true,
+      "fixture_ledger_and_counts_unchanged": true,
+      "temporary_profile_cleanup_verified": true,
+      "initial_test_json_multiline_failure_fixed": true
+    }
   }
 }

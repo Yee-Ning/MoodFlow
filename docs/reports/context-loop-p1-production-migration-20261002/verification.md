@@ -373,3 +373,7 @@ REHEARSAL_PREFLIGHT_READONLY_FINISHED; no_restore_or_migration_run
 | 只读结束 | READONLY_INTERRUPTION_CHECK_FINISHED; no_migration_or_retry |
 
 以上是中断后的检查，确认 003 / 004 尚未生效，并非迁移成功后的 §3 输出。新脚本已自动匹配实际演练报告，下一步仍须重新过低峰门控后提交，才能记录 §3 六项原始输出；真实写复验仍跳过。
+
+最新门控 3 回传（2026-10-02 12:41:04.33921 UTC）：数据库 / 角色 / 旧 ledger / 328 行历史均符合；活动会话、advisory、run、pending run、latest pending writes、legacy pending sends、AI 入站连接均为 0，但 pending_controls=1、unknown_checkpoints=423。实际脚本在首次采样停止，production_transaction_attempted=false、production_commit_confirmed=false，清理 passed。原始结果见 [gate3-first-stop-result.json](gate3-first-stop-result.json)；它不是 §3 迁移后输出，不能标记生产迁移成功。
+
+已准备 [checkpoint 只读诊断](gate3-checkpoint-readonly.sh)，区分 inline / 缺失空通道、异常 JSON / blob 与空 join 集合。诊断尚待生产回传；现有 pending / unknown 门控保持，不删除记录或扩大 checkpoint 反序列化范围。备份已重新通过文件完整性与演练证据核验；真实写复验继续跳过。

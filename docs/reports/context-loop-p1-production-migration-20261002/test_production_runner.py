@@ -144,6 +144,32 @@ ALTER TABLE checkpoint_writes ADD COLUMN thread_id TEXT, ADD COLUMN checkpoint_n
         remaining=self.source.command('find','/tmp','-maxdepth','1','-name','mf-state-check-*').stdout
         self.assertEqual(remaining,b'')
 
+    def test_0_checkpoint_diagnostic_preserves_database_and_classifies_storage(self):
+        shell=(Path(__file__).resolve().parent/'gate3-checkpoint-readonly.sh').read_text(encoding='utf-8')
+        sql=shell.split("<<'MF_CP_SQL'\n",1)[1].split('\nMF_CP_SQL\n',1)[0]
+        rows="""INSERT INTO checkpoints(thread_id,checkpoint_ns,checkpoint_id,checkpoint)
+VALUES('diagnostic','','001','{"v":4,"channel_versions":{"branch:to:idle":"01","branch:to:ready":"01","join:a+b:done":"02"},"versions_seen":{"done":{"join:a+b:done":"01"}},"channel_values":{"branch:to:ready":null}}');
+INSERT INTO checkpoint_blobs(thread_id,checkpoint_ns,channel,version,type,blob)
+VALUES('diagnostic','','join:a+b:done','02','msgpack',decode('c70f0093a86275696c74696e73a373657490','hex'));
+"""
+        before={k:v for k,v in self.source.metadata().items() if k!='database_bytes'}
+        # Run synthetic inserts and inspection within a rollback-only fixture transaction.
+        output=self.source.sql(sql.replace('BEGIN READ ONLY;','BEGIN;\n'+rows)).stdout.decode()
+        result=json.loads(next(line for line in output.splitlines() if line.startswith('{')))
+        self.assertEqual(result['malformed_checkpoint_shapes'],0)
+        self.assertEqual(result['missing_blob_without_inline'],1)
+        self.assertEqual(result['missing_blob_with_inline'],1)
+        self.assertEqual(result['inline_unseen_controls'],1)
+        self.assertEqual(len(result['old_pending_candidates']),1)
+        self.assertTrue(result['old_pending_candidates'][0]['known_empty_builtin_set'])
+        self.assertEqual(result['old_pending_candidates'][0]['family'],'join')
+        self.assertEqual({k:v for k,v in self.source.metadata().items() if k!='database_bytes'},before)
+        body=shell.split("<<'MF_CP_DIAGNOSTIC'\n",1)[1].split('\nMF_CP_DIAGNOSTIC\n',1)[0]
+        actual=self.source.command('sh','-s',data=body.encode()).stdout.decode()
+        self.assertIn('"read_only": "on"',actual)
+        self.assertEqual({k:v for k,v in self.source.metadata().items() if k!='database_bytes'},before)
+        self.assertEqual(self.source.command('find','/tmp','-maxdepth','1','-name','mf-cp-check-*').stdout,b'')
+
     def test_1_pending_latest_and_consumed_old_writes(self):
         def query(prefix):
             output=self.source.sql('BEGIN;'+prefix+p.GATE_QUERY+'ROLLBACK;').stdout.decode()

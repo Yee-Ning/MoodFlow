@@ -1,9 +1,9 @@
 # Context Loop P1：003 / 004 生产迁移执行报告
 
-记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–15 节。
+记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–16 节。
 报告对象：West；由本次请求方转交，本轮没有对外发送消息。
 
-**最新结论：门控 0 / 1 / 2 已通过。2026-10-02 12:26:03 UTC 的中断核对显示生产 PostgreSQL healthy，ledger 仅 001 / 002，execution 与新增列不存在，其他活跃 psql / advisory locks 均为 0，003 / 004 尚未生效。已定位并修复演练目录中数字 0 / 字母 o 的抄写错误，改为自动查找并严格匹配成功演练报告；命令已压缩和拆分短行，不改变登录 Shell 选项。新版脚本待 ECS 执行回传，生产低峰、COMMIT 与 §3 复验仍待确认，超时保持 5s / 60s。有效备份及恢复负责人唐艺宁已确认；真实写复验继续跳过。**
+**最新结论：备份、真实副本演练和镜像已在新版生产脚本中核验通过；20:41 的门控 3 首次采样返回 pending_controls=1、unknown_checkpoints=423，安全停止。production_transaction_attempted=false、production_commit_confirmed=false，临时 profile 清理 passed；未开始迁移事务。官方 saver 存在 inline 与空通道缺少 blob 的正常模式，原 SQL 可能误计；已准备只读存储诊断，未修改门控或清理 checkpoint。生产迁移与 §3 复验未执行，5s / 60s、备份硬门槛和原批准范围保持。恢复负责人唐艺宁；真实写复验继续跳过。**
 
 ## 1. 批准与执行依据
 
@@ -241,3 +241,29 @@
 执行脚本改为压缩 / base64 短行封装，14,403 bytes、最长行 109 字符；运行前解压并验证源代码 SHA-256，if 分支接住子进程退出码。迁移 SQL、超时、低峰检查和失败回滚不变；不设置父登录 Shell 的 set -e / set -u，也不再传递原来的长行 payload。已准备新版脚本继续原批准范围，仍重新检查备份和门控 3；本轮代理没有向生产发送新的迁移 SQL。
 
 最终完整验证 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v`：10 tests / 27.074 s 通过。新增测试覆盖正确随机目录、其他 run、损坏报告、重复匹配、错误哈希和目录不存在；短行 payload 还原源代码、哈希 / 长度 / shell 语法验证通过；真实隔离 PostgreSQL 的只读诊断、正常迁移、忙碌停止、中途错误回滚、重复尝试停止与临时文件清理继续通过。Python 编译、文档链接和范围内 diff 检查通过。没有应用代码变更，不运行应用构建或前后端业务验收；生产提交及 §3 输出仍等待用户执行新版后回传。没有部署、push、改变默认图 / 灰度或执行真实业务写测试。
+
+## 16. 门控 3 安全停止与 checkpoint 存储诊断
+
+用户文本回传新版实际输出，原始结构化结果保存为 [gate3-first-stop-result.json](gate3-first-stop-result.json)。报告路径为 `/secure/moodflow/migration-executions/context-loop-20261002-eueymc3q/report.json`，起止时间 2026-10-02 12:41:03.687717–12:41:04.788161 UTC（北京时间 20:41:03–20:41:04），报告差值 1.100444 s。来源为用户实际远端输出，本代理没有直接远端连接。
+
+| 步骤 | 实际结果 |
+| --- | --- |
+| 有效备份复核 | checked_verified_backup 通过，backup_integrity_rechecked=true、backup_restore_verified=true；清单 20261001T234103Z-3a11237c.json，完成时间仍为 Oct1 23:41:24.275303 UTC |
+| 演练证据 | 成功发现并验证实际路径 `/secure/moodflow/migration-rehearsals/context-loop-20261002-y0pxiydv/report.json`，0 / o 问题已解决 |
+| 固定生产镜像 | checking_production_image 通过 |
+| 门控 3 身份 / schema | moodflow_agent / moodflow，readonly=on、standby=false；ledger 001 / 002；history_rows=328，database_bytes=53,894,167；execution / event_seq=false；immutable_enabled=true |
+| 活动与常规 pending | active_sessions / advisory_locks / active_runs / pending_runs / unknown_runs / latest_pending_writes / legacy_pending_sends 均为 0；AI listener=1、established inbound=0；sender / slot=0 |
+| 停止指标 | pending_controls=1，unknown_checkpoints=423；reason=gate_3_not_quiet_pending_controls_no_migration |
+| 采样窗口 | 首次采样 12:41:04.33921 UTC 即停止，未完成约 10 s 的 6 次观测，不声称低峰门控通过 |
+| 事务 / 清理 | production_transaction_attempted=false，production_commit_confirmed=false；temporary_profile_cleanup=passed。未发送迁移 BEGIN，因而没有失败的迁移事务需要回滚 |
+| §3 / 业务复验 | 生产只读复验未执行；真实业务写复验依约跳过 |
+
+检查发现原 SQL 的 unknown_checkpoints 是 malformed checkpoint 计数加控制通道问题计数，并非 423 条独立损坏 checkpoint；缺少 blob 被归为 unknown、非 empty 的 join blob 加版本差被归为 pending，可能比实际调度状态更保守。当前未删除或清零这些门控指标，也没有允许迁移。
+
+已阅读本地已安装的官方包源码：langgraph 1.2.11、langgraph-checkpoint 4.2.0、langgraph-checkpoint-postgres 3.1.2。PostgresSaver.put 将 None / str / int / float / bool 留在 checkpoint.channel_values，复杂值才写 blob；不存在的通道可以没有 blob。load 将 inline 值与非 empty 的 blob 合并。NamedBarrierValue.is_available 要求 seen 等于全部前驱，consume 会把 seen 置为空集合，空集合自身仍可序列化为非 empty 的 msgpack blob。因而不能单凭 blob 缺失判定状态未知，也不能单凭 join blob 存在及版本变化判定存在可调度任务。以上是源码与本地夹具确认，尚未确认生产包版本或该记录的实际存储。
+
+新增 [gate3-checkpoint-readonly.sh](gate3-checkpoint-readonly.sh)，3,882 bytes，继续使用临时无密码 service 和只读事务，仅输出统计 / 类型 / 指纹：latest checkpoint 数、JSON 形状异常数、缺少 blob 的 inline / 非 inline 分组、非法非 empty NULL blob、inline 未见控制通道、原 pending 候选的 family / 存储类型 / 长度 / MD5 / 已知空集合精确匹配结果。没有输出线程 / namespace / 消息 / blob 正文，没有反序列化生产 checkpoint，也不调用 graph 恢复。另只读获取部署包版本并序列化自建空集合以比较格式，不读取应用配置或凭据。是否属于误判必须由该结果确认后再决定；真正 pending 或无法确认时继续停止。
+
+验证命令 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -k checkpoint_diagnostic -v`。首次诊断测试因 json_agg 嵌套结果带换行导致测试按行解析失败，改用 jsonb_build_object 输出单行，修正后 1 test / 11.824 s 通过。夹具覆盖缺 blob 的空通道、inline None 的 ready 通道、序列化空 join 集合，并在真实隔离 PostgreSQL 的只读执行中确认 ledger / schema / 历史及核心表计数保持、临时 profile 清理通过。synthetic INSERT 仅在隔离测试的回滚事务中使用；物理页分配可保留，未以库物理大小判断业务数据是否变化。sh -n 和 Python 编译通过，原迁移脚本及应用源码未修改；没有部署、push 或业务真实写验收。
+
+当前待交付项：门控 3 的记录分类与完整无 pending / 低峰证明、生产 COMMIT、§3 六项原始输出仍未完成；备份状态有效、演练完成，不需要因该门控停止重跑恢复。真实写与业务专项复验仍跳过 / 未验收。提供给 West 的结论是生产迁移安全停止且尚未开始，不是迁移成功或开闸批准。
