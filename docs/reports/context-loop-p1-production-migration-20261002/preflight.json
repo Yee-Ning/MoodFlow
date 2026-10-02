@@ -1,10 +1,10 @@
 {
-  "recorded_at": "2026-10-02T14:32:22.598895+00:00",
+  "recorded_at": "2026-10-02T14:46:06.200954+00:00",
   "timezone": "Asia/Shanghai",
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "gate_3_stopped_confirmed_storage_false_positives_one_inline_control_unresolved",
+  "status": "stopped_at_gate_3_pending_child_namespace_control_reported_for_owner_resolution",
   "production_connection_established": true,
   "database_sql_sent": true,
   "migration_executed": false,
@@ -723,11 +723,11 @@
       "malformed_checkpoint_shapes": 0,
       "missing_blob_without_inline": 422
     },
-    "classification": "423 storage flags explained; empty join candidate explained; one inline version difference unresolved"
+    "classification": "423 storage flags explained; empty join candidate explained; remaining inline classified pending in child namespace"
   },
   "inline_control_followup": {
     "command_file": "gate3-inline-control-readonly.sh",
-    "production_executed": false,
+    "production_executed": true,
     "purpose": "strict scheduling comparison and count confirmation only",
     "production_checkpoint_deserialization": false,
     "migration_or_resume_allowed": false,
@@ -739,6 +739,37 @@
       "synthetic_official_scheduler_compared": true,
       "actual_isolated_postgresql_tested": true,
       "production_test_run": false
-    }
-  }
+    },
+    "source_result_file": "gate3-inline-control-result.json",
+    "result": {
+      "database": "moodflow_agent",
+      "read_only": "on",
+      "checked_at": "2026-10-02T14:40:37.303582+00:00",
+      "inline_controls": [
+        {
+          "pending": true,
+          "unknown": false,
+          "inline_kind": "null",
+          "version_kind": "string",
+          "versions_equal": null,
+          "node_static_name": "general_chat_subgraph",
+          "namespace_is_root": false,
+          "seen_node_present": false,
+          "seen_version_kind": null,
+          "checkpoint_fingerprint": "ce287fbf81eca90fce8a14548837d6ec"
+        }
+      ],
+      "pending_controls": 1,
+      "unknown_checkpoints": 0
+    },
+    "finished_marker_observed": true,
+    "current_parent_reference_verified": false,
+    "gate_passed": false
+  },
+  "remaining_work": [
+    "owner review of pending child checkpoint and current parent lineage",
+    "normal approved business recovery or closure if required",
+    "fresh backup and complete quiet gate before any migration attempt",
+    "production 003/004 transaction and Section 3 outputs"
+  ]
 }

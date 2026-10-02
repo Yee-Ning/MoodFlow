@@ -1,9 +1,9 @@
 # Context Loop P1：003 / 004 生产迁移执行报告
 
-记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–17 节。
+记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–18 节。
 报告对象：West；由本次请求方转交，本轮没有对外发送消息。
 
-**最新结论：22:19 的实际只读诊断确认 423 个存储标记来自 422 个不可用通道及 1 个 inline null，原 join 候选为已知空集合，属于原 SQL 误判。另有 1 个 inline branch 的 current / seen 版本不相等，尚不能仅凭不相等认定待执行或放行；已修正存储分类与严格版本比较，并准备专门只读检查。门控 3 仍未通过，生产迁移事务与 §3 复验未执行。有效备份、本轮真实副本演练、5s / 60s、恢复负责人唐艺宁保持；真实写复验继续跳过。**
+**最新结论：22:40 的实际只读检查返回 pending_controls=1、unknown_checkpoints=0。剩余 inline None 位于非根 namespace，目标 general_chat_subgraph，node 无 versions_seen；按当前门控与官方调度规则属于可触发候选。是否仍被当前父 checkpoint 引用尚未核实，不能据此认定任务正在运行，也不能直接忽略该状态。门控 3 未通过，本次停止且不运行迁移 / 业务恢复。备份与副本演练已有通过证据；生产迁移与 §3 复验未完成。恢复负责人唐艺宁，真实写复验依约跳过。**
 
 ## 1. 批准与执行依据
 
@@ -289,3 +289,26 @@
 修正范围仅限本轮运维 helper、测试和报告，原 003 / 004 与应用源码未改。当前实际生产迁移仍未开始；若 inline 严格判定仍 pending，继续停止并提交证据给 West / 恢复负责人处理，不删除状态或强制放行。真实写复验依约跳过，生产 §3 六项没有结果可填。
 
 本地完整验证 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v`：14 tests / 38.997 s 通过，覆盖官方 synthetic 通道调度对照、inline None、严格较大 / 相等 / 较小的字符串与数值版本、类型错误阻断、空与非空 join、没有前驱的 barrier、只读诊断不变与清理，以及生产 helper 在隔离 PostgreSQL 中的 busy 停止、中途错误回滚、完整成功与重复调用停止。Python 编译、两个 wrapper 的 sh -n 通过。没有业务代码变更，不运行应用构建或真实业务写验收；生产迁移、§3 输出及 inline 生产判定仍未完成。
+
+## 18. 最终只读结果：门控 3 因子图 pending 停止
+
+用户回传查询时间 `2026-10-02T14:40:37.303582+00:00`（北京时间 22:40:37），数据库 moodflow_agent、read_only=on，`INLINE_CONTROL_READONLY_FINISHED; no_migration_or_resume` 结束标记可见。证据保存为 [gate3-inline-control-result.json](gate3-inline-control-result.json)。输出没有查询耗时，记录为未提供；不把两次回传间隔当成 SQL 耗时。
+
+| 项目 | 实际结果 |
+| --- | --- |
+| 剩余候选数量 | pending_controls=1，unknown_checkpoints=0 |
+| inline 控制值 | inline_kind=null；这是可用 EphemeralValue，不等同于空通道 |
+| 目标节点 | general_chat_subgraph |
+| namespace | namespace_is_root=false；只输出是否根，不输出 namespace 原文 |
+| 消费状态 | seen_node_present=false、seen_version_kind=null、versions_equal=null；没有可比较的 seen，null 并非比较失败 |
+| 当前判定 | pending=true、unknown=false；node 无 seen 时，官方调度依据通道可用性可产生触发候选 |
+| 安全定位指纹 | ce287fbf81eca90fce8a14548837d6ec；不是 thread / checkpoint 原始标识 |
+| 生产副作用 | 本脚本只有只读 SQL，没有迁移、删除 checkpoint、调用恢复或业务写入 |
+
+该结果关闭了存储异常误报的调查，但没有满足“无 pending 执行”的硬门槛。本查询未检查该 child namespace 与当前父 checkpoint 的引用关系，也没有装载实际图节点或调用图恢复；因此当前结论是可触发子图控制候选仍阻断，而不是有运行中的 HTTP 请求、必然需要重跑业务或已经确认孤儿历史。没有将非根 namespace 自动排除。
+
+按原执行要求，门控不通过即停止并报告，不继续重试生产 SQL，不删除子图 checkpoint、重建原 run、强制清空 pending 或降低 fence / revision。给 West 的下一步是安排原 run / namespace 的业务负责人核对当前父 checkpoint、Session lineage 与已写回执，确认它是否仍待执行；若需恢复或收尾，按既有获批业务流程处理。本轮数据库迁移授权没有被扩展为调用模型、修改真实歌单或恢复未知写操作。唐艺宁作为已确认的数据库恢复负责人保留；未启动数据库备份恢复。
+
+交付状态：门控 0 / 1 / 2 已有通过证据及演练数据；门控 3 停止。生产 003 / 004 与 ledger 提交未在本轮执行，手册 §3 六项生产结果均为“未执行”，真实写操作依约跳过。最新 ledger 证据仍为先前 001 / 002 查询，本次 inline 查询不刷新 ledger；未伪造迁移后的结果。后续继续时需重新确认备份时效和完整低峰观测，再决定是否进入迁移事务。不开灰度、不改默认图 / .env、不部署、不 push。
+
+本次只更新证据与操作报告，没有修改应用、迁移 SQL 或 helper 代码。验证范围为 JSON 解析、证据与报告字段一致性、文档链接和本次 diff 检查；此前 helper 的 14 项隔离验证保持原记录，不将其列为本次重新运行。生产迁移、业务恢复和真实写验收因当前门控与账号条件未进行。

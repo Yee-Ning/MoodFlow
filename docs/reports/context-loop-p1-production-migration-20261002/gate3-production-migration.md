@@ -1,10 +1,10 @@
-# 当前操作：先核对剩余 inline，暂不运行迁移脚本
+# 当前操作：门控 3 停止，不运行迁移脚本
 
-22:19 的生产只读输出已确认缺 blob / 空 join 误判。运维 helper 已修正，但另有 1 个 inline branch 的 current / seen 版本不相等，仍缺少严格调度判定，低峰门控没有通过。先执行 [gate3-inline-control-readonly.sh](gate3-inline-control-readonly.sh)，回传结果；它不迁移、不恢复图、不删除状态。若确有 pending 或未知状态，停止并报告给 West / 唐艺宁。后续满足门控时继续原批准范围，仍需即时复查备份、低峰及事务内门控，不重复重放失败的生产 SQL。
+2026-10-02 22:40 的只读结果为 pending_controls=1、unknown_checkpoints=0；剩余 inline 的目标 general_chat_subgraph 位于非根 namespace，node 没有 seen 状态，按当前检查为 pending。证据见 [gate3-inline-control-result.json](gate3-inline-control-result.json)，完整交接见 [执行报告](execution.md)。
 
-# 最后一次执行：低峰检查、003 / 004、只读复验
+当前无需请求方继续粘贴命令。由 West 安排业务负责人核对当前父 checkpoint / Session lineage 与原 run 回执，确定该子图是否仍待执行，并按既有获批流程处理；不删除 checkpoint 或强制清除 pending，不在本轮授权下调用业务恢复。后续状态处理完成后，重新检查有效备份和完整低峰窗口，再继续原获批迁移。唐艺宁为数据库恢复负责人；本次未进行数据库恢复。
 
-**当前停止点：2026-10-02 20:41 的实际执行已通过备份、演练和镜像检查，但门控 3 返回 pending_controls=1、unknown_checkpoints=423，生产事务未尝试。先执行 [checkpoint 只读诊断](gate3-checkpoint-readonly.sh)，回传结果；在区分真实待执行任务与存储格式前，不再运行迁移脚本。以下说明保留作后续执行参考。**
+以下内容仅保留为后续参考，门控未通过时不得运行。
 
 已获批准的目标库：`moodflow_agent`。门控 0 / 1 / 2 已通过；恢复负责人唐艺宁。本文件没有替代生产低峰检查，必须由脚本即时通过门控 3 才执行迁移。
 

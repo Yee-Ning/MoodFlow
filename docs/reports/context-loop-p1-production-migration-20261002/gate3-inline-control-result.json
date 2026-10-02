@@ -1,0 +1,31 @@
+{
+  "source": "user_pasted_ecs_terminal_output",
+  "direct_remote_connection_by_agent": false,
+  "result": {
+    "database": "moodflow_agent",
+    "read_only": "on",
+    "checked_at": "2026-10-02T14:40:37.303582+00:00",
+    "inline_controls": [
+      {
+        "pending": true,
+        "unknown": false,
+        "inline_kind": "null",
+        "version_kind": "string",
+        "versions_equal": null,
+        "node_static_name": "general_chat_subgraph",
+        "namespace_is_root": false,
+        "seen_node_present": false,
+        "seen_version_kind": null,
+        "checkpoint_fingerprint": "ce287fbf81eca90fce8a14548837d6ec"
+      }
+    ],
+    "pending_controls": 1,
+    "unknown_checkpoints": 0
+  },
+  "finished_marker": "INLINE_CONTROL_READONLY_FINISHED; no_migration_or_resume",
+  "conclusion": "gate_3_stopped_pending_child_namespace_control; current_parent_reference_not_verified",
+  "production_migration_sent_by_this_diagnostic": false,
+  "business_graph_resume_executed": false,
+  "query_duration_seconds": null,
+  "query_duration_note": "not present in returned output"
+}

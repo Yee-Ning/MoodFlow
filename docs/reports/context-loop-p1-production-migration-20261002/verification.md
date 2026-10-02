@@ -1,12 +1,12 @@
-# 最新观测：存储误判已确认，剩余 inline 尚待严格调度核对
+# 最新观测：子图 pending 已确认，门控 3 停止
 
-生产只读检查时间 `2026-10-02T14:19:52.733477+00:00`（北京时间 22:19:52），read_only=on，完成标记可见。原始结构化证据见 [gate3-checkpoint-diagnostic-result.json](gate3-checkpoint-diagnostic-result.json)。97 个 latest checkpoints 中，422 个控制通道没有 blob 或 inline 值，1 个 branch 的 None 留在 inline；另一个 join blob 是与部署 serializer 精确匹配的空集合。malformed_checkpoint_shapes / invalid_nonempty_blob_rows 均为 0。
+生产只读结果时间 `2026-10-02T14:40:37.303582+00:00`（北京时间 22:40:37），read_only=on，结束标记可见。证据见 [gate3-inline-control-result.json](gate3-inline-control-result.json)。pending_controls=1、unknown_checkpoints=0；inline None 的目标为 general_chat_subgraph，namespace_is_root=false、seen_node_present=false，当前门控判定 pending=true、unknown=false。该子图是否仍被当前父 checkpoint 引用未核实；不认定任务正在运行，也不自动忽略非根 namespace。
 
-原 unknown=423 和空 join pending 的误判已有证据解释。仍有 1 个 inline branch 的版本不相等；旧诊断的 `!=` 不能替代官方调度的 `>` 或 node 无 seen 时的可用性判断。修正仅在本地隔离验证，生产低峰门控尚未通过，§3 六项生产复验仍未执行。后续只读命令见 [gate3-inline-control-readonly.sh](gate3-inline-control-readonly.sh)。真实写操作继续跳过（无专用测试账号）。
+本轮按硬门槛停止，不再运行迁移或清理 / 恢复业务状态。生产 003 / 004 及手册 §3 六项未执行，真实写操作依约跳过（无专用测试账号）。先前存储误判及原始输出保留在 [存储诊断证据](gate3-checkpoint-diagnostic-result.json)，交接详情见 [执行报告第 18 节](execution.md)。
 
 # Context Loop P1：前置查询与迁移后复验结果
 
-日期：2026-10-02，Asia/Shanghai。**最新状态：门控 0 / 1 通过，门控 2 的生产规模及资源只读查询已回传；隔离演练脚本准备完成。生产 003 / 004 未执行，生产 §3 复验仍全部未执行。**
+日期：2026-10-02，Asia/Shanghai。**当前状态：门控 0 / 1 / 2 已有通过证据，门控 3 因子图 pending 停止。生产 003 / 004 与生产 §3 复验未执行。**
 
 依据：[生产迁移手册](../../operations/context-loop-p1-postgres-migration-20261002.md) §1 / §3。执行过程及停止原因见 [执行报告](execution.md)。
 
