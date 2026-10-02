@@ -76,6 +76,27 @@
     "lock_timeout_selected": null,
     "statement_timeout_selected": null
   },
+  "remote_terminal_followup": {
+    "recorded_at": "2026-10-02T18:13:01+08:00",
+    "source": "user_pasted_ecs_terminal_output",
+    "independently_verified_by_agent": false,
+    "execution_wall_time_seconds": null,
+    "remote_terminal_available_via_user": true,
+    "os_user": "root",
+    "host_psql_path": "/usr/bin/psql",
+    "compose_project": "moodflow-production",
+    "six_runtime_containers_reported_healthy": true,
+    "reported_runtime": "Up 11 hours",
+    "service_lookup_error": "psql: error: definition of service \"moodflow-approved-migration\" not found",
+    "host_service_search_output_paths": [],
+    "container_service_search_output_paths": [],
+    "search_maxdepth": 4,
+    "search_name_pattern": "*pg_service*.conf",
+    "PGSERVICEFILE_override_path_reported": false,
+    "production_database_connection_established": false,
+    "database_sql_executed": false,
+    "temporary_profile_proposal": "not_authorized_not_executed"
+  },
   "source_sha256": {
     "docs/operations/context-loop-p1-postgres-migration-20261002.md": "4162164E1A925E6E22599F4196ECF8478829063F46F3183477798F9DB0AC0ACA",
     "ai-service/migrations/postgresql/003_context_loop_history.sql": "DB21752BCB86AFFAE039634342E5B6DF8EC113053AA5ECB213F07C854ACB67B3",

@@ -148,3 +148,29 @@ WHERE tgrelid='agent_history_event'::regclass AND NOT tgisinternal;
 | 双存储缺回执追加 reconciled | 未执行；门控 0 阻断 |
 
 没有执行真实写操作或任何生产 DDL / DML，也没有记录迁移后的通过结论。
+
+## 5. ECS 终端回传补充
+
+用户已能打开 ECS 远程终端；以下为用户回传结果，执行耗时未知，本代理没有直接远端验证。
+
+```text
+root
+moodflow-production-frontend-1  Up 11 hours (healthy)
+moodflow-production-java-1      Up 11 hours (healthy)
+moodflow-production-ai-service-1        Up 11 hours (healthy)
+moodflow-production-netease-1   Up 11 hours (healthy)
+moodflow-production-qdrant-1    Up 11 hours (healthy)
+moodflow-production-postgres-1  Up 11 hours (healthy)
+psql: error: definition of service "moodflow-approved-migration" not found
+```
+
+随后只查客户端及 profile 文件位置，回传结果：
+
+```text
+Host PostgreSQL client:
+/usr/bin/psql
+Host service files:
+Container service files:
+```
+
+宿主机有 `psql`；已检查路径没有候选 service 文件输出。当前客户端仍不能解析手册 service。以上不是数据库 SQL 查询输出；§1 / §3 的 11 条 SQL 仍全部未执行。备份门控未进入。

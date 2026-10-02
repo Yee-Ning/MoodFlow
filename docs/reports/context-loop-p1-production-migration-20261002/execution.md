@@ -84,3 +84,19 @@
 | `python -`（内联报告校验） | exit 0；JSON 停止状态、未知备份结论、3 个来源 SHA-256、5 条前置与 6 条复验 SQL、全部未执行标记、演练指标为 null、相对链接均通过 |
 | `git diff --cached --check` | 通过；无空白错误 |
 | `git status --short` / `git diff --cached` | 已审阅；暂存范围仅为本目录三份报告文件，既有用户改动未暂存 |
+
+## 7. 用户回传的 ECS 只读检查补充
+
+记录时间：2026-10-02 18:13:01 +08:00。来源：用户在 ECS 远程终端执行本聊天提供的只读命令后回传的输出；本代理未直接登录远端，命令执行耗时未提供。
+
+- 当前服务器用户：`root`。
+- `moodflow-production` 的 frontend、java、ai-service、netease、qdrant、postgres 六个容器均显示 `Up 11 hours (healthy)`。这只证明回传时容器健康，不能代替迁移前置、备份或业务验收。
+- 宿主机 PostgreSQL 客户端：`/usr/bin/psql`。
+- 宿主机使用手册 service 名称连接，仍返回 `psql: error: definition of service "moodflow-approved-migration" not found`。失败发生在 service 查找阶段，没有数据库 SQL 输出。
+- 用户回传的文件查找中，宿主机 `/root`、`/etc`、`/opt/moodflow`、`/secure/moodflow` 和容器 `/root`、`/etc`、`/var/lib/postgresql`（最大深度 4，名称 `*pg_service*.conf`）均未输出候选文件路径；两处 `PGSERVICEFILE` 检查也未输出 override 路径。未读取配置内容。该结果不能证明其他目录或其他账号下完全没有 profile。
+
+停止原因已进一步定位为：**已有生产终端和客户端，但无法确认可用的获批 service profile**。门控 0 仍未通过；备份仍未知；003 / 004、后续门控和复验均未执行。
+
+若无法提供已有 profile，拟议替代方案是经请求方同意调整“使用已有 profile”的限制后，在 PostgreSQL 容器内创建一次性、仅含本地 socket 地址、获批库名及现有用户名的临时 service 文件，使用完立即清理；不保存密码，不改认证规则或 `.env.production`。连接仍使用 service 名称，先进行只读门控 0。具体 socket、角色和认证可用性尚未验证，不能保证该方案一定能连接。该方案**尚未获准、未执行**；备份、演练和低峰门控仍须随后按顺序通过。
+
+临时文件可由 `PGSERVICEFILE` 指定的机制见 [PostgreSQL 16 service 文件文档](https://www.postgresql.org/docs/16/libpq-pgservice.html)。
