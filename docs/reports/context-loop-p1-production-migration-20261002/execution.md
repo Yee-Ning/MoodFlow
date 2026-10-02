@@ -1,9 +1,9 @@
 # Context Loop P1：003 / 004 生产迁移执行报告
 
-记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–14 节。
+记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–15 节。
 报告对象：West；由本次请求方转交，本轮没有对外发送消息。
 
-**最新结论：门控 0 / 1 / 2 已通过，生产超时选为演练验证过的 5s / 60s。用户尝试最后脚本后输出 STOP 并断开 SSH，具体失败原因和生产事务状态尚未确认；不能声明迁移未开始、已回滚或已提交。已修复会影响登录 Shell 的封装和隐藏停止原因的问题，并提供约 3 KB 的只读中断核对脚本。本次不重试迁移。备份已完整恢复验证，恢复负责人唐艺宁；真实写复验继续跳过。**
+**最新结论：门控 0 / 1 / 2 已通过。2026-10-02 12:26:03 UTC 的中断核对显示生产 PostgreSQL healthy，ledger 仅 001 / 002，execution 与新增列不存在，其他活跃 psql / advisory locks 均为 0，003 / 004 尚未生效。已定位并修复演练目录中数字 0 / 字母 o 的抄写错误，改为自动查找并严格匹配成功演练报告；命令已压缩和拆分短行，不改变登录 Shell 选项。新版脚本待 ECS 执行回传，生产低峰、COMMIT 与 §3 复验仍待确认，超时保持 5s / 60s。有效备份及恢复负责人唐艺宁已确认；真实写复验继续跳过。**
 
 ## 1. 批准与执行依据
 
@@ -229,3 +229,15 @@
 新增 [中断后的只读核对](gate3-interrupted-readonly.sh)，3,221 bytes。重新登录普通 SSH Shell 后执行；不使用 VNC、不重启服务、不执行迁移或回滚指令。它读取 PostgreSQL 容器状态，以临时无密码 profile 的只读事务查询四份 ledger、execution 表、event_key / event_seq、其他活跃 psql 和 advisory locks，随后读取已有报告的有限状态字段。临时 profile 精确清理，报告不存在也明确输出 missing_or_unreadable，不输出应用消息、连接凭据或原始异常日志。ledger 和对象未变仍需结合未结束会话、报告判断，不单凭客户端断开假定事务结果。
 
 本地验证：`python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v` 为 8 tests / 24.743 s 通过，包含旧 Shell 退出重现、新封装保持父 Shell、停止原因安全显示及原有正常 / pending / 回滚 / 重复尝试逻辑；新增只读检查测试使用同命令加 `-k interruption_check`，1 test / 10.562 s 通过，在真实隔离 PostgreSQL 上确认只读输出、ledger / schema / 历史计数不变且临时文件已删除。没有重跑生产迁移，没有推送、部署或业务真实写验收。具体停止原因、生产事务状态、低峰与生产 §3 输出仍待用户重新登录后回传。
+
+## 15. 中断只读结果与演练报告路径修复
+
+用户文本回传：PostgreSQL 容器 Up 13 hours (healthy)，只读查询时间 `2026-10-02 12:26:03.183457+00`（北京时间 20:26:03）。数据库 / 用户为 moodflow_agent / moodflow，read_only=on，事务以 ROLLBACK 结束。ledger 只有 001 / 002，应用时间与先前清单一致；execution_table 为空，event_key / event_seq 查询 0 rows；other_active_psql_sessions=0、other_advisory_locks=0。报告检查显示 REHEARSAL_STATUS=missing_or_unreadable、EXECUTION_REPORT_DIRECTORIES=0，最后只读结束标记可见。该结果确认 003 / 004 未生效，且本次采样没有遗留活跃 psql 或 advisory locks；不把它当成完整业务低峰门控通过。
+
+重新核对原演练截图，实际随机目录名为 `context-loop-20261002-y0pxiydv`，先前抄写成 `context-loop-20261002-yopxiydv`。错误位于本轮运维脚本 / 报告，生产源码、备份与实际演练未受影响；旧命令在读取该不存在的报告路径时可触发前置停止，执行报告目录尚未建立。客户端的泛化错误没有给出原始 Stop 码，因此不把其他前置条件的状态也推定为通过。
+
+已移除硬编码随机路径。生产脚本仅在 `/secure/moodflow/migration-rehearsals/context-loop-20261002-*` 内查找非 symlink 报告；先验证 passed / cleanup、已选备份清单、固定镜像和两份 SQL 哈希、恢复规模与 ledger、复验指标和 5s / 60s，再匹配本次容器 `mf-context-rehearsal-a730c24a17d8` 及完成时间 `2026-10-02T11:47:52.762324+00:00`。必须恰好找到一份，缺失、损坏、其他演练、摘要不符或多份匹配均停止。最终报告记录实际找到的路径，不生成或伪造替代演练证据。
+
+执行脚本改为压缩 / base64 短行封装，14,403 bytes、最长行 109 字符；运行前解压并验证源代码 SHA-256，if 分支接住子进程退出码。迁移 SQL、超时、低峰检查和失败回滚不变；不设置父登录 Shell 的 set -e / set -u，也不再传递原来的长行 payload。已准备新版脚本继续原批准范围，仍重新检查备份和门控 3；本轮代理没有向生产发送新的迁移 SQL。
+
+最终完整验证 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v`：10 tests / 27.074 s 通过。新增测试覆盖正确随机目录、其他 run、损坏报告、重复匹配、错误哈希和目录不存在；短行 payload 还原源代码、哈希 / 长度 / shell 语法验证通过；真实隔离 PostgreSQL 的只读诊断、正常迁移、忙碌停止、中途错误回滚、重复尝试停止与临时文件清理继续通过。Python 编译、文档链接和范围内 diff 检查通过。没有应用代码变更，不运行应用构建或前后端业务验收；生产提交及 §3 输出仍等待用户执行新版后回传。没有部署、push、改变默认图 / 灰度或执行真实业务写测试。

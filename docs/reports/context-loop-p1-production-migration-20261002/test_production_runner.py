@@ -1,5 +1,7 @@
 import base64
 import contextlib
+import gzip
+import hashlib
 import io
 import json
 import subprocess
@@ -41,6 +43,36 @@ class Guards(unittest.TestCase):
             path.write_text(json.dumps({'status':'failed'}),encoding='utf-8')
             with self.assertRaises(p.r.Stop): p.checked_rehearsal(path)
 
+    def test_report_discovery_validates_identity_instead_of_directory_spelling(self):
+        checks={k:True for k in ('immutable_trigger_enabled','sequence_usage','execution_select','execution_insert','execution_update')}
+        checks.update({k:0 for k in ('missing_sequence','duplicate_key_groups','duplicate_sequence_groups')})
+        report={'status':'passed','cleanup':'passed','backup_manifest':p.r.MANIFEST.name,'image':p.r.IMAGE,
+                'container':p.REHEARSAL_CONTAINER,'completed_at_utc':p.REHEARSAL_COMPLETED,
+                'migration_sha256':{n:v['sha256'] for n,v in p.r.MIGRATIONS.items()},
+                'lock_timeout':'5s','statement_timeout':'60s',
+                'restored_before':{'history_rows':328,'ledger':p.r.OLD_LEDGER},
+                'restored_after':{'ledger':p.r.NEW_LEDGER},
+                'metrics':{'lock_window_upper_bound_ms':85.249,'transaction_elapsed_ms':87.304},
+                'readonly_postchecks':checks}
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            def put(name,item):
+                folder=root/name
+                folder.mkdir()
+                path=folder/'report.json'
+                path.write_text(json.dumps(item),encoding='utf-8')
+                return path
+            actual=put('context-loop-20261002-y0pxiydv',report)
+            put('context-loop-20261002-other-run',{**report,'container':'different'})
+            put('context-loop-20261002-bad',{'status':'failed'})
+            self.assertEqual(p.checked_rehearsal(root=root)['_evidence_path'],str(actual))
+            duplicate=put('context-loop-20261002-duplicate',report)
+            with self.assertRaises(p.r.Stop): p.checked_rehearsal(root=root)
+            duplicate.unlink()
+            actual.write_text(json.dumps({**report,'migration_sha256':{}}),encoding='utf-8')
+            with self.assertRaises(p.r.Stop): p.checked_rehearsal(root=root)
+            with self.assertRaises(p.r.Stop): p.checked_rehearsal(root=root/'missing')
+
     def test_network_probe_uses_only_counts(self):
         self.assertNotIn('environ',p.NETWORK_PROBE)
         self.assertNotIn('cmdline',p.NETWORK_PROBE)
@@ -50,8 +82,13 @@ class Guards(unittest.TestCase):
         here=Path(__file__).resolve().parent
         shell=(here/'gate3-production-migration.sh').read_text(encoding='utf-8')
         support=(here/'rehearsal_runner.py').read_text(encoding='utf-8').split('\ndef main():')[0]
-        self.assertIn(repr(base64.b64encode(support.encode()).decode()),shell)
-        self.assertIn((here/'production_runner.py').read_text(encoding='utf-8')+'\nMF_APPROVED_PRODUCTION\nMF_SAFE_CHILD\n',shell)
+        packed=shell.split('_packed = """\n',1)[1].split('\n"""',1)[0]
+        source=gzip.decompress(base64.b64decode(packed)).decode()
+        self.assertIn(repr(support),source)
+        self.assertTrue(source.endswith((here/'production_runner.py').read_text(encoding='utf-8')))
+        self.assertIn(hashlib.sha256(source.encode()).hexdigest(),shell)
+        self.assertLess(max(map(len,shell.splitlines())),150)
+        self.assertNotIn('\nset -',shell)
         # Syntax only; the script is never executed against a local or remote production name.
         p.r.run(['docker','run','--rm','--pull','never','--network','none','--entrypoint','sh',p.r.IMAGE,'-n'],data=shell.encode())
 
@@ -152,7 +189,7 @@ VALUES('test-run-progress','fixture-task','fixture-session','run_progress',now()
                 return real_run(args,**kwargs)
             with tempfile.TemporaryDirectory() as root,patch.object(p,'REPORTS',Path(root)),\
                  patch.object(p.r,'checked_backup',return_value=({},Path(root))),\
-                 patch.object(p,'checked_rehearsal',return_value={}),\
+                 patch.object(p,'checked_rehearsal',return_value={'_evidence_path':'fixture_verified_report.json'}),\
                  patch.object(p.r,'EXPECTED_DATABASE_BYTES',self.meta['database_bytes']),\
                  patch.object(p.os,'geteuid',return_value=0,create=True),\
                  patch.object(p.r,'run',side_effect=fixture_command),patch.object(p.time,'sleep'):

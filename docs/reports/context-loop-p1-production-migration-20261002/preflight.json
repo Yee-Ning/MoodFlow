@@ -1,18 +1,18 @@
 {
-  "recorded_at": "2026-10-02T20:24:25+08:00",
+  "recorded_at": "2026-10-02T20:38:12+08:00",
   "timezone": "Asia/Shanghai",
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "production_command_stopped_ssh_disconnected_awaiting_readonly_ledger_audit",
+  "status": "interruption_audit_no_production_migration_report_lookup_fixed_awaiting_execution",
   "production_connection_established": true,
   "database_sql_sent": true,
-  "migration_executed": null,
+  "migration_executed": false,
   "backup_status": "valid_postgres_backup_confirmed_integrity_and_fresh_isolated_restore",
   "backup_gate_entered": true,
   "rehearsal_gate_entered": true,
-  "low_traffic_gate_entered": null,
-  "post_migration_sql_executed": null,
+  "low_traffic_gate_entered": false,
+  "post_migration_sql_executed": false,
   "real_write_verification": "skipped_no_dedicated_test_account",
   "windows_client_discovery": {
     "psql_on_path": false,
@@ -412,7 +412,7 @@
     "screenshot_sha256": {
       "codex-clipboard-db04a722-c345-4a54-8048-df09ba5af7ff.png": "F73C6822273EC3F6EFC68E3CB89A8BE73ADE1BC6227E88A5543CC42AA1B16B8E"
     },
-    "report_path": "/secure/moodflow/migration-rehearsals/context-loop-20261002-yopxiydv/report.json",
+    "report_path": "/secure/moodflow/migration-rehearsals/context-loop-20261002-y0pxiydv/report.json",
     "status": "passed",
     "cleanup": "passed",
     "production_modified": false,
@@ -485,7 +485,8 @@
     },
     "raw_six_queries_returned_in_screenshot": false,
     "summary_postchecks_returned": true,
-    "gate_2_passed": true
+    "gate_2_passed": true,
+    "report_path_note": "corrected_digit_0_from_original_screenshot; automated_discovery_verifies_report_before_execution"
   },
   "combined_production_execution_preparation": {
     "command_file": "gate3-production-migration.sh",
@@ -514,7 +515,17 @@
       "production_schema_execution": false
     },
     "user_attempted_command": true,
-    "actual_transaction_state": "unconfirmed_after_stop_and_ssh_disconnect"
+    "actual_transaction_state": "audit_shows_no_003_004_effects_or_active_psql_locks",
+    "rehearsal_report_resolution": "unique_validated_matching_report_in_bounded_directory",
+    "command_bytes": 14403,
+    "maximum_line_chars": 109,
+    "command_sha256": "9fc1ba0297b828ce40e3dae845f24d56352bc431b67ac4d5c45ce106553c1a0c",
+    "latest_local_validation": {
+      "tests_passed": 10,
+      "seconds": 27.074,
+      "report_discovery_failure_cases_verified": true,
+      "compressed_payload_and_hash_verified": true
+    }
   },
   "production_command_interruption": {
     "source": "user_supplied_workbench_screenshot",
@@ -523,7 +534,7 @@
     "ssh_disconnected": true,
     "initial_failure_reason": null,
     "production_transaction_started": null,
-    "production_commit_confirmed": null,
+    "production_commit_confirmed": false,
     "direct_remote_connection_by_agent": false,
     "production_retry_executed": false,
     "confirmed_script_defects": [
@@ -540,6 +551,31 @@
       "full_suite_seconds": 24.743,
       "additional_readonly_test_passed": 1,
       "additional_readonly_test_seconds": 10.562
-    }
+    },
+    "readonly_audit_received": true,
+    "report_path_transcription_defect": "digit_0_transcribed_as_letter_o"
+  },
+  "production_interruption_readonly_audit": {
+    "source": "user_pasted_ecs_terminal_output",
+    "direct_remote_connection_by_agent": false,
+    "checked_at_utc": "2026-10-02T12:26:03.183457+00:00",
+    "database": "moodflow_agent",
+    "role": "moodflow",
+    "read_only": true,
+    "postgres_container": "Up 13 hours (healthy)",
+    "ledger_versions": [
+      "001_agent_continuity.sql",
+      "002_long_term_memory.sql"
+    ],
+    "execution_table": null,
+    "event_key_event_seq_column_count": 0,
+    "other_active_psql_sessions": 0,
+    "other_advisory_locks": 0,
+    "rollback_observed": true,
+    "rehearsal_status_at_old_hardcoded_path": "missing_or_unreadable",
+    "execution_report_directories": 0,
+    "production_migrations_effective": false,
+    "full_business_quiet_gate_confirmed": false,
+    "finished_marker_observed": true
   }
 }

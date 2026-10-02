@@ -355,3 +355,21 @@ REHEARSAL_PREFLIGHT_READONLY_FINISHED; no_restore_or_migration_run
 这些结果属于实际备份恢复后的隔离副本，**不是生产迁移后查询输出**。截图显示六项 SQL 已被演练脚本执行并保存至远端 `readonly-postchecks.txt`，截图只展示 report 摘要；本报告不伪造未回传的逐项原始文本。生产 §3 仍待 [最后脚本](gate3-production-migration.sh) 执行并回传。该脚本会输出六项 SQL 的编号和原始结果；真实写复验仍跳过，原因是暂无专用测试账号。备份目前有效且已再次完整恢复验证，恢复负责人唐艺宁。
 
 最新中断状态：用户回传最后命令 STOP 与 SSH 断开的截图，尚无 ledger 或报告回传。生产迁移结果目前未知，不宣称未执行或成功；先运行 [中断只读检查](gate3-interrupted-readonly.sh)。本地诊断测试通过不构成生产查询证据，§3 生产输出与真实写复验仍没有完成证据。不要重复执行迁移脚本。
+
+中断核对已于 2026-10-02 12:26:03.183457 UTC 回传，更新上述未知状态：
+
+| 查询 / 检查 | 实际输出 |
+| --- | --- |
+| PostgreSQL 容器 | Up 13 hours (healthy) |
+| 数据库 / 用户 / readonly | moodflow_agent / moodflow / on |
+| ledger | 001_agent_continuity.sql，2026-09-22 03:16:04.671694 UTC；002_long_term_memory.sql，2026-09-22 12:03:26.325776 UTC |
+| to_regclass(public.agent_execution) | NULL，显示为空白 |
+| event_key / event_seq 列查询 | 0 rows |
+| other_active_psql_sessions | 0 |
+| other_advisory_locks | 0 |
+| 事务结束 | ROLLBACK |
+| 原脚本指定的演练文件 | missing_or_unreadable；路径中的 0 / o 已定位抄写错误 |
+| execution 报告目录数 | 0 |
+| 只读结束 | READONLY_INTERRUPTION_CHECK_FINISHED; no_migration_or_retry |
+
+以上是中断后的检查，确认 003 / 004 尚未生效，并非迁移成功后的 §3 输出。新脚本已自动匹配实际演练报告，下一步仍须重新过低峰门控后提交，才能记录 §3 六项原始输出；真实写复验仍跳过。

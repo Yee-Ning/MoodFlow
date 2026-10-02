@@ -10,7 +10,9 @@ from pathlib import Path
 
 import rehearsal_runner as r
 
-REHEARSAL = Path('/secure/moodflow/migration-rehearsals/context-loop-20261002-yopxiydv/report.json')
+REHEARSAL_ROOT = Path('/secure/moodflow/migration-rehearsals')
+REHEARSAL_CONTAINER = 'mf-context-rehearsal-a730c24a17d8'
+REHEARSAL_COMPLETED = '2026-10-02T11:47:52.762324+00:00'
 REPORTS = Path('/secure/moodflow/migration-executions')
 AI = 'moodflow-production-ai-service-1'
 
@@ -86,7 +88,26 @@ print(json.dumps({'ai_listeners':listen,'ai_inbound_established':active}))
 """
 
 
-def checked_rehearsal(path=REHEARSAL):
+def checked_rehearsal(path=None,root=None):
+    if path is None:
+        root = REHEARSAL_ROOT if root is None else root
+        if root.is_symlink() or not root.is_dir():
+            raise r.Stop('rehearsal_report_directory_missing_or_unsafe')
+        matching = []
+        for folder in root.glob('context-loop-20261002-*'):
+            if folder.is_symlink() or not folder.is_dir():
+                continue
+            candidate = folder/'report.json'
+            try:
+                item = checked_rehearsal(candidate)
+            except (r.Stop,OSError,ValueError,KeyError,TypeError):
+                continue
+            if (item.get('container') == REHEARSAL_CONTAINER
+                    and item.get('completed_at_utc') == REHEARSAL_COMPLETED):
+                matching.append(item)
+        if len(matching) != 1:
+            raise r.Stop('rehearsal_verified_report_not_unique_or_missing')
+        return matching[0]
     if path.is_symlink() or not path.is_file():
         raise r.Stop('rehearsal_report_missing_or_unsafe')
     item = json.loads(path.read_text(encoding='utf-8'))
@@ -103,6 +124,7 @@ def checked_rehearsal(path=REHEARSAL):
             or not 0 < item['metrics']['transaction_elapsed_ms'] < 1000):
         raise r.Stop('rehearsal_scale_or_timeout_not_confirmed')
     check_postchecks(item['readonly_postchecks'])
+    item['_evidence_path'] = str(path)
     return item
 
 
@@ -240,7 +262,7 @@ def main():
     print('STAGE=checking_verified_backup',flush=True)
     manifest, _ = r.checked_backup()
     print('STAGE=checking_successful_rehearsal_report',flush=True)
-    checked_rehearsal()
+    rehearsal = checked_rehearsal()
     files = r.decoded_migrations()
     print('STAGE=checking_production_image',flush=True)
     if r.text(['docker','inspect','--format','{{.Config.Image}}',r.PRODUCTION]) != r.IMAGE:
@@ -255,7 +277,7 @@ def main():
         raise r.Stop('unsafe_container_temporary_path')
     db = Production(inner)
     report = {'status':'running','started_at_utc':datetime.now(timezone.utc).isoformat(),
-              'backup_manifest':r.MANIFEST.name,'rehearsal_report':str(REHEARSAL),
+              'backup_manifest':r.MANIFEST.name,'rehearsal_report':rehearsal['_evidence_path'],
               'backup_completed_at_utc':manifest.get('completed_at_utc'),
               'backup_integrity_rechecked':True,'backup_restore_verified':True,
               'recovery_responsible':'唐艺宁','lock_timeout':'5s','statement_timeout':'60s',

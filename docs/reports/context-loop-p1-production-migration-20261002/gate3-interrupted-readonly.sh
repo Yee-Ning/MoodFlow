@@ -36,8 +36,11 @@ def show(label,path,keys):
                 safe[k]='redacted'
         print(label+'='+json.dumps(safe))
     except (OSError,ValueError,TypeError): print(label+'=missing_or_unreadable')
-lab=Path('/secure/moodflow/migration-rehearsals/context-loop-20261002-yopxiydv/report.json')
-show('REHEARSAL_STATUS',lab,('status','cleanup','completed_at_utc'))
+labs=Path('/secure/moodflow/migration-rehearsals')
+for folder in sorted(labs.glob('context-loop-20261002-*')):
+    if folder.is_dir() and not folder.is_symlink():
+        print('REHEARSAL_REPORT_FOLDER='+folder.name)
+        show('REHEARSAL_STATUS',folder/'report.json',('status','cleanup','completed_at_utc'))
 root=Path('/secure/moodflow/migration-executions')
 folders=sorted((p for p in root.glob('context-loop-20261002-*') if p.is_dir() and not p.is_symlink()),key=lambda p:p.stat().st_mtime)
 print('EXECUTION_REPORT_DIRECTORIES='+str(len(folders)))
