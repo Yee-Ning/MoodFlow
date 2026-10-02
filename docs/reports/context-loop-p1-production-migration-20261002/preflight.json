@@ -1,10 +1,10 @@
 {
-  "recorded_at": "2026-10-02T14:46:06.200954+00:00",
+  "recorded_at": "2026-10-02T15:44:51.341239+00:00",
   "timezone": "Asia/Shanghai",
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "stopped_at_gate_3_pending_child_namespace_control_reported_for_owner_resolution",
+  "status": "approved_saved_pause_exception_runner_verified_awaiting_production_execution",
   "production_connection_established": true,
   "database_sql_sent": true,
   "migration_executed": false,
@@ -723,7 +723,7 @@
       "malformed_checkpoint_shapes": 0,
       "missing_blob_without_inline": 422
     },
-    "classification": "423 storage flags explained; empty join candidate explained; remaining inline classified pending in child namespace"
+    "classification": "Storage flags explained; remaining control belongs to a Session-scoped root checkpoint, not a persistent child."
   },
   "inline_control_followup": {
     "command_file": "gate3-inline-control-readonly.sh",
@@ -764,12 +764,53 @@
     },
     "finished_marker_observed": true,
     "current_parent_reference_verified": false,
-    "gate_passed": false
+    "gate_passed": false,
+    "namespace_interpretation_superseded_by": "session_root_followup"
   },
   "remaining_work": [
-    "owner review of pending child checkpoint and current parent lineage",
-    "normal approved business recovery or closure if required",
-    "fresh backup and complete quiet gate before any migration attempt",
-    "production 003/004 transaction and Section 3 outputs"
-  ]
+    "fresh backup and complete quiet gate performed by the final script",
+    "production 003/004 transaction, preserved-pause digest comparison and Section 3 raw query outputs",
+    "real write tests remain skipped: no dedicated test account"
+  ],
+  "session_root_followup": {
+    "source": "user_pasted_production_readonly_output",
+    "checked_at_utc": null,
+    "query_elapsed_seconds": null,
+    "result": {
+      "database": "moodflow_agent",
+      "is_latest": true,
+      "read_only": "on",
+      "task_closed": false,
+      "session_found": true,
+      "session_closed": false,
+      "checkpoint_time": "2026-09-29T02:47:54.115908+00:00",
+      "is_session_root": true,
+      "has_child_suffix": false
+    },
+    "finished_marker": "SESSION_READONLY_CHECK_FINISHED",
+    "interpretation": "Session-scoped root checkpoint; open task/session do not establish active execution. Previously observed unconsumed control remains pending under the original gate.",
+    "production_migration_executed": false,
+    "graph_resume_called": false
+  },
+  "saved_pause_exception_authorization": {
+    "source": "explicit_human_user_reply_in_current_chat",
+    "answer": "允许保留这条暂停会话并继续 003/004（推荐）",
+    "approved": true,
+    "checkpoint_fingerprint": "ce287fbf81eca90fce8a14548837d6ec",
+    "checkpoint_time": "2026-09-29T02:47:54.115908+00:00",
+    "limit": "Exactly one saved Session-root chat control; all other activity, pending and unknown guards remain.",
+    "graph_resume_or_state_deletion_authorized": false,
+    "preservation": "SHA-256 of all rows in the saved checkpoint namespace and its Task/Session, stable over six samples, inside transaction, before COMMIT and after COMMIT."
+  },
+  "saved_pause_runner_local_validation": {
+    "command": "python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v",
+    "tests_passed": 17,
+    "seconds": 55.241,
+    "shell_syntax_passed": true,
+    "python_compile_passed": true,
+    "isolated_postgresql_approved_pause_commit_and_postchecks_passed": true,
+    "changed_pause_rollback_passed": true,
+    "default_strict_pending_stop_passed": true,
+    "production_executed": false
+  }
 }

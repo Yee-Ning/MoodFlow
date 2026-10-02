@@ -1,12 +1,12 @@
-# 最新观测：子图 pending 已确认，门控 3 停止
+# 最新观测：已定位 Session 主图的旧暂停状态
 
-生产只读结果时间 `2026-10-02T14:40:37.303582+00:00`（北京时间 22:40:37），read_only=on，结束标记可见。证据见 [gate3-inline-control-result.json](gate3-inline-control-result.json)。pending_controls=1、unknown_checkpoints=0；inline None 的目标为 general_chat_subgraph，namespace_is_root=false、seen_node_present=false，当前门控判定 pending=true、unknown=false。该子图是否仍被当前父 checkpoint 引用未核实；不认定任务正在运行，也不自动忽略非根 namespace。
+用户最新只读输出确认 `is_session_root=true`、`has_child_suffix=false`、`is_latest=true`、Session 存在且 Task / Session 未关闭，checkpoint 时间为 `2026-09-29T02:47:54.115908+00:00`。查询时间和耗时未提供；不把 checkpoint 时间当作查询时间。原始输出见 [Session 核对结果](gate3-session-readonly-result.json)。此前 inline 结果中的 `namespace_is_root=false` 是只检查存储 namespace 是否为空造成的错误判断，原始证据保留，解释已纠正。SessionScopedSaver 的主图也以 Session ID 存储 namespace。
 
-本轮按硬门槛停止，不再运行迁移或清理 / 恢复业务状态。生产 003 / 004 及手册 §3 六项未执行，真实写操作依约跳过（无专用测试账号）。先前存储误判及原始输出保留在 [存储诊断证据](gate3-checkpoint-diagnostic-result.json)，交接详情见 [执行报告第 18 节](execution.md)。
+这条记录仍有未消费的聊天控制状态，但会话开放不证明正在执行。项目负责人已明确批准 [保留暂停会话的具体方案](paused-session-migration-decision.md)，最终脚本仅允许这一个对象，并在低峰观测、事务内、提交前后比较内容摘要。17 项隔离测试通过，实际提交后 §3 输出和摘要保持通过，未批准模式仍停止，状态变化会回滚。生产 003 / 004 及手册 §3 六项未执行，真实写操作依约跳过（无专用测试账号）。
 
 # Context Loop P1：前置查询与迁移后复验结果
 
-日期：2026-10-02，Asia/Shanghai。**当前状态：门控 0 / 1 / 2 已有通过证据，门控 3 因子图 pending 停止。生产 003 / 004 与生产 §3 复验未执行。**
+日期：2026-10-02，Asia/Shanghai。**当前状态：门控 0 / 1 / 2 已有通过证据，门控 3 仍存在一条 Session 主图暂停状态。生产 003 / 004 与生产 §3 复验未执行。**
 
 依据：[生产迁移手册](../../operations/context-loop-p1-postgres-migration-20261002.md) §1 / §3。执行过程及停止原因见 [执行报告](execution.md)。
 

@@ -16,7 +16,9 @@ WITH latest AS (
  SELECT DISTINCT ON(thread_id,checkpoint_ns) * FROM checkpoints
  ORDER BY thread_id,checkpoint_ns,checkpoint_id DESC
 ), controls AS (
- SELECT c.checkpoint, c.checkpoint_ns='' AS namespace_is_root,
+ SELECT c.checkpoint, (c.checkpoint_ns='' OR EXISTS(
+ SELECT 1 FROM agent_session s WHERE s.conversation_id=c.thread_id
+ AND s.session_id=c.checkpoint_ns)) AS namespace_is_root,
  md5(jsonb_build_array(c.thread_id,c.checkpoint_ns,c.checkpoint_id)::text) AS checkpoint_fingerprint,
  v.key, v.value, v.value#>>'{}' AS version_text,
  jsonb_typeof(v.value) AS version_kind, b.type, b.blob,

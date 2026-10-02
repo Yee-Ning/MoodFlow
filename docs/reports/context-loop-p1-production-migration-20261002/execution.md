@@ -1,9 +1,9 @@
 # Context Loop P1：003 / 004 生产迁移执行报告
 
-记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–18 节。
+记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–19 节。
 报告对象：West；由本次请求方转交，本轮没有对外发送消息。
 
-**最新结论：22:40 的实际只读检查返回 pending_controls=1、unknown_checkpoints=0。剩余 inline None 位于非根 namespace，目标 general_chat_subgraph，node 无 versions_seen；按当前门控与官方调度规则属于可触发候选。是否仍被当前父 checkpoint 引用尚未核实，不能据此认定任务正在运行，也不能直接忽略该状态。门控 3 未通过，本次停止且不运行迁移 / 业务恢复。备份与副本演练已有通过证据；生产迁移与 §3 复验未完成。恢复负责人唐艺宁，真实写复验依约跳过。**
+**最新结论：用户最新只读结果确认剩余状态属于 Session 主图，不是持久子图；checkpoint 保存于 9 月 29 日，Task / Session 仍开放。此前仅以存储 namespace 是否为空判定主图是错误的，已修正。项目负责人已明确批准“允许保留这条暂停会话并继续 003/004”，例外仅限这一条记录，其他活动、pending、未知状态及备份门槛保留。最终脚本已实现内容摘要保持检查，17 项隔离测试通过，包括实际提交 / §3 复验、严格模式停止和状态变化回滚。生产迁移及 §3 输出仍待最终脚本的实际远端回传；本代理没有当前可操作的生产终端连接。备份和副本演练已有通过证据，执行时复核。恢复负责人唐艺宁，真实写复验依约跳过。**
 
 ## 1. 批准与执行依据
 
@@ -290,7 +290,7 @@
 
 本地完整验证 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v`：14 tests / 38.997 s 通过，覆盖官方 synthetic 通道调度对照、inline None、严格较大 / 相等 / 较小的字符串与数值版本、类型错误阻断、空与非空 join、没有前驱的 barrier、只读诊断不变与清理，以及生产 helper 在隔离 PostgreSQL 中的 busy 停止、中途错误回滚、完整成功与重复调用停止。Python 编译、两个 wrapper 的 sh -n 通过。没有业务代码变更，不运行应用构建或真实业务写验收；生产迁移、§3 输出及 inline 生产判定仍未完成。
 
-## 18. 最终只读结果：门控 3 因子图 pending 停止
+## 18. 当时的 inline 查询结果（namespace 判断已由第 19 节纠正）
 
 用户回传查询时间 `2026-10-02T14:40:37.303582+00:00`（北京时间 22:40:37），数据库 moodflow_agent、read_only=on，`INLINE_CONTROL_READONLY_FINISHED; no_migration_or_resume` 结束标记可见。证据保存为 [gate3-inline-control-result.json](gate3-inline-control-result.json)。输出没有查询耗时，记录为未提供；不把两次回传间隔当成 SQL 耗时。
 
@@ -312,3 +312,27 @@
 交付状态：门控 0 / 1 / 2 已有通过证据及演练数据；门控 3 停止。生产 003 / 004 与 ledger 提交未在本轮执行，手册 §3 六项生产结果均为“未执行”，真实写操作依约跳过。最新 ledger 证据仍为先前 001 / 002 查询，本次 inline 查询不刷新 ledger；未伪造迁移后的结果。后续继续时需重新确认备份时效和完整低峰观测，再决定是否进入迁移事务。不开灰度、不改默认图 / .env、不部署、不 push。
 
 本次只更新证据与操作报告，没有修改应用、迁移 SQL 或 helper 代码。验证范围为 JSON 解析、证据与报告字段一致性、文档链接和本次 diff 检查；此前 helper 的 14 项隔离验证保持原记录，不将其列为本次重新运行。生产迁移、业务恢复和真实写验收因当前门控与账号条件未进行。
+
+## 19. Session 主图纠正与保留暂停状态的明确批准
+
+用户最新实际只读输出保存在 [gate3-session-readonly-result.json](gate3-session-readonly-result.json)，结束标记 `SESSION_READONLY_CHECK_FINISHED`。该回传没有查询时间或耗时，均记录为未知；其 checkpoint 时间不作为检查时间。结果为 moodflow_agent、read_only=on、is_latest=true、session_found=true、Task / Session 均未关闭、checkpoint_time=`2026-09-29T02:47:54.115908+00:00`、is_session_root=true、has_child_suffix=false。
+
+此前 helper 把非空存储 namespace 当作子图；但 [SessionScopedSaverMixin](../../../ai-service/app/agent/checkpointing.py) 的主图以 Session ID 存储 namespace，实际子图增加 `|` 和图 namespace。因而第 18 节“子图 / 待核对父引用”的解释已被纠正，原始查询 `namespace_is_root=false` 字段保留以便追踪，不改写历史证据。修正 helper 按 Session 与 conversation 的映射识别主图，Session 主图和持久子图的隔离测试均通过。
+
+这条状态仍有一条未消费的 general_chat_subgraph 控制值，开放会话和较早保存时间不能单独证明它无效，也不证明当前有进程在执行。用户已明确自己是项目开发和全程负责人；无需另找子图负责人。经完整兼容测试形成 [具体保留方案](paused-session-migration-decision.md) 后，用户明确回复：**“允许保留这条暂停会话并继续 003/004（推荐）”**。这是原“无 pending 执行”条件的一条例外，原 003 / 004 批准、数据库恢复负责人唐艺宁及其他约束保持，不能推导为任意忽略 pending 或恢复业务的授权。
+
+最终 [production_runner.py](production_runner.py) / [执行脚本](gate3-production-migration.sh) 仅允许指纹 `ce287fbf81eca90fce8a14548837d6ec`、9 月 29 日保存时间、Session 主图身份、开放的 Task / Session、inline None / 字符串版本 / 无 seen 的聊天控制值。pending 总数须恰好为 1，其他 pending / unknown / 活动 / 最新写记录 / advisory 及连接门槛全部保持。在 SQL 内计算该 namespace 全部 checkpoint、blob、writes 与其 Task / Session 的完整行 SHA-256，不输出正文；六次低峰观测、事务内、提交前及提交后摘要保持，否则停止或回滚。默认 `main()` / `check_gate()` 仍严格；本次单文件入口显式启用已经获得的限定批准。
+
+| 本轮验证与范围 | 结果 |
+| --- | --- |
+| 完整验证命令 | `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v` |
+| 最终结果 | 17 tests / 55.241 s，全部通过；此前兼容与根识别版本为 16 tests / 50.367 s |
+| 正常路径 | 实际隔离 PostgreSQL 使用限定暂停对象通过六次观测，提交 003 / 004 和 ledger、执行 §3 六项、提交后暂停摘要保持 |
+| 边界 / 失败 | 未批准的相同 pending 停止；多余 pending、活动、未知、错误指纹 / 摘要停止；注入事务内 checkpoint 变化后显式回滚，ledger 与保存摘要恢复；SQL 失败回滚、重复调用停止、临时 profile 清理通过 |
+| 包装与语法 | Python 编译、sh -n、压缩内容与审阅源代码 SHA-256 / 源码一致性通过；脚本 16,925 bytes、最长行 109 字符 |
+| 影响范围 | 运维 helper、测试、证据和报告；没有修改应用源码、003 / 004 SQL、默认图、灰度、`.env` 或部署配置 |
+| 实际生产状态 | 本轮新脚本未在生产执行，生产 COMMIT 与 §3 六项原始输出仍待回传，不把隔离测试当作生产成功 |
+| 备份结论 | 已确认有效 custom dump、完整性和真实恢复演练；最终脚本再次核验所选备份与同一成功演练证据，未尝试新的生产恢复 |
+| 跳过 / 未验证 | 无专用测试账号，真实业务写复验跳过；JSON / SSE、真实模型账单、播放器 ACK 等业务验收未执行；无应用改动，不重复前后端构建 |
+
+当前连接限制：可用浏览器连接未暴露用户已登录的云服务器终端，没有可操作的生产 Shell 会话。新脚本已准备为一次执行完成低峰复核、迁移和只读复验，仍需在该 root 终端执行并回传 `PRODUCTION_RESULT` 及 `RUNBOOK_SECTION_3_OUTPUT_BEGIN/END` 内的输出。没有通过读取凭据或浏览器私有数据另建连接，没有 push 或对外发送报告。

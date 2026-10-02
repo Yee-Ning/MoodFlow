@@ -1,10 +1,10 @@
-# 当前操作：门控 3 停止，不运行迁移脚本
+# 当前操作：运行已批准保留暂停会话的最终脚本一次
 
-2026-10-02 22:40 的只读结果为 pending_controls=1、unknown_checkpoints=0；剩余 inline 的目标 general_chat_subgraph 位于非根 namespace，node 没有 seen 状态，按当前检查为 pending。证据见 [gate3-inline-control-result.json](gate3-inline-control-result.json)，完整交接见 [执行报告](execution.md)。
+最新只读结果确认这条状态是 Session 主图，保存于 9 月 29 日，Task / Session 仍开放；原“非根 namespace 即子图”的解释错误，已纠正。原始结果见 [Session 核对](gate3-session-readonly-result.json)。项目负责人已明确批准仅保留这一条暂停状态继续 003 / 004，最终脚本已按该批准更新并通过 17 项隔离测试。
 
-当前无需请求方继续粘贴命令。由 West 安排业务负责人核对当前父 checkpoint / Session lineage 与原 run 回执，确定该子图是否仍待执行，并按既有获批流程处理；不删除 checkpoint 或强制清除 pending，不在本轮授权下调用业务恢复。后续状态处理完成后，重新检查有效备份和完整低峰窗口，再继续原获批迁移。唐艺宁为数据库恢复负责人；本次未进行数据库恢复。
+请求方已明确自己是项目开发和全程负责人，无需另找子图负责人。[已批准方案](paused-session-migration-decision.md) 不调用模型恢复，不删除或清空状态；003 / 004 不修改 checkpoint / Task / Session，脚本会比较完整内容摘要。其他活动 / pending / 未知状态仍阻断，唐艺宁为数据库恢复负责人。
 
-以下内容仅保留为后续参考，门控未通过时不得运行。
+在云服务器 root Shell 执行 [最终脚本](gate3-production-migration.sh) 一次：复制文件全文粘贴后回车。也可将该文件上传到服务器后运行 `sh gate3-production-migration.sh`。不再运行诊断脚本，不需要输入密码或修改配置。当前代理没有可操作的生产终端连接，仍需请求方在已登录终端执行并回传最后输出。
 
 已获批准的目标库：`moodflow_agent`。门控 0 / 1 / 2 已通过；恢复负责人唐艺宁。本文件没有替代生产低峰检查，必须由脚本即时通过门控 3 才执行迁移。
 
@@ -12,9 +12,9 @@
 
 已修复 [gate3-production-migration.sh](gate3-production-migration.sh)：不改变登录 Shell 选项，失败由 if 分支接住退出码，显示具体非敏感停止码；自动在限定的演练报告根目录内查找，通过 manifest / 镜像 / SQL 哈希 / 规模 / 时间与容器身份验证后，要求唯一报告。它不依赖人工抄写随机目录名，也不选择其他演练的新报告。
 
-脚本现为 14,403 bytes，压缩 payload 逐行 76 字符，整文件最长行 109 字符；解压后再次核对已审阅源代码 SHA-256。不再粘贴原来的 35 KB 长行版本。打开新脚本，复制文件全文到 root Shell 后回车；也可上传脚本再从文件执行。仍重新校验有效备份、全部前置条件与低峰，原授权范围和 5s / 60s 不变。没有密码或完整连接凭据需要填写。
+压缩 payload 逐行 76 字符，整文件最长行 109 字符；解压后再次核对已审阅源代码 SHA-256。不要使用此前保存的旧脚本。仍重新校验有效备份、全部前置条件与低峰，5s / 60s 不变。没有密码或完整连接凭据需要填写。
 
-脚本重新校验有效备份、演练报告、固定镜像及迁移 SQL 哈希；以临时无密码 PostgreSQL service profile 连接。先跨约 10 秒做 6 次只读低峰观测，任何活跃请求、run、pending 或无法识别的状态均停止。通过后按手册只执行一次事务，超时固定为演练验证过的 5s / 60s，事务内再次检查数据库执行状态，再执行 003 / 004 和 ledger。数据库 SQL 错误显式 ROLLBACK；连接异常核对 ledger，状态不明也不重试。
+脚本重新校验有效备份、演练报告、固定镜像及迁移 SQL 哈希；以临时无密码 PostgreSQL service profile 连接。先跨约 10 秒做 6 次只读低峰观测，仅允许指纹与保存时间一致、Task / Session 开放的这一条主图聊天控制状态，完整内容摘要保持。任何其他 pending、活跃请求 / run 或无法识别的状态均停止。通过后按手册只执行一次事务，超时固定为演练验证过的 5s / 60s，事务内再次检查执行状态和保存摘要，再执行 003 / 004 和 ledger；提交前再次核对保存摘要，变化即 ROLLBACK。提交后执行 §3 六项并复核暂停状态内容保持。数据库 SQL 错误显式 ROLLBACK；连接异常核对 ledger，状态不明也不重试。
 
 输出出现 `PRODUCTION_MIGRATION_AND_READONLY_POSTCHECKS_FINISHED`，且 `PRODUCTION_RESULT` 中 status=passed、production_commit_confirmed=true，表示事务和只读复验完成。§3 六项原始输出位于 `RUNBOOK_SECTION_3_OUTPUT_BEGIN` 与 `RUNBOOK_SECTION_3_OUTPUT_END` 之间，逐项有编号；重复 replay key / sequence 预期返回空结果。
 

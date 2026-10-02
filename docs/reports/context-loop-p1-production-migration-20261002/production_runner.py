@@ -15,6 +15,8 @@ REHEARSAL_CONTAINER = 'mf-context-rehearsal-a730c24a17d8'
 REHEARSAL_COMPLETED = '2026-10-02T11:47:52.762324+00:00'
 REPORTS = Path('/secure/moodflow/migration-executions')
 AI = 'moodflow-production-ai-service-1'
+PAUSED_FINGERPRINT = 'ce287fbf81eca90fce8a14548837d6ec'
+PAUSED_AT = '2026-09-29T02:47:54.115908+00:00'
 
 # Match PostgresSaver's inline/blob merge and Pregel's strict version comparison.
 # A missing blob alone is an unavailable channel, not a corrupt checkpoint.
@@ -23,7 +25,9 @@ CHECKPOINT_CTES = """WITH latest AS (
  SELECT DISTINCT ON(thread_id,checkpoint_ns) * FROM checkpoints
  ORDER BY thread_id,checkpoint_ns,checkpoint_id DESC
 ), controls AS (
- SELECT c.checkpoint, c.checkpoint_ns='' AS namespace_is_root,
+ SELECT c.checkpoint, (c.checkpoint_ns='' OR EXISTS(
+ SELECT 1 FROM agent_session s WHERE s.conversation_id=c.thread_id
+ AND s.session_id=c.checkpoint_ns)) AS namespace_is_root,
  md5(jsonb_build_array(c.thread_id,c.checkpoint_ns,c.checkpoint_id)::text) AS checkpoint_fingerprint,
  v.key, v.value, v.value#>>'{}' AS version_text,
  jsonb_typeof(v.value) AS version_kind, b.type, b.blob,
@@ -70,9 +74,38 @@ CHECKPOINT_CTES = """WITH latest AS (
 )
 """
 
-# Only counts are returned. Historical writes are excluded unless they belong
-# to the latest checkpoint. Available inline None still blocks when unconsumed.
-GATE_QUERY = CHECKPOINT_CTES + """, progress AS (
+# Only a digest is returned; checkpoint, blob and conversation content stays in SQL.
+# This exception was explicitly approved by the project owner on 2026-10-02.
+PAUSED_CTE = """, saved_pause AS (
+ SELECT encode(sha256(convert_to(jsonb_build_object(
+ 'checkpoints',(SELECT jsonb_agg(to_jsonb(x) ORDER BY to_jsonb(x)::text)
+ FROM checkpoints x WHERE x.thread_id=c.thread_id AND x.checkpoint_ns=c.checkpoint_ns),
+ 'blobs',(SELECT jsonb_agg(to_jsonb(x) ORDER BY to_jsonb(x)::text)
+ FROM checkpoint_blobs x WHERE x.thread_id=c.thread_id AND x.checkpoint_ns=c.checkpoint_ns),
+ 'writes',(SELECT jsonb_agg(to_jsonb(x) ORDER BY to_jsonb(x)::text)
+ FROM checkpoint_writes x WHERE x.thread_id=c.thread_id AND x.checkpoint_ns=c.checkpoint_ns),
+ 'session',to_jsonb(s),'task',to_jsonb(t))::text,'UTF8')),'hex') AS state_sha256
+ FROM latest c JOIN agent_session s ON s.conversation_id=c.thread_id AND s.session_id=c.checkpoint_ns
+ JOIN agent_task t ON t.task_id=s.task_id AND t.conversation_id=s.conversation_id
+ WHERE md5(jsonb_build_array(c.thread_id,c.checkpoint_ns,c.checkpoint_id)::text)='"""+PAUSED_FINGERPRINT+"""'
+ AND c.checkpoint->>'ts'='"""+PAUSED_AT+"""'
+ AND s.closed_at IS NULL AND t.closed_at IS NULL
+ AND EXISTS(SELECT 1 FROM classified x WHERE x.checkpoint_fingerprint='"""+PAUSED_FINGERPRINT+"""'
+ AND x.namespace_is_root AND x.pending AND NOT x.unknown
+ AND x.key='branch:to:general_chat_subgraph' AND x.has_inline
+ AND x.inline_value='null'::jsonb AND (x.type IS NULL OR x.type='empty')
+ AND x.version_kind='string' AND x.seen_node IS NULL)
+)
+"""
+PAUSED_PROJECTION = """json_build_object('eligible',(SELECT count(*) FROM saved_pause)=1,
+'fingerprint','"""+PAUSED_FINGERPRINT+"""',
+'state_sha256',(SELECT min(state_sha256) FROM saved_pause))"""
+PAUSED_CHECK = CHECKPOINT_CTES+PAUSED_CTE+'SELECT '+PAUSED_PROJECTION+';'
+
+# Historical writes are excluded unless they belong to the latest checkpoint.
+# Default callers still require no pending controls; the approved entry point
+# accepts only the exact saved pause, with unchanged digest across the window.
+GATE_QUERY = CHECKPOINT_CTES + PAUSED_CTE + """, progress AS (
  SELECT DISTINCT ON(task_id,session_id,body#>>'{payload,run,run_id}')
  body#>'{payload,run}' AS run FROM agent_history_event
  WHERE event_type='run_progress'
@@ -107,6 +140,7 @@ SELECT json_build_object(
  ON c.thread_id=w.thread_id AND c.checkpoint_ns=w.checkpoint_ns AND c.parent_checkpoint_id=w.checkpoint_id
  WHERE w.channel='__pregel_tasks' AND coalesce((c.checkpoint->>'v')::int,0)<4),
  'pending_controls',(SELECT count(*) FROM classified WHERE pending),
+ 'preserved_pause',"""+PAUSED_PROJECTION+""",
  'unknown_checkpoints',(SELECT count(*) FROM latest WHERE
  coalesce(jsonb_typeof(checkpoint->'channel_versions'),'')<>'object'
  OR coalesce(jsonb_typeof(checkpoint->'versions_seen'),'')<>'object') +
@@ -175,7 +209,7 @@ def check_postchecks(item):
         raise r.Stop('readonly_postcheck_failed')
 
 
-def check_gate(item):
+def check_gate(item, allow_saved_pause=False, paused_digest=None):
     if (item['database'] != 'moodflow_agent' or item['role'] != 'moodflow'
             or item['readonly'] != 'on' or item['standby'] is not False
             or item['ledger'] != r.OLD_LEDGER or item['execution_exists']
@@ -185,12 +219,23 @@ def check_gate(item):
             or not 0.9*r.EXPECTED_DATABASE_BYTES <= item['database_bytes'] <= 1.1*r.EXPECTED_DATABASE_BYTES):
         raise r.Stop('production_scale_changed_rehearsal_needed')
     for key in ('active_sessions','advisory_locks','active_runs','pending_runs','unknown_runs',
-                'latest_pending_writes','legacy_pending_sends','pending_controls','unknown_checkpoints',
+                'latest_pending_writes','legacy_pending_sends','unknown_checkpoints',
                 'replication_senders','replication_slots','ai_inbound_established'):
         if item[key] != 0:
             raise r.Stop('gate_3_not_quiet_'+key+'_no_migration')
     if item['ai_listeners'] < 1:
         raise r.Stop('ai_service_activity_not_observable_no_migration')
+    if allow_saved_pause:
+        candidate=item.get('preserved_pause',{})
+        digest=candidate.get('state_sha256')
+        if (item['pending_controls'] != 1 or candidate.get('eligible') is not True
+                or candidate.get('fingerprint') != PAUSED_FINGERPRINT
+                or not isinstance(digest,str) or not re.fullmatch('[a-f0-9]{64}',digest)
+                or (paused_digest is not None and digest != paused_digest)):
+            raise r.Stop('approved_paused_session_changed_or_additional_pending_no_migration')
+        return digest
+    if item['pending_controls'] != 0:
+        raise r.Stop('gate_3_not_quiet_pending_controls_no_migration')
 
 
 class Production:
@@ -231,7 +276,9 @@ ROLLBACK;
 '''
 
 
-def migration_sql(inner):
+def migration_sql(inner, paused_digest=None):
+    if paused_digest is not None and not re.fullmatch('[a-f0-9]{64}',paused_digest):
+        raise r.Stop('invalid_paused_session_digest')
     sql = r'''\set ON_ERROR_STOP off
 \timing on
 '''
@@ -246,7 +293,13 @@ def migration_sql(inner):
     sql += r'''\echo TRANSACTION_GATE=:gate_json
 '''
     # Evaluate independently in SQL, without passing application contents to psql.
-    sql += guarded("SELECT (:'gate_json'::jsonb->>'database'='moodflow_agent' AND "
+    pending_condition="(:'gate_json'::jsonb->>'pending_controls')::bigint=0"
+    if paused_digest is not None:
+        pending_condition=("(:'gate_json'::jsonb->>'pending_controls')::bigint=1 AND "
+                           "(:'gate_json'::jsonb#>>'{preserved_pause,eligible}')::boolean AND "
+                           ":'gate_json'::jsonb#>>'{preserved_pause,fingerprint}'='"+PAUSED_FINGERPRINT+"' AND "
+                           ":'gate_json'::jsonb#>>'{preserved_pause,state_sha256}'='"+paused_digest+"'")
+    sql += guarded("SELECT ("+pending_condition+" AND :'gate_json'::jsonb->>'database'='moodflow_agent' AND "
                    ":'gate_json'::jsonb->>'role'='moodflow' AND "
                    "NOT (:'gate_json'::jsonb->>'standby')::boolean AND "
                    "(:'gate_json'::jsonb->>'history_rows')::bigint=328 AND "
@@ -256,7 +309,7 @@ def migration_sql(inner):
                    "(:'gate_json'::jsonb->>'immutable_enabled')::boolean AND "
                    "NOT EXISTS(SELECT 1 FROM jsonb_each_text(:'gate_json'::jsonb) "
                    "WHERE key IN ('active_sessions','advisory_locks','active_runs','pending_runs','unknown_runs',"
-                   "'latest_pending_writes','legacy_pending_sends','pending_controls','unknown_checkpoints',"
+                   "'latest_pending_writes','legacy_pending_sends','unknown_checkpoints',"
                    "'replication_senders','replication_slots') AND value<>'0')) AS quiet \\gset")
     sql += r'''\if :quiet
 \else
@@ -269,6 +322,16 @@ ROLLBACK;
     for name in r.MIGRATIONS:
         sql += guarded('\\i '+inner+'/'+name)
     sql += guarded("INSERT INTO agent_schema_migration(version) VALUES ('003_context_loop_history.sql'), ('004_continuity_execution.sql') ON CONFLICT(version) DO NOTHING;")
+    if paused_digest is not None:
+        sql += guarded(CHECKPOINT_CTES+PAUSED_CTE+
+                       "SELECT (count(*)=1 AND min(state_sha256)='"+paused_digest+"') AS pause_unchanged FROM saved_pause \\gset")
+        sql += r'''\if :pause_unchanged
+\else
+ROLLBACK;
+\echo PRESERVED_PAUSE_CHANGED_ROLLED_BACK
+\q
+\endif
+'''
     sql += guarded('COMMIT;')
     sql += guarded("SELECT clock_timestamp() AS tx_completed, pg_current_wal_insert_lsn() AS wal_after \\gset")
     sql += r'''\set ON_ERROR_STOP on
@@ -296,7 +359,7 @@ def postcheck_sql():
     return source
 
 
-def main():
+def main(allow_saved_pause=False):
     if os.geteuid() != 0:
         raise r.Stop('root_terminal_required')
     print('STAGE=checking_verified_backup',flush=True)
@@ -324,6 +387,7 @@ def main():
               'migration_sha256':{n:v['sha256'] for n,v in r.MIGRATIONS.items()},
               'production_transaction_attempted':False,'production_commit_confirmed':False,
               'real_write_verification':'skipped_no_dedicated_test_account',
+              'preserved_pause_exception_approved':allow_saved_pause,
               'gate_3_observations':[],'replication_lag_seconds':None}
     try:
         profile = b'[moodflow-approved-migration]\nhost=/var/run/postgresql\nport=5432\ndbname=moodflow_agent\nuser=moodflow\nconnect_timeout=5\noptions=-c default_transaction_read_only=on\n'
@@ -333,17 +397,22 @@ def main():
             if name in files and r.text(['docker','exec',r.PRODUCTION,'sha256sum',inner+'/'+name]).split()[0] != r.MIGRATIONS[name]['sha256']:
                 raise r.Stop('staged_migration_hash_mismatch')
         print('STAGE=gate_3_readonly_quiet_check_10_seconds',flush=True)
+        paused_digest=None
         for sample in range(6):
             item = db.gate()
             report['gate_3_observations'].append(item)
             print('GATE3='+json.dumps(item),flush=True)
-            check_gate(item)
+            paused_digest=check_gate(item,allow_saved_pause=allow_saved_pause,paused_digest=paused_digest)
             if sample < 5:
                 time.sleep(2)
         print('STAGE=one_approved_production_transaction',flush=True)
+        if allow_saved_pause:
+            report['preserved_pause_state_sha256']=paused_digest
+            report['preserved_pause_fingerprint']=PAUSED_FINGERPRINT
+            report['preserved_pause_checkpoint_time']=PAUSED_AT
         report['production_transaction_attempted'] = True
         started = time.monotonic()
-        result = db.sql(migration_sql(inner),check=False)
+        result = db.sql(migration_sql(inner,paused_digest=paused_digest),check=False)
         report['migration_wall_seconds'] = round(time.monotonic()-started,6)
         output = result.stdout.decode('utf-8','replace')
         (folder/'migration-output.txt').write_text(output,encoding='utf-8')
@@ -365,6 +434,12 @@ def main():
         final = json.loads(next(line for line in reversed(checks.splitlines()) if line.startswith('{')))
         check_postchecks(final)
         report['readonly_postchecks'] = final
+        if allow_saved_pause:
+            preserved=json.loads(db.sql("BEGIN READ ONLY; SET LOCAL statement_timeout='10s';\n"+PAUSED_CHECK+'\nROLLBACK;').stdout)
+            report['preserved_pause_postcheck']=preserved
+            if preserved.get('eligible') is not True or preserved.get('state_sha256') != paused_digest:
+                raise r.Stop('committed_pause_preservation_not_verified_no_retry')
+            report['preserved_pause_unchanged']=True
         report['status'] = 'passed'
     except (r.Stop,OSError,ValueError,KeyError,TypeError,subprocess.TimeoutExpired,KeyboardInterrupt) as exc:
         report['status'] = 'stopped_or_failed'
@@ -395,7 +470,7 @@ def main():
 if __name__ == '__main__':
     os.umask(0o077)
     try:
-        raise SystemExit(main())
+        raise SystemExit(main(allow_saved_pause=True))
     except (r.Stop,OSError,ValueError,KeyError,TypeError,subprocess.TimeoutExpired) as exc:
         reason=str(exc) if isinstance(exc,r.Stop) and re.fullmatch(r'[A-Za-z0-9_]+',str(exc)) else type(exc).__name__
         print('STOP: '+reason+'; check_report_and_ledger_no_retry')

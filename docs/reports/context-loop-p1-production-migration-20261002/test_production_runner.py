@@ -63,6 +63,23 @@ print(json.dumps(result))
             with self.subTest(field=field),self.assertRaises(p.r.Stop):
                 p.check_gate({**valid_gate(),field:value})
 
+    def test_saved_pause_exception_is_explicit_and_exact(self):
+        digest='a'*64
+        item={**valid_gate(),'pending_controls':1,'preserved_pause':
+              {'eligible':True,'fingerprint':p.PAUSED_FINGERPRINT,'state_sha256':digest}}
+        with self.assertRaises(p.r.Stop): p.check_gate(item)
+        self.assertEqual(p.check_gate(item,allow_saved_pause=True),digest)
+        self.assertEqual(p.check_gate(item,allow_saved_pause=True,paused_digest=digest),digest)
+        for changed in ({'pending_controls':0},{'pending_controls':2},{'active_runs':1},
+                        {'latest_pending_writes':1},{'unknown_checkpoints':1},
+                        {'preserved_pause':{}},
+                        {'preserved_pause':{**item['preserved_pause'],'eligible':False}},
+                        {'preserved_pause':{**item['preserved_pause'],'fingerprint':'different'}},
+                        {'preserved_pause':{**item['preserved_pause'],'state_sha256':'b'*64}}):
+            with self.subTest(changed=changed),self.assertRaises(p.r.Stop):
+                p.check_gate({**item,**changed},allow_saved_pause=True,paused_digest=digest)
+        with self.assertRaises(p.r.Stop): p.migration_sql('/tmp/fixture',paused_digest="'unsafe")
+
     def test_bad_rehearsal_stops_before_production_connection(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'report.json'
@@ -132,7 +149,7 @@ print(json.dumps(result))
         source='if True:'+source
         for failure,expected in ((p.r.Stop('backup_not_verified'),'backup_not_verified'),
                                  (ValueError('sensitive fixture content'),'ValueError')):
-            def fail(): raise failure
+            def fail(**kwargs): raise failure
             output=io.StringIO()
             with contextlib.redirect_stdout(output),patch.object(p.os,'umask'),self.assertRaises(SystemExit):
                 exec(source,{'os':p.os,'r':p.r,'re':p.re,'subprocess':subprocess,'main':fail})
@@ -277,6 +294,49 @@ VALUES('fixture','','001','{"v":4,"channel_values":{"branch:to:agent":null},"cha
         self.assertEqual({k:v for k,v in self.source.metadata().items() if k!='database_bytes'},before)
         self.assertEqual(self.source.command('find','/tmp','-maxdepth','1','-name','mf-inline-check-*').stdout,b'')
 
+    def test_1_session_namespace_root_is_not_a_child(self):
+        for namespace,root in (('fixture-session',True),('fixture-session|general_chat_subgraph:child',False)):
+            sql="""BEGIN;
+INSERT INTO checkpoints(thread_id,checkpoint_ns,checkpoint_id,checkpoint)
+VALUES('fixture-conversation','"""+namespace+"""','001','{"v":4,"channel_values":{"branch:to:general_chat_subgraph":null},"channel_versions":{"branch:to:general_chat_subgraph":"01"},"versions_seen":{}}');
+"""+p.CHECKPOINT_CTES+"SELECT jsonb_build_object('root',namespace_is_root,'pending',pending) FROM classified; ROLLBACK;"
+            output=self.source.sql(sql).stdout.decode()
+            item=json.loads(next(l for l in output.splitlines() if l.startswith('{')))
+            self.assertEqual((item['root'],item['pending']),(root,True))
+
+    def test_1_approved_ddl_preserves_paused_checkpoint_and_session(self):
+        for name,raw in p.r.decoded_migrations().items():
+            self.source.write(name,raw)
+        # A real SQL transaction in a new isolated fixture. Never resume a graph.
+        sql="""BEGIN;
+INSERT INTO checkpoints(thread_id,checkpoint_ns,checkpoint_id,checkpoint)
+VALUES('fixture-conversation','fixture-session','001','{"v":4,"ts":"2026-09-29T02:47:54.115908+00:00","channel_values":{"branch:to:general_chat_subgraph":null},"channel_versions":{"branch:to:general_chat_subgraph":"01"},"versions_seen":{}}');
+CREATE TEMP TABLE preserved_state AS SELECT
+ (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM checkpoints c) AS checkpoints,
+ (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM checkpoint_blobs c) AS blobs,
+ (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM checkpoint_writes c) AS writes,
+ (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM agent_session c) AS sessions,
+ (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM agent_task c) AS tasks;
+"""
+        for name in p.r.MIGRATIONS:
+            sql+='\\i '+fixtures.r.INNER+'/'+name+'\n'
+        sql+="""INSERT INTO agent_schema_migration(version) VALUES('003_context_loop_history.sql'),('004_continuity_execution.sql');
+SELECT jsonb_build_object(
+ 'checkpoints_unchanged',checkpoints IS NOT DISTINCT FROM (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM checkpoints c),
+ 'blobs_unchanged',blobs IS NOT DISTINCT FROM (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM checkpoint_blobs c),
+ 'writes_unchanged',writes IS NOT DISTINCT FROM (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM checkpoint_writes c),
+ 'sessions_unchanged',sessions IS NOT DISTINCT FROM (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM agent_session c),
+ 'tasks_unchanged',tasks IS NOT DISTINCT FROM (SELECT jsonb_agg(to_jsonb(c) ORDER BY to_jsonb(c)::text) FROM agent_task c),
+ 'execution_exists',to_regclass('public.agent_execution') IS NOT NULL,
+ 'event_columns',(SELECT count(*) FROM information_schema.columns WHERE table_name='agent_history_event' AND column_name IN ('event_key','event_seq'))=2
+) FROM preserved_state;
+ROLLBACK;
+"""
+        output=self.source.sql(sql).stdout.decode()
+        item=json.loads(next(l for l in output.splitlines() if l.startswith('{')))
+        self.assertTrue(all(item.values()),item)
+        self.assertEqual(self.source.metadata()['ledger'],p.r.OLD_LEDGER)
+
     def test_2_error_rolls_back_and_success_commits(self):
         sql=p.migration_sql(fixtures.r.INNER)
         for name,raw in p.r.decoded_migrations().items():
@@ -288,6 +348,10 @@ VALUES('fixture','','001','{"v":4,"channel_values":{"branch:to:agent":null},"cha
             self.assertIn('PRODUCTION_TRANSACTION_ROLLED_BACK',failed.stdout.decode())
             self.assertEqual(db.ledger()['ledger'],p.r.OLD_LEDGER)
             self.assertFalse(db.ledger()['event_seq_exists'])
+            self.source.sql("""INSERT INTO checkpoints(thread_id,checkpoint_ns,checkpoint_id,checkpoint)
+VALUES('fixture-conversation','fixture-session','001','{"v":4,"ts":"2026-09-29T02:47:54.115908+00:00","channel_values":{"branch:to:general_chat_subgraph":null},"channel_versions":{"branch:to:general_chat_subgraph":"01"},"versions_seen":{}}');""")
+            fixture_fingerprint=self.source.sql("SELECT md5(jsonb_build_array('fixture-conversation'::text,'fixture-session'::text,'001'::text)::text);").stdout.decode().strip()
+            old_fingerprint=p.PAUSED_FINGERPRINT
             real_run=p.r.run
             def fixture_command(args,**kwargs):
                 if args[:4]==['docker','exec','-i',p.AI]:
@@ -298,7 +362,11 @@ VALUES('fixture','','001','{"v":4,"channel_values":{"branch:to:agent":null},"cha
                  patch.object(p,'checked_rehearsal',return_value={'_evidence_path':'fixture_verified_report.json'}),\
                  patch.object(p.r,'EXPECTED_DATABASE_BYTES',self.meta['database_bytes']),\
                  patch.object(p.os,'geteuid',return_value=0,create=True),\
-                 patch.object(p.r,'run',side_effect=fixture_command),patch.object(p.time,'sleep'):
+                 patch.object(p.r,'run',side_effect=fixture_command),patch.object(p.time,'sleep'),\
+                 patch.object(p,'PAUSED_FINGERPRINT',fixture_fingerprint),\
+                 patch.object(p,'PAUSED_CTE',p.PAUSED_CTE.replace(old_fingerprint,fixture_fingerprint)),\
+                 patch.object(p,'PAUSED_CHECK',p.PAUSED_CHECK.replace(old_fingerprint,fixture_fingerprint)),\
+                 patch.object(p,'GATE_QUERY',p.GATE_QUERY.replace(old_fingerprint,fixture_fingerprint)):
                 # Busy state stops before BEGIN READ WRITE, preserves schema and ledger,
                 # and cleans only this attempt's temporary profile.
                 output=io.StringIO()
@@ -308,14 +376,33 @@ VALUES('fixture','','001','{"v":4,"channel_values":{"branch:to:agent":null},"cha
                 self.assertFalse(stopped['production_transaction_attempted'])
                 self.assertEqual(stopped['temporary_profile_cleanup'],'passed')
                 self.assertEqual(db.ledger()['ledger'],p.r.OLD_LEDGER)
+                # Without this request's explicit exception the same saved state stops.
+                output=io.StringIO()
+                with contextlib.redirect_stdout(output): self.assertEqual(p.main(),1)
+                self.assertIn('gate_3_not_quiet_pending_controls_no_migration',output.getvalue())
+                candidate=db.gate()['preserved_pause']
+                self.assertTrue(candidate['eligible'])
+                digest=candidate['state_sha256']
+                # A change during DDL must roll back, including the injected change.
+                changed_sql=p.migration_sql(fixtures.r.INNER,paused_digest=digest).replace(
+                    '\\i '+fixtures.r.INNER+'/004_continuity_execution.sql',
+                    "UPDATE checkpoints SET checkpoint=checkpoint || '{\"fixture_changed\":true}'::jsonb;\n"
+                    '\\i '+fixtures.r.INNER+'/004_continuity_execution.sql')
+                changed=db.sql(changed_sql,check=False)
+                self.assertIn('PRESERVED_PAUSE_CHANGED_ROLLED_BACK',changed.stdout.decode())
+                self.assertEqual(db.ledger()['ledger'],p.r.OLD_LEDGER)
+                self.assertEqual(db.gate()['preserved_pause']['state_sha256'],digest)
                 output=io.StringIO()
                 with contextlib.redirect_stdout(output):
-                    self.assertEqual(p.main(),0)
+                    self.assertEqual(p.main(allow_saved_pause=True),0)
                 reports=[json.loads(f.read_text(encoding='utf-8')) for f in Path(root).glob('*/report.json')]
                 passed=next(item for item in reports if item['status']=='passed')
                 self.assertTrue(passed['production_commit_confirmed'])
                 self.assertEqual(passed['temporary_profile_cleanup'],'passed')
                 self.assertEqual(len(passed['gate_3_observations']),6)
+                self.assertTrue(passed['preserved_pause_exception_approved'])
+                self.assertTrue(passed['preserved_pause_unchanged'])
+                self.assertEqual(passed['preserved_pause_state_sha256'],digest)
                 self.assertIn('3.1_LEDGER',output.getvalue())
                 self.assertIn('PRODUCTION_TRANSACTION_COMMITTED',output.getvalue())
             self.assertEqual(db.ledger()['ledger'],p.r.NEW_LEDGER)
