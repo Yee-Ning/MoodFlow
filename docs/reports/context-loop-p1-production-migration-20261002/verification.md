@@ -1,12 +1,23 @@
-# 最新观测：已定位 Session 主图的旧暂停状态
+# 最终结果：生产已提交，手册 §3 六项复验通过
 
-用户最新只读输出确认 `is_session_root=true`、`has_child_suffix=false`、`is_latest=true`、Session 存在且 Task / Session 未关闭，checkpoint 时间为 `2026-09-29T02:47:54.115908+00:00`。查询时间和耗时未提供；不把 checkpoint 时间当作查询时间。原始输出见 [Session 核对结果](gate3-session-readonly-result.json)。此前 inline 结果中的 `namespace_is_root=false` 是只检查存储 namespace 是否为空造成的错误判断，原始证据保留，解释已纠正。SessionScopedSaver 的主图也以 Session ID 存储 namespace。
+2026-10-02 北京时间 23:51:00 完成。用户完整回传包含 COMMIT 标记、ledger 001–004、status=passed、只读复验与暂停摘要保持；核对通过。来源为生产终端回传，[完整输出](production-execution-output.txt)、[结构化报告](production-result.json)、[手册 §3 原始输出](production-section-3-output.txt) 已保存。没有另建生产连接，不把隔离结果当作生产结果。
 
-这条记录仍有未消费的聊天控制状态，但会话开放不证明正在执行。项目负责人已明确批准 [保留暂停会话的具体方案](paused-session-migration-decision.md)，最终脚本仅允许这一个对象，并在低峰观测、事务内、提交前后比较内容摘要。17 项隔离测试通过，实际提交后 §3 输出和摘要保持通过，未批准模式仍停止，状态变化会回滚。生产 003 / 004 及手册 §3 六项未执行，真实写操作依约跳过（无专用测试账号）。
+| 手册查询 | 生产实际输出 / 结果 |
+| --- | --- |
+| §3.1 migration ledger | 003_context_loop_history.sql；004_continuity_execution.sql，两行 |
+| §3.2 to_regclass | agent_execution |
+| §3.3 missing_sequence | 0 |
+| §3.4 duplicate event_key | 空结果，0 组重复 |
+| §3.5 duplicate event_seq | 空结果，0 组重复 |
+| §3.6 immutable trigger | agent_history_event_immutable\|O，启用 |
+
+附加序列 USAGE 及 execution SELECT / INSERT / UPDATE 权限均为 true。获批暂停会话的 namespace 全部 checkpoint / blob / writes 与其 Task / Session 摘要，在六次低峰、事务内、提交前后保持；未恢复或删除会话。备份完整性及恢复验证再次通过，temporary_profile_cleanup=passed。真实业务写复验依约跳过，暂无专用测试账号；JSON / SSE、播放器 ACK、模型账单等业务专项未验收，迁移成功不构成部署 / 开闸批准。
+
+以下保存各历史阶段的原始观测；初次失败和“尚未迁移”的历史结论已由本节及 [执行报告第 20 节](execution.md) 的最终结果覆盖，不作为当前状态。
 
 # Context Loop P1：前置查询与迁移后复验结果
 
-日期：2026-10-02，Asia/Shanghai。**当前状态：门控 0 / 1 / 2 已有通过证据，门控 3 仍存在一条 Session 主图暂停状态。生产 003 / 004 与生产 §3 复验未执行。**
+日期：2026-10-02，Asia/Shanghai。**当前状态：生产 003 / 004 已提交；门控 0–3 与 §3 六项只读复验通过；一条旧暂停会话按明确批准保留。**
 
 依据：[生产迁移手册](../../operations/context-loop-p1-postgres-migration-20261002.md) §1 / §3。执行过程及停止原因见 [执行报告](execution.md)。
 

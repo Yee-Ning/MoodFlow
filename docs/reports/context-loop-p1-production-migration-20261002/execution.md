@@ -1,9 +1,9 @@
 # Context Loop P1：003 / 004 生产迁移执行报告
 
-记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–19 节。
+记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–20 节。
 报告对象：West；由本次请求方转交，本轮没有对外发送消息。
 
-**最新结论：用户最新只读结果确认剩余状态属于 Session 主图，不是持久子图；checkpoint 保存于 9 月 29 日，Task / Session 仍开放。此前仅以存储 namespace 是否为空判定主图是错误的，已修正。项目负责人已明确批准“允许保留这条暂停会话并继续 003/004”，例外仅限这一条记录，其他活动、pending、未知状态及备份门槛保留。最终脚本已实现内容摘要保持检查，17 项隔离测试通过，包括实际提交 / §3 复验、严格模式停止和状态变化回滚。生产迁移及 §3 输出仍待最终脚本的实际远端回传；本代理没有当前可操作的生产终端连接。备份和副本演练已有通过证据，执行时复核。恢复负责人唐艺宁，真实写复验依约跳过。**
+**最终结论：2026-10-02 北京时间 23:50:46–23:51:00，生产 moodflow_agent 的 003 / 004 已 COMMIT，ledger 为 001–004；手册 §3 六项只读复验全部通过。全流程 13.840054 s，事务区间 130.177 ms，DDL 锁窗口上界 76.107 ms，观测 WAL 增量 845,992 bytes。六次低峰检查跨 12.120777 s，只有用户明确批准保留的一条旧暂停会话，内容摘要提交前后保持。备份完整性和恢复验证复核通过，临时 profile 清理通过。真实写复验依约跳过，无专用测试账号；没有部署、push、改默认图 / 灰度 / .env，迁移成功不构成开闸批准。原始输出与每步数据见第 20 节。**
 
 ## 1. 批准与执行依据
 
@@ -336,3 +336,38 @@
 | 跳过 / 未验证 | 无专用测试账号，真实业务写复验跳过；JSON / SSE、真实模型账单、播放器 ACK 等业务验收未执行；无应用改动，不重复前后端构建 |
 
 当前连接限制：可用浏览器连接未暴露用户已登录的云服务器终端，没有可操作的生产 Shell 会话。新脚本已准备为一次执行完成低峰复核、迁移和只读复验，仍需在该 root 终端执行并回传 `PRODUCTION_RESULT` 及 `RUNBOOK_SECTION_3_OUTPUT_BEGIN/END` 内的输出。没有通过读取凭据或浏览器私有数据另建连接，没有 push 或对外发送报告。
+
+## 20. 生产提交成功与最终交付
+
+用户回传完整实际终端输出，包含六次 GATE3、事务内 gate、`PRODUCTION_TRANSACTION_COMMITTED`、§3 六项原始结果、`PRODUCTION_RESULT.status=passed` 和完成标记。证据来源是请求方已登录的生产 root 终端，不是代理另建的实时数据库连接。完整原始文件见 [production-execution-output.txt](production-execution-output.txt)，附件 SHA-256 为 `f4e8efb89cdfcf7264fd54c3e725fed8f97ce591bd18948818d472b03246e4ef`；结构化结果见 [production-result.json](production-result.json)，来源、事务内 gate 与派生耗时见 [production-execution-evidence.json](production-execution-evidence.json)。执行脚本对应本地提交 `633bcfb`。
+
+生产远端报告为 `/secure/moodflow/migration-executions/context-loop-20261002-b7c3_3lt/report.json`；同目录保存 migration-output.txt / readonly-postchecks.txt。本代理未读取该远端文件，以上路径来自回传输出，不将本地转录标为直接拉取。
+
+| 步骤 | 实际结果 / 耗时 |
+| --- | --- |
+| 门控 0 / 前置复核 | moodflow_agent / moodflow，主库、001 / 002、历史 328 行、数据库 53,894,167 bytes；迁移前 execution / event_seq 不存在，历史不可变触发器启用 |
+| 门控 1 / 备份复核 | 完成态 custom dump，manifest=20261001T234103Z-3a11237c.json，完成时间 Oct1 23:41:24.275303 UTC；backup_integrity_rechecked / backup_restore_verified=true；执行开始时备份年龄 16.156085 h。备份阶段单独耗时未回传，恢复负责人唐艺宁 |
+| 门控 2 / 演练复核 | 成功核验 `/secure/moodflow/migration-rehearsals/context-loop-20261002-y0pxiydv/report.json`，固定镜像与 SQL 哈希一致；此前真实备份恢复 8.09383 s，事务 87.304 ms、DDL 锁窗口上界 85.249 ms、WAL 69,336 bytes、DB / 数据目录各增 90,112 bytes，清理 passed。复制不存在，延迟 N/A |
+| 门控 3 / 低峰 | 六次只读观测 15:50:46.784012–15:50:58.904789 UTC，跨度 12.120777 s；活跃会话 / advisory / run / 排队 run / 最新 pending writes / legacy sends / 未知状态 / AI 入站均为 0，listener=1；pending_controls=1 仅为获批暂停记录，六次 eligible=true、摘要相同 |
+| BEGIN READ WRITE | 0.423 ms，沿用单次事务，不执行其他迁移 CLI |
+| lock_timeout / statement_timeout | 5s / 60s，设置分别 0.206 / 0.145 ms；未放宽或反复试跑 |
+| advisory xact lock | 0.726 ms；不是该锁的持有时长 |
+| 事务内门控 | 49.898 ms；身份 / 旧 ledger / 活动状态 / 暂停摘要再次符合，quiet 判断 0.851 ms。输出 readonly=on 为 helper 的判定标记，实际迁移事务为 BEGIN READ WRITE，不把该标记当作只读事务证明 |
+| 003 / event_key | 2.883 ms |
+| 003 / event_seq | 30.428 ms |
+| 003 / 三个索引 | event_key 3.304 ms、event_seq 4.231 ms、task_seq 5.691 ms；003 五条 SQL 耗时合计 46.537 ms |
+| 004 / agent_execution | 9.652 ms |
+| ledger 记录 | 0.841 ms，迁移后完整 ledger 为 001 / 002 / 003 / 004 |
+| 提交前暂停保持检查 | 9.225 ms，摘要一致，未恢复 / 删除 / 清空业务状态 |
+| COMMIT | 8.038 ms；commit_confirmed=true，transaction_attempted=true |
+| 迁移计量 | SQL 客户端 wall time 0.266599 s；事务计量区间 130.177 ms、DDL 锁窗口上界 76.107 ms、WAL LSN 差 845,992 bytes |
+| §3 只读复验 | 六项全部通过，原始结果见 [production-section-3-output.txt](production-section-3-output.txt)；查询分项耗时未打印，不填推测值 |
+| 暂停会话保持 | preserved_pause_unchanged=true，提交后仍 eligible=true，完整内容 SHA-256 为 d2ab24070cccb87dd7686ab2f80d662c1198de00d5412d7ca014a8726fb155c9，与六次观测和事务内一致 |
+| 临时文件清理 | temporary_profile_cleanup=passed，无凭据写入报告；清理分项耗时未回传 |
+| 整体时间 | 15:50:46.181408–15:51:00.021462 UTC，即北京时间 23:50:46–23:51:00；报告时间差 13.840054 s |
+
+DDL 锁窗口上界从第一次 DDL 之前的计量点延续到 COMMIT 后，不能当作 advisory 锁的完整持有时间。WAL 为共享实例两个 LSN 之间的观测差，不是归因到本事务的独占 WAL；保留与副本不同的实际结果，不推测原因。生产本次未输出迁移后磁盘 / 数据库大小；该项记录为未测，门控 2 的磁盘证据仍为实际副本数据，不能代替生产测量。生产 senders / slots 均为 0，复制延迟为不适用，不写成 0 秒。
+
+交付范围已经完成：门控 0–3（含明确批准的一条暂停会话例外）、生产 003 / 004 事务、ledger、手册 §3 六项只读复验及证据报告。无需再执行迁移脚本或处理旧暂停会话。本次真实业务写复验依约跳过（无专用测试账号）；JSON / SSE、恢复、播放器 ACK、真实模型账单等业务验收仍待独立测试，不影响本轮限定的 schema 迁移结果，也不构成部署或开闸批准。
+
+本次只保存真实结果和更新文档，未修改 helper / 应用 / migration SQL。已做本地转录一致性检查：六次日志与 report 数组一致、完整低峰窗口、暂停摘要保持、SQL 哈希与批准源匹配、COMMIT / ledger / schema / §3 汇总一致；JSON 解析、文档链接和范围内 diff 检查通过。此前 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v` 的 17 tests / 55.241 s 是脚本交付前的完整隔离验证，本次纯证据更新未重复测试或应用构建，不声称进行了真实业务验收。没有 push，没有对外发送报告。

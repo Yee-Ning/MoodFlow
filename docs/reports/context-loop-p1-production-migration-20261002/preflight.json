@@ -1,18 +1,18 @@
 {
-  "recorded_at": "2026-10-02T15:44:51.341239+00:00",
+  "recorded_at": "2026-10-02T15:54:06.374471+00:00",
   "timezone": "Asia/Shanghai",
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "approved_saved_pause_exception_runner_verified_awaiting_production_execution",
+  "status": "production_migration_committed_readonly_postchecks_passed",
   "production_connection_established": true,
   "database_sql_sent": true,
-  "migration_executed": false,
+  "migration_executed": true,
   "backup_status": "valid_backup_rechecked_integrity_and_verified_rehearsal_report_on_production_host",
   "backup_gate_entered": true,
   "rehearsal_gate_entered": true,
   "low_traffic_gate_entered": true,
-  "post_migration_sql_executed": false,
+  "post_migration_sql_executed": true,
   "real_write_verification": "skipped_no_dedicated_test_account",
   "windows_client_discovery": {
     "psql_on_path": false,
@@ -768,9 +768,8 @@
     "namespace_interpretation_superseded_by": "session_root_followup"
   },
   "remaining_work": [
-    "fresh backup and complete quiet gate performed by the final script",
-    "production 003/004 transaction, preserved-pause digest comparison and Section 3 raw query outputs",
-    "real write tests remain skipped: no dedicated test account"
+    "real writes and business acceptance require a dedicated test account and separate follow-up; skipped as approved",
+    "deployment, default graph change and rollout are separate approvals; not performed"
   ],
   "session_root_followup": {
     "source": "user_pasted_production_readonly_output",
@@ -812,5 +811,23 @@
     "changed_pause_rollback_passed": true,
     "default_strict_pending_stop_passed": true,
     "production_executed": false
-  }
+  },
+  "production_completion": {
+    "source_result_file": "production-result.json",
+    "source_evidence_file": "production-execution-evidence.json",
+    "section_3_output_file": "production-section-3-output.txt",
+    "commit_confirmed": true,
+    "readonly_postchecks_passed": true,
+    "preserved_pause_unchanged": true,
+    "total_elapsed_seconds": 13.840054,
+    "quiet_window_seconds": 12.120777,
+    "production_metrics": {
+      "lock_window_upper_bound_ms": 76.107,
+      "transaction_elapsed_ms": 130.177,
+      "wal_bytes": 845992
+    },
+    "remote_report_path": "/secure/moodflow/migration-executions/context-loop-20261002-b7c3_3lt/report.json",
+    "temporary_profile_cleanup": "passed"
+  },
+  "remaining_required_migration_work": []
 }

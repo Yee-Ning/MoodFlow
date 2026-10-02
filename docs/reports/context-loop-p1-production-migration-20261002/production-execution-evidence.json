@@ -1,0 +1,51 @@
+{
+  "source": "user_pasted_production_terminal_output",
+  "attachment_name": "已粘贴的文本.txt",
+  "attachment_sha256": "f4e8efb89cdfcf7264fd54c3e725fed8f97ce591bd18948818d472b03246e4ef",
+  "raw_output_file": "production-execution-output.txt",
+  "result_file": "production-result.json",
+  "section_3_output_file": "production-section-3-output.txt",
+  "recorded_at_utc": "2026-10-02T15:54:06.374471+00:00",
+  "execution_agent_revision": "633bcfb",
+  "independent_live_production_connection_by_agent": false,
+  "transcript_consistency_checks_passed": true,
+  "transaction_gate": {
+    "database": "moodflow_agent",
+    "role": "moodflow",
+    "checked_at": "2026-10-02T15:50:59.350795+00:00",
+    "readonly": "on",
+    "standby": false,
+    "ledger": [
+      "001_agent_continuity.sql",
+      "002_long_term_memory.sql"
+    ],
+    "history_rows": 328,
+    "database_bytes": 53894167,
+    "execution_exists": false,
+    "event_seq_exists": false,
+    "immutable_enabled": true,
+    "active_sessions": 0,
+    "advisory_locks": 0,
+    "active_runs": 0,
+    "pending_runs": 0,
+    "unknown_runs": 0,
+    "latest_pending_writes": 0,
+    "legacy_pending_sends": 0,
+    "pending_controls": 1,
+    "preserved_pause": {
+      "eligible": true,
+      "fingerprint": "ce287fbf81eca90fce8a14548837d6ec",
+      "state_sha256": "d2ab24070cccb87dd7686ab2f80d662c1198de00d5412d7ca014a8726fb155c9"
+    },
+    "unknown_checkpoints": 0,
+    "replication_senders": 0,
+    "replication_slots": 0
+  },
+  "remote_report_path": "/secure/moodflow/migration-executions/context-loop-20261002-b7c3_3lt/report.json",
+  "total_elapsed_seconds": 13.840054,
+  "quiet_window_seconds": 12.120777,
+  "backup_age_at_execution_hours": 16.156085,
+  "production_disk_after_measurement_available": false,
+  "production_replication_lag": "not_applicable_no_senders_or_slots",
+  "real_write_verification": "skipped_no_dedicated_test_account"
+}
