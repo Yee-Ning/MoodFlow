@@ -1,3 +1,7 @@
+# 当前操作：先核对剩余 inline，暂不运行迁移脚本
+
+22:19 的生产只读输出已确认缺 blob / 空 join 误判。运维 helper 已修正，但另有 1 个 inline branch 的 current / seen 版本不相等，仍缺少严格调度判定，低峰门控没有通过。先执行 [gate3-inline-control-readonly.sh](gate3-inline-control-readonly.sh)，回传结果；它不迁移、不恢复图、不删除状态。若确有 pending 或未知状态，停止并报告给 West / 唐艺宁。后续满足门控时继续原批准范围，仍需即时复查备份、低峰及事务内门控，不重复重放失败的生产 SQL。
+
 # 最后一次执行：低峰检查、003 / 004、只读复验
 
 **当前停止点：2026-10-02 20:41 的实际执行已通过备份、演练和镜像检查，但门控 3 返回 pending_controls=1、unknown_checkpoints=423，生产事务未尝试。先执行 [checkpoint 只读诊断](gate3-checkpoint-readonly.sh)，回传结果；在区分真实待执行任务与存储格式前，不再运行迁移脚本。以下说明保留作后续执行参考。**

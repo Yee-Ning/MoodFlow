@@ -1,9 +1,9 @@
 # Context Loop P1：003 / 004 生产迁移执行报告
 
-记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–16 节。
+记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–17 节。
 报告对象：West；由本次请求方转交，本轮没有对外发送消息。
 
-**最新结论：备份、真实副本演练和镜像已在新版生产脚本中核验通过；20:41 的门控 3 首次采样返回 pending_controls=1、unknown_checkpoints=423，安全停止。production_transaction_attempted=false、production_commit_confirmed=false，临时 profile 清理 passed；未开始迁移事务。官方 saver 存在 inline 与空通道缺少 blob 的正常模式，原 SQL 可能误计；已准备只读存储诊断，未修改门控或清理 checkpoint。生产迁移与 §3 复验未执行，5s / 60s、备份硬门槛和原批准范围保持。恢复负责人唐艺宁；真实写复验继续跳过。**
+**最新结论：22:19 的实际只读诊断确认 423 个存储标记来自 422 个不可用通道及 1 个 inline null，原 join 候选为已知空集合，属于原 SQL 误判。另有 1 个 inline branch 的 current / seen 版本不相等，尚不能仅凭不相等认定待执行或放行；已修正存储分类与严格版本比较，并准备专门只读检查。门控 3 仍未通过，生产迁移事务与 §3 复验未执行。有效备份、本轮真实副本演练、5s / 60s、恢复负责人唐艺宁保持；真实写复验继续跳过。**
 
 ## 1. 批准与执行依据
 
@@ -267,3 +267,25 @@
 验证命令 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -k checkpoint_diagnostic -v`。首次诊断测试因 json_agg 嵌套结果带换行导致测试按行解析失败，改用 jsonb_build_object 输出单行，修正后 1 test / 11.824 s 通过。夹具覆盖缺 blob 的空通道、inline None 的 ready 通道、序列化空 join 集合，并在真实隔离 PostgreSQL 的只读执行中确认 ledger / schema / 历史及核心表计数保持、临时 profile 清理通过。synthetic INSERT 仅在隔离测试的回滚事务中使用；物理页分配可保留，未以库物理大小判断业务数据是否变化。sh -n 和 Python 编译通过，原迁移脚本及应用源码未修改；没有部署、push 或业务真实写验收。
 
 当前待交付项：门控 3 的记录分类与完整无 pending / 低峰证明、生产 COMMIT、§3 六项原始输出仍未完成；备份状态有效、演练完成，不需要因该门控停止重跑恢复。真实写与业务专项复验仍跳过 / 未验收。提供给 West 的结论是生产迁移安全停止且尚未开始，不是迁移成功或开闸批准。
+
+## 17. 实际存储诊断、误判修正与剩余 inline 核对
+
+用户回传只读查询时间 `2026-10-02T14:19:52.733477+00:00`（北京时间 22:19:52），数据库 moodflow_agent、read_only=on，结束标记 `CHECKPOINT_READONLY_DIAGNOSTIC_FINISHED; no_migration_or_resume` 可见。完整结构化输出与部署包版本保存在 [gate3-checkpoint-diagnostic-result.json](gate3-checkpoint-diagnostic-result.json)。代理没有直接远端连接。
+
+| 观测 | 实际输出与结论 |
+| --- | --- |
+| latest checkpoints | 97 |
+| 缺少 blob 且没有 inline | 422：branch 325、__start__ 97；按官方加载规则通道没有可用值，缺少 blob 本身不表示损坏 |
+| 缺少 blob 且有 inline | 1：branch、inline_kind=null；None 是可用 EphemeralValue，必须进一步判断是否触发节点 |
+| 原 blob pending 候选 | 1：join、msgpack、18 bytes，MD5 19a2151a36e3a6a7545040c8ab29615c；与自建空集合的精确字节相同，无待齐的前驱值 |
+| JSON / blob 异常 | malformed_checkpoint_shapes=0、invalid_nonempty_blob_rows=0 |
+| inline 版本差候选 | inline_unseen_controls=1；旧诊断用不相等，仍缺少严格调度比较结果 |
+| 部署库版本 | langgraph 1.2.11、langgraph-checkpoint 4.2.0、langgraph-checkpoint-postgres 3.1.2，与所查本地包一致 |
+
+原门控 SQL 没有完整模拟 saver 的 inline / blob 合并，缺 blob 计入 unknown，又把所有非 empty typed blob 当作可用 join。实际证据确认这两项误判。官方 Pregel `_triggers` 对已有 node 的版本判断使用 `current > seen`，不是 `current != seen`；node 尚无 seen 状态时，只要通道可用就可能触发。修正使用 JSON 类型保持的数值比较或 C 排序字符串比较，类型不符或结构异常继续阻断；非空、无法确定已齐的 join 保守阻断，不反序列化生产数据。只对具有非空前驱名称的标准 join 通道识别这一已确认的空集合；没有前驱的 barrier 不会被当作不可用。
+
+新增 [gate3-inline-control-readonly.sh](gate3-inline-control-readonly.sh)，与门控复用同一 SQL 分类，只读输出剩余 inline 的节点静态名、是否根 namespace、版本类型 / 相等 / pending 判定及 checkpoint 指纹。没有输出线程 / namespace 原文、消息、blob 正文或凭据，也不调用恢复、修改 checkpoint 或执行迁移。该脚本尚未在生产执行；当前候选结果不能替代即时低峰复查。
+
+修正范围仅限本轮运维 helper、测试和报告，原 003 / 004 与应用源码未改。当前实际生产迁移仍未开始；若 inline 严格判定仍 pending，继续停止并提交证据给 West / 恢复负责人处理，不删除状态或强制放行。真实写复验依约跳过，生产 §3 六项没有结果可填。
+
+本地完整验证 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v`：14 tests / 38.997 s 通过，覆盖官方 synthetic 通道调度对照、inline None、严格较大 / 相等 / 较小的字符串与数值版本、类型错误阻断、空与非空 join、没有前驱的 barrier、只读诊断不变与清理，以及生产 helper 在隔离 PostgreSQL 中的 busy 停止、中途错误回滚、完整成功与重复调用停止。Python 编译、两个 wrapper 的 sh -n 通过。没有业务代码变更，不运行应用构建或真实业务写验收；生产迁移、§3 输出及 inline 生产判定仍未完成。

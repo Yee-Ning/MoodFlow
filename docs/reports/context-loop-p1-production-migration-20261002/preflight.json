@@ -1,10 +1,10 @@
 {
-  "recorded_at": "2026-10-02T20:54:04+08:00",
+  "recorded_at": "2026-10-02T14:32:22.598895+00:00",
   "timezone": "Asia/Shanghai",
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "gate_3_stopped_pending_control_and_unknown_storage_awaiting_readonly_diagnostics",
+  "status": "gate_3_stopped_confirmed_storage_false_positives_one_inline_control_unresolved",
   "production_connection_established": true,
   "database_sql_sent": true,
   "migration_executed": false,
@@ -643,8 +643,8 @@
   },
   "checkpoint_storage_diagnostic": {
     "command_file": "gate3-checkpoint-readonly.sh",
-    "production_executed": false,
-    "migration_gate_changed": false,
+    "production_executed": true,
+    "migration_gate_changed": true,
     "production_checkpoint_deserialization": false,
     "local_primary_source_versions": {
       "langgraph": "1.2.11",
@@ -663,6 +663,82 @@
       "fixture_ledger_and_counts_unchanged": true,
       "temporary_profile_cleanup_verified": true,
       "initial_test_json_multiline_failure_fixed": true
+    },
+    "production_primary_source_versions": {
+      "langgraph": "1.2.11",
+      "langgraph-checkpoint": "4.2.0",
+      "langgraph-checkpoint-postgres": "3.1.2"
+    },
+    "source_result_file": "gate3-checkpoint-diagnostic-result.json",
+    "result": {
+      "database": "moodflow_agent",
+      "read_only": "on",
+      "checked_at": "2026-10-02T14:19:52.733477+00:00",
+      "storage_groups": [
+        {
+          "rows": 325,
+          "family": "branch",
+          "blob_type": null,
+          "has_inline": false,
+          "inline_kind": null
+        },
+        {
+          "rows": 1,
+          "family": "branch",
+          "blob_type": null,
+          "has_inline": true,
+          "inline_kind": "null"
+        },
+        {
+          "rows": 1,
+          "family": "join",
+          "blob_type": "msgpack",
+          "has_inline": false,
+          "inline_kind": null
+        },
+        {
+          "rows": 97,
+          "family": "__start__",
+          "blob_type": null,
+          "has_inline": false,
+          "inline_kind": null
+        }
+      ],
+      "latest_checkpoints": 97,
+      "inline_unseen_controls": 1,
+      "old_pending_candidates": [
+        {
+          "family": "join",
+          "blob_md5": "19a2151a36e3a6a7545040c8ab29615c",
+          "blob_type": "msgpack",
+          "blob_bytes": 18,
+          "has_inline": false,
+          "inline_kind": null,
+          "seen_version_equal": false,
+          "known_empty_builtin_set": true
+        }
+      ],
+      "missing_blob_with_inline": 1,
+      "invalid_nonempty_blob_rows": 0,
+      "malformed_checkpoint_shapes": 0,
+      "missing_blob_without_inline": 422
+    },
+    "classification": "423 storage flags explained; empty join candidate explained; one inline version difference unresolved"
+  },
+  "inline_control_followup": {
+    "command_file": "gate3-inline-control-readonly.sh",
+    "production_executed": false,
+    "purpose": "strict scheduling comparison and count confirmation only",
+    "production_checkpoint_deserialization": false,
+    "migration_or_resume_allowed": false,
+    "local_validation": {
+      "tests_passed": 14,
+      "seconds": 38.997,
+      "shell_syntax_passed": true,
+      "python_compile_passed": true,
+      "synthetic_official_scheduler_compared": true,
+      "actual_isolated_postgresql_tested": true,
+      "production_test_run": false
     }
   }
 }

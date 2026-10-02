@@ -1,0 +1,69 @@
+{
+  "source": "user_pasted_ecs_terminal_output",
+  "direct_remote_connection_by_agent": false,
+  "result": {
+    "database": "moodflow_agent",
+    "read_only": "on",
+    "checked_at": "2026-10-02T14:19:52.733477+00:00",
+    "storage_groups": [
+      {
+        "rows": 325,
+        "family": "branch",
+        "blob_type": null,
+        "has_inline": false,
+        "inline_kind": null
+      },
+      {
+        "rows": 1,
+        "family": "branch",
+        "blob_type": null,
+        "has_inline": true,
+        "inline_kind": "null"
+      },
+      {
+        "rows": 1,
+        "family": "join",
+        "blob_type": "msgpack",
+        "has_inline": false,
+        "inline_kind": null
+      },
+      {
+        "rows": 97,
+        "family": "__start__",
+        "blob_type": null,
+        "has_inline": false,
+        "inline_kind": null
+      }
+    ],
+    "latest_checkpoints": 97,
+    "inline_unseen_controls": 1,
+    "old_pending_candidates": [
+      {
+        "family": "join",
+        "blob_md5": "19a2151a36e3a6a7545040c8ab29615c",
+        "blob_type": "msgpack",
+        "blob_bytes": 18,
+        "has_inline": false,
+        "inline_kind": null,
+        "seen_version_equal": false,
+        "known_empty_builtin_set": true
+      }
+    ],
+    "missing_blob_with_inline": 1,
+    "invalid_nonempty_blob_rows": 0,
+    "malformed_checkpoint_shapes": 0,
+    "missing_blob_without_inline": 422
+  },
+  "finished_marker": "CHECKPOINT_READONLY_DIAGNOSTIC_FINISHED; no_migration_or_resume",
+  "library": {
+    "versions": {
+      "langgraph": "1.2.11",
+      "langgraph-checkpoint": "4.2.0",
+      "langgraph-checkpoint-postgres": "3.1.2"
+    },
+    "synthetic_empty_set_type": "msgpack",
+    "synthetic_empty_set_md5": "19a2151a36e3a6a7545040c8ab29615c"
+  },
+  "production_transaction_attempted": false,
+  "conclusion": "missing_blob_counts_are_normal_storage_forms; known_empty_join_is_not_ready; one_inline_branch_requires_strict_scheduler_comparison"
+}

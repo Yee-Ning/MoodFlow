@@ -25,6 +25,32 @@ def valid_gate():
 
 
 class Guards(unittest.TestCase):
+    def test_channel_availability_and_versions_match_installed_scheduler(self):
+        # Synthetic channels only: no app import, configuration or checkpoint payload.
+        python=Path(__file__).resolve().parents[3]/'ai-service/.venv/Scripts/python.exe'
+        source="""import json
+from langgraph.channels.ephemeral_value import EphemeralValue
+from langgraph.channels.named_barrier_value import NamedBarrierValue
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+from langgraph.pregel._algo import _triggers
+from langgraph.pregel._read import PregelNode
+name='branch:to:agent'
+proc=PregelNode(channels=[name],triggers=[name])
+channel=EphemeralValue(type(None)).from_checkpoint(None)
+result={'inline_none_available':channel.is_available(),
+ 'missing_unavailable':not EphemeralValue(type(None)).is_available(),
+ 'empty_join_unavailable':not NamedBarrierValue(str,{'a','b'}).from_checkpoint(set()).is_available(),
+ 'empty_set_hex':JsonPlusSerializer().dumps_typed(set())[1].hex(),
+ 'versions':[_triggers({name:channel},{name:v},{name:s},type(v)(),proc)
+  for v,s in [('02','01'),('01','01'),('01','02'),(2,1),(1,1),(1,2)]],
+ 'missing_seen_node':_triggers({name:channel},{name:''},None,'',proc)}
+print(json.dumps(result))
+"""
+        item=json.loads(subprocess.run([str(python),'-I','-c',source],check=True,capture_output=True).stdout)
+        self.assertTrue(all(item[k] for k in ('inline_none_available','missing_unavailable','empty_join_unavailable','missing_seen_node')))
+        self.assertEqual(item['empty_set_hex'],'c70f0093a86275696c74696e73a373657490')
+        self.assertEqual(item['versions'],[True,False,False,True,False,False])
+
     def test_activity_and_unknown_state_stop(self):
         p.check_gate(valid_gate())
         for field in ('active_sessions','advisory_locks','active_runs','pending_runs','unknown_runs',
@@ -189,13 +215,67 @@ VALUES('fake','','branch:to:agent','0001','msgpack','\\xc0');"""
         self.assertEqual(query(branch)['pending_controls'],1)
         self.assertEqual(query(branch+"UPDATE checkpoints SET checkpoint=jsonb_set(checkpoint,'{versions_seen}','{\"agent\":{\"branch:to:agent\":\"0001\"}}');")['pending_controls'],0)
         self.assertEqual(query(branch+"UPDATE checkpoint_blobs SET type='empty',blob=NULL;")['pending_controls'],0)
-        self.assertEqual(query(branch+"DELETE FROM checkpoint_blobs;")['unknown_checkpoints'],1)
+        missing=query(branch+"DELETE FROM checkpoint_blobs;")
+        self.assertEqual((missing['unknown_checkpoints'],missing['pending_controls']),(0,0))
+        broken=query(branch+"UPDATE checkpoint_blobs SET blob=NULL;")
+        self.assertEqual(broken['unknown_checkpoints'],1)
         progress="""INSERT INTO agent_history_event(event_id,task_id,session_id,event_type,event_timestamp,node,source,body)
 VALUES('test-run-progress','fixture-task','fixture-session','run_progress',now(),'fixture','fixture',
 '{"payload":{"run":{"run_id":"test-run","status":"running","pending_task_ids":["one"]}}}');"""
         state=query(progress)
         self.assertEqual((state['active_runs'],state['pending_runs']),(1,1))
         self.assertEqual(self.source.metadata()['history_rows'],328)
+
+    def test_1_inline_none_empty_join_and_strict_versions(self):
+        def query(checkpoint,blobs=''):
+            data=json.dumps(checkpoint).replace("'","''")
+            output=self.source.sql("BEGIN; INSERT INTO checkpoints(thread_id,checkpoint_ns,checkpoint_id,checkpoint) "
+                                   "VALUES('fixture','','001','"+data+"');"+blobs+p.GATE_QUERY+'ROLLBACK;').stdout.decode()
+            return json.loads(next(l for l in output.splitlines() if l.startswith('{')))
+        for current,seen,expected in (('02','01',1),('01','01',0),('01','02',0),(2,1,1),(1,1,0),(1,2,0)):
+            checkpoint={'v':4,'channel_values':{'branch:to:agent':None},
+                        'channel_versions':{'branch:to:agent':current},
+                        'versions_seen':{'agent':{'branch:to:agent':seen}}}
+            item=query(checkpoint)
+            self.assertEqual((item['pending_controls'],item['unknown_checkpoints']),(expected,0))
+        checkpoint={'v':4,'channel_values':{'branch:to:agent':None},
+                    'channel_versions':{'branch:to:agent':'01'},'versions_seen':{}}
+        self.assertEqual(query(checkpoint)['pending_controls'],1)
+        for invalid in ({'agent':None},{'agent':{'branch:to:agent':1}}):
+            self.assertEqual(query({**checkpoint,'versions_seen':invalid})['unknown_checkpoints'],1)
+        empty_join="""INSERT INTO checkpoint_blobs(thread_id,checkpoint_ns,channel,version,type,blob)
+VALUES('fixture','','join:a+b:done','02','msgpack',decode('c70f0093a86275696c74696e73a373657490','hex'));"""
+        joined={'v':4,'channel_values':{},'channel_versions':{'join:a+b:done':'02'},
+                'versions_seen':{'done':{'join:a+b:done':'01'}}}
+        item=query(joined,empty_join)
+        self.assertEqual((item['pending_controls'],item['unknown_checkpoints']),(0,0))
+        # An unrecognised nonempty barrier is never silently declared quiet.
+        self.assertEqual(query(joined,empty_join.replace('c70f0093a86275696c74696e73a373657490','91a161'))['pending_controls'],1)
+        # A barrier with no named predecessors is available even for an empty set.
+        empty_names={'v':4,'channel_values':{},'channel_versions':{'join::done':'02'},
+                     'versions_seen':{'done':{'join::done':'01'}}}
+        self.assertEqual(query(empty_names,empty_join.replace('join:a+b:done','join::done'))['pending_controls'],1)
+        self.assertEqual(query({'channel_versions':[],'versions_seen':{}})['unknown_checkpoints'],1)
+
+    def test_1_inline_diagnostic_matches_classifier_and_is_readonly(self):
+        shell=(Path(__file__).resolve().parent/'gate3-inline-control-readonly.sh').read_text(encoding='utf-8')
+        sql=shell.split("<<'MF_INLINE_SQL'\n",1)[1].split('\nMF_INLINE_SQL\n',1)[0]
+        self.assertIn(p.CHECKPOINT_CTES,sql)
+        data="""INSERT INTO checkpoints(thread_id,checkpoint_ns,checkpoint_id,checkpoint)
+VALUES('fixture','','001','{"v":4,"channel_values":{"branch:to:agent":null},"channel_versions":{"branch:to:agent":"02"},"versions_seen":{"agent":{"branch:to:agent":"01"}}}');"""
+        before={k:v for k,v in self.source.metadata().items() if k!='database_bytes'}
+        result=self.source.sql(sql.replace('BEGIN READ ONLY;','BEGIN;'+data)).stdout.decode()
+        item=json.loads(next(l for l in result.splitlines() if l.startswith('{')))
+        self.assertEqual((item['pending_controls'],item['unknown_checkpoints']),(1,0))
+        self.assertEqual(item['inline_controls'][0]['node_static_name'],'agent')
+        self.assertTrue(item['inline_controls'][0]['pending'])
+        self.assertTrue(item['inline_controls'][0]['namespace_is_root'])
+        self.assertNotIn('thread_id',item['inline_controls'][0])
+        body=shell.split("<<'MF_INLINE_DIAGNOSTIC'\n",1)[1].split('\nMF_INLINE_DIAGNOSTIC\n',1)[0]
+        output=self.source.command('sh','-s',data=body.encode()).stdout.decode()
+        self.assertIn('INLINE_CONTROL_READONLY_FINISHED; no_migration_or_resume',output)
+        self.assertEqual({k:v for k,v in self.source.metadata().items() if k!='database_bytes'},before)
+        self.assertEqual(self.source.command('find','/tmp','-maxdepth','1','-name','mf-inline-check-*').stdout,b'')
 
     def test_2_error_rolls_back_and_success_commits(self):
         sql=p.migration_sql(fixtures.r.INNER)
