@@ -182,11 +182,11 @@ class LongHorizonContextService:
 
     def _inherit(self, session: SessionRecord, draft: HandoffDraft) -> HandoffDraft:
         if not session.inherited_handoff_id:
-            return draft
+            return self.apply_revocations(draft, session.task_id)
         prior = self.store.get_handoff(session.inherited_handoff_id)
         if prior is None:
             raise ValueError("session inherited handoff cannot be resolved")
-        return draft.model_copy(update={
+        return self.apply_revocations(draft.model_copy(update={
             "constraints": _unique([*prior.constraints, *draft.constraints]),
             "constraint_refs": {**prior.constraint_refs, **draft.constraint_refs},
             "preferences": _unique([*prior.preferences, *draft.preferences]),
@@ -198,7 +198,28 @@ class LongHorizonContextService:
             "evidence_refs": _unique([*prior.evidence_refs, *draft.evidence_refs]),
             "revalidate_fields": _unique([*prior.revalidate_fields, *draft.revalidate_fields]),
             "last_known_state": {**prior.last_known_state, **draft.last_known_state},
-        })
+        }), session.task_id)
+
+    def apply_revocations(self, projection, task_id):
+        from .public_events import PublicDecision
+        revoked, cursor = set(), 0
+        while True:
+            rows = self.store.query_task_history(task_id, event_type=HistoryEventType.USER_DECISION,
+                after_seq=cursor, limit=100)
+            if not rows:
+                break
+            for row in rows:
+                body = PublicDecision.model_validate(row.payload)
+                revoked.update(ref.target_id for ref in body.supersedes)
+                cursor = row.event_seq
+        updates = {}
+        for field, ref_field in (("constraints", "constraint_refs"), ("decisions", "decision_refs")):
+            refs = getattr(projection, ref_field)
+            removed = {text for text, pointers in refs.items() if pointers and all(ref.target_id in revoked for ref in pointers)}
+            updates[field] = [text for text in getattr(projection, field) if text not in removed]
+            updates[ref_field] = {text: [ref for ref in pointers if ref.target_id not in revoked]
+                for text, pointers in refs.items() if text not in removed}
+        return projection.model_copy(update=updates)
 
     def build_handoff(self, session_id: str, draft: HandoffDraft | HandoffDraftV2) -> HandoffProjection | HandoffProjectionV2:
         session = self.store.require_session(session_id)
@@ -266,29 +287,31 @@ class LongHorizonContextService:
         return projection_type(**values, **envelope)
 
     def rollover(self, session_id: str, draft: HandoffDraft,
-                 reason: RolloverReason, *, automatic: bool = False) -> RolloverResult:
+                 reason: RolloverReason, *, automatic: bool = False, new_session_id=None, writer=None, identity=None) -> RolloverResult:
         if automatic and not getattr(self.store, "supports_atomic_rollover", False):
             raise ValueError("automatic rollover requires an atomic persistence backend")
         with self.store.transaction():
             session = self.store.require_session(session_id)
             handoff = self.build_handoff(session_id, draft)
-            checkpoint = self.record_event(
-                task_id=session.task_id, session_id=session_id,
-                event_type=HistoryEventType.CHECKPOINT, node="rollover", source=reason.value,
-                payload={"reason": reason.value, "handoff_id": handoff.handoff_id},
-            )
             self.store.put_handoff(handoff)
-            self.record_event(
-                task_id=session.task_id, session_id=session_id,
-                event_type=HistoryEventType.SESSION_HANDOFF, node="rollover", source="handoff_projection",
-                payload={"handoff_id": handoff.handoff_id, "token_count": handoff.token_count},
-                references=[HistoryPointer(kind="event", target_id=checkpoint.event_id)],
-            )
+            target_id = new_session_id or f"session:{uuid4().hex}"
+            if writer is None:
+                checkpoint = self.record_event(task_id=session.task_id, session_id=session_id,
+                    event_type=HistoryEventType.CHECKPOINT, node="rollover", source=reason.value,
+                    payload={"reason": reason.value, "handoff_id": handoff.handoff_id})
+                self.record_event(task_id=session.task_id, session_id=session_id,
+                    event_type=HistoryEventType.SESSION_HANDOFF, node="rollover", source="handoff_projection",
+                    payload={"handoff_id": handoff.handoff_id, "token_count": handoff.token_count},
+                    references=[HistoryPointer(kind="event", target_id=checkpoint.event_id)])
+            else:
+                from .public_events import PublicSessionHandoff
+                writer.append_public_event(identity, "rollover:" + target_id, HistoryEventType.SESSION_HANDOFF,
+                    PublicSessionHandoff(handoff_id=handoff.handoff_id, target_session=target_id, reason=reason.value))
             closed = self.store.close_session(session_id, self._now().isoformat())
             new_session = SessionRecord(
                 task_id=session.task_id,
                 conversation_id=session.conversation_id,
-                session_id=f"session:{uuid4().hex}",
+                session_id=target_id,
                 previous_session_id=session.session_id,
                 parent_session_id=session.parent_session_id or session.session_id,
                 inherited_handoff_id=handoff.handoff_id, created_at=self._now(),

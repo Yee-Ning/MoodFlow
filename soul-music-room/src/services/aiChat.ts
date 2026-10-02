@@ -1,6 +1,15 @@
 import type { AiChatNode, AiSongRecommendation } from '../types/aiChat'
 
 const AI_API_BASE_URL = (import.meta.env.VITE_AI_API_BASE_URL ?? '').replace(/\/$/, '')
+
+export async function acknowledgeAiAction(threadId: string, actionId: string, status: 'applied' | 'failed'): Promise<void> {
+  const response = await fetch(`${AI_API_BASE_URL}/api/ai/actions/ack`, {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ thread_id: threadId, action_id: actionId, status }),
+  })
+  if (!response.ok) throw new Error('播放器操作回执尚未保存，请稍后重试确认')
+}
 const ACCEPTANCE_TELEMETRY_KEY = 'moodflow-acceptance-telemetry'
 let acceptanceTelemetryActive = false
 

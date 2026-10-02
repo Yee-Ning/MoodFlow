@@ -77,7 +77,7 @@ class RequestLedger:
     synchronously before their first await. Persisted snapshots contain no text.
     """
 
-    def __init__(self, usage, agent, limits, *, deadline, emit=lambda **_: None):
+    def __init__(self, usage, agent, limits, *, deadline, emit=lambda **_: None, run_id=None):
         self.usage = {item.agent.value: item.model_dump(mode="json") for item in usage}
         self.agent = agent.value
         self.limits = limits
@@ -85,6 +85,10 @@ class RequestLedger:
         self.reserved = 0
         self.blocked = None
         self.emit = emit
+        from app.agent.foundation.long_horizon.accounting import active_accounting
+        self.accounting = active_accounting.get()
+        if self.accounting is not None:
+            self.accounting.bind(self, run_id)
 
     @property
     def remaining(self):
@@ -98,6 +102,8 @@ class RequestLedger:
         )
 
     def check(self):
+        if self.accounting is not None:
+            self.accounting.lease.check()
         if self.blocked:
             raise RuntimeLimitError(self.blocked)
         if monotonic() >= self.deadline:
@@ -134,6 +140,8 @@ class RequestLedger:
         row = self.usage[self.agent]
         if row["retries"] >= self.limits.max_retries_per_agent:
             return False
+        if self.accounting is not None:
+            self.accounting.retry(self)
         row["retries"] += 1
         self.emit(code="retry", tokens=0, duration_ms=0)
         return True
@@ -162,6 +170,7 @@ async def accounted_call(operation, payload, *, output_tokens=1024, retry=True):
     reserve = estimate_tokens(payload) + output_tokens
     while True:
         ledger.reserve(reserve)
+        call_id = ledger.accounting.reserve(ledger, reserve) if ledger.accounting is not None else None
         response = None
         error = None
         started = perf_counter()
@@ -178,6 +187,8 @@ async def accounted_call(operation, payload, *, output_tokens=1024, retry=True):
             error = exc
         finally:
             cost = ledger.settle(reserve, response)
+            if ledger.accounting is not None:
+                ledger.accounting.settle(ledger, call_id, reserve, response)
             ledger.emit(
                 code="model_call",
                 tokens=cost,
@@ -213,7 +224,8 @@ class AccountedChatModel:
         )
 
     async def ainvoke(self, messages, *args, **kwargs):
-        schemas = [tool.tool_call_schema.model_json_schema() for tool in self.tools]
+        schemas = ([tool.tool_call_schema.model_json_schema() for tool in self.tools]
+                   if self.tools else getattr(self.model, "kwargs", {}).get("tools", []))
         return await accounted_call(
             lambda: self.model.ainvoke(messages, *args, **kwargs),
             {"messages": messages, "tools": schemas},
@@ -227,10 +239,18 @@ def instrument_chat_model(model):
     # Copy configuration rather than changing the shared cached Foundation model.
     from langchain_openai import ChatOpenAI
 
-    if isinstance(model, ChatOpenAI):
-        model = model.model_copy(update={"max_retries": 0, "stream_usage": True})
-        if model.root_async_client is not None:
-            isolated = model.root_async_client.with_options(max_retries=0)
-            model.root_async_client = isolated
-            model.async_client = isolated.chat.completions
+    source = getattr(model, "bound", model)
+    if isinstance(source, ChatOpenAI):
+        copied = source.model_copy(update={"max_retries": 0, "stream_usage": True})
+        if copied.root_async_client is not None:
+            isolated = copied.root_async_client.with_options(max_retries=0)
+            copied.root_async_client = isolated
+            copied.async_client = isolated.chat.completions
+        model = copied if source is model else model.model_copy(update={"bound": copied})
     return AccountedChatModel(model)
+
+
+def instrument_continuity_model(model):
+    """Use durable accounting at Foundation SDK boundaries during production calls."""
+    from app.agent.foundation.long_horizon.accounting import active_accounting
+    return instrument_chat_model(model) if active_accounting.get() is not None else model

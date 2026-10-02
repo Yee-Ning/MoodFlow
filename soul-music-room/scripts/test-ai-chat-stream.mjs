@@ -618,7 +618,48 @@ try {
     })) { void event }
   }, /无法识别的任务结果/)
 
-  process.stdout.write('AI chat streaming store checks passed.\n')
+  // A failed action must remain failed on duplicate delivery; it cannot become
+  // an applied ACK simply because its identifier was remembered.
+  usePlayerStore.setState({ currentSong: null, queue: [], playlist: [] })
+  const failedAction = { action_id: 'p1-failed-repeat', task_id: 'p1', name: 'pause_player', arguments: {} }
+  await assert.rejects(executeClientAction(failedAction), /请先选择/)
+  usePlayerStore.setState({ currentSong })
+  await assert.rejects(executeClientAction(failedAction), /请先选择/)
+  await assert.rejects(executeClientAction({ ...failedAction, name: 'resume_player' }), /不一致/)
+
+  const ackBodies = []
+  globalThis.fetch = async (url, init) => {
+    if (String(url).endsWith('/actions/ack')) {
+      assert.equal(init.credentials, 'include')
+      ackBodies.push(JSON.parse(init.body))
+      return new Response('{}', { status: 200 })
+    }
+    return streamResponse([
+      sse('action', { action_id: 'p1-ack-applied', task_id: 'p1', name: 'pause_player', arguments: {} }),
+      sse('final', { type: 'chat', message: '已暂停', search_query: null }), sse('done', {}),
+    ])
+  }
+  useAiChatStore.getState().clearConversation()
+  await useAiChatStore.getState().sendMessage('暂停', playerContext())
+  assert.deepEqual(ackBodies.map((ack) => [ack.action_id, ack.status]), [['p1-ack-applied', 'applied']])
+  assert.equal(ackBodies[0].thread_id, useAiChatStore.getState().conversationId)
+
+  usePlayerStore.setState({ currentSong: null })
+  globalThis.fetch = async (url, init) => {
+    if (String(url).endsWith('/actions/ack')) {
+      ackBodies.push(JSON.parse(init.body))
+      return new Response('{}', { status: 200 })
+    }
+    return streamResponse([
+      sse('action', { action_id: 'p1-ack-failed', task_id: 'p1', name: 'pause_player', arguments: {} }),
+      sse('final', { type: 'chat', message: '需要选歌', search_query: null }), sse('done', {}),
+    ])
+  }
+  await useAiChatStore.getState().sendMessage('暂停', playerContext())
+  assert.equal(ackBodies.at(-1).status, 'failed')
+  assert.match(useAiChatStore.getState().error, /请先选择/)
+
+  process.stdout.write('AI chat streaming store and durable ACK checks passed.\n')
 } finally {
   globalThis.fetch = originalFetch
   await server.close()

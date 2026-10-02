@@ -49,13 +49,20 @@ logger = logging.getLogger(__name__)
 @lru_cache
 def get_foundation_graph():
     """Build the model router and checkpointer once when Foundation is enabled."""
-    return create_main_graph()
+    from app.agent.checkpointing import create_runtime_checkpointer
+    from app.agent.foundation.long_horizon.coordinator import ContinuityCheckpointer, get_continuity_coordinator
+    coordinator = get_continuity_coordinator()
+    return create_main_graph(checkpointer=ContinuityCheckpointer(create_runtime_checkpointer(), coordinator))
 
 
 @lru_cache
 def get_handoff_graph():
     from app.agent.handoff.graph import create_handoff_graph
-    return create_handoff_graph()
+    from app.agent.checkpointing import create_runtime_checkpointer
+    from app.agent.foundation.long_horizon.coordinator import ContinuityCheckpointer, get_continuity_coordinator
+    coordinator = get_continuity_coordinator()
+    return create_handoff_graph(checkpointer=ContinuityCheckpointer(create_runtime_checkpointer(), coordinator),
+                                transfer_journal=coordinator.journal)
 
 
 def _public_response(message, results, *, needs_clarification=False, execution_failed=False):
@@ -215,7 +222,19 @@ async def stream_foundation_assistant(
     memory_runtime: Any | None = None,
     telemetry_sample_kind: str = "production",
     graph_mode: Literal["foundation", "handoff"] = "foundation",
+    request_id: str | None = None,
+    resume: bool = False,
+    new_session: bool = False,
+    decisions: tuple = (),
 ) -> AsyncIterator[SongAssistantStreamEvent]:
+    if graph is None:
+        from app.agent.foundation.long_horizon.runner import stream
+        async for event in stream(message=message, thread_id=thread_id, routing_context=routing_context,
+            session_cookie=session_cookie, user_id=user_id, memory_runtime=memory_runtime,
+            telemetry_sample_kind=telemetry_sample_kind, graph_mode=graph_mode, request_id=request_id,
+            resume=resume, new_session=new_session, decisions=decisions):
+            yield event
+        return
     execution_thread_id = f"handoff:v1:{thread_id}" if graph_mode == "handoff" else thread_id
     selected_graph = graph or (get_handoff_graph() if graph_mode == "handoff" else get_foundation_graph())
     update_nodes = FOUNDATION_UPDATE_NODES | ({"general_chat_agent", "curator_agent", "explorer_agent"} if graph_mode == "handoff" else set())
@@ -410,7 +429,17 @@ async def invoke_foundation_assistant(
     memory_runtime: Any | None = None,
     telemetry_sample_kind: str = "production",
     graph_mode: Literal["foundation", "handoff"] = "foundation",
+    request_id: str | None = None,
+    resume: bool = False,
+    new_session: bool = False,
+    decisions: tuple = (),
 ) -> FoundationResponse:
+    if graph is None:
+        from app.agent.foundation.long_horizon.runner import invoke
+        return await invoke(message=message, thread_id=thread_id, routing_context=routing_context,
+            session_cookie=session_cookie, user_id=user_id, memory_runtime=memory_runtime,
+            telemetry_sample_kind=telemetry_sample_kind, graph_mode=graph_mode, request_id=request_id,
+            resume=resume, new_session=new_session, decisions=decisions)
     execution_thread_id = f"handoff:v1:{thread_id}" if graph_mode == "handoff" else thread_id
     continuity, graph_thread_id, continuity_context, session = await _continuity_start(
         execution_thread_id,

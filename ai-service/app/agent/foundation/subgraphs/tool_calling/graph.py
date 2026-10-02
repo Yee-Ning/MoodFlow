@@ -59,6 +59,7 @@ from app.schemas.music import (
     UserPlaylistsResult,
 )
 from app.tools.music import handle_music_tool_error
+from app.agent.foundation.long_horizon.operations import journal_tool_call
 
 MAX_TOOL_CALLS = 5
 MAX_VISIBLE_RESPONSE_CHARACTERS = 2_000
@@ -872,7 +873,7 @@ def build_tool_calling_subgraph(
     builder.add_node("validate_tool_calls", lambda _: {})
     builder.add_node(
         "tools",
-        ToolNode(graph_tools, handle_tool_errors=handle_music_tool_error),
+        ToolNode(graph_tools, handle_tool_errors=handle_music_tool_error, awrap_tool_call=journal_tool_call),
     )
     builder.add_node("capture_tool_results", capture_tool_results)
     builder.add_node("reject_tool_calls", reject_invalid_tool_calls)

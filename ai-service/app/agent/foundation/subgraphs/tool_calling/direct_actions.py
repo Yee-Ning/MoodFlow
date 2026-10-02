@@ -160,7 +160,20 @@ async def resolve_direct_actions(
             liked = sub_intent == "favorite_song"
             session_cookie = runtime.context.session_cookie if runtime.context else None
             try:
-                result = await MusicServiceClient(session_cookie).set_song_liked(context.current_song_id, liked)
+                from types import SimpleNamespace
+                from langchain_core.messages import ToolMessage
+                from app.agent.foundation.long_horizon.operations import active_operations
+                operations = active_operations.get()
+                if operations is None:
+                    result = await MusicServiceClient(session_cookie).set_song_liked(context.current_song_id, liked)
+                else:
+                    async def execute_like(_):
+                        response = await MusicServiceClient(session_cookie).set_song_liked(context.current_song_id, liked)
+                        return ToolMessage(content=response.model_dump_json(), name="set_song_liked_tool", tool_call_id=action_id)
+                    response = await operations.call(SimpleNamespace(tool_call={"id": action_id,
+                        "name": "set_song_liked_tool", "args": {"song_id": context.current_song_id, "liked": liked}}), execute_like)
+                    from app.schemas.music import SongLikeResult
+                    result = SongLikeResult.model_validate_json(response.content)
             except Exception as exc:
                 failure = handle_music_tool_error(exc)
                 message = json.loads(failure)["message"]

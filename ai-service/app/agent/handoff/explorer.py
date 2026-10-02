@@ -17,7 +17,7 @@ from app.agent.foundation.subgraphs.worldline.models import (
 from app.agent.foundation.subgraphs.worldline.music_service import catalog_entity_id
 from app.agent.foundation.subgraphs.worldline.state import create_worldline_state
 from app.agent.handoff.context import latest_entities
-from app.agent.handoff.song_context import SongContextRead
+from app.agent.handoff.song_context import SongContextRead, invoke_song_context
 from app.rag.query_understanding.context import _CURRENT_SONG_REFERENCE
 
 
@@ -50,7 +50,7 @@ async def execute_exploration(view, run, runtime, *, graph, context_tool) -> Tas
             song_id, name = selected.song_id, selected.name
             artist, album = " / ".join(selected.artists), selected.album
         else:
-            read = SongContextRead.model_validate_json(await context_tool.ainvoke({}))
+            read = SongContextRead.model_validate_json(await invoke_song_context(context_tool, {}))
             if read.status is not TaskStatus.SUCCESS:
                 return TaskResult(
                     task_id=task.task_id,
@@ -82,7 +82,8 @@ async def execute_exploration(view, run, runtime, *, graph, context_tool) -> Tas
         trusted_target=target,
         continuity_context=view.get("continuity_context", {}),
     )
-    output = await graph.ainvoke(private, context=runtime.context)
+    invoke_options = {"durability": "async"} if getattr(graph, "checkpointer", None) is False else {}
+    output = await graph.ainvoke(private, context=runtime.context, **invoke_options)
     result = TaskResult.model_validate(output.get("task_result"))
     if result.task_id != task.task_id or result.route_key != RouteKey.WORLDLINE:
         raise ValueError("Explorer result does not match its assigned task")

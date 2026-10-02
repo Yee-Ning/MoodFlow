@@ -16,6 +16,9 @@ from app.config.settings import get_settings
 from app.agent.handoff.streaming import invoke_handoff_assistant, stream_handoff_assistant
 from app.agent.handoff.rollout import select_chat_graph
 from app.context.identity import UserIdentityProvider
+from app.agent.foundation.long_horizon.execution import ContinuityConflict
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Literal
 from app.schemas.chat import (
     ChatRequest,
     ClientActionStreamEvent,
@@ -24,6 +27,7 @@ from app.schemas.chat import (
     MessageStreamEvent,
     UpdateStreamEvent,
 )
+from app.schemas.player import PlayerContext
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +66,10 @@ async def foundation_chat(chat_request: ChatRequest, request: Request) -> Founda
             session_cookie=session_cookie,
             user_id=user_id,
             telemetry_sample_kind=_telemetry_sample_kind(request),
+            **chat_request.continuity_options(),
         )
+    except ContinuityConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         logger.exception("Foundation JSON request failed")
         raise HTTPException(
@@ -82,7 +89,10 @@ async def handoff_chat(chat_request: ChatRequest, request: Request) -> Foundatio
             routing_context=chat_request.resolved_routing_context(),
             session_cookie=session_cookie, user_id=user_id,
             telemetry_sample_kind=_telemetry_sample_kind(request),
+            **chat_request.continuity_options(),
         )
+    except ContinuityConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         logger.warning("Handoff JSON request failed: %s", type(exc).__name__)
         raise HTTPException(status_code=502, detail="MoodFlow AI 暂时离线，请稍后再试") from exc
@@ -106,8 +116,11 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
                     session_cookie=session_cookie,
                     user_id=user_id,
                     telemetry_sample_kind=_telemetry_sample_kind(request),
+                    **chat_request.continuity_options(),
                 )
             else:
+                if chat_request.resume or chat_request.new_session:
+                    raise ContinuityConflict("legacy graph does not support continuity recovery")
                 event_stream = stream_current_song_assistant(
                     message=chat_request.message,
                     thread_id=thread_id,
@@ -150,3 +163,54 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
             "X-Accel-Buffering": "no",
         },
     )
+
+
+class ActionAckRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    thread_id: str = Field(min_length=1, max_length=128)
+    graph_mode: Literal["foundation", "handoff"] | None = None
+    action_id: str = Field(min_length=1, max_length=128)
+    status: Literal["applied", "failed"]
+
+
+@router.post("/actions/ack")
+async def action_ack(body: ActionAckRequest, request: Request):
+    from app.agent.foundation.long_horizon.coordinator import get_continuity_coordinator
+    user_id = await UserIdentityProvider().resolve(_spring_session_cookie(request))
+    try:
+        mode = body.graph_mode or select_chat_graph(get_settings(), body.thread_id)
+        if mode not in {"foundation", "handoff"}:
+            raise ContinuityConflict("legacy graph has no durable action receipts")
+        return await get_continuity_coordinator().acknowledge(graph_mode=mode,
+            thread_id=body.thread_id, user_id=user_id, action_id=body.action_id, status=body.status)
+    except (ContinuityConflict, ValueError) as exc:
+        raise HTTPException(status_code=409, detail="动作回执与会话状态不一致") from exc
+
+
+class NamespaceMigrationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    thread_id: str = Field(min_length=1, max_length=128)
+    migration_id: str = Field(min_length=1, max_length=128)
+    player_context: PlayerContext | None = None
+
+
+@router.post("/continuity/migrate")
+async def migrate_namespace(body: NamespaceMigrationRequest, request: Request):
+    from app.agent.foundation.long_horizon.coordinator import get_continuity_coordinator
+    from app.agent.foundation.long_horizon.migration import NamespaceMigrator
+    from app.agent.foundation.streaming import get_handoff_graph
+    from app.agent.foundation.routing import RoutingContext
+    coordinator = get_continuity_coordinator()
+    user_id = await UserIdentityProvider().resolve(_spring_session_cookie(request))
+    call = None
+    try:
+        current_player = RoutingContext.model_validate(body.player_context.model_dump() if body.player_context else {})
+        call = await coordinator.begin_call(graph=get_handoff_graph(), graph_mode="handoff", thread_id=body.thread_id,
+            message="", routing_context=current_player, user_id=user_id, resume=True)
+        config = await NamespaceMigrator(coordinator).migrate(call, migration_id=body.migration_id)
+        return {"session_id": config["configurable"]["session_id"], "status": "migrated"}
+    except (ContinuityConflict, ValueError) as exc:
+        raise HTTPException(status_code=409, detail="运行状态不满足跨窗迁移条件") from exc
+    finally:
+        if call is not None:
+            await call.close()

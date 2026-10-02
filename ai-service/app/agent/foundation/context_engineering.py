@@ -221,6 +221,13 @@ class ContextCollector:
         add("structured_output", "structured_output", structured_output, required=structured_output is not None, compressible=False)
         add("search_plan", "search_plan", search_plan)
         if continuity_context:
+            from app.agent.foundation.long_horizon.coordinator import active_call
+            continuity_call = active_call.get()
+            add("revalidation", "business_state", (continuity_call.revalidation if continuity_call else None)
+                or continuity_context.get("revalidation"), compressible=False)
+            decisions = continuity_context.get("effective_decisions")
+            add("effective_decisions", "business_state", decisions,
+                required=bool(decisions), compressible=False)
             handoff_projection = handoff_projection or continuity_context.get("handoff")
             history_drilldown = [*(history_drilldown or []), *continuity_context.get("key_events", [])]
             artifact_projections = [*(artifact_projections or []), *continuity_context.get("artifacts", [])]
@@ -500,6 +507,16 @@ class ContextSelector:
                         sum(item.type == "rag_evidence" for item in items),
                         sum(item.type == "rag_evidence" for item in final),
                         [item_id for item_id in dropped if item_id.startswith("evidence:")])
+        from app.agent.foundation.long_horizon.coordinator import active_call
+        call = active_call.get()
+        if call is not None:
+            from uuid import uuid4
+            from app.agent.foundation.long_horizon.models import HistoryEventType
+            from app.agent.foundation.long_horizon.public_events import PublicContextTrace
+            call.lease.check()
+            call.coordinator.writer.append_public_event(call.accounting.identity, "context:" + uuid4().hex,
+                HistoryEventType.CONTEXT_TRACE, PublicContextTrace(selected_tokens=pack.total_tokens,
+                    candidate_tokens=sum(item.token_count for item in items), budget=pack.budget, dropped_count=len(dropped)))
         return pack
 
 

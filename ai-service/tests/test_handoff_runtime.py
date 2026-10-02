@@ -615,6 +615,7 @@ async def test_production_continuity_sessions_stay_separate_when_switching_modes
 ):
     from app.agent.foundation.long_horizon.service import LongHorizonContextService
     from app.agent.foundation.long_horizon.store import SQLiteContinuityStore
+    from app.agent.foundation.long_horizon.coordinator import ContinuityCoordinator
     from app.agent.foundation.main_graph import build_main_graph
 
     class FreshRouter(Router):
@@ -645,8 +646,8 @@ async def test_production_continuity_sessions_stay_separate_when_switching_modes
     )
     with (
         patch(
-            "app.agent.foundation.streaming.get_long_horizon_service",
-            return_value=service,
+            "app.agent.foundation.long_horizon.coordinator.get_continuity_coordinator",
+            return_value=ContinuityCoordinator(service),
         ),
         patch(
             "app.agent.foundation.streaming.get_foundation_graph",

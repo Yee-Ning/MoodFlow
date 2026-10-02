@@ -15,6 +15,7 @@ from app.agent.foundation.context_engineering import build_context_async
 from app.agent.foundation.subgraphs.tool_calling.client_tools import CLIENT_ACTION_TOOLS
 from app.agent.foundation.subgraphs.tool_calling.models import ReferencedEntities
 from app.llm.client import get_base_chat_model
+from app.llm.runtime import instrument_continuity_model
 from app.tools.music import MUSIC_AGENT_TOOLS
 
 
@@ -98,7 +99,7 @@ async def answer_tool_calling_task(
         trace_context={key: continuity_context[key] for key in ("task_id", "session_id", "request_id")
                        if continuity_context and key in continuity_context},
     )
-    response = await (model or get_tool_calling_chat_model()).ainvoke(pack.messages)
+    response = await instrument_continuity_model(model or get_tool_calling_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("Tool-calling assistant returned a non-AI message")
     if not response.tool_calls and not str(response.text).strip():

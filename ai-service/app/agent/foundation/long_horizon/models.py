@@ -25,6 +25,12 @@ class HistoryEventType(StrEnum):
     REALITY_REVALIDATION = "reality_revalidation"
     CONTEXT_TRACE = "context_trace"
     ERROR = "error"
+    USER_DECISION = "user_decision"
+    ACTION_ACK = "action_ack"
+    CLIENT_ACTION = "client_action"
+    MODEL_USAGE = "model_usage"
+    HISTORY_ARCHIVE = "history_archive"
+    NAMESPACE_MIGRATION = "namespace_migration"
 
 
 class HistoryPointer(BaseModel):

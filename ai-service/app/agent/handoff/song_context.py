@@ -38,6 +38,24 @@ class SongContextRead(ContractModel):
     target_source: str | None = None
 
 
+async def invoke_song_context(context_tool, arguments, *, tool_call_id=None):
+    """Journal direct reads too; ToolNode already journals its own invocations."""
+    from uuid import uuid4
+    from types import SimpleNamespace
+    from langchain_core.messages import ToolMessage
+    from app.agent.foundation.long_horizon.operations import active_operations
+
+    operations = active_operations.get()
+    if operations is None:
+        return await context_tool.ainvoke(arguments)
+    call_id = tool_call_id or "song-context:" + uuid4().hex
+    async def execute(_):
+        content = await context_tool.ainvoke(arguments)
+        return ToolMessage(content=content, name=context_tool.name, tool_call_id=call_id)
+    response = await operations.call(SimpleNamespace(tool_call={"id": call_id, "name": context_tool.name, "args": arguments}), execute)
+    return response.content
+
+
 def create_song_context_tool(
     context: RoutingContext,
     prior_results: Sequence[TaskResult] = (),

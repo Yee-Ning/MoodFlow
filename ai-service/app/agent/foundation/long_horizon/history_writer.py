@@ -18,12 +18,32 @@ from .models import (
     TransferJournalEvent,
 )
 from .store import ContinuityStore
+from .public_events import (
+    PublicText, PublicDecision, PublicRoute, PublicTool, PublicActionAck,
+    PublicRevalidation, PublicUsage, PublicCheckpoint, PublicContextTrace,
+    PublicArchive, PublicMigration, PublicAction, PublicSessionHandoff,
+)
 
 PUBLIC_SCHEMAS = {
     HistoryEventType.AGENT_TRANSFER: TransferJournalEvent,
     HistoryEventType.RUN_PROGRESS: RunProgressRecord,
     HistoryEventType.STRUCTURED_OUTPUT: PublicTaskResult,
     HistoryEventType.ERROR: PublicHistoryError,
+    HistoryEventType.USER_MESSAGE: PublicText,
+    HistoryEventType.ASSISTANT_MESSAGE: PublicText,
+    HistoryEventType.USER_DECISION: PublicDecision,
+    HistoryEventType.ROUTE_DECISION: PublicRoute,
+    HistoryEventType.TOOL_CALL: PublicTool,
+    HistoryEventType.TOOL_RESULT: PublicTool,
+    HistoryEventType.ACTION_ACK: PublicActionAck,
+    HistoryEventType.CLIENT_ACTION: PublicAction,
+    HistoryEventType.REALITY_REVALIDATION: PublicRevalidation,
+    HistoryEventType.MODEL_USAGE: PublicUsage,
+    HistoryEventType.CHECKPOINT: PublicCheckpoint,
+    HistoryEventType.CONTEXT_TRACE: PublicContextTrace,
+    HistoryEventType.HISTORY_ARCHIVE: PublicArchive,
+    HistoryEventType.NAMESPACE_MIGRATION: PublicMigration,
+    HistoryEventType.SESSION_HANDOFF: PublicSessionHandoff,
 }
 PRIVATE_TEXT = re.compile(
     r"scratchpad|<\s*(?:analysis|reasoning)\b|(?:raw|system)[_ ]?prompt|"

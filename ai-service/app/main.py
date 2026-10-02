@@ -29,6 +29,13 @@ async def lifespan(_app: FastAPI):
     try:
         yield
     finally:
+        from app.agent.foundation.long_horizon.runner import drain_workers
+        from app.agent.foundation.long_horizon.coordinator import get_continuity_coordinator
+        from app.agent.foundation.streaming import get_foundation_graph, get_handoff_graph
+        await drain_workers()
+        get_continuity_coordinator.cache_clear()
+        get_foundation_graph.cache_clear()
+        get_handoff_graph.cache_clear()
         get_worldline_session_service.cache_clear()
         close_long_horizon_service()
         close_memory_runtime()

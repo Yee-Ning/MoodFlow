@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { AiChatApiError, streamAiChatMessage } from '../services/aiChat'
+import { AiChatApiError, streamAiChatMessage, acknowledgeAiAction } from '../services/aiChat'
 import type { PlayerContext } from '../services/aiChat'
 import type {
   AiChatMessage,
@@ -133,13 +133,21 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
                 : 'generating',
           })
         } else if (event.type === 'action') {
+          let applied = false
           try {
             const { executeClientAction } = await import('../services/aiClientActions')
             await executeClientAction(event.action)
+            applied = true
           } catch (error) {
             actionFailure = error instanceof Error
               ? error.message
               : 'AI 播放器操作没有执行成功'
+            set({ error: actionFailure })
+          }
+          try {
+            await acknowledgeAiAction(threadId, event.action.action_id, applied ? 'applied' : 'failed')
+          } catch (error) {
+            actionFailure = error instanceof Error ? error.message : '播放器操作回执尚未保存'
             set({ error: actionFailure })
           }
         } else if (event.type === 'final') {

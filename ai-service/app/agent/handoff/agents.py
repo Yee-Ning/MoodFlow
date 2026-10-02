@@ -139,7 +139,8 @@ async def execute_owned_task(
             context_tool=context_tool,
         )
     if task.route_key is RouteKey.CURRENT_SONG:
-        read = SongContextRead.model_validate_json(await context_tool.ainvoke({}))
+        from app.agent.handoff.song_context import invoke_song_context
+        read = SongContextRead.model_validate_json(await invoke_song_context(context_tool, {}))
         if read.status is not TaskStatus.SUCCESS:
             return TaskResult(
                 task_id=task.task_id,
@@ -228,7 +229,8 @@ async def execute_owned_task(
                 call = response.tool_calls[0]
                 if call["name"] != context_tool.name or not call.get("id"):
                     raise ValueError("chat tool is outside its read-only domain")
-                content = await context_tool.ainvoke(call["args"])
+                from app.agent.handoff.song_context import invoke_song_context
+                content = await invoke_song_context(context_tool, call["args"], tool_call_id=call["id"])
                 history.extend(
                     [
                         response,

@@ -36,16 +36,13 @@ class RealityRevalidator:
         return (observation.scope == scope and -5 <= age <= self.max_age_seconds
                 and observation.status != "unknown")
 
-    def revalidate(self, projection, live_snapshot: LiveSnapshot, checkpoint_snapshot, refs=()):
-        snapshot = checkpoint_snapshot
-        if snapshot is None:
-            return RevalidationReport(reasons=("checkpoint_missing",))
-        identity = snapshot.identity
-        field_results, reasons = {}, []
+    def check_fields(self, projection, live_snapshot: LiveSnapshot, scope):
+        """Check historical fields without inferring an execution owner."""
+        field_results = {}
         observations = {item.field: item for item in live_snapshot.observations}
         for field in projection.revalidate_fields:
             observation = observations.get(field)
-            if field not in projection.last_known_state or observation is None or not self._fresh(observation, identity.conversation_id):
+            if field not in projection.last_known_state or observation is None or not self._fresh(observation, scope):
                 field_results[field] = "unknown"
                 continue
             if observation.source not in self.expected_sources.get(field, set()):
@@ -62,6 +59,16 @@ class RealityRevalidator:
                 field_results[field] = "changed"
             else:
                 field_results[field] = "valid"
+        return field_results
+
+    def revalidate(self, projection, live_snapshot: LiveSnapshot, checkpoint_snapshot, refs=()):
+        snapshot = checkpoint_snapshot
+        if snapshot is None:
+            return RevalidationReport(reasons=("checkpoint_missing",))
+        identity = snapshot.identity
+        field_results = self.check_fields(projection, live_snapshot, identity.conversation_id)
+        reasons = []
+        observations = {item.field: item for item in live_snapshot.observations}
         changed = tuple(field for field, status in field_results.items() if status == "changed")
         if any(field in changed and observations[field].value is False for field in ("logged_in", "write_permission")):
             reasons.append("current_authority_lost")

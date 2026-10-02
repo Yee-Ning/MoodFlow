@@ -1,0 +1,85 @@
+"""Durable pre-dispatch reserves survive a process dying inside the SDK."""
+
+from contextvars import ContextVar
+from uuid import uuid4
+
+from .models import HistoryEventType
+from .public_events import PublicUsage
+
+active_accounting = ContextVar("continuity_accounting", default=None)
+
+
+class DurableAccounting:
+    def __init__(self, writer, identity, lease):
+        self.writer, self.identity, self.lease = writer, identity, lease
+
+    def events(self, run_id):
+        cursor, result = 0, []
+        while True:
+            rows = self.writer.store.query_task_history(self.identity.continuity_task_id,
+                event_type=HistoryEventType.MODEL_USAGE, after_seq=cursor, limit=100)
+            if not rows:
+                return result
+            for event in rows:
+                body = PublicUsage.model_validate(event.payload)
+                if body.run_id == run_id:
+                    result.append(body)
+                cursor = event.event_seq
+
+    def totals(self, run_id, original):
+        usage = {row["agent"]: dict(row) for row in original}
+        events = self.events(run_id)
+        for agent, previous in usage.items():
+            selected = [event for event in events if event.agent == agent]
+            baseline = next((event for event in selected if event.phase == "baseline"), None)
+            if baseline is None:
+                continue
+            reservations = {event.call_id: event for event in selected if event.phase == "reserved"}
+            settlements = {event.call_id: event for event in selected if event.phase == "settled"}
+            billed = [settlements.get(call_id, event) for call_id, event in reservations.items()]
+            values = {
+                "tokens": baseline.tokens + sum(event.tokens for event in billed),
+                "reported_tokens": baseline.reported_tokens + sum(event.tokens for event in billed if event.reported),
+                "estimated_tokens": baseline.estimated_tokens + sum(event.tokens for event in billed if not event.reported),
+                "model_calls": baseline.model_calls + len(billed),
+                "retries": baseline.retries + sum(event.phase == "retry" for event in selected),
+            }
+            # Never reduce any saved usage, even when a previous adapter lacked receipts.
+            previous.update({field: max(previous[field], value) for field, value in values.items()})
+        return tuple(usage.values())
+
+    def bind(self, ledger, run_id):
+        self.lease.check()
+        if not run_id:
+            raise ValueError("durable model accounting requires a server run identity")
+        self.identity = self.identity.model_copy(update={"run_id": run_id})
+        for agent, row in ledger.usage.items():
+            key = f"usage:{run_id}:{agent}:baseline"
+            if self.writer.store.get_history_event(self.writer.event_id(self.identity, key)) is None:
+                self.writer.append_public_event(self.identity, key, HistoryEventType.MODEL_USAGE,
+                    PublicUsage(run_id=run_id, agent=agent, call_id="baseline", phase="baseline",
+                        tokens=row["tokens"], model_calls=row["model_calls"], retries=row["retries"],
+                        reported_tokens=row["reported_tokens"], estimated_tokens=row["estimated_tokens"]))
+        ledger.usage = {row["agent"]: row for row in self.totals(run_id, tuple(ledger.usage.values()))}
+
+    def reserve(self, ledger, amount):
+        self.lease.check()
+        call_id = uuid4().hex
+        self.writer.append_public_event(self.identity, f"usage:{call_id}:reserved", HistoryEventType.MODEL_USAGE,
+            PublicUsage(run_id=self.identity.run_id, agent=ledger.agent, call_id=call_id, phase="reserved", tokens=amount))
+        return call_id
+
+    def settle(self, ledger, call_id, amount, response):
+        from app.llm.runtime import reported_tokens
+
+        self.lease.check()
+        reported = reported_tokens(response)
+        self.writer.append_public_event(self.identity, f"usage:{call_id}:settled", HistoryEventType.MODEL_USAGE,
+            PublicUsage(run_id=self.identity.run_id, agent=ledger.agent, call_id=call_id, phase="settled",
+                        tokens=amount if reported is None else reported, reported=reported is not None))
+
+    def retry(self, ledger):
+        self.lease.check()
+        call_id = uuid4().hex
+        self.writer.append_public_event(self.identity, f"usage:{call_id}:retry", HistoryEventType.MODEL_USAGE,
+            PublicUsage(run_id=self.identity.run_id, agent=ledger.agent, call_id=call_id, phase="retry", tokens=0))

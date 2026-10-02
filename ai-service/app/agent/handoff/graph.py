@@ -108,6 +108,7 @@ def build_handoff_graph(
             bounds,
             deadline=remaining,
             emit=trace.emit,
+            run_id=state["run_id"],
         )
         try:
             with request_scope(ledger):
@@ -156,6 +157,10 @@ def build_handoff_graph(
         )
 
     async def agent(state, runtime: Runtime[MusicAgentContext]) -> Command:
+        from app.agent.foundation.long_horizon.coordinator import active_call
+
+        continuity_call = active_call.get()
+        journal = transfer_journal or (continuity_call.coordinator.journal if continuity_call else None)
         run = HandoffRun.model_validate(state["handoff_run"])
         task = run.pending_tasks[0]
         trace = TraceRecorder(
@@ -192,6 +197,7 @@ def build_handoff_graph(
             run.limits,
             deadline=node_window,
             emit=trace.emit,
+            run_id=run.run_id,
         )
         response = None
         result = None
@@ -199,11 +205,13 @@ def build_handoff_graph(
         try:
             with request_scope(ledger):
                 ledger.check()
-                if transfer_journal is not None:
-                    await transfer_journal.await_committed(
+                if journal is not None:
+                    await journal.await_committed(
                         _continuity_identity(state, run), run, timeout=max(0, node_window),
                     )
                     ledger.check()
+                    if continuity_call is not None:
+                        await continuity_call.coordinator.before_agent(state, run)
                 if ledger.remaining <= 0:
                     raise RuntimeLimitError("token_limit")
                 async with asyncio.timeout(max(0, ledger.deadline - monotonic())):
@@ -224,10 +232,10 @@ def build_handoff_graph(
                             clock=clock,
                             guard=handoff_guard or configured_guard(),
                             trace=trace,
-                            journal=transfer_journal,
+                            journal=journal,
                             identity=(
                                 _continuity_identity(state, run)
-                                if transfer_journal is not None else None
+                                if journal is not None else None
                             ),
                         )
                     else:
