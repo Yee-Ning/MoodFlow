@@ -95,7 +95,28 @@
     "PGSERVICEFILE_override_path_reported": false,
     "production_database_connection_established": false,
     "database_sql_executed": false,
-    "temporary_profile_proposal": "not_authorized_not_executed"
+    "temporary_profile_proposal": "authorized_awaiting_production_execution"
+  },
+  "temporary_profile_authorization": {
+    "recorded_at": "2026-10-02T18:27:07+08:00",
+    "source": "explicit_user_reply_allow",
+    "scope": "temporary_password_free_connection_profile_then_read_only_gate_0",
+    "other_original_constraints_unchanged": true,
+    "production_execution_confirmed": false
+  },
+  "local_readonly_command_validation": {
+    "environment": "existing_local_moodflow_rehearsal_20260928_containers",
+    "production_gate_0_evidence": false,
+    "production_scale_migration_rehearsal": false,
+    "shell_syntax_passed": true,
+    "success": {"exit_code": 0, "wall_time_seconds": 0.297, "cleanup_passed": true},
+    "wrong_database": {"exit_code": 1, "wall_time_seconds": 0.250, "cleanup_passed": true},
+    "invalid_role_name": {"exit_code": 1, "wall_time_seconds": 0.234, "cleanup_passed": true},
+    "connection_failure": {"exit_code": 2, "wall_time_seconds": 0.250, "cleanup_passed": true},
+    "readonly_transaction_observed": true,
+    "application_output_limited_to_six_nonsecret_settings": true,
+    "migration_003_004_executed": false,
+    "final_command_stderr_empty_on_success": true
   },
   "source_sha256": {
     "docs/operations/context-loop-p1-postgres-migration-20261002.md": "4162164E1A925E6E22599F4196ECF8478829063F46F3183477798F9DB0AC0ACA",
