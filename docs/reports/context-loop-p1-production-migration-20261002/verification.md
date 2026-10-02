@@ -353,3 +353,5 @@ REHEARSAL_PREFLIGHT_READONLY_FINISHED; no_restore_or_migration_run
 | 数据保持 | 历史 328 行和备份核心表计数保持，vector 0.8.6 |
 
 这些结果属于实际备份恢复后的隔离副本，**不是生产迁移后查询输出**。截图显示六项 SQL 已被演练脚本执行并保存至远端 `readonly-postchecks.txt`，截图只展示 report 摘要；本报告不伪造未回传的逐项原始文本。生产 §3 仍待 [最后脚本](gate3-production-migration.sh) 执行并回传。该脚本会输出六项 SQL 的编号和原始结果；真实写复验仍跳过，原因是暂无专用测试账号。备份目前有效且已再次完整恢复验证，恢复负责人唐艺宁。
+
+最新中断状态：用户回传最后命令 STOP 与 SSH 断开的截图，尚无 ledger 或报告回传。生产迁移结果目前未知，不宣称未执行或成功；先运行 [中断只读检查](gate3-interrupted-readonly.sh)。本地诊断测试通过不构成生产查询证据，§3 生产输出与真实写复验仍没有完成证据。不要重复执行迁移脚本。

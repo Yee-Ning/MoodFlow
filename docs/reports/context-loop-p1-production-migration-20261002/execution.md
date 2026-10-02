@@ -1,9 +1,9 @@
 # Context Loop P1：003 / 004 生产迁移执行报告
 
-记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–13 节。
+记录日期：2026-10-02，Asia/Shanghai。初始记录时间：17:51:32 +08:00；后续进展见第 7–14 节。
 报告对象：West；由本次请求方转交，本轮没有对外发送消息。
 
-**最新结论：门控 0 / 1 / 2 已通过。实际备份隔离恢复后执行 003 / 004，通过副本复验与清理；事务 87.304 ms、锁窗口上限 85.249 ms、WAL 69,336 bytes。生产超时选为演练验证过的 5s / 60s。最后的低峰检查、生产事务和只读复验已合并为一份脚本，等待 ECS 执行结果；目前尚无生产迁移提交或生产复验完成的证据。备份有效，恢复负责人唐艺宁；真实写复验继续跳过。**
+**最新结论：门控 0 / 1 / 2 已通过，生产超时选为演练验证过的 5s / 60s。用户尝试最后脚本后输出 STOP 并断开 SSH，具体失败原因和生产事务状态尚未确认；不能声明迁移未开始、已回滚或已提交。已修复会影响登录 Shell 的封装和隐藏停止原因的问题，并提供约 3 KB 的只读中断核对脚本。本次不重试迁移。备份已完整恢复验证，恢复负责人唐艺宁；真实写复验继续跳过。**
 
 ## 1. 批准与执行依据
 
@@ -217,3 +217,15 @@
 本地隔离验证命令 `python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v`：最终 5 tests / 22.467 s 通过，覆盖门控忙碌 / 未知 / 错误身份、最新与历史 writes 区分、控制通道、run_progress、实际 SQL 中途错误回滚、完整 wrapper 成功提交 / 复验 / profile 清理及重复尝试停止。独立 payload / shell 语法测试使用同命令加 `-k standalone`，1 test / 0.616 s 通过。源 SQL 与手册未修改；没有运行应用构建、业务账号写入验收、部署或 push。
 
 当前未完成项：门控 3 的生产结果、生产 COMMIT 与 §3 原始输出仍待远端回传；业务 JSON / SSE、同 run 恢复、namespace 迁移、真实歌单写入、播放器 ACK、费用和期限、并发容量未验收。真实写复验依约跳过（专用测试账号暂无）。备份状态已从未知更新为有效，并经过本轮再次完整隔离恢复验证。迁移完成后仍需 West 独立决定部署 / 开闸，本次不操作开关、默认图或 `.env`。
+
+## 14. 最后命令 STOP 与 SSH 中断后的处理
+
+用户回传截图 `codex-clipboard-954b3b05-ea62-4173-a5a2-b652453874b8.png`，SHA-256 为 `97C3AC3E699156E5EE20BA44170C21E79EA8AF26BB3CECE79201A4C53879AF9F`。截图可见 Workbench 的“远程连接关闭”弹窗以及 `STOP: production_command_failed_check_report_and_ledger_no_retry`，没有可见的阶段、具体异常、ledger、提交标记或执行报告。本代理没有远端执行渠道，无法据此确定 SQL 是否开始或提交；记录为未知而非“没有迁移”。原来的备份与副本演练证据仍保留，但后续门控需要即时核对。
+
+检查脚本发现两项可确认的问题：复制到登录 Shell 的脚本顶层 `set -eu` 会改变该 Shell 的行为；命令失败时 `set -e` 可使登录 Shell 直接退出。最外层 catch 又把所有停止原因替换成同一个泛化消息。隔离 `sh` 重现了旧方式失败后父 Shell 后续命令不运行，新子 Shell / if 封装失败后父 Shell 可继续运行。该发现可解释连接中断的机制，不代表已经确定最初 Python 前置检查的具体失败条件，也没有证据说明数据库或服务器故障。
+
+修复范围仅限运维 wrapper 和诊断：将生产脚本的 `set -eu` 放入受控子 Shell，以 if 分支接住退出码；添加备份、演练证据和镜像检查的阶段输出，安全显示受控停止码，对其他异常仅显示类型。迁移 SQL、固定来源哈希、门控、5s / 60s、回滚和不重试规则不变。生产脚本暂不执行，后续通过文件上传与哈希校验运行，不再直接粘贴长文本。
+
+新增 [中断后的只读核对](gate3-interrupted-readonly.sh)，3,221 bytes。重新登录普通 SSH Shell 后执行；不使用 VNC、不重启服务、不执行迁移或回滚指令。它读取 PostgreSQL 容器状态，以临时无密码 profile 的只读事务查询四份 ledger、execution 表、event_key / event_seq、其他活跃 psql 和 advisory locks，随后读取已有报告的有限状态字段。临时 profile 精确清理，报告不存在也明确输出 missing_or_unreadable，不输出应用消息、连接凭据或原始异常日志。ledger 和对象未变仍需结合未结束会话、报告判断，不单凭客户端断开假定事务结果。
+
+本地验证：`python -m unittest discover -s docs/reports/context-loop-p1-production-migration-20261002 -p test_production_runner.py -v` 为 8 tests / 24.743 s 通过，包含旧 Shell 退出重现、新封装保持父 Shell、停止原因安全显示及原有正常 / pending / 回滚 / 重复尝试逻辑；新增只读检查测试使用同命令加 `-k interruption_check`，1 test / 10.562 s 通过，在真实隔离 PostgreSQL 上确认只读输出、ledger / schema / 历史计数不变且临时文件已删除。没有重跑生产迁移，没有推送、部署或业务真实写验收。具体停止原因、生产事务状态、低峰与生产 §3 输出仍待用户重新登录后回传。

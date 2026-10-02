@@ -1,4 +1,6 @@
 #!/bin/sh
+# Failure is contained in a child shell, including when pasted into a login shell.
+if sh <<'MF_SAFE_CHILD'
 set -eu
 python3 - <<'MF_APPROVED_PRODUCTION'
 import base64, sys, types
@@ -244,9 +246,12 @@ def postcheck_sql():
 def main():
     if os.geteuid() != 0:
         raise r.Stop('root_terminal_required')
+    print('STAGE=checking_verified_backup',flush=True)
     manifest, _ = r.checked_backup()
+    print('STAGE=checking_successful_rehearsal_report',flush=True)
     checked_rehearsal()
     files = r.decoded_migrations()
+    print('STAGE=checking_production_image',flush=True)
     if r.text(['docker','inspect','--format','{{.Config.Image}}',r.PRODUCTION]) != r.IMAGE:
         raise r.Stop('production_image_changed')
     if REPORTS.is_symlink():
@@ -338,8 +343,15 @@ if __name__ == '__main__':
     os.umask(0o077)
     try:
         raise SystemExit(main())
-    except (r.Stop,OSError,ValueError,KeyError,TypeError,subprocess.TimeoutExpired):
-        print('STOP: production_command_failed_check_report_and_ledger_no_retry')
+    except (r.Stop,OSError,ValueError,KeyError,TypeError,subprocess.TimeoutExpired) as exc:
+        reason=str(exc) if isinstance(exc,r.Stop) and re.fullmatch(r'[A-Za-z0-9_]+',str(exc)) else type(exc).__name__
+        print('STOP: '+reason+'; check_report_and_ledger_no_retry')
         raise SystemExit(1)
 
 MF_APPROVED_PRODUCTION
+MF_SAFE_CHILD
+then
+  printf 'COMMAND_ENDED; inspect_production_result\n'
+else
+  printf 'STOP: command_failed; no_automatic_retry\n'
+fi

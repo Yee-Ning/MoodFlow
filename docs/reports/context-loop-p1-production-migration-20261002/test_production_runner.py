@@ -51,9 +51,30 @@ class Guards(unittest.TestCase):
         shell=(here/'gate3-production-migration.sh').read_text(encoding='utf-8')
         support=(here/'rehearsal_runner.py').read_text(encoding='utf-8').split('\ndef main():')[0]
         self.assertIn(repr(base64.b64encode(support.encode()).decode()),shell)
-        self.assertTrue(shell.endswith((here/'production_runner.py').read_text(encoding='utf-8')+'\nMF_APPROVED_PRODUCTION\n'))
+        self.assertIn((here/'production_runner.py').read_text(encoding='utf-8')+'\nMF_APPROVED_PRODUCTION\nMF_SAFE_CHILD\n',shell)
         # Syntax only; the script is never executed against a local or remote production name.
         p.r.run(['docker','run','--rm','--pull','never','--network','none','--entrypoint','sh',p.r.IMAGE,'-n'],data=shell.encode())
+
+    def test_failed_command_does_not_exit_parent_login_shell(self):
+        prefix=['docker','run','--rm','--pull','never','--network','none','--entrypoint','sh',p.r.IMAGE,'-c']
+        old=p.r.run(prefix+['set -e; false; printf LOGIN_SURVIVED'],check=False)
+        self.assertEqual(old.returncode,1)
+        self.assertNotIn(b'LOGIN_SURVIVED',old.stdout)
+        new=p.r.run(prefix+["set -e; if sh <<'CHILD'\nset -eu\nfalse\nCHILD\nthen :; else printf 'STOP\\n'; fi\nprintf LOGIN_SURVIVED"],check=False)
+        self.assertEqual(new.returncode,0)
+        self.assertIn(b'LOGIN_SURVIVED',new.stdout)
+
+    def test_specific_stop_reason_is_visible_without_exception_contents(self):
+        source=Path(p.__file__).read_text(encoding='utf-8').split("if __name__ == '__main__':",1)[1]
+        source='if True:'+source
+        for failure,expected in ((p.r.Stop('backup_not_verified'),'backup_not_verified'),
+                                 (ValueError('sensitive fixture content'),'ValueError')):
+            def fail(): raise failure
+            output=io.StringIO()
+            with contextlib.redirect_stdout(output),patch.object(p.os,'umask'),self.assertRaises(SystemExit):
+                exec(source,{'os':p.os,'r':p.r,'re':p.re,'subprocess':subprocess,'main':fail})
+            self.assertIn(expected,output.getvalue())
+            self.assertNotIn('sensitive fixture content',output.getvalue())
 
 
 class IsolatedProductionFlow(unittest.TestCase):
@@ -73,6 +94,18 @@ ALTER TABLE checkpoint_writes ADD COLUMN thread_id TEXT, ADD COLUMN checkpoint_n
     @classmethod
     def tearDownClass(cls):
         fixtures.IsolatedDockerFlow.tearDownClass.__func__(cls)
+
+    def test_0_interruption_check_is_readonly_and_cleans_temp_profile(self):
+        source=(Path(__file__).resolve().parent/'gate3-interrupted-readonly.sh').read_text(encoding='utf-8')
+        body=source.split("<<'MF_STATE_CHECK'\n",1)[1].split('\nMF_STATE_CHECK\n',1)[0]
+        before=self.source.metadata()
+        result=self.source.command('sh','-s',data=body.encode())
+        self.assertIn('001_agent_continuity.sql',result.stdout.decode())
+        self.assertNotIn('003_context_loop_history.sql',result.stdout.decode())
+        self.assertIn('ROLLBACK',result.stdout.decode())
+        self.assertEqual(self.source.metadata(),before)
+        remaining=self.source.command('find','/tmp','-maxdepth','1','-name','mf-state-check-*').stdout
+        self.assertEqual(remaining,b'')
 
     def test_1_pending_latest_and_consumed_old_writes(self):
         def query(prefix):

@@ -2,7 +2,9 @@
 
 已获批准的目标库：`moodflow_agent`。门控 0 / 1 / 2 已通过；恢复负责人唐艺宁。本文件没有替代生产低峰检查，必须由脚本即时通过门控 3 才执行迁移。
 
-打开 [gate3-production-migration.sh](gate3-production-migration.sh)，复制文件全文到云服务器 root Shell，粘贴后回车。复制的是脚本文件全文，无需添加 Markdown 代码围栏。没有密码或完整连接凭据需要填写。
+**2026-10-02 更新：用户执行旧版命令时输出 STOP 并断开 SSH，生产事务状态待只读核对。先执行 [中断后的只读检查](gate3-interrupted-readonly.sh)，回传 ledger 和执行报告；不要重复执行旧脚本。**
+
+已修复 [gate3-production-migration.sh](gate3-production-migration.sh) 的交互 Shell 封装，失败只退出子进程，并输出具体非敏感停止原因和前置检查阶段。但本次不继续迁移。待确认前一次生产事务状态及停止原因后，改为上传脚本文件到服务器、核对文件哈希再从文件执行；不再整段粘贴 35 KB 脚本。没有密码或完整连接凭据需要填写。
 
 脚本重新校验有效备份、演练报告、固定镜像及迁移 SQL 哈希；以临时无密码 PostgreSQL service profile 连接。先跨约 10 秒做 6 次只读低峰观测，任何活跃请求、run、pending 或无法识别的状态均停止。通过后按手册只执行一次事务，超时固定为演练验证过的 5s / 60s，事务内再次检查数据库执行状态，再执行 003 / 004 和 ledger。数据库 SQL 错误显式 ROLLBACK；连接异常核对 ledger，状态不明也不重试。
 

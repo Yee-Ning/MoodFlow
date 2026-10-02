@@ -1,18 +1,18 @@
 {
-  "recorded_at": "2026-10-02T20:07:15+08:00",
+  "recorded_at": "2026-10-02T20:24:25+08:00",
   "timezone": "Asia/Shanghai",
   "target_database_approved": "moodflow_agent",
   "approved_service_name_from_runbook": "moodflow-approved-migration",
   "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
-  "status": "gate_0_1_2_passed_awaiting_combined_production_execution",
+  "status": "production_command_stopped_ssh_disconnected_awaiting_readonly_ledger_audit",
   "production_connection_established": true,
   "database_sql_sent": true,
-  "migration_executed": false,
+  "migration_executed": null,
   "backup_status": "valid_postgres_backup_confirmed_integrity_and_fresh_isolated_restore",
   "backup_gate_entered": true,
   "rehearsal_gate_entered": true,
-  "low_traffic_gate_entered": false,
-  "post_migration_sql_executed": false,
+  "low_traffic_gate_entered": null,
+  "post_migration_sql_executed": null,
   "real_write_verification": "skipped_no_dedicated_test_account",
   "windows_client_discovery": {
     "psql_on_path": false,
@@ -512,6 +512,34 @@
       "repeat_attempt_stopped": true,
       "test_data": "isolated_synthetic_fixture_only",
       "production_schema_execution": false
+    },
+    "user_attempted_command": true,
+    "actual_transaction_state": "unconfirmed_after_stop_and_ssh_disconnect"
+  },
+  "production_command_interruption": {
+    "source": "user_supplied_workbench_screenshot",
+    "screenshot_sha256": "97C3AC3E699156E5EE20BA44170C21E79EA8AF26BB3CECE79201A4C53879AF9F",
+    "stop_marker": "production_command_failed_check_report_and_ledger_no_retry",
+    "ssh_disconnected": true,
+    "initial_failure_reason": null,
+    "production_transaction_started": null,
+    "production_commit_confirmed": null,
+    "direct_remote_connection_by_agent": false,
+    "production_retry_executed": false,
+    "confirmed_script_defects": [
+      "set_eu_applied_to_login_shell",
+      "outer_exception_handler_hid_specific_stop_reason"
+    ],
+    "wrapper_fixed": true,
+    "safe_specific_reason_fixed": true,
+    "diagnostic_script": "gate3-interrupted-readonly.sh",
+    "diagnostic_bytes": 3221,
+    "production_diagnostic_executed": false,
+    "local_tests": {
+      "full_suite_passed": 8,
+      "full_suite_seconds": 24.743,
+      "additional_readonly_test_passed": 1,
+      "additional_readonly_test_seconds": 10.562
     }
   }
 }
