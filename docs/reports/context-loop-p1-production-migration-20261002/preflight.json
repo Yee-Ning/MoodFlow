@@ -1,0 +1,84 @@
+{
+  "recorded_at": "2026-10-02T17:51:32+08:00",
+  "timezone": "Asia/Shanghai",
+  "target_database_approved": "moodflow_agent",
+  "approved_service_name_from_runbook": "moodflow-approved-migration",
+  "repository_revision_at_check": "6f402a28a8dd65f555c6391e88f14ab41a84a5b7",
+  "status": "stopped_at_gate_0",
+  "production_connection_established": false,
+  "database_sql_sent": false,
+  "migration_executed": false,
+  "backup_status": "unknown_valid_backup_not_confirmed",
+  "backup_gate_entered": false,
+  "rehearsal_gate_entered": false,
+  "low_traffic_gate_entered": false,
+  "post_migration_sql_executed": false,
+  "real_write_verification": "skipped_no_dedicated_test_account",
+  "windows_client_discovery": {
+    "psql_on_path": false,
+    "pg_dump_on_path": false,
+    "pg_restore_on_path": false,
+    "psql_found_in_checked_installation_roots": false,
+    "checked_installation_roots": [
+      "C:/Program Files/PostgreSQL",
+      "C:/Program Files (x86)/PostgreSQL",
+      "C:/ProgramData/chocolatey/bin",
+      "%USERPROFILE%/scoop/apps/postgresql"
+    ],
+    "service_environment_present": {
+      "PGSERVICE": false,
+      "PGSERVICEFILE": false,
+      "PGSYSCONFDIR": false
+    },
+    "service_files": [
+      {"path": "%APPDATA%/postgresql/.pg_service.conf", "exists": false},
+      {"path": "%APPDATA%/postgresql/pg_service.conf", "exists": false},
+      {"path": "%USERPROFILE%/.pg_service.conf", "exists": false}
+    ]
+  },
+  "existing_local_client_container": {
+    "name": "moodflow-rehearsal-20260928-postgres-1",
+    "image_from_docker_ps": "pgvector/pgvector:pg16-trixie",
+    "production_identity_confirmed": false,
+    "production_scale_confirmed": false,
+    "psql_path": "/usr/bin/psql",
+    "pg_config_sysconfdir": "/etc/postgresql-common",
+    "service_environment_present": {
+      "PGSERVICE": false,
+      "PGSERVICEFILE": false,
+      "PGSYSCONFDIR": false
+    },
+    "checked_service_file_candidates": [
+      "$HOME/.pg_service.conf",
+      "/root/.pg_service.conf",
+      "/var/lib/postgresql/.pg_service.conf",
+      "/etc/pg_service.conf",
+      "/etc/postgresql-common/pg_service.conf"
+    ],
+    "any_checked_service_file_exists": false,
+    "profile_contents_read": false
+  },
+  "read_only_connection_attempt": {
+    "command": "docker exec moodflow-rehearsal-20260928-postgres-1 psql \"service=moodflow-approved-migration\" -X -w --set=ON_ERROR_STOP=1 -c \"BEGIN READ ONLY; SELECT current_database(), current_user, version(); ROLLBACK;\"",
+    "exit_code": 1,
+    "wall_time_seconds": 0.7735487,
+    "stderr": "psql: error: definition of service \"moodflow-approved-migration\" not found",
+    "failure_stage": "service_definition_lookup",
+    "sql_executed": false,
+    "retry_count": 0
+  },
+  "rehearsal_measurements": {
+    "lock_hold_seconds": null,
+    "wal_bytes": null,
+    "disk_bytes": null,
+    "replication_lag_seconds": null,
+    "migration_duration_seconds": null,
+    "lock_timeout_selected": null,
+    "statement_timeout_selected": null
+  },
+  "source_sha256": {
+    "docs/operations/context-loop-p1-postgres-migration-20261002.md": "4162164E1A925E6E22599F4196ECF8478829063F46F3183477798F9DB0AC0ACA",
+    "ai-service/migrations/postgresql/003_context_loop_history.sql": "DB21752BCB86AFFAE039634342E5B6DF8EC113053AA5ECB213F07C854ACB67B3",
+    "ai-service/migrations/postgresql/004_continuity_execution.sql": "5622723C341F6782085039AD2D0872D35ED93303A6F1114D7878E96EB0A388D2"
+  }
+}
