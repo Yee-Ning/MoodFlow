@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MoodFlow validation-7 真实操作验收</title>
+<style>body{max-width:1000px;margin:32px auto;padding:0 20px;font:16px/1.6 system-ui;background:#0b1822;color:#e3f1f4}button,input,textarea,select{font:inherit;padding:9px;margin:4px}input{width:220px}textarea{width:95%;height:100px}pre{white-space:pre-wrap;word-break:break-all;background:#122733;padding:16px}fieldset{margin:14px 0}button{cursor:pointer}audio{width:100%}</style>
+<h1>validation-7 真实操作验收</h1><p>唯一授权账号：我也无话可说_t（17994646607）。无自动重试；供应商合计上限 5 元。此页仅为本地验收工具。</p>
+<fieldset><legend>A / D：真实 Java + OperationJournal</legend>
+<label>运行 ID <input id="run" value="validation7-a"></label><label>歌单名 <input id="name"></label><br>
+<label>歌单 ID <input id="playlist" type="number"></label><label>歌曲 ID <input id="song" type="number"></label>
+<button id="identity">核对身份</button><button id="search">搜索晴天</button><button id="create">创建测试歌单</button><button id="add">添加歌曲</button><button id="like">红心写入</button><button id="lists">核对本轮歌单</button><button id="detail">读回歌单</button><button id="liked">读回红心</button><button id="recover">同运行幂等恢复</button>
+</fieldset>
+<fieldset><legend>B / C / E：真实 Handoff 与播放器 ACK</legend>
+<label>Thread ID <input id="thread" value="validation7-live-chain"></label><textarea id="message" aria-label="真实链路消息">请播放周杰伦的晴天。</textarea>
+<button id="loadplay">用实际播放器播放目录歌曲</button><button id="handoff">发送真实 Handoff</button><button id="resume">空输入恢复原链路</button><button id="apply">执行原始播放器动作并 ACK</button><button id="ack">补发同一原始 ACK</button><button id="jev">单次真实 JEV 调用</button><div id="audio"></div>
+<p>独立 ACK 故障案例：仅填写已真实执行的原始动作 ID，显式使用现有 Handoff 命名空间；原始失败仍计入验收。</p>
+<label>原始动作 ID <input id="originalaction" style="width:95%"></label><button id="recoverack">恢复已执行动作的原始 ACK</button>
+</fieldset>
+<fieldset><legend>独立进程故障注入</legend><select id="point"><option>after_write_before_result</option><option>before_journal_committed</option><option>before_action_ack</option></select><button id="arm">布防一次进程终止</button></fieldset>
+<pre id="output" aria-live="polite">准备中</pre>
+<script type="module">
+import {executeClientAction} from '/src/services/aiClientActions.ts'
+import {acknowledgeAiAction} from '/src/services/aiChat.ts'
+import {createPlayerContextSnapshot} from '/src/services/playerContext.ts'
+import {getGlobalAudioElement} from '/src/services/audio.ts'
+import {usePlayerStore} from '/src/store/playerStore.ts'
+const $=id=>document.getElementById(id), records=[], attempted=new Set(); let lastOperation=null,lastResponse=null,lastAck=null;
+const audio=getGlobalAudioElement();audio.controls=true;$('audio').append(audio);
+const show=(kind,value)=>{records.push({time:new Date().toISOString(),kind,value});$('output').textContent=JSON.stringify(records,null,2)};
+async function request(path,body){const response=await fetch('/api/ai/'+path,{method:body?'POST':'GET',credentials:'include',headers:{'Content-Type':'application/json','X-MoodFlow-Telemetry-Class':'acceptance'},body:body?JSON.stringify(body):undefined});const text=await response.text();let data;try{data=JSON.parse(text)}catch{data=text}show('http',{path,parameters:body,status:response.status,result:data});if(!response.ok)throw new Error('HTTP '+response.status);return data}
+function bind(id,action){$(id).onclick=async()=>{try{await action()}catch(error){show('original_error',{name:error.name,message:error.message})}}}
+bind('identity',()=>request('validation7/read/identity'));bind('search',async()=>{const r=await request('validation7/read/search');const songs=r.songs??r.data??[];if(songs[0])$('song').value=songs[0].song_id??songs[0].songId??songs[0].id});
+for(const kind of ['create','add','like'])bind(kind,async()=>{const run=$('run').value;const key=run+':'+kind;if(attempted.has(key))throw new Error('此步骤已尝试，禁止自动重试');attempted.add(key);lastOperation={kind,run_id:run,call_id:'first-'+kind};if(kind==='create')lastOperation.name=$('name').value;else{lastOperation.song_id=Number($('song').value);if(kind==='add')lastOperation.playlist_id=Number($('playlist').value)}const r=await request('validation7/operation',lastOperation);if(kind==='create')$('playlist').value=r.result.playlist_id;});
+bind('recover',()=>request('validation7/operation',{...lastOperation,call_id:'recovery-new-call-id'}));bind('lists',()=>request('validation7/read/playlists'));bind('detail',()=>request('validation7/read/detail?playlist_id='+$('playlist').value));bind('liked',()=>request('validation7/read/liked'));
+bind('handoff',async()=>{lastResponse=await request('handoff',{message:$('message').value,thread_id:$('thread').value,request_id:$('thread').value+'-original',player_context:createPlayerContextSnapshot()})});
+bind('resume',async()=>{lastResponse=await request('handoff',{message:'',thread_id:$('thread').value,request_id:$('thread').value+'-recover',resume:true,player_context:createPlayerContextSnapshot()})});
+bind('apply',async()=>{if(!lastResponse)throw new Error('没有真实链路响应');const actions=lastResponse.results.flatMap(r=>r.metadata?.client_actions??[]);if(!actions.length)throw new Error('真实链路没有产生播放器动作');for(const action of actions){let status='applied';try{await executeClientAction(action)}catch(error){status='failed';show('actual_player_error',{name:error.name,message:error.message})}lastAck={thread:$('thread').value,action_id:action.action_id,status};show('actual_player',{action,status,paused:audio.paused,currentTime:audio.currentTime,readyState:audio.readyState,snapshot:createPlayerContextSnapshot()});await acknowledgeAiAction(lastAck.thread,lastAck.action_id,status);show('ack_saved',lastAck)}});
+bind('ack',async()=>{if(!lastAck)throw new Error('没有待补原始 ACK');await acknowledgeAiAction(lastAck.thread,lastAck.action_id,lastAck.status);show('ack_reconciled',lastAck)});
+bind('recoverack',()=>request('actions/ack',{thread_id:$('thread').value,graph_mode:'handoff',action_id:$('originalaction').value,status:'applied'}));
+bind('arm',()=>request('validation7/arm/'+$('point').value,{}));
+bind('jev',()=>request('validation7/jev',{}));
+bind('loadplay',async()=>{const id=Number($('song').value);const response=await fetch('/api/songs/'+id,{credentials:'include'});const body=await response.json();show('catalogue_song',{status:response.status,result:body});if(!response.ok)throw new Error('HTTP '+response.status);const song=body.data;await usePlayerStore.getState().playSong({id:song.id,name:song.name,artists:song.artists,album:song.album,coverUrl:song.coverUrl,duration:song.duration});show('real_playback',{paused:audio.paused,currentTime:audio.currentTime,readyState:audio.readyState,snapshot:createPlayerContextSnapshot()})});
+$('name').value='MoodFlowTest-'+new Date().toLocaleString('sv-SE',{timeZone:'Asia/Shanghai'}).replace(/[- :]/g,'').replace(/^(\d{8})(\d{6})$/,'$1-$2');show('ready',{mock:false});
+</script></html>
