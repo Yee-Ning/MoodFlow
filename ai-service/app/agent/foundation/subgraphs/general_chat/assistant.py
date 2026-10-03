@@ -71,6 +71,11 @@ async def answer_general_chat(
     model: BaseChatModel | None = None,
     continuity_context: dict[str, Any] | None = None,
 ) -> AIMessage:
+    from app.agent.foundation.long_horizon.write_reconciliation import answer_write_status_query
+
+    answer = await answer_write_status_query(current_input)
+    if answer is not None:
+        return AIMessage(content=answer)
     history = select_recent_history(messages, current_input)
     player_context, prior_context = _trusted_context(routing_context, prior_task_results)
     pack = await build_context_async(

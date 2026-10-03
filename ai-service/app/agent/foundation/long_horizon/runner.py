@@ -46,7 +46,7 @@ async def produce(*, message, thread_id, routing_context, graph_mode="foundation
     graph.checkpointer = saver
     call = await coordinator.begin_call(graph=graph, graph_mode=graph_mode, thread_id=thread_id, message=message,
         routing_context=routing_context, user_id=user_id, request_id=request_id, resume=resume,
-        new_session=new_session, decisions=decisions)
+        new_session=new_session, decisions=decisions, session_cookie=session_cookie)
     token = active_call.set(call)
     accounting_token = active_accounting.set(call.accounting)
     operations_token = active_operations.set(call.operations)

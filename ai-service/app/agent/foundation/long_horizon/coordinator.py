@@ -185,7 +185,7 @@ class ContinuityCoordinator:
             return False
 
     async def begin_call(self, *, graph, graph_mode, thread_id, message, routing_context, user_id=None,
-                         request_id=None, resume=False, new_session=False, decisions=()):
+                         request_id=None, resume=False, new_session=False, decisions=(), session_cookie=None):
         conversation_id = f"handoff:v1:{thread_id}" if graph_mode == "handoff" else thread_id
         lease = await asyncio.to_thread(self.locks.acquire, conversation_id, digest([graph_mode, user_id]))
         try:
@@ -195,7 +195,9 @@ class ContinuityCoordinator:
             config = {"configurable": {"thread_id": conversation_id, "session_id": session.session_id}, "recursion_limit": 40}
             live = server_snapshot(conversation_id, routing_context, user_id)
             accounting = DurableAccounting(self.writer, identity, lease)
-            operations = OperationJournal(self.writer, accounting)
+            from app.tools.music import MusicServiceClient
+            operations = OperationJournal(self.writer, accounting,
+                read_client=MusicServiceClient(session_cookie) if session_cookie and user_id is not None else None)
             blocked, graph_input, report_body = None, None, None
             snapshot = await self.snapshot(graph, config, identity) if graph_mode == "handoff" else None
             saved_row = await graph.checkpointer.aget_tuple(config)
@@ -209,6 +211,16 @@ class ContinuityCoordinator:
                 previous = state.values or {}
                 snapshot = await self.snapshot(graph, config, identity) if graph_mode == "handoff" else None
             context = previous.get("continuity_context", {})
+            previous_run = snapshot.run.run_id if snapshot else context.get("run_id")
+            from .write_reconciliation import is_write_status_query
+            if context.get("auth_scope") and context["auth_scope"] != lease.scope and (
+                is_write_status_query(message) or (previous_run and operations.unknown_writes(previous_run))
+            ):
+                raise ContinuityConflict("write reconciliation auth scope changed")
+            if previous_run and operations.reconciler is not None and operations.unknown_writes(previous_run):
+                await operations.reconcile_run(previous_run)
+                if snapshot:
+                    snapshot = await self.snapshot(graph, config, identity)
             # Same request replay uses the original run and checkpoint; a transport
             # identifier is never treated as permission to restart business effects.
             replay = bool(request_id and context.get("request_id") == request_id)
@@ -216,7 +228,8 @@ class ContinuityCoordinator:
             if resume and new_session:
                 raise ContinuityConflict("resume and new session are separate operations")
             if snapshot and not state.next and operations.unknown_writes(snapshot.run.run_id):
-                blocked = "上次写操作的结果尚未确认，需要先查询状态，不能重复执行。"
+                blocked = await operations.answer_query(message) if is_write_status_query(message) else (
+                    "上次写操作的结果尚未确认，需要先查询状态，不能重复执行。")
             if not resume and state.next:
                 raise ContinuityConflict("pending run requires empty-input resume")
             if replay and message and message != previous.get("current_input"):

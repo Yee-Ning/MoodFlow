@@ -193,6 +193,11 @@ async def execute_owned_task(
     else:
 
         async def chat(messages, text, routing_context, prior_results):
+            from app.agent.foundation.long_horizon.write_reconciliation import answer_write_status_query
+
+            answer = await answer_write_status_query(text)
+            if answer is not None:
+                return AIMessage(content=answer)
             history = list(messages)
             if history and isinstance(history[-1], HumanMessage):
                 history.pop()

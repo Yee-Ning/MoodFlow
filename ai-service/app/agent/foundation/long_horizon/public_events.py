@@ -44,6 +44,12 @@ class PublicTool(ContinuityContract):
     status: Literal["proposed", "success", "failed", "unknown"]
     effect: Literal["read", "write", "client_action"]
     result_ref: HistoryPointer | None = None
+    baseline_ref: HistoryPointer | None = None
+    reconciliation_ref: HistoryPointer | None = None
+    confirmation_source: Literal["response", "readback"] | None = None
+    error_code: str | None = Field(default=None, max_length=80)
+    error_message: str | None = Field(default=None, max_length=1000)
+    auth_scope: str | None = Field(default=None, max_length=160)
 
     @model_validator(mode="after")
     def public_parameters_only(self):

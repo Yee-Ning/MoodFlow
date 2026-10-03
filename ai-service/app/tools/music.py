@@ -20,6 +20,7 @@ from app.schemas.music import (
     SongLikeResult,
     SpringCreatedPlaylistResponse,
     SpringSongLikeResponse,
+    SpringLikedSongsResponse,
     EntitySearchItem,
     EntitySearchResult,
     GetAlbumDetailArgs,
@@ -331,6 +332,12 @@ class MusicServiceClient:
             raise MusicServiceError("invalid_response", "音乐服务返回了不匹配的红心状态。")
         return parsed.data
 
+    async def get_liked_song_ids(self) -> list[int]:
+        """Read the authenticated account's full cloud like list; never mutate it."""
+        payload = await self._request("GET", "/api/user/liked-songs")
+        parsed = self._validate_response(payload, SpringLikedSongsResponse)
+        return parsed.data
+
     async def create_playlist(self, name: str, privacy: int = 0) -> CreatedPlaylistResult:
         args = CreatePlaylistArgs(name=name, privacy=privacy)
         payload = await self._request("POST", "/api/playlists", params=args.model_dump())
@@ -545,4 +552,8 @@ def handle_music_tool_error(error: Exception) -> str:
         code = "tool_execution_failed"
         message = "工具调用失败，请根据已有信息回答，并建议用户稍后重试。"
     logger.warning("Music tool execution failed: code=%s", code, exc_info=error)
-    return ToolFailure(error=code, message=message).model_dump_json()
+    state = getattr(error, "write_state", None)
+    if state == "unknown":
+        message = "原写请求没有有效成功回执，实际效果仍未知；只允许读回核对，禁止重复写入。原始错误：" + message
+    return ToolFailure(error=code, message=message, operation_id=getattr(error, "operation_id", None),
+                       write_state=state).model_dump_json(exclude_none=True)

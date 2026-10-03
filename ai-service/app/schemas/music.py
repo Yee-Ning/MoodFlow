@@ -283,12 +283,22 @@ class SpringSongLikeResponse(BaseModel):
     data: SongLikeResult
 
 
+class SpringLikedSongsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: int
+    message: str
+    data: list[Annotated[int, Field(gt=0, strict=True)]]
+
+
 class ToolFailure(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     success: Literal[False] = False
     error: str
     message: str
+    operation_id: str | None = None
+    write_state: Literal["failed", "unknown", "confirmed"] | None = None
 
 
 class SpringMusicSearchResponse(BaseModel):
