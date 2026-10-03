@@ -925,6 +925,9 @@ async def test_mismatched_explorer_result_is_failed_before_publication_or_action
         response.results[0].status == TaskStatus.FAILED
         and response.results[0].subgraph == "worldline"
     )
-    assert (
-        "private" not in response.model_dump_json() and not response.results[0].metadata
-    )
+    metadata = response.results[0].metadata
+    assert "private" not in response.model_dump_json()
+    # Only parent-owned failure/progress data may escape; the corrupt child
+    # graph, target and metadata remain excluded from the public result.
+    assert set(metadata) == {"reason"}
+    assert metadata["reason"] == "task_failed"
