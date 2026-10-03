@@ -436,32 +436,17 @@ class ContinuityCoordinator:
                     acknowledgements.add(event.payload["action_id"])
                 cursor = event.event_seq
 
-    async def acknowledge(self, *, graph_mode, thread_id, user_id, action_id, status):
-        conversation = f"handoff:v1:{thread_id}" if graph_mode == "handoff" else thread_id
-        await asyncio.to_thread(self.locks.require_scope, conversation, digest([graph_mode, user_id]))
-        try:
-            task = self.store.active_task(conversation)
-            if task is None:
-                raise ContinuityConflict("action conversation unavailable")
-            cursor, action = 0, None
-            while True:
-                rows = self.store.query_task_history(task.task_id, event_type=HistoryEventType.CLIENT_ACTION, after_seq=cursor, limit=100)
-                if not rows:
-                    break
-                for event in rows:
-                    if event.payload["action_id"] == action_id:
-                        action = event
-                    cursor = event.event_seq
-            if action is None:
-                raise ContinuityConflict("unknown action id")
-            identity = ContinuityIdentity(conversation_id=conversation, continuity_task_id=task.task_id,
-                session_id=action.session_id, request_id="ack:" + action_id, graph_mode=graph_mode)
-            from .models import HistoryPointer
-            event = self.writer.append_public_event(identity, "ack:" + action_id, HistoryEventType.ACTION_ACK,
-                PublicActionAck(action_id=action_id, status=status, action_ref=HistoryPointer(kind="event", target_id=action.event_id)))
-            return {"action_id": action_id, "status": event.payload["status"]}
-        finally:
-            pass  # ACK is append-only and may arrive while the execution owns its lease.
+    async def acknowledge(self, *, graph_mode=None, thread_id, user_id, action_id, status):
+        from .action_ack import resolve_action_owner
+        from .models import HistoryPointer
+
+        identity, action = await asyncio.to_thread(resolve_action_owner, self.store, self.locks,
+            graph_mode=graph_mode, thread_id=thread_id, user_id=user_id, action_id=action_id)
+        # Retain the original action's task/session and the Writer's immutable deduplication key.
+        event = await asyncio.to_thread(self.writer.append_public_event, identity, "ack:" + action_id,
+            HistoryEventType.ACTION_ACK, PublicActionAck(action_id=action_id, status=status,
+                action_ref=HistoryPointer(kind="event", target_id=action.event_id)))
+        return {"action_id": action_id, "status": event.payload["status"]}
 
 
 class ContinuityCheckpointer(BaseCheckpointSaver):

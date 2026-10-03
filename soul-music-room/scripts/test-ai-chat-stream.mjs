@@ -643,6 +643,47 @@ try {
   await useAiChatStore.getState().sendMessage('暂停', playerContext())
   assert.deepEqual(ackBodies.map((ack) => [ack.action_id, ack.status]), [['p1-ack-applied', 'applied']])
   assert.equal(ackBodies[0].thread_id, useAiChatStore.getState().conversationId)
+  assert.equal('graph_mode' in ackBodies[0], false)
+
+  const { acknowledgeAiAction, parseClientAction } = await server.ssrLoadModule('/src/services/aiChat.ts')
+  for (const graphMode of ['handoff', 'foundation']) {
+    globalThis.fetch = async (url, init) => {
+      if (String(url).endsWith('/actions/ack')) {
+        ackBodies.push(JSON.parse(init.body))
+        return new Response('{}', { status: 200 })
+      }
+      const { thread_id: threadId } = JSON.parse(init.body)
+      return streamResponse([
+        sse('action', { action_id: `ack-${graphMode}`, task_id: 'p1', name: 'pause_player', arguments: {},
+          graph_mode: graphMode, thread_id: threadId }),
+        sse('final', { type: 'chat', message: '已暂停', search_query: null }), sse('done', {}),
+      ])
+    }
+    useAiChatStore.getState().clearConversation()
+    await useAiChatStore.getState().sendMessage('暂停', playerContext())
+    assert.deepEqual(ackBodies.at(-1), { thread_id: useAiChatStore.getState().conversationId,
+      action_id: `ack-${graphMode}`, status: 'applied', graph_mode: graphMode })
+    assert.equal(useAiChatStore.getState().error, '')
+  }
+  const beforeMismatch = ackBodies.length
+  globalThis.fetch = async () => streamResponse([
+    sse('action', { action_id: 'wrong-thread', task_id: 'p1', name: 'pause_player', arguments: {},
+      graph_mode: 'handoff', thread_id: 'foreign-thread' }),
+  ])
+  await useAiChatStore.getState().sendMessage('暂停', playerContext())
+  assert.match(useAiChatStore.getState().error, /所属会话/)
+  assert.equal(ackBodies.length, beforeMismatch)
+  const dto = { action_id: 'parse', task_id: 'p1', name: 'pause_player', arguments: {} }
+  for (const extra of [{ graph_mode: 'legacy' }, { thread_id: '' }, { graph_mode: null }, { unexpected: 1 }]) {
+    assert.throws(() => parseClientAction({ ...dto, ...extra }), /无法识别/)
+  }
+  globalThis.fetch = async () => new Response(JSON.stringify({ detail: {
+    code: 'ack_graph_mode_mismatch', message: '回执图类型与原动作所属会话不一致',
+  } }), { status: 409 })
+  await assert.rejects(acknowledgeAiAction('thread', 'action', 'applied', 'foundation'),
+    (error) => error.status === 409 && /ack_graph_mode_mismatch/.test(error.message))
+  globalThis.fetch = async () => new Response('old error', { status: 409 })
+  await assert.rejects(acknowledgeAiAction('thread', 'action', 'applied'), /播放器操作回执尚未保存/)
 
   usePlayerStore.setState({ currentSong: null })
   globalThis.fetch = async (url, init) => {

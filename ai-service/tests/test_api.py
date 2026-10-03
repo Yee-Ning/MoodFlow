@@ -288,6 +288,8 @@ class ApiTests(unittest.TestCase):
         events = parse_sse(response.text)
         self.assertEqual([name for name, _ in events], ["action", "final", "done"])
         self.assertEqual(events[0][1]["name"], "pause_player")
+        self.assertEqual(events[0][1]["graph_mode"], "foundation")
+        self.assertEqual(events[0][1]["thread_id"], "foundation-api")
         self.assertEqual(captured["thread_id"], "foundation-api")
         self.assertEqual(captured["telemetry_sample_kind"], "acceptance")
         context = captured["routing_context"]

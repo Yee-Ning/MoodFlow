@@ -17,6 +17,7 @@ from app.agent.handoff.streaming import invoke_handoff_assistant, stream_handoff
 from app.agent.handoff.rollout import select_chat_graph
 from app.context.identity import UserIdentityProvider
 from app.agent.foundation.long_horizon.execution import ContinuityConflict
+from app.agent.foundation.long_horizon.action_ack import ActionAckConflict
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
 from app.schemas.chat import (
@@ -54,20 +55,36 @@ def _encode_sse(event: str, data: dict[str, object]) -> str:
     return f"event: {event}\ndata: {payload}\n\n"
 
 
+def _with_action_owner(response: FoundationResponse, graph_mode: str, thread_id: str) -> FoundationResponse:
+    # Stamp transport copies only; internal action DTOs and durable payload digests stay intact.
+    results = []
+    for result in response.results:
+        metadata = dict(result.metadata)
+        if "client_actions" in metadata:
+            metadata["client_actions"] = [
+                {**action, "graph_mode": graph_mode, "thread_id": thread_id}
+                for action in metadata["client_actions"]
+            ]
+        results.append(result.model_copy(update={"metadata": metadata}))
+    return response.model_copy(update={"results": results})
+
+
 @router.post("/foundation", response_model=FoundationResponse)
 async def foundation_chat(chat_request: ChatRequest, request: Request) -> FoundationResponse:
     try:
         session_cookie = _spring_session_cookie(request)
         user_id = await UserIdentityProvider().resolve(session_cookie)
-        return await invoke_foundation_assistant(
+        thread_id = chat_request.thread_id or str(uuid4())
+        response = await invoke_foundation_assistant(
             message=chat_request.message,
-            thread_id=chat_request.thread_id or str(uuid4()),
+            thread_id=thread_id,
             routing_context=chat_request.resolved_routing_context(),
             session_cookie=session_cookie,
             user_id=user_id,
             telemetry_sample_kind=_telemetry_sample_kind(request),
             **chat_request.continuity_options(),
         )
+        return _with_action_owner(response, "foundation", thread_id)
     except ContinuityConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
@@ -83,14 +100,16 @@ async def handoff_chat(chat_request: ChatRequest, request: Request) -> Foundatio
     try:
         session_cookie = _spring_session_cookie(request)
         user_id = await UserIdentityProvider().resolve(session_cookie)
-        return await invoke_handoff_assistant(
+        thread_id = chat_request.thread_id or str(uuid4())
+        response = await invoke_handoff_assistant(
             message=chat_request.message,
-            thread_id=chat_request.thread_id or str(uuid4()),
+            thread_id=thread_id,
             routing_context=chat_request.resolved_routing_context(),
             session_cookie=session_cookie, user_id=user_id,
             telemetry_sample_kind=_telemetry_sample_kind(request),
             **chat_request.continuity_options(),
         )
+        return _with_action_owner(response, "handoff", thread_id)
     except ContinuityConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
@@ -137,14 +156,20 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
                         {"node": event.node, "status": event.status},
                     )
                 elif isinstance(event, ClientActionStreamEvent):
+                    action = event.action.model_dump(mode="json")
+                    if mode in {"foundation", "handoff"}:
+                        action.update(graph_mode=mode, thread_id=thread_id)
                     yield _encode_sse(
                         "action",
-                        event.action.model_dump(mode="json"),
+                        action,
                     )
                 elif isinstance(event, FinalStreamEvent):
+                    response = event.response
+                    if mode in {"foundation", "handoff"} and isinstance(response, FoundationResponse):
+                        response = _with_action_owner(response, mode, thread_id)
                     yield _encode_sse(
                         "final",
-                        event.response.model_dump(mode="json"),
+                        response.model_dump(mode="json"),
                     )
         except Exception:
             logger.exception("AI agent streaming request failed")
@@ -178,13 +203,13 @@ async def action_ack(body: ActionAckRequest, request: Request):
     from app.agent.foundation.long_horizon.coordinator import get_continuity_coordinator
     user_id = await UserIdentityProvider().resolve(_spring_session_cookie(request))
     try:
-        mode = body.graph_mode or select_chat_graph(get_settings(), body.thread_id)
-        if mode not in {"foundation", "handoff"}:
-            raise ContinuityConflict("legacy graph has no durable action receipts")
-        return await get_continuity_coordinator().acknowledge(graph_mode=mode,
+        return await get_continuity_coordinator().acknowledge(graph_mode=body.graph_mode,
             thread_id=body.thread_id, user_id=user_id, action_id=body.action_id, status=body.status)
+    except ActionAckConflict as exc:
+        raise HTTPException(status_code=409, detail={"code": exc.code, "message": str(exc)}) from exc
     except (ContinuityConflict, ValueError) as exc:
-        raise HTTPException(status_code=409, detail="动作回执与会话状态不一致") from exc
+        raise HTTPException(status_code=409, detail={"code": "ack_state_conflict",
+            "message": "动作回执与原动作或已保存回执不一致"}) from exc
 
 
 class NamespaceMigrationRequest(BaseModel):

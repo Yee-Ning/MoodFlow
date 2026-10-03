@@ -133,6 +133,9 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
                 : 'generating',
           })
         } else if (event.type === 'action') {
+          if (event.action.thread_id && event.action.thread_id !== threadId) {
+            throw new AiChatApiError('播放器动作所属会话与当前会话不一致')
+          }
           let applied = false
           try {
             const { executeClientAction } = await import('../services/aiClientActions')
@@ -145,7 +148,7 @@ export const useAiChatStore = create<AiChatState>((set, get) => ({
             set({ error: actionFailure })
           }
           try {
-            await acknowledgeAiAction(threadId, event.action.action_id, applied ? 'applied' : 'failed')
+            await acknowledgeAiAction(threadId, event.action.action_id, applied ? 'applied' : 'failed', event.action.graph_mode)
           } catch (error) {
             actionFailure = error instanceof Error ? error.message : '播放器操作回执尚未保存'
             set({ error: actionFailure })
