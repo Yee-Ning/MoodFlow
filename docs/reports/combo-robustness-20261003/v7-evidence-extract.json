@@ -1,0 +1,182 @@
+{
+  "source": "docs/reports/context-loop-live-20261003/history-public.json",
+  "source_sha256": "436d2612d437d035deb560ee07d63e5efffd203c9b3ddcb4c69c6563f6347ca7",
+  "events": [
+    {
+      "event_seq": 9,
+      "event_type": "model_usage",
+      "agent": "general_chat",
+      "phase": "baseline",
+      "tokens": 0,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 10,
+      "event_type": "model_usage",
+      "agent": "curator",
+      "phase": "baseline",
+      "tokens": 0,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 11,
+      "event_type": "model_usage",
+      "agent": "explorer",
+      "phase": "baseline",
+      "tokens": 0,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 16,
+      "event_type": "model_usage",
+      "agent": "general_chat",
+      "phase": "reserved",
+      "tokens": 1510,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 17,
+      "event_type": "model_usage",
+      "agent": "general_chat",
+      "phase": "settled",
+      "tokens": 716,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 19,
+      "event_type": "model_usage",
+      "agent": "general_chat",
+      "phase": "reserved",
+      "tokens": 1024,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 20,
+      "event_type": "model_usage",
+      "agent": "general_chat",
+      "phase": "settled",
+      "tokens": 1113,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 28,
+      "event_type": "model_usage",
+      "agent": "curator",
+      "phase": "reserved",
+      "tokens": 7120,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 29,
+      "event_type": "model_usage",
+      "agent": "curator",
+      "phase": "settled",
+      "tokens": 4517,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 30,
+      "event_type": "tool_call",
+      "run_id": "a8247447339547bc97f06bb18e0f6c00",
+      "name": "search_music",
+      "status": "proposed",
+      "effect": "read"
+    },
+    {
+      "event_seq": 31,
+      "event_type": "tool_result",
+      "run_id": "a8247447339547bc97f06bb18e0f6c00",
+      "name": "search_music",
+      "status": "success",
+      "effect": "read"
+    },
+    {
+      "event_seq": 32,
+      "event_type": "model_usage",
+      "agent": "curator",
+      "phase": "reserved",
+      "tokens": 403,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 33,
+      "event_type": "model_usage",
+      "agent": "curator",
+      "phase": "settled",
+      "tokens": 389,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 35,
+      "event_type": "model_usage",
+      "agent": "curator",
+      "phase": "reserved",
+      "tokens": 7852,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 36,
+      "event_type": "model_usage",
+      "agent": "curator",
+      "phase": "settled",
+      "tokens": 5049,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 37,
+      "event_type": "tool_call",
+      "run_id": "a8247447339547bc97f06bb18e0f6c00",
+      "name": "search_music",
+      "status": "proposed",
+      "effect": "read"
+    },
+    {
+      "event_seq": 38,
+      "event_type": "tool_call",
+      "run_id": "a8247447339547bc97f06bb18e0f6c00",
+      "name": "search_entities_tool",
+      "status": "proposed",
+      "effect": "read"
+    },
+    {
+      "event_seq": 39,
+      "event_type": "tool_result",
+      "run_id": "a8247447339547bc97f06bb18e0f6c00",
+      "name": "search_music",
+      "status": "success",
+      "effect": "read"
+    },
+    {
+      "event_seq": 40,
+      "event_type": "tool_result",
+      "run_id": "a8247447339547bc97f06bb18e0f6c00",
+      "name": "search_entities_tool",
+      "status": "success",
+      "effect": "read"
+    },
+    {
+      "event_seq": 41,
+      "event_type": "model_usage",
+      "agent": "curator",
+      "phase": "reserved",
+      "tokens": 403,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 42,
+      "event_type": "model_usage",
+      "agent": "curator",
+      "phase": "settled",
+      "tokens": 389,
+      "run_id": "a8247447339547bc97f06bb18e0f6c00"
+    },
+    {
+      "event_seq": 46,
+      "event_type": "structured_output",
+      "run_id": "a8247447339547bc97f06bb18e0f6c00",
+      "status": "failed",
+      "route_key": "tool_calling",
+      "route_task_id": "91b1a751e13d4a048c6da41e82bcb9a0:tool_calling:0"
+    }
+  ]
+}
