@@ -1,0 +1,70 @@
+[
+  {
+    "time": "2026-10-03T19:00:27.306529+08:00",
+    "kind": "provider_dispatch",
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "dispatch": 1,
+    "ceiling_cny": 0.010522,
+    "reserved_cny": 0.010522,
+    "calls": 1
+  },
+  {
+    "time": "2026-10-03T19:00:27.964406+08:00",
+    "kind": "provider_http",
+    "provider": "deepseek",
+    "status": 200
+  },
+  {
+    "time": "2026-10-03T19:00:28.827033+08:00",
+    "kind": "provider_dispatch",
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "dispatch": 2,
+    "ceiling_cny": 0.010522,
+    "reserved_cny": 0.021044,
+    "calls": 2
+  },
+  {
+    "time": "2026-10-03T19:00:29.459301+08:00",
+    "kind": "provider_http",
+    "provider": "deepseek",
+    "status": 200
+  },
+  {
+    "time": "2026-10-03T19:00:29.54353+08:00",
+    "kind": "provider_dispatch",
+    "provider": "typesafe",
+    "model": "jev-latest",
+    "dispatch": 3,
+    "ceiling_cny": 0.008081220000000002,
+    "reserved_cny": 0.02912522,
+    "calls": 3
+  },
+  {
+    "time": "2026-10-03T19:00:30.336746+08:00",
+    "kind": "jev_usage",
+    "usage": {
+      "input_tokens": 1019,
+      "output_tokens": 40
+    }
+  },
+  {
+    "time": "2026-10-03T19:00:31.095826+08:00",
+    "kind": "provider_dispatch",
+    "provider": "typesafe",
+    "model": "jev-latest",
+    "dispatch": 4,
+    "ceiling_cny": 0.008113559999999999,
+    "reserved_cny": 0.03723878,
+    "calls": 4
+  },
+  {
+    "time": "2026-10-03T19:00:31.964085+08:00",
+    "kind": "jev_usage",
+    "usage": {
+      "input_tokens": 1047,
+      "output_tokens": 40
+    }
+  }
+]
