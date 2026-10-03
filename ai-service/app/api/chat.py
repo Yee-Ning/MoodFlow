@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
@@ -239,3 +240,22 @@ async def migrate_namespace(body: NamespaceMigrationRequest, request: Request):
     finally:
         if call is not None:
             await call.close()
+
+
+class RecoveryStatusRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    thread_id: str = Field(min_length=1, max_length=128)
+    graph_mode: Literal["foundation", "handoff"]
+
+
+@router.post("/continuity/recovery/status")
+async def recovery_status(body: RecoveryStatusRequest, request: Request):
+    """Read diagnostics only; querying status cannot resume tools or reset limits."""
+    from app.agent.foundation.long_horizon.coordinator import get_continuity_coordinator
+    user_id = await UserIdentityProvider().resolve(_spring_session_cookie(request))
+    try:
+        return await asyncio.to_thread(get_continuity_coordinator().recovery_status,
+            graph_mode=body.graph_mode, thread_id=body.thread_id, user_id=user_id)
+    except ContinuityConflict as exc:
+        raise HTTPException(status_code=409, detail={"code": "recovery_scope_mismatch",
+            "message": "当前账号或图类型与原运行作用域不一致，无法读取恢复记录"}) from exc

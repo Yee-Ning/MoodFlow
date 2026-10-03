@@ -4,7 +4,7 @@ from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
-from .models import ContinuityContract, HistoryPointer
+from .models import ContinuityContract, HistoryPointer, RecoveryGap
 
 
 class PublicText(ContinuityContract):
@@ -99,6 +99,9 @@ class PublicRevalidation(ContinuityContract):
     transfer_integrity: Literal["valid", "uncommitted", "missing_receipt", "conflict", "unknown"]
     action: Literal["resume_target", "resume_source", "refresh_facts", "needs_input", "stop"]
     reason: str | None = Field(default=None, max_length=160)
+    checkpoint_id: str | None = Field(default=None, max_length=160)
+    receipt_gaps: tuple[RecoveryGap, ...] = Field(default=(), max_length=64)
+    revalidation_reasons: tuple[str, ...] = Field(default=(), max_length=32)
 
 
 class PublicUsage(ContinuityContract):

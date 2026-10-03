@@ -27,6 +27,7 @@ from .models import ContinuityIdentity, HandoffDraftV2, HistoryEventType, LiveSn
 from .operations import OperationJournal
 from .public_events import PublicAction, PublicActionAck, PublicCheckpoint, PublicRoute
 from .recovery_executor import RecoveryExecutor
+from .recovery_receipts import RecoveryReceiptRepair, is_recovery_query, latest_recovery_status, recovery_message
 from .runtime import get_long_horizon_service
 
 logger = logging.getLogger(__name__)
@@ -105,6 +106,7 @@ class ContinuityCoordinator:
         self.locks = ExecutionLocks(self.store)
         self.recovery = RecoveryExecutor(self.writer, self.journal,
             read_facts=read_facts or self.refresh_facts, read_effects=read_effects or self.refresh_effects)
+        self.receipt_repair = RecoveryReceiptRepair(self.writer, self.journal)
 
     async def refresh_effects(self, snapshot, live):
         return self.with_acks(snapshot.identity, live)
@@ -212,12 +214,32 @@ class ContinuityCoordinator:
                 snapshot = await self.snapshot(graph, config, identity) if graph_mode == "handoff" else None
             context = previous.get("continuity_context", {})
             previous_run = snapshot.run.run_id if snapshot else context.get("run_id")
+            if is_recovery_query(message):
+                view = latest_recovery_status(self.store, session.task_id, session_id=session.session_id)
+                return ContinuityCall(self, identity, session, config, None, live, lease, accounting,
+                    operations, graph, recovery_message(view), view)
             from .write_reconciliation import is_write_status_query
             if context.get("auth_scope") and context["auth_scope"] != lease.scope and (
                 is_write_status_query(message) or (previous_run and operations.unknown_writes(previous_run))
             ):
                 raise ContinuityConflict("write reconciliation auth scope changed")
-            if previous_run and operations.reconciler is not None and operations.unknown_writes(previous_run):
+            recovering = resume or bool(request_id and context.get("request_id") == request_id)
+            gaps = ()
+            # A completed transport replay must return the original response;
+            # an ACK gap alone is diagnosed only by explicit recovery, not replay.
+            repair_needed = snapshot and (resume or state.next or any(
+                gap.kind != "action_ack" for gap in self.receipt_repair.scan(snapshot, operations)))
+            if recovering and repair_needed:
+                accounting.identity = snapshot.identity
+                gaps = await self.receipt_repair.repair(snapshot, operations,
+                    authority_matches=not context.get("auth_scope") or context["auth_scope"] == lease.scope)
+                if gaps:
+                    self.receipt_repair.record(snapshot, gaps)
+                    snapshot = await self.snapshot(graph, config, identity)
+                    if any(gap.status == "blocked" for gap in gaps):
+                        blocked = recovery_message(latest_recovery_status(self.store, session.task_id,
+                            session_id=session.session_id))
+            elif previous_run and operations.reconciler is not None and operations.unknown_writes(previous_run):
                 await operations.reconcile_run(previous_run)
                 if snapshot:
                     snapshot = await self.snapshot(graph, config, identity)
@@ -262,7 +284,7 @@ class ContinuityCoordinator:
                     raise ContinuityConflict("resume checkpoint unavailable")
                 if context.get("graph_mode") != graph_mode:
                     raise ContinuityConflict("checkpoint graph mode mismatch")
-                if snapshot and not state.next:
+                if snapshot and not state.next and not any(gap.status == "blocked" for gap in gaps):
                     self.journal.confirm_checkpoint(snapshot, reconcile=True)
                     if previous.get("final_response"):
                         self.history.public_text(snapshot.identity, "final:" + snapshot.run.run_id,
@@ -273,14 +295,14 @@ class ContinuityCoordinator:
                     live = self.with_acks(identity, live)
                     draft = self.draft(session, snapshot, context.get("live_snapshot"), snapshot.run.original_input)
                     projection = self.service.build_handoff(session.session_id, draft)
-                    plan, report, live = await self.recovery.execute(projection, live, snapshot, operations=operations)
+                    plan, report, live = await self.recovery.execute(projection, live, snapshot, operations=operations, receipt_gaps=gaps)
                     report_body = report.model_dump(mode="json")
                     totals = accounting.totals(snapshot.run.run_id, [item.model_dump(mode="json") for item in snapshot.run.usage])
                     if (sum(item["tokens"] for item in totals) >= snapshot.run.limits.run_token_budget
                         or any(item["tokens"] >= snapshot.run.limits.agent_token_budget or item["retries"] > snapshot.run.limits.max_retries_per_agent for item in totals)):
-                        blocked = "原运行额度已耗尽，本次恢复已停止。"
+                        blocked = recovery_message(latest_recovery_status(self.store, session.task_id, session_id=session.session_id))
                     elif plan.action not in {"resume_target", "resume_source"}:
-                        blocked = "恢复需要补充确认或原运行已停止；不会重建任务或重复操作。"
+                        blocked = recovery_message(latest_recovery_status(self.store, session.task_id, session_id=session.session_id))
                     else:
                         # The exclusive fence protects the saved source namespace.
                         # An unpinned empty-input resume lets LangGraph apply only
@@ -295,6 +317,14 @@ class ContinuityCoordinator:
                         blocked = "原运行截止时间已到，恢复已停止。"
                     elif context.get("auth_scope") != lease.scope or operations.unknown_writes(context.get("run_id")):
                         blocked = "原运行权限或写操作状态尚未确认。"
+                if snapshot and gaps and (not state.next or blocked):
+                    if not state.next:
+                        reason = "receipt_evidence_insufficient" if any(gap.status == "blocked" for gap in gaps) else "run_terminal"
+                        self.receipt_repair.record(snapshot, gaps, action="stop", reason=reason)
+                    view = latest_recovery_status(self.store, session.task_id, session_id=session.session_id)
+                    report_body = view
+                    if any(gap.status == "blocked" for gap in gaps):
+                        blocked = recovery_message(view)
                 # Empty input resumes saved pending nodes. For a completed run,
                 # runner returns the saved visible response without invoking again.
             elif blocked is None:
@@ -344,6 +374,15 @@ class ContinuityCoordinator:
                     value=ack.status, source="client_action_ack", observed_at=event.timestamp, scope=identity.conversation_id)
                 cursor = event.event_seq
         return LiveSnapshot(observations=tuple(list(observations.values())[-64:]))
+
+    def recovery_status(self, *, graph_mode, thread_id, user_id):
+        conversation = f"handoff:v1:{thread_id}" if graph_mode == "handoff" else thread_id
+        self.locks.require_scope(conversation, digest([graph_mode, user_id]))
+        task = self.store.active_task(conversation)
+        if task is None:
+            return {"status": "unavailable", "reason": "recovery_not_observed", "receipt_gaps": []}
+        session = self.store.active_session(task.task_id)
+        return latest_recovery_status(self.store, task.task_id, session_id=session.session_id)
 
     def draft(self, session, snapshot, live_body, goal):
         live = LiveSnapshot.model_validate(live_body) if live_body else LiveSnapshot()

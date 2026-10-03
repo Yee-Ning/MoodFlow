@@ -194,8 +194,9 @@ async def execute_owned_task(
 
         async def chat(messages, text, routing_context, prior_results):
             from app.agent.foundation.long_horizon.write_reconciliation import answer_write_status_query
+            from app.agent.foundation.long_horizon.recovery_receipts import answer_recovery_query
 
-            answer = await answer_write_status_query(text)
+            answer = await answer_recovery_query(text) or await answer_write_status_query(text)
             if answer is not None:
                 return AIMessage(content=answer)
             history = list(messages)

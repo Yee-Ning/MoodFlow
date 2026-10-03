@@ -15,9 +15,17 @@ class RecoveryExecutor:
         self.validator = RealityRevalidator(writer.store)
         self.planner = RecoveryPlanner()
 
-    async def execute(self, projection, live, snapshot, *, operations=None):
+    async def execute(self, projection, live, snapshot, *, operations=None, receipt_gaps=()):
         def verify(current_live):
             report = self.validator.revalidate(projection, current_live, snapshot)
+            report = report.model_copy(update={"receipt_gaps": receipt_gaps})
+            if operations is not None:
+                totals = operations.accounting.totals(snapshot.run.run_id,
+                    [item.model_dump(mode="json") for item in snapshot.run.usage])
+                if (sum(item["tokens"] for item in totals) >= snapshot.run.limits.run_token_budget
+                    or any(item["tokens"] >= snapshot.run.limits.agent_token_budget
+                        or item["retries"] > snapshot.run.limits.max_retries_per_agent for item in totals)):
+                    report = report.model_copy(update={"budget_state": "exhausted"})
             if operations is not None and operations.unknown_writes(snapshot.run.run_id):
                 report = report.model_copy(update={"write_status": "unknown",
                     "reasons": (*report.reasons, "operation_effect_unknown")})
@@ -26,7 +34,9 @@ class RecoveryExecutor:
         plan = self.planner.decide(report, snapshot)
         for attempt in range(3):
             body = PublicRevalidation(run_id=snapshot.run.run_id, field_results=report.field_results,
-                transfer_integrity=report.transfer_integrity, action=plan.action, reason=plan.blocked_reason)
+                transfer_integrity=report.transfer_integrity, action=plan.action, reason=plan.blocked_reason,
+                checkpoint_id=snapshot.ref.checkpoint_id, receipt_gaps=receipt_gaps,
+                revalidation_reasons=tuple(dict.fromkeys(report.reasons)))
             self.writer.append_public_event(snapshot.identity,
                 "revalidation:" + digest([snapshot.identity.request_id, snapshot.ref.checkpoint_id, attempt,
                     body.model_dump(mode="json")])[7:], HistoryEventType.REALITY_REVALIDATION, body)
@@ -50,4 +60,11 @@ class RecoveryExecutor:
             # Fresh facts still disagree with an original task's input/constraints.
             # Propagate changed/unknown to context and wait; reads grant no write authority.
             plan = plan.model_copy(update={"action": "needs_input", "blocked_reason": "fresh_facts_require_authorization"})
+        final = PublicRevalidation(run_id=snapshot.run.run_id, field_results=report.field_results,
+            transfer_integrity=report.transfer_integrity, action=plan.action, reason=plan.blocked_reason,
+            checkpoint_id=snapshot.ref.checkpoint_id, receipt_gaps=receipt_gaps,
+            revalidation_reasons=tuple(dict.fromkeys(report.reasons)))
+        self.writer.append_public_event(snapshot.identity,
+            "revalidation-final:" + digest([snapshot.identity.request_id, final.model_dump(mode="json")])[7:],
+            HistoryEventType.REALITY_REVALIDATION, final)
         return plan, report, live

@@ -9,6 +9,8 @@ class RecoveryPlanner:
             run_id=report.run_id, remaining_deadline=report.remaining_deadline,
             evidence_refs=report.required_drilldown,
         )
+        if checkpoint is not None and str(checkpoint.run.stop_reason) == "cancelled":
+            return RecoveryPlan(action="stop", blocked_reason="original_run_cancelled", **base)
         if checkpoint is not None and limits is not None and limits != checkpoint.run.limits:
             return RecoveryPlan(action="stop", blocked_reason="limits_mismatch", **base)
         if report.budget_state == "exhausted":

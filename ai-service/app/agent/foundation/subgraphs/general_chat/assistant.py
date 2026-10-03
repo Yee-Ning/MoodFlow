@@ -72,8 +72,9 @@ async def answer_general_chat(
     continuity_context: dict[str, Any] | None = None,
 ) -> AIMessage:
     from app.agent.foundation.long_horizon.write_reconciliation import answer_write_status_query
+    from app.agent.foundation.long_horizon.recovery_receipts import answer_recovery_query
 
-    answer = await answer_write_status_query(current_input)
+    answer = await answer_recovery_query(current_input) or await answer_write_status_query(current_input)
     if answer is not None:
         return AIMessage(content=answer)
     history = select_recent_history(messages, current_input)

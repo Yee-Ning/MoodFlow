@@ -404,6 +404,14 @@ class LiveSnapshot(ContinuityContract):
         return self
 
 
+class RecoveryGap(ContinuityContract):
+    kind: Literal["write_success", "transfer_committed", "task_result", "action_ack"]
+    subject_id: str = Field(min_length=1, max_length=160)
+    status: Literal["missing", "repaired", "blocked"] = "missing"
+    reason: str = Field(min_length=1, max_length=160)
+    evidence_refs: tuple[HistoryPointer, ...] = Field(default=(), max_length=8)
+
+
 class RevalidationReport(ContinuityContract):
     field_results: dict[str, Literal["valid", "changed", "unknown"]] = Field(default_factory=dict)
     transfer_integrity: Literal["valid", "uncommitted", "missing_receipt", "conflict", "unknown"] = "unknown"
@@ -418,6 +426,7 @@ class RevalidationReport(ContinuityContract):
     remaining_deadline: float = Field(default=0, ge=0)
     run_status: str = "unknown"
     write_status: Literal["none", "confirmed", "unknown"] = "unknown"
+    receipt_gaps: tuple[RecoveryGap, ...] = Field(default=(), max_length=64)
 
 
 class RecoveryPlan(ContinuityContract):
