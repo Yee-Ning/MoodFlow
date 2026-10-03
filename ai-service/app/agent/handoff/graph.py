@@ -21,7 +21,7 @@ from app.agent.handoff.agents import choose_transfer, execute_owned_task
 from app.agent.handoff.guard import configured_guard
 from app.agent.handoff.integrity import TransferIntegrityConflict
 from app.agent.handoff.registry import AGENT_REGISTRY, CAPABILITY_OWNERS, AgentKey
-from app.agent.handoff.routing import configured_entry_router
+from app.agent.handoff.routing import LazyHybridRouter, configured_entry_router, input_question
 from app.agent.handoff.state import (
     HandoffRun,
     AgentUsage,
@@ -72,13 +72,12 @@ def build_handoff_graph(
     trace_sink=None,
     transfer_journal=None,
 ) -> StateGraph:
-    router = intent_router or configured_entry_router(create_hybrid_router())
+    router = intent_router or configured_entry_router(LazyHybridRouter(create_hybrid_router))
     bounds = limits or RunLimits()
 
     def prepare(state):
-        text = state["current_input"].strip()
-        if not text or len(text) > 4_000:
-            raise ValueError("invalid handoff input")
+        raw = state["current_input"]
+        text = raw.strip() if isinstance(raw, str) else raw
         return {
             "current_input": text,
             "route_decision": None,
@@ -96,6 +95,13 @@ def build_handoff_graph(
         }
 
     async def route(state) -> Command:
+        question = input_question(state["current_input"])
+        if question:
+            # Invalid input cannot fit HandoffRun.UserInput. End before creating
+            # a run, retaining the same needs-input response flags.
+            return Command(goto="final_response", update={
+                "handoff_needs_input": True, "final_response": question,
+            })
         trace = TraceRecorder(state["run_id"], AgentKey.GENERAL_CHAT, sink=trace_sink)
         remaining = (
             bounds.run_timeout_seconds
@@ -346,7 +352,7 @@ def build_handoff_graph(
             text = state.get("final_response") or EXECUTION_FAILURE
             return {
                 "final_response": text,
-                "handoff_failed": True,
+                "handoff_failed": not state.get("handoff_needs_input", False),
                 "messages": [AIMessage(content=text)],
             }
         run = HandoffRun.model_validate(raw)

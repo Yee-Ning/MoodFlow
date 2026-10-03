@@ -45,7 +45,7 @@ async def test_shadow_preserves_baseline_and_active_selects_candidate(
     probe = client()
     with caplog.at_level(logging.INFO):
         plan = await HandoffEntryRouter(baseline, probe, shadow=shadow).route(
-            "暂停一下", RoutingContext()
+            "老唱片为什么会有底噪", RoutingContext()
         )
     assert plan.tasks[0].route_key is expected
     assert baseline.route.await_count == int(shadow)
@@ -58,7 +58,7 @@ async def test_shadow_preserves_baseline_and_active_selects_candidate(
         )
     )
     assert event["plan_agreement"] is (False if shadow else None)
-    assert "暂停一下" not in caplog.text and "candidate_summary" not in caplog.text
+    assert "老唱片为什么会有底噪" not in caplog.text and "candidate_summary" not in caplog.text
 
 
 @pytest.mark.asyncio
@@ -76,7 +76,7 @@ async def test_api_and_schema_failures_use_baseline_once(shadow, failure):
     probe = client()
     probe.decide.side_effect = failure
     plan = await HandoffEntryRouter(baseline, probe, shadow=shadow).route(
-        "暂停一下", RoutingContext()
+        "老唱片为什么会有底噪", RoutingContext()
     )
     assert plan.tasks[0].route_key is RouteKey.TOOL_CALLING
     assert baseline.route.await_count == probe.decide.await_count == 1
@@ -87,22 +87,24 @@ async def test_low_confidence_falls_back_and_budget_failure_propagates():
     baseline = AsyncMock(wraps=Router(RouteKey.GENERAL_CHAT))
     probe = client(0.79)
     adapter = HandoffEntryRouter(baseline, probe, shadow=False)
-    assert (await adapter.route("暂停一下", RoutingContext())).tasks[
+    assert (await adapter.route("老唱片为什么会有底噪", RoutingContext())).tasks[
         0
     ].route_key is RouteKey.GENERAL_CHAT
     probe.decide.side_effect = RuntimeLimitError("token_limit")
     with pytest.raises(RuntimeLimitError):
-        await adapter.route("暂停一下", RoutingContext())
+        await adapter.route("老唱片为什么会有底噪", RoutingContext())
     assert baseline.route.await_count == 1
 
 
 def test_independent_factory_gates(monkeypatch):
     baseline = object()
-    assert configured_entry_router(baseline) is baseline
+    adapter = configured_entry_router(baseline)
+    assert adapter.baseline is baseline and adapter.candidate is None
     monkeypatch.setenv("JEV_ENABLED", "true")
     config = settings(jev_handoff_router_enabled=False)
     monkeypatch.setattr("app.agent.handoff.routing.get_settings", lambda: config)
-    assert configured_entry_router(baseline) is baseline
+    adapter = configured_entry_router(baseline)
+    assert adapter.baseline is baseline and adapter.candidate is None
     config = config.model_copy(
         update={
             "jev_handoff_router_enabled": True,
@@ -130,8 +132,9 @@ async def test_entry_candidate_reaches_existing_handoff_graph_without_protocol_c
             curator_model=model,
         )
         .compile()
-        .ainvoke(input_state())
+        .ainvoke(input_state("老唱片为什么会有底噪"))
     )
     assert out["handoff_run"]["status"] == "completed"
     assert out["handoff_run"]["results"][0]["route_key"] == "tool_calling"
     assert "task_fidelity" not in out["final_response"]
+    assert baseline.route.await_count == 0
