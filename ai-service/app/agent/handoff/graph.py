@@ -19,6 +19,7 @@ from app.agent.foundation.routing import RouteDecision
 from app.agent.foundation.state.main import MainState
 from app.agent.handoff.agents import choose_transfer, execute_owned_task
 from app.agent.handoff.guard import configured_guard
+from app.agent.handoff.integrity import TransferIntegrityConflict
 from app.agent.handoff.registry import AGENT_REGISTRY, CAPABILITY_OWNERS, AgentKey
 from app.agent.handoff.routing import configured_entry_router
 from app.agent.handoff.state import (
@@ -208,6 +209,7 @@ def build_handoff_graph(
                 if journal is not None:
                     await journal.await_committed(
                         _continuity_identity(state, run), run, timeout=max(0, node_window),
+                        messages=state.get("messages", ()), envelope=state.get("transfer_envelope"),
                     )
                     ledger.check()
                     if continuity_call is not None:
@@ -275,6 +277,10 @@ def build_handoff_graph(
                     )
                     return command
                 updated = record_task_result(run, result)
+        except TransferIntegrityConflict:
+            trace.emit(code="guard_rejected")
+            # Preserve the conflicting state for diagnosis; no fallback/result or retry.
+            raise
         except (Exception, asyncio.CancelledError) as exc:
             run = HandoffRun.model_validate(
                 {**run.model_dump(), "usage": tuple(ledger.usage.values())}

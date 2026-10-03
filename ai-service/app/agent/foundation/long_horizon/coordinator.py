@@ -16,7 +16,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from app.agent.foundation.models import TaskResult
 from app.agent.foundation.routing import RouteDecision
 from app.agent.foundation.state.main import create_main_state
-from app.agent.handoff.continuity import AgentTransferJournal, ProgressProjector, snapshot_from_row, validate_transfer_messages
+from app.agent.handoff.continuity import AgentTransferJournal, ProgressProjector, snapshot_from_row
 from app.agent.handoff.state import HandoffRun, RunStatus
 
 from .accounting import DurableAccounting
@@ -176,10 +176,10 @@ class ContinuityCoordinator:
             for result in candidate.results:
                 if result.data.get("client_actions"):
                     return False
-            from app.agent.handoff.contracts import HandoffEnvelope
+            from app.agent.handoff.continuity import checkpoint_envelope
             pending = replace(snapshot, run=candidate, messages=tuple(values.get("messages", [])),
-                envelope=HandoffEnvelope.model_validate(values["transfer_envelope"]) if values.get("transfer_envelope") else None)
-            validate_transfer_messages(pending)
+                envelope=checkpoint_envelope(values.get("transfer_envelope")))
+            self.journal.verify_payloads(pending.identity, pending.run, pending.messages, pending.envelope)
             return True
         except (ValueError, KeyError, TypeError):
             return False

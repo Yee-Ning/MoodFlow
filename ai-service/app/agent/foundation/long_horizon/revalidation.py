@@ -5,7 +5,7 @@ import json
 from datetime import UTC, datetime
 
 from app.agent.handoff.continuity import (
-    public_state_digest, transfer_identity, validate_transfer_messages,
+    AgentTransferJournal, public_state_digest, transfer_identity,
 )
 from app.agent.handoff.registry import AGENT_REGISTRY, next_agent_for_task
 from app.agent.handoff.state import HandoffRun
@@ -92,7 +92,12 @@ class RealityRevalidator:
                 raise ValueError("checkpoint identity mismatch")
             if (snapshot.ref.session_id, snapshot.ref.checkpoint_ns, snapshot.ref.execution_thread_id) != (
                 identity.session_id, identity.session_id, identity.conversation_id
-            ) or snapshot.ref.public_state_digest != public_state_digest(run):
+            ):
+                raise ValueError("checkpoint scope or digest mismatch")
+            AgentTransferJournal(HistoryWriter(self.store)).verify_payloads(
+                identity, run, snapshot.messages, snapshot.envelope,
+            )
+            if snapshot.ref.public_state_digest != public_state_digest(run):
                 raise ValueError("checkpoint scope or digest mismatch")
             source_ref = getattr(projection, "source_checkpoint_ref", None)
             if source_ref and (source_ref.session_id, source_ref.execution_thread_id, source_ref.checkpoint_ns) != (
@@ -103,7 +108,6 @@ class RealityRevalidator:
                 snapshot.ref.checkpoint_id, *snapshot.ancestor_checkpoint_ids
             }:
                 raise ValueError("projection checkpoint lineage mismatch")
-            validate_transfer_messages(snapshot)
             if snapshot.next_nodes:
                 expected = AGENT_REGISTRY[run.current_agent].node_name if run.status.value == "running" else "final_response"
                 if any(node != expected for node in snapshot.next_nodes):

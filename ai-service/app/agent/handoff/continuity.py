@@ -5,6 +5,7 @@ import asyncio
 import hashlib
 import json
 from datetime import datetime
+from types import SimpleNamespace
 
 from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -20,11 +21,13 @@ from app.agent.foundation.long_horizon.models import (
     HandoffDraftV2,
     PublicRunMetadata,
     PublicTaskResult,
+    PublicHistoryError,
     RunProgressRecord,
     TransferJournalEvent,
 )
 from app.agent.handoff.contracts import HandoffCode, HandoffEnvelope
 from app.agent.handoff.messages import parse_transfer_call
+from app.agent.handoff.integrity import TransferIntegrityConflict, payload_digest, transfer_payload
 from app.agent.handoff.registry import transfer_tool_name
 from app.agent.handoff.state import HandoffRun
 
@@ -80,11 +83,21 @@ class CheckpointSnapshot:
     ref: CheckpointRef
     run: HandoffRun
     messages: tuple
-    envelope: HandoffEnvelope | None
+    envelope: HandoffEnvelope | dict | None
     ancestor_checkpoint_ids: frozenset[str] = frozenset()
     next_nodes: tuple[str, ...] = ()
     pending_writes: bool = False
     guard_retry_deadline: datetime | None = None
+
+
+def checkpoint_envelope(raw):
+    """Retain malformed private data so the journal can audit and reject it."""
+    if raw is None:
+        return None
+    try:
+        return HandoffEnvelope.model_validate(raw)
+    except (ValueError, TypeError):
+        return raw
 
 
 def snapshot_from_row(row, identity, *, ancestors=(), next_nodes=()) -> CheckpointSnapshot:
@@ -105,8 +118,7 @@ def snapshot_from_row(row, identity, *, ancestors=(), next_nodes=()) -> Checkpoi
     return CheckpointSnapshot(
         identity=identity, ref=ref, run=run,
         messages=tuple(values.get("messages", [])),
-        envelope=HandoffEnvelope.model_validate(values["transfer_envelope"])
-        if values.get("transfer_envelope") else None,
+        envelope=checkpoint_envelope(values.get("transfer_envelope")),
         ancestor_checkpoint_ids=frozenset(ancestors), next_nodes=tuple(next_nodes),
         pending_writes=bool(row.pending_writes),
         guard_retry_deadline=datetime.fromisoformat(values["guard_retry_deadline"])
@@ -114,7 +126,7 @@ def snapshot_from_row(row, identity, *, ancestors=(), next_nodes=()) -> Checkpoi
     )
 
 
-def validate_transfer_messages(snapshot: CheckpointSnapshot) -> None:
+def validate_transfer_messages(snapshot: CheckpointSnapshot) -> dict[str, str]:
     calls, replies, pending = {}, {}, {}
     for message in snapshot.messages:
         if isinstance(message, AIMessage):
@@ -143,6 +155,7 @@ def validate_transfer_messages(snapshot: CheckpointSnapshot) -> None:
         if isinstance(message, ToolMessage) and str(message.name or "").startswith("transfer_to_"):
             if message.tool_call_id not in calls and not str(message.id or "").startswith("handoff-result:"):
                 raise ValueError("orphan checkpoint transfer reply")
+    digests = {}
     for hop in snapshot.run.hops:
         call = calls.get(hop.tool_call_id)
         reply = replies.get(hop.tool_call_id)
@@ -153,8 +166,13 @@ def validate_transfer_messages(snapshot: CheckpointSnapshot) -> None:
             raise ValueError("checkpoint transfer target mismatch")
         if json.loads(reply.content) != {"accepted": True, "code": "accepted"}:
             raise ValueError("checkpoint hop has no accepted reply")
+        digests[hop.tool_call_id] = payload_digest(transfer_payload(
+            snapshot.run, request, source_agent=hop.source_agent, tool_call_id=hop.tool_call_id,
+            completed_count=hop.completed_count,
+        ))
     if snapshot.envelope is not None:
-        envelope = snapshot.envelope
+        raw = snapshot.envelope
+        envelope = HandoffEnvelope.model_validate(raw.model_dump(mode="json") if isinstance(raw, HandoffEnvelope) else raw)
         if not snapshot.run.hops:
             raise ValueError("checkpoint envelope has no accepted hop")
         hop = snapshot.run.hops[-1]
@@ -171,6 +189,9 @@ def validate_transfer_messages(snapshot: CheckpointSnapshot) -> None:
             (item.task_id, str(item.route_key), (item.content or "")[:1000]) for item in snapshot.run.results
         ]:
             raise ValueError("checkpoint envelope completed results disagree")
+        if payload_digest(envelope.model_dump(mode="json")) != digests[hop.tool_call_id]:
+            raise ValueError("checkpoint transfer envelope payload mismatch")
+    return digests
 
 
 class AgentTransferJournal:
@@ -178,7 +199,7 @@ class AgentTransferJournal:
         self.writer = writer
         self._commit_signals = {}
 
-    async def await_committed(self, identity, run, *, timeout):
+    async def await_committed(self, identity, run, *, messages, envelope, timeout):
         """Opt-in graph nodes cannot act on an in-memory accepted Command."""
         if not run.hops:
             return
@@ -201,6 +222,8 @@ class AgentTransferJournal:
                 run.run_id, hop.source_agent.value, hop.target_agent.value, hop.task_id, len(run.hops) - 1
             ):
                 raise ValueError("transfer commit disagrees with target execution")
+            # Check the actual node input, even if its persisted checkpoint was valid.
+            self.verify_payloads(identity, run, messages, envelope, require_receipts=True)
         finally:
             self._commit_signals.pop(key, None)
 
@@ -213,6 +236,40 @@ class AgentTransferJournal:
 
     def _event(self, identity, transfer_id, phase):
         return self.writer.store.get_history_event(self.writer.event_id(identity, f"{transfer_id}:{phase}"))
+
+    def verify_payloads(self, identity, run, messages, envelope, *, require_receipts=False):
+        """Compare actual payloads with sender proposals and committed receipts.
+
+        Missing receipts may be reconciled only from matching immutable proposals.
+        A missing legacy digest is never generated from the received payload.
+        """
+        self.writer.require_identity(identity)
+        if identity.graph_mode != "handoff" or identity.run_id != run.run_id:
+            raise ValueError("transfer payload identity mismatch")
+        if not run.hops:
+            validate_transfer_messages(SimpleNamespace(run=run, messages=tuple(messages), envelope=envelope))
+            return
+        related = transfer_identity(run.run_id, run.hops[-1].tool_call_id)
+        try:
+            snapshot = SimpleNamespace(run=run, messages=tuple(messages), envelope=envelope)
+            actual = validate_transfer_messages(snapshot)
+            for hop in run.hops:
+                related = transfer_identity(run.run_id, hop.tool_call_id)
+                proposal = self._event(identity, related, "proposed")
+                receipt = self._event(identity, related, "committed") or self._event(identity, related, "reconciled")
+                if proposal is None or (require_receipts and receipt is None):
+                    raise ValueError("transfer payload digest has no immutable anchor")
+                expected = TransferJournalEvent.model_validate(proposal.payload).summary.payload_digest
+                if expected is None or actual[hop.tool_call_id] != expected:
+                    raise ValueError("transfer payload digest mismatch")
+                if receipt and TransferJournalEvent.model_validate(receipt.payload).summary.payload_digest != expected:
+                    raise ValueError("transfer receipt payload digest mismatch")
+        except (ValueError, KeyError, TypeError):
+            self.writer.append_public_event(
+                identity, f"{related}:integrity_conflict", HistoryEventType.ERROR,
+                PublicHistoryError(code="integrity_conflict", related_key_digest=digest(related)),
+            )
+            raise TransferIntegrityConflict() from None
 
     def observe_target(self, snapshot, *, phase):
         """Explicit execution hook; a saved task result proves target_finished."""
@@ -260,6 +317,9 @@ class AgentTransferJournal:
             source_agent=run_before.current_agent.value, target_agent=request.target_agent.value,
             route_task_id=run_before.pending_tasks[0].task_id,
             reason_code=reason_code, candidate_summary=request.context_summary,
+            payload_digest=payload_digest(transfer_payload(
+                run_before, request, source_agent=run_before.current_agent, tool_call_id=call_id,
+            )),
             completed_result_refs=self._result_refs(identity, run_before),
             pending_task_refs=tuple(task.task_id for task in run_before.pending_tasks),
         )
@@ -277,9 +337,9 @@ class AgentTransferJournal:
             identity.session_id, identity.session_id, identity.conversation_id
         ):
             raise ValueError("checkpoint journal scope mismatch")
+        self.verify_payloads(identity, run, snapshot.messages, snapshot.envelope)
         if snapshot.ref.public_state_digest != public_state_digest(run):
             raise ValueError("checkpoint public state digest mismatch")
-        validate_transfer_messages(snapshot)
         transfer_refs = []
         for index, hop in enumerate(run.hops):
             transfer_id = transfer_identity(run.run_id, hop.tool_call_id)

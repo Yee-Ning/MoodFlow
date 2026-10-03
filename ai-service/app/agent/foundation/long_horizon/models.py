@@ -225,6 +225,8 @@ class AgentTransferSummaryV1(ContinuityContract):
     route_task_id: str = Field(min_length=1, max_length=128)
     reason_code: str = Field(min_length=1, max_length=64)
     candidate_summary: str = Field(default="", max_length=2000)
+    # Legacy history remains readable; execution requires a pinned digest.
+    payload_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     completed_result_refs: tuple[HistoryPointer, ...] = Field(default=(), max_length=32)
     pending_task_refs: tuple[str, ...] = Field(default=(), max_length=32)
     entity_refs: tuple[str, ...] = Field(default=(), max_length=32)

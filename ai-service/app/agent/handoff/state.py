@@ -13,7 +13,6 @@ from app.agent.foundation.routing import RouteDecision, RouteTask, RoutingContex
 from app.agent.foundation.state.base import BaseAgentState
 from app.agent.foundation.subgraphs.tool_calling.models import ReferencedEntities
 from app.agent.handoff.contracts import (
-    CompletedTaskSummary,
     ContractModel,
     FinalResponse,
     HandoffCode,
@@ -29,6 +28,7 @@ from app.agent.handoff.registry import (
     AgentKey,
     next_agent_for_task,
 )
+from app.agent.handoff.integrity import transfer_payload
 
 
 class RunStatus(StrEnum):
@@ -391,25 +391,10 @@ def request_handoff(
         code = HandoffCode.WRONG_TARGET
     if code is not None:
         return run, HandoffResult(code=code)
-    envelope = HandoffEnvelope(
-        run_id=run.run_id,
-        tool_call_id=tool_call_id,
-        source_agent=source_agent,
-        request=request.model_dump(),
-        original_input=run.original_input,
-        active_task=run.pending_tasks[0].model_dump(),
-        pending_tasks=tuple(task.model_dump() for task in run.pending_tasks),
-        completed_results=tuple(
-            CompletedTaskSummary(
-                task_id=result.task_id,
-                route_key=result.route_key,
-                content=(result.content or "")[:1_000],
-            )
-            for result in run.results
-        ),
-        entities=(entities or ReferencedEntities()).model_dump(),
-        evidence_refs=tuple(ref.model_dump() for ref in evidence_refs),
-    )
+    envelope = HandoffEnvelope.model_validate(transfer_payload(
+        run, request, source_agent=source_agent, tool_call_id=tool_call_id,
+        entities=entities or ReferencedEntities(), evidence_refs=evidence_refs,
+    ))
     hop = HandoffHop(
         tool_call_id=tool_call_id,
         source_agent=source_agent,

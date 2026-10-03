@@ -72,6 +72,11 @@ class NamespaceMigrator:
         row = await graph.checkpointer.aget_tuple(source_config)
         if row is None or row.checkpoint["channel_values"]["handoff_run"]["run_id"] != body.run_id:
             raise ContinuityConflict("migration source unavailable")
+        source_snapshot = snapshot_from_row(row, source_identity)
+        coordinator.journal.verify_payloads(
+            source_identity, source_snapshot.run, source_snapshot.messages, source_snapshot.envelope,
+            require_receipts=True,
+        )
         target_identity = source_identity.model_copy(update={"session_id": body.target_session, "run_id": body.run_id})
         target_session = coordinator.store.require_session(body.target_session)
         if target_session.previous_session_id != body.source_session or target_session.task_id != source_identity.continuity_task_id:

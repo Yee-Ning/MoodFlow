@@ -8,6 +8,7 @@ from app.agent.foundation.response import foundation_response
 from app.agent.foundation.routing import RouteDecision
 from app.agent.handoff.registry import AgentKey
 from app.agent.handoff.state import AgentUsage, HandoffRun, RunLimits
+from app.agent.handoff.integrity import TransferIntegrityConflict
 from app.llm.runtime import RequestLedger, request_scope
 from app.schemas.chat import ClientActionStreamEvent, FinalStreamEvent, MessageStreamEvent, UpdateStreamEvent
 from app.schemas.context import MusicAgentContext
@@ -155,6 +156,12 @@ async def produce(*, message, thread_id, routing_context, graph_mode="foundation
         await _extract_memories(user_id=user_id, thread_id=thread_id, user_message=message,
                                enabled=bool(message), memory_runtime=memory_runtime)
         coordinator.history.archive(call.identity)
+        return response
+    except TransferIntegrityConflict:
+        response = foundation_response(
+            "转交载荷完整性核验失败，已拒绝执行；需要检查原始转交记录。", [], needs_clarification=True,
+        )
+        emit(FinalStreamEvent(response=response))
         return response
     finally:
         renew.cancel()
