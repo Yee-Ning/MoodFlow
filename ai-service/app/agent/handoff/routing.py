@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 
 from app.agent.decision.jev.client import JevClient
 from app.agent.decision.jev.router_v5 import JevRouterV5, RuleGuard
@@ -17,6 +18,22 @@ from app.llm.runtime import RuntimeLimitError
 
 logger = logging.getLogger(__name__)
 NO_PLAN_QUESTION = "暂时无法确定可执行的音乐或聊天任务，请说明目标或把请求拆成具体步骤。"
+# Preflight strips clause syntax; Legacy Hybrid may retain it in evidence.
+# Permit only that prefix, never text from an excluded or preceding action.
+_HYBRID_CLAUSE_PREFIX = re.compile(
+    r"(?:[ \t\r\n,，。.!?！？;；、]|然后|接着|随后|顺便|另外|同时|以及|并且|并|最后|再)+"
+)
+
+
+def hybrid_span_is_grounded(text, item, clauses):
+    for clause in clauses:
+        if not clause.start < item.end <= clause.end:
+            continue
+        if clause.start <= item.start < item.end:
+            return True
+        if _HYBRID_CLAUSE_PREFIX.fullmatch(text[item.start:clause.start]):
+            return True
+    return False
 
 
 def input_question(text):
@@ -55,8 +72,7 @@ class HybridFallback:
                 # by preflight. Never reintroduce an excluded fragment on fallback.
                 if any(
                     text[item.start:item.end] != item.evidence
-                    or not any(clause.start <= item.start < item.end <= clause.end
-                               for clause in clauses)
+                    or not hybrid_span_is_grounded(text, item, clauses)
                     for item in decision.intents
                 ) or any(
                     not task.intent_orders and (
