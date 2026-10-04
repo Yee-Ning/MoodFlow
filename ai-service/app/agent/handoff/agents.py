@@ -107,6 +107,12 @@ async def choose_transfer(
     )
     if not isinstance(response, AIMessage):
         raise ValueError("transfer model returned an invalid message")
+    # Explorer supplies its server-built queue in the existing summary slot.
+    # All other agents, transfer targets, tasks and guard paths are unchanged.
+    from app.agent.handoff.registry import AgentKey
+    if run.current_agent is AgentKey.EXPLORER:
+        from app.agent.handoff.journey import attach_journey_transfer
+        response = attach_journey_transfer(response, run)
     return response
 
 
