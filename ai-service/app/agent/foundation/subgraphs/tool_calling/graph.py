@@ -46,6 +46,7 @@ from app.agent.structured_output import (
     StructuredOutputService,
 )
 from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
+from app.agent.foundation.subgraphs.tool_calling.scope import is_simple_song_playback, SONG_PLAYBACK_TOOLS
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
     AlbumDetailResult,
@@ -67,7 +68,7 @@ TOOL_LIMIT_MESSAGE = (
     "这次任务需要的工具调用次数超过安全上限，我已停止继续操作。"
     "请缩小请求范围或分成两次完成。"
 )
-INVALID_TOOL_OUTPUT_MESSAGE = "工具选择或参数格式无效，本次没有执行工具。"
+INVALID_TOOL_OUTPUT_MESSAGE = "工具选择或参数格式无效，已停止后续工具执行。"
 
 # Tool output and conversation history can supply entity references, but only
 # the assigned user clause can authorize a player or library mutation.
@@ -599,6 +600,13 @@ def _final_task_result(
         if (payload := _read_json(result.get("content"))) is not None
         and payload.get("success") is False
     ]
+    execution_failures = [
+        payload for payload in failures
+        if payload.get("error") not in {
+            "duplicate_tool_call", "batch_rejected", "untrusted_entity_reference",
+            "invalid_tool_arguments", "invalid_tool_selection", "unknown_tool",
+        }
+    ]
     all_tools_failed = bool(state.get("tool_results")) and len(failures) == len(
         state.get("tool_results", [])
     )
@@ -615,7 +623,7 @@ def _final_task_result(
     limit_reached = content == TOOL_LIMIT_MESSAGE
     status = (
         TaskStatus.FAILED
-        if all_tools_failed or write_failures or limit_reached
+        if all_tools_failed or write_failures or execution_failures or limit_reached
         else TaskStatus.SUCCESS
     )
     error = None
@@ -625,6 +633,8 @@ def _final_task_result(
         error = str(failures[0].get("message") or "工具调用失败，请稍后重试。")
     elif write_failures:
         error = str(write_failures[0].get("message") or "云端操作未完成，请稍后重试。")
+    elif execution_failures:
+        error = str(execution_failures[0].get("message") or "工具调用失败，请稍后重试。")
     actual_write_failures = [
         item for item in write_failures
         if item.get("error") not in {
@@ -636,6 +646,12 @@ def _final_task_result(
         # Persistence acknowledgements come from the service, even if the model
         # mistakenly describes a failed write as successful.
         content = "云端操作未完成：" + str(actual_write_failures[0].get("message") or "请稍后重试。")
+    elif execution_failures and not limit_reached:
+        content = "操作未全部完成：" + error
+    if (status is TaskStatus.SUCCESS and is_simple_song_playback(state["current_input"])
+        and not any(action.name is ClientActionName.PLAY_SONG for action in actions)):
+        status = TaskStatus.NEEDS_INPUT
+        content = "未找到可确认的指定歌曲版本，尚未发送播放指令。请明确要播放的版本。"
     return (
         content,
         TaskResult(
@@ -651,7 +667,9 @@ def _final_task_result(
                 "tool_calls": state.get("tool_call_count", 0),
                 "tool_call_details": [
                     {"name": str(item.get("name") or "unknown"),
-                     "status": str(item.get("status") or "unknown")}
+                     "status": str(item.get("status") or "unknown"),
+                     **({"error": payload.get("error"), "message": payload.get("message")}
+                        if (payload := _read_json(item.get("content"))) and payload.get("success") is False else {})}
                     for item in state.get("tool_results", [])
                 ],
             },
@@ -665,18 +683,16 @@ def _fail_invalid_tool_output(
     state: ToolCallingState,
     reason: str,
 ) -> dict[str, Any]:
+    _, result, actions = _final_task_result(state, AIMessage(content=INVALID_TOOL_OUTPUT_MESSAGE))
+    result = result.model_copy(update={
+        "status": TaskStatus.FAILED, "content": INVALID_TOOL_OUTPUT_MESSAGE,
+        "error": INVALID_TOOL_OUTPUT_MESSAGE, "data": {**result.data, "reason": reason},
+    })
     return {
         "messages": [AIMessage(content=INVALID_TOOL_OUTPUT_MESSAGE)],
         "answer": INVALID_TOOL_OUTPUT_MESSAGE,
-        "client_actions": [],
-        "task_result": TaskResult(
-            task_id=state["task_id"],
-            route_key=RouteKey.TOOL_CALLING,
-            status=TaskStatus.FAILED,
-            content=INVALID_TOOL_OUTPUT_MESSAGE,
-            data={"reason": reason, "client_actions": [], "tool_call_details": []},
-            error=INVALID_TOOL_OUTPUT_MESSAGE,
-        ),
+        "client_actions": actions,
+        "task_result": result,
     }
 
 
@@ -738,18 +754,33 @@ def build_tool_calling_subgraph(
                 state.get("prior_entities", []),
             )
         else:
-            result = await answer_tool_calling_task(
-                state["messages"],
-                state["current_input"],
-                state["routing_context"],
-                state.get("prior_entities", []),
-                model=bound_model,
-                continuity_context=state.get("continuity_context"),
-                search_only=bool(graph_tools) and all(
-                    item.name in {"search_music", "search_entities_tool"}
-                    for item in graph_tools
-                ),
-            )
+            from app.llm.runtime import RuntimeLimitError
+
+            try:
+                result = await answer_tool_calling_task(
+                    state["messages"],
+                    state["current_input"],
+                    state["routing_context"],
+                    state.get("prior_entities", []),
+                    model=bound_model,
+                    continuity_context=state.get("continuity_context"),
+                    search_only=bool(graph_tools) and all(
+                        item.name in {"search_music", "search_entities_tool"}
+                        for item in graph_tools
+                    ),
+                    song_playback={item.name for item in graph_tools} == SONG_PLAYBACK_TOOLS,
+                )
+            except RuntimeLimitError as exc:
+                # Preserve successful tools/actions when the next model request
+                # is refused. The parent still records its original stop reason.
+                message = "本轮操作达到资源上限，后续步骤未执行。"
+                answer, task_result, actions = _final_task_result(state, AIMessage(content=message))
+                task_result = task_result.model_copy(update={
+                    "status": TaskStatus.FAILED, "content": message, "error": message,
+                    "data": {**task_result.data, "reason": exc.reason},
+                })
+                return {"messages": [AIMessage(content=message)], "answer": message,
+                        "task_result": task_result, "client_actions": actions}
 
         if result.invalid_tool_calls or any(
             not isinstance(call.get("id"), str) or not call["id"].strip()

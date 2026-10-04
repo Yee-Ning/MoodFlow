@@ -18,6 +18,7 @@ from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.routing import RouteDecision
 from app.agent.foundation.state.main import MainState
 from app.agent.handoff.agents import choose_transfer, execute_owned_task
+from app.agent.handoff.progress import with_combination_progress, explain_combination_progress
 from app.agent.handoff.guard import configured_guard
 from app.agent.handoff.integrity import TransferIntegrityConflict
 from app.agent.handoff.registry import AGENT_REGISTRY, CAPABILITY_OWNERS, AgentKey
@@ -282,6 +283,7 @@ def build_handoff_graph(
                         else None
                     )
                     return command
+                result = with_combination_progress(run, result)
                 updated = record_task_result(run, result)
         except TransferIntegrityConflict:
             trace.emit(code="guard_rejected")
@@ -319,13 +321,16 @@ def build_handoff_graph(
                     handoff_trace=trace.events,
                 )
                 return failed
-            result = TaskResult(
-                task_id=task.task_id,
-                route_key=task.route_key,
-                status=TaskStatus.FAILED,
-                content=EXECUTION_FAILURE,
-                error=EXECUTION_FAILURE,
-            )
+            if result is None or result.status is not TaskStatus.FAILED:
+                result = TaskResult(
+                    task_id=task.task_id,
+                    route_key=task.route_key,
+                    status=TaskStatus.FAILED,
+                    content=EXECUTION_FAILURE,
+                    error=EXECUTION_FAILURE,
+                    data={"reason": reason.value},
+                )
+            result = with_combination_progress(run, result)
             updated = record_task_result(run, result)
             if reason is not StopReason.TASK_FAILED:
                 updated = finish_run(updated, EXECUTION_FAILURE, reason=reason)
@@ -356,6 +361,13 @@ def build_handoff_graph(
                 "messages": [AIMessage(content=text)],
             }
         run = HandoffRun.model_validate(raw)
+        if len(run.plan.tasks) > 1 and (run.status in {RunStatus.FAILED, RunStatus.NEEDS_INPUT}
+                                       or run.stop_reason is StopReason.TASK_FAILED):
+            text = explain_combination_progress(run)
+            if run.terminal:
+                run = HandoffRun.model_validate({**run.model_dump(), "final_response": text})
+            else:
+                run = finish_run(run, text)
         if not run.terminal:
             contents = [result.content for result in run.results if result.content]
             if run.stop_reason is StopReason.TASK_FAILED:

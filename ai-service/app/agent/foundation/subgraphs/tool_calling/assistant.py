@@ -40,6 +40,10 @@ SEARCH_ONLY_PROMPT = """本任务只读搜索目录。查询具体歌曲时使�
 一次成功搜索通常足够。若未找到用户指定的歌曲/歌手组合，最多进行一次有针对性的补充查询，随后如实报告结果或没有准确匹配；不要为扩大候选数量重复搜索，不主动查询歌手履历、歌词或专辑详情。
 翻唱、伴奏、现场版和同名歌曲不得冒充指定歌手的原曲。不得编造工具未返回的歌曲或 ID，不派发播放、收藏或歌单动作。"""
 
+SONG_PLAYBACK_PROMPT = """本任务只播放指定歌曲。先用 search_music 搜索，找到准确的歌曲和歌手匹配后，原样传入 play_song。
+若没有准确匹配，最多做一次有针对性的补充歌曲搜索，随后说明未找到并请用户选择版本；翻唱、伴奏、现场版和同名歌曲不得冒充指定歌手的原曲。
+不要扩展查询歌手、专辑或世界线；这些由其他子任务负责。发出播放命令后立即结束，只说明已发送播放指令，不能声称音频已播放。"""
+
 
 def all_tool_calling_tools() -> list[BaseTool]:
     return [*MUSIC_AGENT_TOOLS, *CLIENT_ACTION_TOOLS]
@@ -86,6 +90,7 @@ async def answer_tool_calling_task(
     model: BaseChatModel | None = None,
     continuity_context: dict[str, Any] | None = None,
     search_only: bool = False,
+    song_playback: bool = False,
 ) -> AIMessage:
     history = list(messages)
     if history and isinstance(history[-1], HumanMessage):
@@ -93,7 +98,9 @@ async def answer_tool_calling_task(
     player_context, entity_context = _trusted_context(routing_context, prior_entities)
     pack = await build_context_async(
         RouteKey.TOOL_CALLING, query=current_input,
-        system=TOOL_CALLING_SYSTEM_PROMPT + ("\n" + SEARCH_ONLY_PROMPT if search_only else ""), messages=history,
+        system=TOOL_CALLING_SYSTEM_PROMPT
+        + ("\n" + SEARCH_ONLY_PROMPT if search_only else "")
+        + ("\n" + SONG_PLAYBACK_PROMPT if song_playback else ""), messages=history,
         business_state=player_context, structured_output=entity_context,
         continuity_context=continuity_context,
         trace_context={key: continuity_context[key] for key in ("task_id", "session_id", "request_id")
@@ -102,6 +109,6 @@ async def answer_tool_calling_task(
     response = await instrument_continuity_model(model or get_tool_calling_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("Tool-calling assistant returned a non-AI message")
-    if not response.tool_calls and not str(response.text).strip():
+    if not response.tool_calls and not response.invalid_tool_calls and not str(response.text).strip():
         raise RuntimeError("Tool-calling assistant returned an empty response")
     return response
