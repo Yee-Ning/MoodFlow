@@ -1,0 +1,14 @@
+{
+  "at_utc": "2026-10-04T07:40:39.107485+00:00",
+  "pid": 361529,
+  "replaced_pid": 314869,
+  "same_observation_start": "2026-10-04T06:58:46.300881+00:00",
+  "window_seconds": 300,
+  "missing_collection_grace_seconds": 300,
+  "business_services_changed": false,
+  "source_sha256": {
+    "/secure/moodflow/deployments/staging/handoff-watch.py": "f793175f14fa6e9d65eec39654718112f4d6404c7adb91bf83320543941bc481",
+    "/secure/moodflow/deployments/staging/watch_checks.py": "1db03bda07e93e410148eab6ad739003b55d1f93160a4875dbb646a65c7ec617"
+  },
+  "checks": "independent_http_access_vs_observation_starts_and_mature_ACK_deadline_windows"
+}

@@ -1,0 +1,742 @@
+{
+  "at_utc": "2026-10-04T07:52:54.561218+00:00",
+  "since_utc": "2026-10-04T07:49:54.457220+00:00",
+  "event_counts": {
+    "handoff.request": 6,
+    "handoff.trace": 17,
+    "jev.handoff_entry": 2,
+    "jev.handoff_guard": 2,
+    "foundation.routing": 1
+  },
+  "groups": {
+    "production": {
+      "canary": {
+        "request_starts": 0,
+        "request_finishes": 0,
+        "missing_terminals": 0,
+        "statuses": {},
+        "request_error_rate": null,
+        "clarification_rate": null,
+        "v5_attempts": 0,
+        "v5_classes": {},
+        "v5_success_rate": null,
+        "v5_error_rate": null,
+        "fallback_rate": null,
+        "v5_p50_ms": null,
+        "v5_p95_ms": null,
+        "v5_missing_latency": 0,
+        "v5_latency_by_class": {
+          "Single": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          },
+          "Multi": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          }
+        },
+        "local_rules": 0,
+        "rule_hit_rate": null,
+        "guard_histograms": {
+          "display": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "task_fidelity": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "authority_override": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          }
+        },
+        "trace_events": 0,
+        "transfer_events": 0,
+        "ack": {
+          "unique_actions": 0,
+          "applied": 0,
+          "rejected": 0,
+          "timed_out": 0,
+          "pending": 0,
+          "late_receipts": 0,
+          "matured_actions": 0,
+          "matured_failures": 0,
+          "eligible_actions": 0,
+          "success_rate": null
+        },
+        "foundation_routing_count": 0,
+        "foundation_routing_p50_ms": null,
+        "foundation_routing_p95_ms": null
+      },
+      "non_canary": {
+        "request_starts": 0,
+        "request_finishes": 0,
+        "missing_terminals": 0,
+        "statuses": {},
+        "request_error_rate": null,
+        "clarification_rate": null,
+        "v5_attempts": 0,
+        "v5_classes": {},
+        "v5_success_rate": null,
+        "v5_error_rate": null,
+        "fallback_rate": null,
+        "v5_p50_ms": null,
+        "v5_p95_ms": null,
+        "v5_missing_latency": 0,
+        "v5_latency_by_class": {
+          "Single": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          },
+          "Multi": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          }
+        },
+        "local_rules": 0,
+        "rule_hit_rate": null,
+        "guard_histograms": {
+          "display": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "task_fidelity": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "authority_override": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          }
+        },
+        "trace_events": 0,
+        "transfer_events": 0,
+        "ack": {
+          "unique_actions": 0,
+          "applied": 0,
+          "rejected": 0,
+          "timed_out": 0,
+          "pending": 0,
+          "late_receipts": 0,
+          "matured_actions": 0,
+          "matured_failures": 0,
+          "eligible_actions": 0,
+          "success_rate": null
+        },
+        "foundation_routing_count": 0,
+        "foundation_routing_p50_ms": null,
+        "foundation_routing_p95_ms": null
+      },
+      "explicit": {
+        "request_starts": 0,
+        "request_finishes": 0,
+        "missing_terminals": 0,
+        "statuses": {},
+        "request_error_rate": null,
+        "clarification_rate": null,
+        "v5_attempts": 0,
+        "v5_classes": {},
+        "v5_success_rate": null,
+        "v5_error_rate": null,
+        "fallback_rate": null,
+        "v5_p50_ms": null,
+        "v5_p95_ms": null,
+        "v5_missing_latency": 0,
+        "v5_latency_by_class": {
+          "Single": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          },
+          "Multi": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          }
+        },
+        "local_rules": 0,
+        "rule_hit_rate": null,
+        "guard_histograms": {
+          "display": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "task_fidelity": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "authority_override": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          }
+        },
+        "trace_events": 0,
+        "transfer_events": 0,
+        "ack": {
+          "unique_actions": 0,
+          "applied": 0,
+          "rejected": 0,
+          "timed_out": 0,
+          "pending": 0,
+          "late_receipts": 0,
+          "matured_actions": 0,
+          "matured_failures": 0,
+          "eligible_actions": 0,
+          "success_rate": null
+        },
+        "foundation_routing_count": 0,
+        "foundation_routing_p50_ms": null,
+        "foundation_routing_p95_ms": null
+      }
+    },
+    "acceptance": {
+      "canary": {
+        "request_starts": 2,
+        "request_finishes": 2,
+        "missing_terminals": 0,
+        "statuses": {
+          "success": 2
+        },
+        "request_error_rate": 0.0,
+        "clarification_rate": 0.0,
+        "v5_attempts": 2,
+        "v5_classes": {
+          "Single": 1,
+          "Multi": 1
+        },
+        "v5_success_rate": 1.0,
+        "v5_error_rate": 0.0,
+        "fallback_rate": 0.0,
+        "v5_p50_ms": 388.2,
+        "v5_p95_ms": 460.88,
+        "v5_missing_latency": 0,
+        "v5_latency_by_class": {
+          "Single": {
+            "count": 1,
+            "p50_ms": 307.45,
+            "p95_ms": 307.45
+          },
+          "Multi": {
+            "count": 1,
+            "p50_ms": 468.95,
+            "p95_ms": 468.95
+          }
+        },
+        "local_rules": 0,
+        "rule_hit_rate": 0.0,
+        "guard_histograms": {
+          "display": {
+            "count": 2,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 2,
+              "[.9,1]": 0
+            }
+          },
+          "task_fidelity": {
+            "count": 2,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 2,
+              "[.9,1]": 0
+            }
+          },
+          "authority_override": {
+            "count": 2,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 2,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          }
+        },
+        "trace_events": 17,
+        "transfer_events": 2,
+        "ack": {
+          "unique_actions": 0,
+          "applied": 0,
+          "rejected": 0,
+          "timed_out": 0,
+          "pending": 0,
+          "late_receipts": 0,
+          "matured_actions": 0,
+          "matured_failures": 0,
+          "eligible_actions": 0,
+          "success_rate": null
+        },
+        "foundation_routing_count": 0,
+        "foundation_routing_p50_ms": null,
+        "foundation_routing_p95_ms": null
+      },
+      "non_canary": {
+        "request_starts": 1,
+        "request_finishes": 1,
+        "missing_terminals": 0,
+        "statuses": {
+          "success": 1
+        },
+        "request_error_rate": 0.0,
+        "clarification_rate": 0.0,
+        "v5_attempts": 0,
+        "v5_classes": {},
+        "v5_success_rate": null,
+        "v5_error_rate": null,
+        "fallback_rate": null,
+        "v5_p50_ms": null,
+        "v5_p95_ms": null,
+        "v5_missing_latency": 0,
+        "v5_latency_by_class": {
+          "Single": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          },
+          "Multi": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          }
+        },
+        "local_rules": 0,
+        "rule_hit_rate": 0.0,
+        "guard_histograms": {
+          "display": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "task_fidelity": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "authority_override": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          }
+        },
+        "trace_events": 0,
+        "transfer_events": 0,
+        "ack": {
+          "unique_actions": 0,
+          "applied": 0,
+          "rejected": 0,
+          "timed_out": 0,
+          "pending": 0,
+          "late_receipts": 0,
+          "matured_actions": 0,
+          "matured_failures": 0,
+          "eligible_actions": 0,
+          "success_rate": null
+        },
+        "foundation_routing_count": 1,
+        "foundation_routing_p50_ms": 66.94,
+        "foundation_routing_p95_ms": 66.94
+      },
+      "explicit": {
+        "request_starts": 0,
+        "request_finishes": 0,
+        "missing_terminals": 0,
+        "statuses": {},
+        "request_error_rate": null,
+        "clarification_rate": null,
+        "v5_attempts": 0,
+        "v5_classes": {},
+        "v5_success_rate": null,
+        "v5_error_rate": null,
+        "fallback_rate": null,
+        "v5_p50_ms": null,
+        "v5_p95_ms": null,
+        "v5_missing_latency": 0,
+        "v5_latency_by_class": {
+          "Single": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          },
+          "Multi": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          }
+        },
+        "local_rules": 0,
+        "rule_hit_rate": null,
+        "guard_histograms": {
+          "display": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "task_fidelity": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "authority_override": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          }
+        },
+        "trace_events": 0,
+        "transfer_events": 0,
+        "ack": {
+          "unique_actions": 0,
+          "applied": 0,
+          "rejected": 0,
+          "timed_out": 0,
+          "pending": 0,
+          "late_receipts": 0,
+          "matured_actions": 0,
+          "matured_failures": 0,
+          "eligible_actions": 0,
+          "success_rate": null
+        },
+        "foundation_routing_count": 0,
+        "foundation_routing_p50_ms": null,
+        "foundation_routing_p95_ms": null
+      }
+    },
+    "synthetic": {
+      "canary": {
+        "request_starts": 0,
+        "request_finishes": 0,
+        "missing_terminals": 0,
+        "statuses": {},
+        "request_error_rate": null,
+        "clarification_rate": null,
+        "v5_attempts": 0,
+        "v5_classes": {},
+        "v5_success_rate": null,
+        "v5_error_rate": null,
+        "fallback_rate": null,
+        "v5_p50_ms": null,
+        "v5_p95_ms": null,
+        "v5_missing_latency": 0,
+        "v5_latency_by_class": {
+          "Single": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          },
+          "Multi": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          }
+        },
+        "local_rules": 0,
+        "rule_hit_rate": null,
+        "guard_histograms": {
+          "display": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "task_fidelity": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "authority_override": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          }
+        },
+        "trace_events": 0,
+        "transfer_events": 0,
+        "ack": {
+          "unique_actions": 0,
+          "applied": 0,
+          "rejected": 0,
+          "timed_out": 0,
+          "pending": 0,
+          "late_receipts": 0,
+          "matured_actions": 0,
+          "matured_failures": 0,
+          "eligible_actions": 0,
+          "success_rate": null
+        },
+        "foundation_routing_count": 0,
+        "foundation_routing_p50_ms": null,
+        "foundation_routing_p95_ms": null
+      },
+      "non_canary": {
+        "request_starts": 0,
+        "request_finishes": 0,
+        "missing_terminals": 0,
+        "statuses": {},
+        "request_error_rate": null,
+        "clarification_rate": null,
+        "v5_attempts": 0,
+        "v5_classes": {},
+        "v5_success_rate": null,
+        "v5_error_rate": null,
+        "fallback_rate": null,
+        "v5_p50_ms": null,
+        "v5_p95_ms": null,
+        "v5_missing_latency": 0,
+        "v5_latency_by_class": {
+          "Single": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          },
+          "Multi": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          }
+        },
+        "local_rules": 0,
+        "rule_hit_rate": null,
+        "guard_histograms": {
+          "display": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "task_fidelity": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "authority_override": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          }
+        },
+        "trace_events": 0,
+        "transfer_events": 0,
+        "ack": {
+          "unique_actions": 0,
+          "applied": 0,
+          "rejected": 0,
+          "timed_out": 0,
+          "pending": 0,
+          "late_receipts": 0,
+          "matured_actions": 0,
+          "matured_failures": 0,
+          "eligible_actions": 0,
+          "success_rate": null
+        },
+        "foundation_routing_count": 0,
+        "foundation_routing_p50_ms": null,
+        "foundation_routing_p95_ms": null
+      },
+      "explicit": {
+        "request_starts": 0,
+        "request_finishes": 0,
+        "missing_terminals": 0,
+        "statuses": {},
+        "request_error_rate": null,
+        "clarification_rate": null,
+        "v5_attempts": 0,
+        "v5_classes": {},
+        "v5_success_rate": null,
+        "v5_error_rate": null,
+        "fallback_rate": null,
+        "v5_p50_ms": null,
+        "v5_p95_ms": null,
+        "v5_missing_latency": 0,
+        "v5_latency_by_class": {
+          "Single": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          },
+          "Multi": {
+            "count": 0,
+            "p50_ms": null,
+            "p95_ms": null
+          }
+        },
+        "local_rules": 0,
+        "rule_hit_rate": null,
+        "guard_histograms": {
+          "display": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "task_fidelity": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          },
+          "authority_override": {
+            "count": 0,
+            "missing": 0,
+            "bins": {
+              "[0,.7)": 0,
+              "[.7,.8)": 0,
+              "[.8,.9)": 0,
+              "[.9,1]": 0
+            }
+          }
+        },
+        "trace_events": 0,
+        "transfer_events": 0,
+        "ack": {
+          "unique_actions": 0,
+          "applied": 0,
+          "rejected": 0,
+          "timed_out": 0,
+          "pending": 0,
+          "late_receipts": 0,
+          "matured_actions": 0,
+          "matured_failures": 0,
+          "eligible_actions": 0,
+          "success_rate": null
+        },
+        "foundation_routing_count": 0,
+        "foundation_routing_p50_ms": null,
+        "foundation_routing_p95_ms": null
+      }
+    }
+  },
+  "invalid_events": 0,
+  "logging_errors": 0,
+  "alerts_generated": 0,
+  "alerts_delivered": 0,
+  "unscoped_events": 0
+}

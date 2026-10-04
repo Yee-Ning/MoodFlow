@@ -1,0 +1,19 @@
+{
+  "snapshot_at_utc": "2026-10-04T07:52:53.318187+00:00",
+  "required_source": "production",
+  "cohort": "canary",
+  "target_fast_rule_samples": 50,
+  "real_canary_requests": 0,
+  "real_fast_rule_hits": 0,
+  "captured_replay_samples": 0,
+  "comparable_samples": 0,
+  "disagreements": 0,
+  "disagreement_rate": null,
+  "target_met": false,
+  "r2_remaining_item_closed": false,
+  "status": "insufficient_real_traffic; observation_wait_cancelled_by_user",
+  "replay_method": "R2 ReplayClient strict state SHA256, question names, response consumption; no dispatch",
+  "replay_executed": false,
+  "raw_requests_or_responses_exported": false,
+  "acceptance_or_synthetic_counted_as_real": false
+}

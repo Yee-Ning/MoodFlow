@@ -1,6 +1,6 @@
 # Handoff 观测修复与 Canary 重开（2026-10-04）
 
-状态：观测修复、生产发布、第二次重开硬验收均通过；双开关 true，正在进行初始观察。
+状态：观测修复、生产发布及最终硬验收通过；双开关 true，10% session canary 已开启。按用户最新指令取消两小时观察等待。真实流量不足的指标与 R2 Replay 不声明完成。
 
 ## 1. 授权、基线与范围
 
@@ -31,7 +31,7 @@ ai-service/.venv/Scripts/python.exe docs/reports/rule-layer-r2-20261003/check.py
 
 初次定向夹具把默认 Curator 作为 self-transfer 起点，9 failed / 93 passed；修正夹具为实际 GeneralChat→Curator 后 125 passed，未弱化断言。首轮全量 2148 passed、288 subtests passed、45 skipped、178 既有 durability warnings，273.30s。增加三项窗口边界/连续窗口/ACK 样本测试后，接收器及发布门控定向 34 passed；最终全量 **2151 passed、288 subtests passed、45 skipped**，178 既有 warnings，259.23s。Ruff 所有修改 Python 文件通过，compileall 通过。
 
-45 项既有外部集成跳过条件未改变，不计为本轮通过。未改 Java/Node/前端，不重复其构建。生产镜像构建及真实供应商候选仍待本轮生产验证，离线 mock 测试不能代替。
+45 项既有外部集成跳过条件未改变，不计为本轮通过。未改 Java/Node/前端，不重复其构建。生产镜像构建及真实供应商 Single / Multi 候选已通过下述在线验收。
 
 ## 4. 发布计划与关闭状态验收
 
@@ -51,7 +51,7 @@ ai-service/.venv/Scripts/python.exe docs/reports/rule-layer-r2-20261003/check.py
 
 ## 5. 重开、硬门控与回滚
 
-待 Phase 4 全绿，通过私有 Compose service override 仅改变两个 AI 环境键；缓存设置用相同新镜像重建 AI 服务加载。Shadow true、默认 foundation、Guard 0.8、10% session 不变。准备同时关闭双开关的一键脚本及配置比较、镜像/挂载/其他环境指纹比较。
+发布验收全绿后，通过私有 Compose service override 仅改变两个 AI 环境键；缓存设置用相同新镜像重建 AI 服务加载。Shadow true、默认 foundation、Guard 0.8、10% session 不变。同时关闭双开关的一键脚本及配置比较、镜像/挂载/其他环境指纹比较已通过。
 
 acceptance 探针：规则未命中 Single、跨搜索与聊天的 Multi、确定 non-canary 的对照；候选分类、Guard 非空分数、accepted 转交 trace 任一失败立即关闭双开关，验证 Foundation+Hybrid 恢复。只凭 handoff SSE 节点或最终 Hybrid 成功不算 V5 通过。
 
@@ -63,14 +63,46 @@ acceptance 探针：规则未命中 Single、跨搜索与聊天的 Multi、确�
 
 修正私有探针，依据实际 graph/cohort、候选及 handoff.trace，不再依赖兼容输出节点名。使用全新验收 thread。第二次 **14:58:12 翻转、14:58:46 healthy**，同镜像、同两键 override；[open-second.json](open-second.json)。**14:59:06–14:59:38 硬验收全绿**：[hard-gates-second.json](hard-gates-second.json)。Single / Multi 各 1 个完整真实 V5 candidate（分别 1 / 2 次决策 API），Multi 跨搜索与聊天；Guard 分数 2 个，accepted 跨 agent 转交 2 条，trace 17 条。non-canary 对照 1 请求，实际 Foundation+Hybrid routing 事件 1，未产生 handoff 入口事件。Guard 0.8、foundation、router Shadow true、10% 与双开关 true 复核通过。
 
+观察驱动异常回滚及用户取消等待后，最终于 **15:49:20** 用相同 `handoff-control.py open` 及同一 override 写入双开关 true；**15:49:54 healthy**，[open-final.json](open-final.json)。镜像、挂载、排除双开关后的环境指纹均未变，其余六服务容器 ID 不变，没有重新部署或构建。**15:51:36–15:52:06** 使用全新 r3 thread 的 Single / Multi / non-canary 三条短验收全绿，[hard-gates-final.json](hard-gates-final.json)。有效 V5 Single / Multi 各 1，Guard 2 个，accepted 跨 agent 转交 2 条、trace 17 条；non-canary 仍为 Foundation+Hybrid，未产生 handoff 入口。**15:52:54** 最终 [运行快照](final-snapshot.json)：生产 HEAD 6667b70e、源码 hash 一致、六常驻 healthy、migrate exited 0、双开关 true、foundation、10%、router Shadow true、Guard 0.8。没有启动新的长观察驱动。
+
 ## 6. 初始观察与真实流量抽样
 
-本轮观察从第二次重开 healthy **14:58:46** 起算，不把上次 78 秒、第一次误判区间或发布前日志算进来。15:00:58 启动有限观察 watchdog，见 [observation-launch.json](observation-launch.json)：30 秒检查接收器、事件缺失、服务与配置漂移；按相邻非重叠五分钟窗口、真实流量的最小分母执行 §5 自动双开关回滚；满两小时或 ≥100 个真实 canary 终态先到者形成初始快照。验收探针不补真实流量分母。预计无足量真实流量时最早 **16:58:46** 满两小时。
+原观察从第二次重开 healthy **14:58:46** 起算。15:00:58 启动有限观察 watchdog，[observation-launch.json](observation-launch.json)；最终用户明确指示“不用进行两个小时观测了，你直接开闸”。本轮不再等待两小时或 100 个真实请求，保留已产生快照，不把 acceptance 补入真实流量。
 
-硬验收快照：acceptance V5 2/2 成功、Single 305.22ms / Multi 315.01ms，合并 P50 310.12ms / P95 314.52ms，回退/错误/澄清 0；Guard 派生和 fidelity 四区间为 `0/0/0/2`、authority 为 `2/0/0/0`，missing 0。验收对照 Hybrid 101.35ms，错误/澄清 0。真实 canary 和 baseline 暂为 0，所有实际比率 null；播放器 action 0，ACK 0/0/0/pending0，成功率 null。该快照不是两小时结论，不以验收样本得出真实流量健康判断。
+第二次硬验收快照：acceptance V5 2/2 成功、Single 305.22ms / Multi 315.01ms，合并 P50 310.12ms / P95 314.52ms，回退/错误/澄清 0；Guard 派生和 fidelity 四区间为 `0/0/0/2`、authority 为 `2/0/0/0`，missing 0。验收对照 Hybrid 101.35ms，错误/澄清 0。随后增加快判澄清及 ACK 关联验收，汇总如下；不据此判断真实用户健康。
 
-真实 canary 快判采样目标 ≥50。保存原请求 RoutingContext、快判签名和真实供应商 capture 于访问受控目录，不进 Git；隔离评测禁止 dispatch，沿用 R2 ReplayClient 严格 state SHA256 / question names / 未消费响应匹配。回退不进入可比较分母。流量不足记录实际数；0 样本时分歧率 null，R2 遗留项保持未完成。
+15:40:34 有限观察驱动发生 `ValueError`，按其保守异常分支于 **15:41:10** 完成双开关关闭；六常驻服务 healthy、migrate exited 0、Foundation 配置恢复，见 [watch-failure.json](watch-failure.json)、[automatic-rollback.json](automatic-rollback.json)。主机 Python 为 3.10.12，该版本不能用 `datetime.fromisoformat` 解析驱动传入的 Docker 九位小数时间戳，已用相同格式独立复现；应用接收器仍 active，事件解析及模型调用未失败。这是观察驱动兼容性问题，未触发业务错误率/延迟/回退/ACK 阈值。之前仅在本地 Python 3.12 跑过驱动辅助测试，未覆盖生产解释器兼容性，此限制据实保留。
+
+**15:48:40** 确认有限观察进程已退出、不再启动；接收器保持 active，[observation-stop.json](observation-stop.json)。用户取消观察等待，不删除采集数据。当前仅保留持续采集和 fallback 文件告警；有限观察驱动的自动阈值回滚不再运行，一键双开关回滚仍可用。
+
+截至 **15:40:18** 的最后有效快照（14:58:46 起，2492 秒，约 41 分 32 秒）见 [observation-progress.json](observation-progress.json)：
+
+| 指标 | acceptance canary | acceptance non-canary | 真实 canary / 对照 |
+| --- | --- | --- | --- |
+| 请求始/终 | 6 / 6 | 1 / 1 | 0 / 0 |
+| 状态 | success 5，needs_input 1 | success 1 | 无请求 |
+| V5 候选 | Single 4，Multi 1，5/5 成功 | 不适用 | 0；成功率 null |
+| V5 P50 / P95 | 306.44 / 360.35 ms | Hybrid 101.35 / 101.35 ms | null |
+| V5 错误 / 回退 | 0% / 0% | 不适用 | null |
+| 快判命中 | 1/6 | 0/1 | 0；命中率 null |
+| 错误 / 澄清 | 0% / 16.67% | 0% / 0% | null |
+| Guard 派生分布 `[0,.7)` / `[.7,.8)` / `[.8,.9)` / `[.9,1]` | 0 / 1 / 3 / 2，missing 0 | 不适用 | 0 / 0 / 0 / 0 |
+| trace / accepted 跨 agent 转交 | 49 / 6 | 0 / 0 | 0 / 0 |
+| ACK 唯一 action | 3 | 0 | 0 |
+| applied / rejected / timed_out / pending | 0 / 1 / 2 / 0 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+
+ACK 验收未驱动真实播放器：暂停请求因无当前歌曲产生澄清、无 action；音量探针实际产生 action，未应用或未回执的两条按 60 秒 deadline 计 timed_out。一条音量 action 被验收客户端明确拒绝，发送两次实际 failed 回执均 HTTP 200，唯一 action 只计一次 rejected。首版探针读取错误的嵌套 owner 字段而断言失败，留下其中一次真实超时；修正为 SSE 顶层 graph/thread 关联后通过，记录保留 [ack-rejected-first.json](ack-rejected-first.json)、[ack-rejected-probe.json](ack-rejected-probe.json)。未伪造 applied。验收 ACK 成功率 0 是主动拒绝/超时测试结果，真实 ACK 成功率 null，不能推断播放器生产成功率。
+
+最终重开后短验收快照 [final-summary.json](final-summary.json)：V5 2/2 成功，Single 307.45ms、Multi 468.95ms，合并 P50 388.20ms / P95 460.88ms，错误/回退/澄清 0；Guard 派生分布 `0/0/2/0`、missing 0；对照 Hybrid 66.94ms，错误/澄清 0。真实请求与 ACK 分母仍 0，比率 null。这是短验收结果，不是两小时观察结果。
+
+数据质量 [quality-final.json](quality-final.json)：14:58:46 后共 109 个白名单事件、10 个请求及 10 个终态（含重开前后 acceptance），重复/孤儿请求、标签不一致、孤儿 ACK、非法分数/耗时、阈值漂移、解析/日志错误均 0。最终重开后的独立 HTTP access 与已采集 chat start 为 **3 / 3**，[traffic-crosscheck-final.json](traffic-crosscheck-final.json)，全部明确标记 acceptance。上次容器已经重建，不把当前容器 access 当成旧区间的完整 access 序列；旧区间另留 [traffic-crosscheck-initial.json](traffic-crosscheck-initial.json) 的独立快照。原始请求、响应和原始日志均未导出至报告。
+
+真实 canary 快判采样目标 ≥50。当前实际真实请求、快判命中、capture、离线 Replay 可比较样本均 **0**；分歧数 0，分歧率 **null**，目标未达，R2 遗留项保持未完成。已有验收样本不冒充真实样本。后续仅在有真实流量时保存访问受控 RoutingContext / 快判签名 / 供应商 capture，沿用 R2 ReplayClient 的严格 state SHA256、question names、未消费响应校验，禁止 dispatch，回退不进入可比较分母。本轮不延长等待采样，也不声明“关闭 R2”。
+
+采样交付记录见 [real-traffic-sampling.json](real-traffic-sampling.json)，实际样本数及不可计算项明确记录。
 
 ## 7. Commit 与结论
 
-观测修复 commit **7346cf972419a63ad82a665136f7fb76663c74e4**；部署门控及实际生产代码 commit **6667b70ecc1ad27786559bacb389f6f65d42098b**；部署验收记录 **f9ba5dc781a4652dbb214346e71e961fe487075f**；第一次双开关翻转记录 **e639b3a002018ae49676039fe0246154401adb56**。第二次开闸、误判回滚及硬验收独立提交；最终记录给出已产生 hash。未 push。最终观察结果、继续观察建议及未完成项：观察结束后据实填写。48h 扩大/全量/回滚决策不在本轮。
+观测修复 commit **7346cf972419a63ad82a665136f7fb76663c74e4**；部署门控及实际生产代码 commit **6667b70ecc1ad27786559bacb389f6f65d42098b**；部署验收记录 **f9ba5dc781a4652dbb214346e71e961fe487075f**；第一次双开关翻转记录 **e639b3a002018ae49676039fe0246154401adb56**；第二次开闸、误判回滚及硬验收记录 **e3571634c77d8509595d427cef47912a9c1559c0**；最终开闸配置及硬验收独立 commit **20f4d11f0771b36606a18934c45d7bdeb01ec614**（[opening-record.md](opening-record.md)）。最终统计报告另行提交，hash 见 Git history。未 push。
+
+本轮按最新指令结束等待，只保留 10% canary，不进行扩大/全量决策。真实请求与 ACK 分母为 0，生产指标不具备统计结论，R2 真实 Replay 未完成；已登录歌单本轮浏览器会话过期，未重新验证。48h 决策不在本轮。
