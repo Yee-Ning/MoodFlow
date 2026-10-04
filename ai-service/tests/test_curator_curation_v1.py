@@ -210,6 +210,10 @@ async def test_three_scenes_create_real_catalog_only_playlists_and_grounded_intr
     monkeypatch, journal, text, count
 ):
     catalog = Catalog(monkeypatch, scene=text, count=count)
+    if "港乐" in text:
+        from tests.test_curator_curation_v2 import install_era
+
+        install_era(monkeypatch, catalog)
     result = await curate(text, catalog, journal, owned=True)
     assert result.status is TaskStatus.SUCCESS, result.content
     data = result.data["curation"]
@@ -342,7 +346,9 @@ async def test_era_query_is_not_a_release_year_fact(monkeypatch, journal):
         song.model_copy(update={"album": "港乐精选"}) for song in catalog.songs
     ]
     result = await curate("90 年代港乐", catalog, journal)
-    assert "只找到 0 首" in result.content and "缺少可核实的年代标签" in result.content
+    assert (
+        "只找到 0 首" in result.content and "缺少可核实的歌曲年代证据" in result.content
+    )
     assert not catalog.exists
 
 

@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-04",
+  "branch": "codex/agent-curator-v2",
+  "baseline_commit": "e671f27d92792304a3b310557a4bc46452592fbb",
+  "implementation_commit": "fe54d46bc2e3812a15743195b78fafdebaeddf14",
+  "related": {"passed": 82, "failed": 0, "seconds": 78.21},
+  "full_ai_and_deploy": {"passed": 2297, "skipped": 46, "failed": 0, "subtests_passed": 288, "warnings": 316, "seconds": 361.87},
+  "ruff_check": "passed",
+  "ruff_format_check": "passed",
+  "compileall": "passed",
+  "git_diff_check": "passed",
+  "online_validation": "not_run",
+  "curator_standalone_features": "complete_and_frozen",
+  "integration_scope": "Journey consumption and GeneralChat polish deferred to separate integration round"
+}
