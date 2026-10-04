@@ -33,7 +33,7 @@ def test_bundle_checksum_and_ref_verified_without_origin_write(tmp_path, monkeyp
     checksum = hashlib.sha256(b"fixture").hexdigest()
     assert update.bundle_target(bundle, checksum, target) == target
     assert ("git", "bundle", "verify", str(bundle)) in calls
-    assert ("git", "fetch", "--no-tags", str(bundle), "refs/heads/codex/deploy") in calls
+    assert ("git", "fetch", "--no-tags", "--recurse-submodules=no", str(bundle), "refs/heads/codex/deploy") in calls
     assert not any("origin" in args or "push" in args or "reset" in args for args in calls)
     calls.clear()
     with pytest.raises(update.UpdateError, match="checksum_mismatch"):
@@ -127,6 +127,7 @@ def test_scoped_update_backup_build_start_and_no_migrate_or_frontend(monkeypatch
     monkeypatch.setattr(update, "command", command)
     update.update(False, False, True, bundle=tmp_path / "test.bundle", services_only=["netease", "java", "ai-service"], p1_already_applied=True)
     assert calls.index(("bash", "deploy/backup.sh", "--predeploy")) < calls.index(("compose", "build", "netease"))
+    assert ("git", "submodule", "update", "--init", "--recursive", "--no-fetch") in calls
     assert [("compose", "up", "-d", "--no-build", "--no-deps", service) for service in ("netease", "java", "ai-service")] == [c for c in calls if c[:2] == ("compose", "up")]
     assert not any(c[:2] == ("git", "fetch") or "migrate" in c or "frontend" in c or "qdrant" in c for c in calls)
     record = json.loads(next((tmp_path / "logs").glob("*.json")).read_text())

@@ -34,5 +34,7 @@
 - 发布器定向：`ai-service/.venv/Scripts/python.exe -m pytest deploy/tests/test_update.py deploy/tests/test_update_bundle.py -q`，**25 passed**（含后补 executor/rollback 回归）；Ruff 通过。
 - Java：`JAVA_HOME=D:/code/JDKall/openjdk-21.0.1`，`mvn.cmd --batch-mode --no-transfer-progress -o verify`，**92 tests，0 failures/errors/skipped，BUILD SUCCESS**。
 - 网易云子模块：`pnpm --config.verify-deps-before-run=false exec mocha -r intelli-espower-loader -t 60000 main.test.js test/playlist_tracks.test.js --exit`，**6 passing**；对应两文件 ESLint 通过。供应商远程完整 Mocha 不在离线测试范围。
-- AI 应用与部署全量沿用 R2 换行保护包装器和上一轮的 pytest_entry，目前正在运行；最终结果后补。
+- AI 应用与部署全量沿用 R2 换行保护包装器和上一轮的 pytest_entry，首次 **2111 passed、45 skipped、288 subtests passed**，279.66s；后续 bundle 导入修正后的最终全量正在重跑。
 - 定向新测试首次出现一项 fixture 的 Windows 路径比较失败，修正为 Path 对象比较后 23 项全通过，补充两项回归后 25 项全通过；未改失败断言或应用业务逻辑。
+- 首次生产 dry-run 在 Git fetch 停止，未改生产 HEAD/镜像：Git 的递归子模块 fetch 尝试从尚未 push 的源取提交。修正为主 bundle 禁用递归网络 fetch、独立导入并验证子模块 bundle、更新固定子模块时 `--no-fetch`。没有改 origin 或绕过 bundle 校验。
+- 单独运行 `pytest deploy/tests` 暴露既有 Retrieval/Foundation 的 import-order 循环依赖（1 failed、101 passed）；联合完整应用/部署集合此前通过。该独立入口失败保留记录，未修改业务模块；最终采用既有各 Phase 的联合完整验证入口。

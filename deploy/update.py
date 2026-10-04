@@ -139,7 +139,7 @@ def bundle_target(bundle: Path, checksum: str, target: str) -> str:
     refs = [line.split()[1] for line in heads if line.split()[0] == target]
     if len(refs) != 1:
         raise UpdateError("bundle_target_not_unique")
-    command("git", "fetch", "--no-tags", str(bundle), refs[0])
+    command("git", "fetch", "--no-tags", "--recurse-submodules=no", str(bundle), refs[0])
     if git("rev-parse", "FETCH_HEAD") != target:
         raise UpdateError("bundle_fetched_target_mismatch")
     return target
@@ -348,7 +348,10 @@ def update(dry_run: bool, approve_migrations: bool, approve_contract: bool = Fal
         phase = "git_update"
         git("merge", "--ff-only", target)
         git("submodule", "sync", "--recursive")
-        git("submodule", "update", "--init", "--recursive")
+        if bundle is not None:
+            git("submodule", "update", "--init", "--recursive", "--no-fetch")
+        else:
+            git("submodule", "update", "--init", "--recursive")
         status_clean()
         compose("config", "--quiet")
         phase = "backup"
