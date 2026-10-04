@@ -6,5 +6,11 @@ public record PlaylistData(
         String coverImgUrl,
         int trackCount,
         String creator,
-        boolean subscribed) {
+        boolean subscribed,
+        Long creatorId,
+        Integer specialType) {
+    public PlaylistData(long id, String name, String coverImgUrl, int trackCount,
+            String creator, boolean subscribed) {
+        this(id, name, coverImgUrl, trackCount, creator, subscribed, null, null);
+    }
 }

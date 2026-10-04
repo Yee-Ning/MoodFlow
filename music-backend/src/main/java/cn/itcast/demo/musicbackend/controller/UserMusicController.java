@@ -10,6 +10,7 @@ import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
 import cn.itcast.demo.musicbackend.dto.CreatedPlaylistData;
+import cn.itcast.demo.musicbackend.dto.DeletedPlaylistData;
 import cn.itcast.demo.musicbackend.dto.SongLikeData;
 import cn.itcast.demo.musicbackend.dto.SongData;
 import cn.itcast.demo.musicbackend.dto.SongLyricsData;
@@ -137,5 +138,13 @@ public class UserMusicController {
     public ApiResponse<PlaylistMutationData> removeSongFromPlaylist(
             @PathVariable long playlistId, @PathVariable long songId, HttpServletRequest request) {
         return ApiResponse.success(neteaseMusicService.removeSongFromPlaylist(playlistId, songId, request));
+    }
+
+    @DeleteMapping("/playlists/{playlistId}")
+    public ApiResponse<DeletedPlaylistData> deletePlaylist(
+            @PathVariable long playlistId,
+            @RequestParam(defaultValue = "false") boolean confirmed,
+            HttpServletRequest request) {
+        return ApiResponse.success(neteaseMusicService.deletePlaylist(playlistId, confirmed, request));
     }
 }
