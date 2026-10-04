@@ -1,6 +1,6 @@
 # Handoff 观测修复与 Canary 重开（2026-10-04）
 
-状态：观测修复及生产发布验收通过，双开关已翻转；正在执行重开硬验收，失败即回滚。
+状态：观测修复、生产发布、第二次重开硬验收均通过；双开关 true，正在进行初始观察。
 
 ## 1. 授权、基线与范围
 
@@ -57,14 +57,20 @@ acceptance 探针：规则未命中 Single、跨搜索与聊天的 Multi、确�
 
 实际重开：北京时间 **14:52:55** 写入 root 私有 `/opt/moodflow-runtime/handoff-canary-reopen-20261004/switches.yml`，仅两个 AI 环境键为 true；使用 `docker compose --env-file .env.production -f docker-compose.production.yml -f <该 override> up -d --no-deps --no-build --force-recreate ai-service` 同镜像加载，**14:53:29 healthy**。见 [open.json](open.json)。其余 Compose 配置、环境/挂载指纹及所有镜像一致，其余六容器 ID 不变；foundation / 10% / Shadow true / Guard 0.8 复核通过。主机接收器在重建后仍 active，能重新跟随新容器。
 
-一键回滚：`/opt/moodflow-runtime/handoff-canary-reopen-20261004/rollback.sh`；同时将两键置 false，复用同镜像只重建 AI，不修改环境/secrets 文件。硬门控驱动遇到任一候选、Guard 或 trace 验证失败立即执行关闭并重新复核配置、全部服务和作用域。实际路径验收及是否回滚：正在执行。
+一键回滚：`/opt/moodflow-runtime/handoff-canary-reopen-20261004/rollback.sh`；同时将两键置 false，复用同镜像只重建 AI，不修改环境/secrets 文件。
+
+第一次硬验收的 Single 已产生有效候选（346.89ms）及 trace，但探针误用旧版本内部 SSE 节点名，判为 `single_handoff_node_missing`。当前 handoff streaming 明确复用 Foundation public projection，因此出现 `intent_router/general_chat_subgraph` 正常，不能据此区分内部 graph。驱动 **14:54:38 立即回滚、14:55:17 healthy**，双开关 false、全部作用域检查通过；完整记录 [hard-gates-first.json](hard-gates-first.json)，没有删除这次误判。回滚后第一条 Foundation 恢复请求业务 failed，保留 [first-recovered.json](first-recovered.json)；随后相同链路的搜索、匿名鉴权、Foundation 搜索完整烟雾成功，见 [first-recovery-smoke.json](first-recovery-smoke.json)。未改路由或工具逻辑，未把中间失败改成通过。
+
+修正私有探针，依据实际 graph/cohort、候选及 handoff.trace，不再依赖兼容输出节点名。使用全新验收 thread。第二次 **14:58:12 翻转、14:58:46 healthy**，同镜像、同两键 override；[open-second.json](open-second.json)。**14:59:06–14:59:38 硬验收全绿**：[hard-gates-second.json](hard-gates-second.json)。Single / Multi 各 1 个完整真实 V5 candidate（分别 1 / 2 次决策 API），Multi 跨搜索与聊天；Guard 分数 2 个，accepted 跨 agent 转交 2 条，trace 17 条。non-canary 对照 1 请求，实际 Foundation+Hybrid routing 事件 1，未产生 handoff 入口事件。Guard 0.8、foundation、router Shadow true、10% 与双开关 true 复核通过。
 
 ## 6. 初始观察与真实流量抽样
 
-尚未开始本轮观察，不把上次 78 秒或发布前日志算作观察时长。硬门通过后，≥2 小时或 ≥100 个真实 canary 请求先到者形成快照；验收探针不补真实流量分母。报告 V5 成功/错误/回退、Single/Multi P50/P95、Guard 三组四区间、唯一 action ACK、错误/澄清与同期非 canary 基线；缺失事件、无流量及空分母显式记录。
+本轮观察从第二次重开 healthy **14:58:46** 起算，不把上次 78 秒、第一次误判区间或发布前日志算进来。15:00:58 启动有限观察 watchdog，见 [observation-launch.json](observation-launch.json)：30 秒检查接收器、事件缺失、服务与配置漂移；按相邻非重叠五分钟窗口、真实流量的最小分母执行 §5 自动双开关回滚；满两小时或 ≥100 个真实 canary 终态先到者形成初始快照。验收探针不补真实流量分母。预计无足量真实流量时最早 **16:58:46** 满两小时。
+
+硬验收快照：acceptance V5 2/2 成功、Single 305.22ms / Multi 315.01ms，合并 P50 310.12ms / P95 314.52ms，回退/错误/澄清 0；Guard 派生和 fidelity 四区间为 `0/0/0/2`、authority 为 `2/0/0/0`，missing 0。验收对照 Hybrid 101.35ms，错误/澄清 0。真实 canary 和 baseline 暂为 0，所有实际比率 null；播放器 action 0，ACK 0/0/0/pending0，成功率 null。该快照不是两小时结论，不以验收样本得出真实流量健康判断。
 
 真实 canary 快判采样目标 ≥50。保存原请求 RoutingContext、快判签名和真实供应商 capture 于访问受控目录，不进 Git；隔离评测禁止 dispatch，沿用 R2 ReplayClient 严格 state SHA256 / question names / 未消费响应匹配。回退不进入可比较分母。流量不足记录实际数；0 样本时分歧率 null，R2 遗留项保持未完成。
 
 ## 7. Commit 与结论
 
-观测修复 commit **7346cf972419a63ad82a665136f7fb76663c74e4**；部署门控及实际生产代码 commit **6667b70ecc1ad27786559bacb389f6f65d42098b**；部署验收记录 **f9ba5dc781a4652dbb214346e71e961fe487075f**；本次双开关翻转记录单独提交，hash 由最终记录给出。未 push。最终结果、继续观察建议及未完成项：待执行后填写。48h 扩大/全量/回滚决策不在本轮。
+观测修复 commit **7346cf972419a63ad82a665136f7fb76663c74e4**；部署门控及实际生产代码 commit **6667b70ecc1ad27786559bacb389f6f65d42098b**；部署验收记录 **f9ba5dc781a4652dbb214346e71e961fe487075f**；第一次双开关翻转记录 **e639b3a002018ae49676039fe0246154401adb56**。第二次开闸、误判回滚及硬验收独立提交；最终记录给出已产生 hash。未 push。最终观察结果、继续观察建议及未完成项：观察结束后据实填写。48h 扩大/全量/回滚决策不在本轮。

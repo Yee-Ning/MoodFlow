@@ -1,0 +1,160 @@
+{
+  "started_at_utc": "2026-10-04T06:54:32.323474+00:00",
+  "sample_kind": "acceptance",
+  "passed": false,
+  "cases": {
+    "single": {
+      "response": {
+        "sample_kind": "acceptance",
+        "case": "single",
+        "thread_id": "handoff-reopen-acceptance-single-20261004-4",
+        "bucket": 211,
+        "bucket_is_canary_when_enabled": true,
+        "at_utc": "2026-10-04T06:54:32.389903+00:00",
+        "http_status": 200,
+        "events": [
+          "update",
+          "message",
+          "final",
+          "done"
+        ],
+        "event_counts": {
+          "update": 4,
+          "message": 1,
+          "final": 1,
+          "done": 1
+        },
+        "nodes": [
+          "prepare_context",
+          "intent_router",
+          "general_chat_subgraph",
+          "final_response"
+        ],
+        "status": "success",
+        "results": [
+          {
+            "subgraph": "general_chat",
+            "status": "success",
+            "tool_call_count": 0
+          }
+        ],
+        "seconds": 5.694,
+        "passed_response": true,
+        "handoff_agent_node_observed": false,
+        "v5_candidate_verified_by_response": false
+      },
+      "events": [
+        {
+          "marker": "handoff.request",
+          "graph_mode": "handoff",
+          "logging_error_count": 0,
+          "entrypoint": "chat",
+          "at_utc": "2026-10-04T06:54:32.411293+00:00",
+          "sample_kind": "acceptance",
+          "thread_key": "4f1744d4fe61970c0dd46785a592c873da6132aa6bce96bde5fed4e407f3fc06",
+          "cohort": "canary",
+          "event_id": "00e6d38642aa4f21807aeb24e68c70b2",
+          "phase": "started",
+          "request_key": "f54c76dfd85f42efa04cb8d71756ef1c"
+        },
+        {
+          "marker": "handoff.trace",
+          "graph_mode": "handoff",
+          "run_id": "54de33fd16ff478e872dd0afe19e3c0a",
+          "logging_error_count": 0,
+          "duration_ms": 319,
+          "source_agent": "general_chat",
+          "at_utc": "2026-10-04T06:54:33.198755+00:00",
+          "sample_kind": "acceptance",
+          "thread_key": "4f1744d4fe61970c0dd46785a592c873da6132aa6bce96bde5fed4e407f3fc06",
+          "cohort": "canary",
+          "guard_score": null,
+          "event_id": "48857436a4eb47d2aae435ad0b6c03f9",
+          "target_agent": "general_chat",
+          "code": "model_call",
+          "tokens": 1090,
+          "reason_code": "model_call",
+          "request_key": "f54c76dfd85f42efa04cb8d71756ef1c"
+        },
+        {
+          "marker": "jev.handoff_entry",
+          "graph_mode": "handoff",
+          "v5_attempted": true,
+          "candidate_task_count": 1,
+          "logging_error_count": 0,
+          "sample_kind": "acceptance",
+          "latency_ms": 346.89,
+          "event_id": "9fa1eeaa4cfe405b84aefea3d6f22363",
+          "router_source": "jev_single",
+          "at_utc": "2026-10-04T06:54:33.201957+00:00",
+          "attempt_class": "Single",
+          "api_calls": 1,
+          "fallback_reason": null,
+          "thread_key": "4f1744d4fe61970c0dd46785a592c873da6132aa6bce96bde5fed4e407f3fc06",
+          "entry_wall_latency_ms": 486.43,
+          "candidate_needs_input": false,
+          "decision_class": "Single",
+          "request_key": "f54c76dfd85f42efa04cb8d71756ef1c",
+          "cohort": "canary",
+          "plan_agreement": true,
+          "shadow": true,
+          "candidate_complete": true
+        },
+        {
+          "marker": "handoff.trace",
+          "graph_mode": "handoff",
+          "run_id": "54de33fd16ff478e872dd0afe19e3c0a",
+          "logging_error_count": 0,
+          "duration_ms": 4194,
+          "source_agent": "general_chat",
+          "at_utc": "2026-10-04T06:54:37.969487+00:00",
+          "sample_kind": "acceptance",
+          "thread_key": "4f1744d4fe61970c0dd46785a592c873da6132aa6bce96bde5fed4e407f3fc06",
+          "cohort": "canary",
+          "guard_score": null,
+          "event_id": "c893ea8a6fad4dbd91a57bbcc6867878",
+          "target_agent": "general_chat",
+          "code": "model_call",
+          "tokens": 1220,
+          "reason_code": "model_call",
+          "request_key": "f54c76dfd85f42efa04cb8d71756ef1c"
+        },
+        {
+          "marker": "handoff.trace",
+          "graph_mode": "handoff",
+          "run_id": "54de33fd16ff478e872dd0afe19e3c0a",
+          "logging_error_count": 0,
+          "duration_ms": 0,
+          "source_agent": "general_chat",
+          "at_utc": "2026-10-04T06:54:38.008892+00:00",
+          "sample_kind": "acceptance",
+          "thread_key": "4f1744d4fe61970c0dd46785a592c873da6132aa6bce96bde5fed4e407f3fc06",
+          "cohort": "canary",
+          "guard_score": null,
+          "event_id": "20aa3dfae9694189904b960c94350b6b",
+          "target_agent": "general_chat",
+          "code": "all_tasks_done",
+          "tokens": 0,
+          "reason_code": "all_tasks_done",
+          "request_key": "f54c76dfd85f42efa04cb8d71756ef1c"
+        },
+        {
+          "marker": "handoff.request",
+          "graph_mode": "handoff",
+          "status": "success",
+          "logging_error_count": 0,
+          "at_utc": "2026-10-04T06:54:38.081913+00:00",
+          "sample_kind": "acceptance",
+          "thread_key": "4f1744d4fe61970c0dd46785a592c873da6132aa6bce96bde5fed4e407f3fc06",
+          "latency_ms": 5670.63,
+          "cohort": "canary",
+          "event_id": "8fcbdae71d8149c9b25e7b0776931941",
+          "phase": "finished",
+          "request_key": "f54c76dfd85f42efa04cb8d71756ef1c"
+        }
+      ]
+    }
+  },
+  "failure": "single_handoff_node_missing",
+  "failed_at_utc": "2026-10-04T06:54:38.095027+00:00"
+}
