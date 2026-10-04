@@ -1,6 +1,6 @@
 # Handoff 观测修复与 Canary 重开（2026-10-04）
 
-状态：观测修复已通过离线验收，生产发布及重开尚未执行；下列生产结果在执行后据实补充。
+状态：观测修复及生产发布验收通过，双开关关闭；重开硬验收及观察待执行。
 
 ## 1. 授权、基线与范围
 
@@ -37,7 +37,15 @@ ai-service/.venv/Scripts/python.exe docs/reports/rule-layer-r2-20261003/check.py
 
 只重建 ai-service；postgres/qdrant/netease/java/frontend/migrate 的容器和镜像保持不变；无新迁移，migrate 不重跑。不修改 Compose 或环境文件、secrets 挂载。通过无 push Git bundle 提供精确目标对象，部署脚本必须与目标 Git blob 校验一致。`deploy/update.py --services ai-service --approve-contract` 的专用审查仅允许本轮观测路径、测试和报告，拒绝 Compose/submodule 漂移及其他业务模块；保留备份、完整性、FF-only、镜像溯源、七服务和严格 TLS 烟雾门控。
 
-发布前最新完整备份：`/secure/moodflow/backups/manifests/20261004T063953Z-613db731.json`，`bash deploy/backup.sh --predeploy` 成功；随后 `bash deploy/backup.sh --verify <该路径>` 独立隔离恢复复验 **postgres passed、qdrant passed**。发布记录、镜像标签、关闭开关及 Foundation 验证结果：待执行。主机接收器另行安装已提交脚本和 systemd unit，保存代码 SHA256 / active 状态。回退告警触发演练将在新镜像隔离进程执行真实 router 的受控超时回退（synthetic），不 dispatch、不调用供应商、不改实时路由；通过同一接收器核对 fallback→alert→delivery 关联。
+发布前最新完整备份：`/secure/moodflow/backups/manifests/20261004T063953Z-613db731.json`，`bash deploy/backup.sh --predeploy` 成功；随后 `bash deploy/backup.sh --verify <该路径>` 独立隔离恢复复验 **postgres passed、qdrant passed**。
+
+部署 run_id `20261004T064429Z-6667b70e`，北京时间 **14:44:29 启动、14:45:46 验收完成**，通过精确 bundle `9edf9d32a6a8375eb0532d41a9e44735d0de736b2fb920d10338fbef1aca48d8`、`--services ai-service --approve-contract` 执行既有 updater。其第二次强制完整备份 `20261004T064431Z-6667b70e` 也经独立恢复校验后才允许构建。发布 HEAD **6667b70ecc1ad27786559bacb389f6f65d42098b**，AI 标签 `moodflow/ai-service:release-6667b70ecc1a`，镜像 `sha256:7619d3f85457d9413c6577bae9209b6d5cc68f7cea82224dbfba408edea565b3`，没有迁移。见 [发布记录](deployment-progress.json)、[部署范围及源码验证](deployment-verify.json)。
+
+六常驻 healthy、migrate exited 0；双开关 false、foundation、router Shadow true、Guard 0.8；原 12 源码及新 observability/runtime 文件与 Git blob SHA256 一致。其余六服务的镜像及容器 ID 全部一致，所有服务挂载和排除双开关后的环境指纹一致。严格 TLS 首页/healthz/auth、Foundation SSE 和 worldline 恢复均通过；额外 [Foundation 搜索烟雾](foundation-smoke.json) 返回 intent_router→tool_calling_subgraph、搜索 3 首歌曲、无 action。匿名歌单 401 为预期鉴权边界，本轮没有重做已登录歌单只读验证，不把脚本模板中的旧浏览器标记当本轮证据。
+
+北京时间 14:47:49 安装精确 Git blob 接收器，`moodflow-handoff-observer.service` active，版本及私有路径见 [安装记录](observer-install.json)。14:49:00 新镜像隔离进程执行真实 HandoffEntryRouter 注入超时客户端，实际产生 fallback→alert；14:49:01 同一白名单接收器 fsync 交付 `alerts.jsonl`，关联 IDs 完整，见 [触发与交付演练](fallback-drill.json)。来源 synthetic；供应商调用 0、dispatch 0、配置变更 0。该演练通过相同生产 formatter/parser/receiver，但隔离进程 stdout 由 driver 交给接收器，不声称经过在线请求的 Docker logs 管道；在线管道由后续 acceptance 验证。
+
+[关闭状态统计](closed-summary.json)：在线 Foundation acceptance 2 个请求均有终态与实际 routing 事件；无真实 canary 请求。1 个 synthetic fallback 告警生成并交付；logging_errors / invalid / unscoped 均 0。synthetic 数据未计入真实或 acceptance 分母。双开关一键关闭脚本已经准备并校验 [prepared.json](prepared.json)。
 
 应用发布任一验证失败：按本次 updater run_id 回滚旧 ai-service 镜像 `sha256:19dad4f4cb3746191dbe44832ce026172498e0659316f225ea3d57841c98c24d` 及生产 HEAD 613db731，复核六服务 healthy、migrate exited 0、双开关 false、Foundation 老链路。回滚记录必须保留。
 
@@ -57,4 +65,4 @@ acceptance 探针：规则未命中 Single、跨搜索与聊天的 Multi、确�
 
 ## 7. Commit 与结论
 
-观测修复、部署和开闸分别独立 commit；本报告后续记录已产生的完整 hash，不写自引用假值。未 push。最终结果、继续观察建议及未完成项：待执行后填写。48h 扩大/全量/回滚决策不在本轮。
+观测修复 commit **7346cf972419a63ad82a665136f7fb76663c74e4**；部署门控及实际生产代码 commit **6667b70ecc1ad27786559bacb389f6f65d42098b**；部署验收记录独立提交，开闸记录后续单独提交。未 push。最终结果、继续观察建议及未完成项：待执行后填写。48h 扩大/全量/回滚决策不在本轮。

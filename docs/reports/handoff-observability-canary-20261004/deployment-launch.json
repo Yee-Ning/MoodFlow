@@ -1,0 +1,24 @@
+{
+  "at_utc": "2026-10-04T06:44:29.400376+00:00",
+  "pid": 296940,
+  "target": "6667b70ecc1ad27786559bacb389f6f65d42098b",
+  "output": "/secure/moodflow/deployments/staging/handoff-update-6667b70.output",
+  "command": [
+    "python3",
+    "-B",
+    "/secure/moodflow/deployments/staging/handoff-update.py",
+    "--bundle",
+    "/secure/moodflow/deployments/staging/handoff-release.bundle",
+    "--bundle-sha256",
+    "9edf9d32a6a8375eb0532d41a9e44735d0de736b2fb920d10338fbef1aca48d8",
+    "--target-commit",
+    "6667b70ecc1ad27786559bacb389f6f65d42098b",
+    "--services",
+    "ai-service",
+    "--approve-contract"
+  ],
+  "allowed_switches": {
+    "HANDOFF_CANARY_ENABLED": "false",
+    "JEV_HANDOFF_ROUTER_ENABLED": "false"
+  }
+}
