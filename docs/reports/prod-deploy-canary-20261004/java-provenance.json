@@ -1,0 +1,10 @@
+{
+  "container_id": "014794a625ec958e3a87f3b28cb7c679e0b1657c45f1d1bf3c16556eb9d80073",
+  "classes_sha256": {
+    "controller/UserMusicController.class": "186720b9b6367aff41c0a46b6d2bbce6b02cbfe2ff9e4b2ee0c4ba6b43b56d22",
+    "service/NeteaseMusicService.class": "269f8f9c13d8551df942c4f7703bf5d407ce12051e56cdf966f5bca9c4147528",
+    "dto/CreatedPlaylistData.class": "0f48c4e46682ac19a1d849c658b4ca279a6eaed948ce5a252deb5f33ede8ebab",
+    "dto/DeletedPlaylistData.class": "3d6b742ce8fabfcf3e7278a6c6713b2b6af562a3d90ea2d4f1b29a2a2f91e773",
+    "dto/SongLikeData.class": "a246aa9fb3ec69c206085009c3920be6273f0c62c2c290eee821803e39453083"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "method": "Chrome authenticated UI; no cookie/token extraction",
+  "rollback_before_retry": {
+    "authenticated": true,
+    "playlist_read": "passed",
+    "songs_count": 18
+  },
+  "final_new_version": {
+    "playlist_read": "pending",
+    "reason": "Java restart invalidated prior login session; fresh authentication required"
+  },
+  "production_write_or_player_action": false
+}

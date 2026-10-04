@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "passed": true,
+  "probe_stdout": "startup_imports_passed_and_artifacts_rejected",
+  "production_services_changed": false,
+  "secret_mounts": false,
+  "network": "none"
+}

@@ -1,0 +1,45 @@
+{
+  "at_utc": "2026-10-04T05:11:35.202704+00:00",
+  "sample_kind": "acceptance",
+  "search": {
+    "http_status": 200,
+    "code": 200,
+    "songs_count": 3
+  },
+  "playlist_auth_boundary": {
+    "http_status": 401,
+    "status": "expected_login_required",
+    "authenticated_read_status": "pending_relogin_after_java_restart"
+  },
+  "foundation_search": {
+    "http_status": 200,
+    "status": "success",
+    "events": [
+      "update",
+      "update",
+      "update",
+      "message",
+      "update",
+      "update",
+      "final",
+      "done"
+    ],
+    "nodes": [
+      "prepare_context",
+      "intent_router",
+      "tool_calling_subgraph",
+      "aggregate_results",
+      "final_response"
+    ],
+    "results": [
+      {
+        "subgraph": "tool_calling",
+        "status": "success",
+        "tool_call_count": 1
+      }
+    ],
+    "seconds": 3.812
+  },
+  "passed": true,
+  "probe_scope": "public_search_foundation_sse_anonymous_playlist_auth_boundary"
+}

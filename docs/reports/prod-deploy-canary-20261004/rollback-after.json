@@ -1,0 +1,71 @@
+{
+  "at_utc": "2026-10-04T04:56:39.540962+00:00",
+  "head": "3a11237cbce78ffb1e8ce6dc31db681c1430e360",
+  "services": {
+    "postgres": {
+      "container_id": "b0b37d1aed690a99c6c4c856ab6e5598d0df03346df5f2ddc6ef28d928d1e367",
+      "image_id": "sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b",
+      "environment_except_canary_sha256": "028b9aa581bedb92778a061b3a8435e085da2cfec34d90bb051689ea69ecccbd",
+      "mounts_sha256": "ea079d09dfe3c12fb0f474a753ea3d48945e09a265a43b7a33674a084f828c9f",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    "qdrant": {
+      "container_id": "b7dbd6e0d2c60c24d1e7c5d18891e90a39882463d1459722fc4a4ef7b5497bff",
+      "image_id": "sha256:cdae0d52cfe04283adc0e086932bd7ccc1893f7c48cd2d6ac936c4e6cc4a0a82",
+      "environment_except_canary_sha256": "76c255f7745e07d848666b0d6d3d7f63e4a94928727bb6982e0e72ceaf9b5606",
+      "mounts_sha256": "04232a807ab4a8c4839b315ecf14448234e60cab8a21e89b47e2ab1e590d41f5",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    "netease": {
+      "container_id": "c57c0442b1b26fc4128668fa95f2ca58f011abc0f0859f36b867f1fa82ae3fed",
+      "image_id": "sha256:ad627aaccdb8a13b3109ea6108e8f95afe69ce671254cc0d7451c832917213ba",
+      "environment_except_canary_sha256": "42e3e89e72ccfef8866f48598dbba9441842fad9618887e6415eea8017840161",
+      "mounts_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    "java": {
+      "container_id": "1de8819a423c5e0507edbfd362fff39e4f4546748d2a55dff02ec3d55708825e",
+      "image_id": "sha256:59ba45c47e29b8361a4f824faeb3a3ffaddfd339329bfa88b1f1ba62363ea5be",
+      "environment_except_canary_sha256": "87488d65ffb3dce542db4f2928a41fe21c7e77553ce041ac6fc9898cf09bc27d",
+      "mounts_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    "ai-service": {
+      "container_id": "e54ab7afc1935871dcfd49744b1602b1c31b1eb260487bea80fb4fcbdf93f442",
+      "image_id": "sha256:20a1fb99eb6fcf8951ae186663d5bdcc2fa791984445ff2fa7fe8de50611099b",
+      "environment_except_canary_sha256": "4b0ef3238b26cf48525b81e2cd1b2b88b03d56f6ba48fd44247488b32955c5ed",
+      "mounts_sha256": "dc65d72b00de7f66726d7e6a842d8b45a6377a02d868f9ec7b681eb20d307599",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    "frontend": {
+      "container_id": "b40cef60e49d73e2cd4a0b4144c7106eb80a0e19ef739534080461719da14309",
+      "image_id": "sha256:c08f60a5a8145fb6f7ceafa025037a244bd2edbec268a36b9ae2455f8aa6fb5e",
+      "environment_except_canary_sha256": "a19c4ebb94be91e33ddfcc5b402b78a0723522ad95f5415355096921f4f4d909",
+      "mounts_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "state": "running",
+      "health": "healthy",
+      "exit_code": 0
+    },
+    "migrate": {
+      "container_id": "a0189a40af9069485e4e04721a51b5e83d99afb535fc0683d0ecb2f9405b100f",
+      "image_id": "sha256:20a1fb99eb6fcf8951ae186663d5bdcc2fa791984445ff2fa7fe8de50611099b",
+      "environment_except_canary_sha256": "4b0ef3238b26cf48525b81e2cd1b2b88b03d56f6ba48fd44247488b32955c5ed",
+      "mounts_sha256": "dc65d72b00de7f66726d7e6a842d8b45a6377a02d868f9ec7b681eb20d307599",
+      "state": "exited",
+      "health": null,
+      "exit_code": 0
+    }
+  },
+  "production_worktree_clean": true,
+  "canary_env_file_setting": null
+}

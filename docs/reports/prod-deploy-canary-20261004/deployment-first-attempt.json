@@ -1,0 +1,80 @@
+{
+  "active_image_tags": {
+    "ai-service": "moodflow/ai-service:worldline-v1-fe24b04",
+    "frontend": "moodflow/frontend:worldline-v1-fe24b04",
+    "java": "moodflow/java:worldline-v1-fe24b04",
+    "netease": "moodflow/netease:worldline-v1-fe24b04",
+    "qdrant": "moodflow/qdrant:worldline-v1-fe24b04"
+  },
+  "already_applied_p1": {
+    "execution_columns": 6,
+    "history_keys": 2,
+    "immutable_trigger": true,
+    "unique_indexes": 2,
+    "versions": [
+      "001_agent_continuity.sql",
+      "002_long_term_memory.sql",
+      "003_context_loop_history.sql",
+      "004_continuity_execution.sql"
+    ]
+  },
+  "backup_files": {
+    "postgres": "/secure/moodflow/backups/postgres/20261004T044917Z-f6b7a421.dump",
+    "qdrant": "/secure/moodflow/backups/qdrant/20261004T044917Z-f6b7a421.snapshot"
+  },
+  "backup_manifest": "/secure/moodflow/backups/manifests/20261004T044917Z-f6b7a421.json",
+  "build_services": [
+    "netease",
+    "java",
+    "ai-service"
+  ],
+  "bundle_sha256": "28de6b77ea9cc099cbed1cecf9fb80b090a60e702b35f98b48b5b290bb1e475d",
+  "deferred_frontend_paths": [
+    "soul-music-room/scripts/test-ai-chat-stream.mjs",
+    "soul-music-room/scripts/validation7.html",
+    "soul-music-room/scripts/validation7.vite.config.mjs",
+    "soul-music-room/src/services/aiChat.ts",
+    "soul-music-room/src/services/aiClientActions.ts",
+    "soul-music-room/src/store/aiChatStore.ts"
+  ],
+  "health": {
+    "java": "healthy",
+    "netease": "healthy",
+    "postgres": "healthy",
+    "qdrant": "healthy"
+  },
+  "migration": "not_needed",
+  "migration_paths": [],
+  "new_commit": "f6b7a421e229223e1f1677103078cb4da1220120",
+  "new_image_ids": {
+    "ai-service": "sha256:8499fe2f271dbb9204c1a6e60cb1b798727ff199e6698ccf6521a6f1b9400fd5",
+    "java": "sha256:81520399c96cdb2d5f5b1cd883de09040f3e39de27c7712a858625f9844a3d72",
+    "netease": "sha256:0fb807c20dec8959cf2547b8e132d11c7aa6e4822434044e8b338c2d220aadf0"
+  },
+  "phase": "migration",
+  "previous_commit": "3a11237cbce78ffb1e8ce6dc31db681c1430e360",
+  "previous_image_ids": {
+    "ai-service": "sha256:20a1fb99eb6fcf8951ae186663d5bdcc2fa791984445ff2fa7fe8de50611099b",
+    "frontend": "sha256:c08f60a5a8145fb6f7ceafa025037a244bd2edbec268a36b9ae2455f8aa6fb5e",
+    "java": "sha256:59ba45c47e29b8361a4f824faeb3a3ffaddfd339329bfa88b1f1ba62363ea5be",
+    "netease": "sha256:ad627aaccdb8a13b3109ea6108e8f95afe69ce671254cc0d7451c832917213ba",
+    "postgres": "sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b",
+    "qdrant": "sha256:cdae0d52cfe04283adc0e086932bd7ccc1893f7c48cd2d6ac936c4e6cc4a0a82"
+  },
+  "release_tags": {
+    "ai-service": "moodflow/ai-service:release-f6b7a421e229",
+    "java": "moodflow/java:release-f6b7a421e229",
+    "netease": "moodflow/netease:release-f6b7a421e229"
+  },
+  "rollback": {
+    "application": "restored",
+    "at_utc": "2026-10-04T04:55:53.441528+00:00",
+    "database": "untouched",
+    "qdrant": "untouched"
+  },
+  "run_id": "20261004T044916Z-f6b7a421",
+  "smoke": "not_started",
+  "source": "verified_bundle",
+  "started_at_utc": "2026-10-04T04:49:15.644478+00:00",
+  "status": "running"
+}
