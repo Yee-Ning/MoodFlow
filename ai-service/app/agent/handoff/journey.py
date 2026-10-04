@@ -63,6 +63,7 @@ class JourneyNarrative(JourneyModel):
     # GeneralChat v1 may later fill its four effect states from actual receipts.
     # Preparing this path supplies no evidence of an applied/confirmed effect.
     effect_state: None = None
+    preference_song_ids: tuple[int, ...] = Field(default=(), max_length=8)
 
 
 class JourneyNode(JourneyQueueItem):
@@ -105,7 +106,7 @@ class JourneyTransferPayload(JourneyModel):
 class ListeningJourney(JourneyModel):
     schema_version: Literal[1] = 1
     root_entity_id: str | None
-    ordering: Literal["timeline"] = "timeline"
+    ordering: Literal["timeline", "preference_then_timeline"] = "timeline"
     ordering_reason: str = (
         "根实体导览；其余按来源时间递增，未知时间单列；顺序不宣称因果。"
     )
@@ -157,22 +158,36 @@ def _publish_year(value) -> int | None:
 
 
 def build_listening_journey(
-    world: WorldLineResult, facts: MusicEntityFacts | None
+    world: WorldLineResult,
+    facts: MusicEntityFacts | None,
+    *,
+    catalog_history: tuple[MusicEntityFacts, ...] = (),
+    node_priorities: dict[str, int] | None = None,
+    recommendation_reasons: dict[str, str] | None = None,
+    preference_song_ids: dict[str, tuple[int, ...]] | None = None,
 ) -> ListeningJourney:
     sources = {item.id: item for item in world.sources}
     graph_nodes = {item.id: item for item in world.graph.nodes}
     catalog = {}
-    catalog_sources = set()
-    catalog_edges = set()
-    if facts is not None and facts.entity == world.root_entity:
-        catalog_sources = {
+    catalog_node_sources = {}
+    catalog_edges = {}
+    snapshots = (*catalog_history, *((facts,) if facts is not None else ()))
+    for snapshot in snapshots:
+        root = graph_nodes.get(snapshot.entity.entity_id)
+        if (
+            root is None
+            or root.name != snapshot.entity.name
+            or root.type.value != snapshot.entity.entity_type.value
+        ):
+            continue
+        snapshot_sources = {
             item.id
-            for item in facts.sources
+            for item in snapshot.sources
             if item.source_type is EvidenceType.MUSIC_API
             and sources.get(item.id) == item
         }
-        if catalog_sources:
-            for entity in (facts.entity, *facts.related_entities):
+        if snapshot_sources:
+            for entity in (snapshot.entity, *snapshot.related_entities):
                 node = graph_nodes.get(entity.entity_id)
                 if (
                     node is not None
@@ -180,12 +195,15 @@ def build_listening_journey(
                     and node.type.value == entity.entity_type.value
                 ):
                     catalog[entity.entity_id] = entity
-            catalog_edges = {
-                (item.subject_id, item.object_entity_id, item.predicate)
-                for item in facts.facts
-                if item.evidence_ids
-                and set(item.evidence_ids).issubset(catalog_sources)
-            }
+                    catalog_node_sources.setdefault(entity.entity_id, set()).update(
+                        snapshot_sources
+                    )
+            for item in snapshot.facts:
+                if item.evidence_ids and set(item.evidence_ids).issubset(
+                    snapshot_sources
+                ):
+                    key = (item.subject_id, item.object_entity_id, item.predicate)
+                    catalog_edges.setdefault(key, set()).update(item.evidence_ids)
     conflicts = set()
     dates = {}
     for relation in (
@@ -223,7 +241,7 @@ def build_listening_journey(
             dates[node_id] = (year, "catalog_publish_time")
 
     backed_edges = []
-    node_sources = {key: set(catalog_sources) for key in catalog}
+    node_sources = {key: set(value) for key, value in catalog_node_sources.items()}
     neighbors = {key: set() for key in graph_nodes}
     for edge in world.graph.edges:
         key = (edge.source, edge.target, edge.relation.value)
@@ -240,7 +258,7 @@ def build_listening_journey(
                 sources[item].source_type is EvidenceType.KNOWLEDGE
                 and sources[item].excerpt
             )
-            or (item in catalog_sources and key in catalog_edges)
+            or item in catalog_edges.get(key, ())
         }
         if not evidence:
             continue
@@ -259,7 +277,11 @@ def build_listening_journey(
         pending.extend(sorted(neighbors[node_id] - reachable))
     ordered = sorted(
         reachable - {world.graph.root},
-        key=lambda key: (dates.get(key, (3000, ""))[0], key),
+        key=lambda key: (
+            -(node_priorities or {}).get(key, 0),
+            dates.get(key, (3000, ""))[0],
+            key,
+        ),
     )
     if world.graph.root in reachable:
         ordered.insert(0, world.graph.root)
@@ -343,6 +365,8 @@ def build_listening_journey(
             statement += (
                 "；目录已确认该实体，尚无可支持其时代、场景或影响结论的知识证据"
             )
+        if (recommendation_reasons or {}).get(node_id):
+            statement += "；" + recommendation_reasons[node_id]
         year, time_basis = dates.get(node_id, (None, None))
         transition = (
             "从根实体开始导览。"
@@ -365,6 +389,7 @@ def build_listening_journey(
                 statement=_short(statement, 240),
                 transition=transition,
                 source_ids=evidence_ids,
+                preference_song_ids=(preference_song_ids or {}).get(node_id, ()),
             ),
             representative_reason=reason,
         )
@@ -405,6 +430,10 @@ def build_listening_journey(
         )
     return ListeningJourney(
         root_entity_id=world.root_entity.entity_id,
+        ordering="preference_then_timeline" if node_priorities else "timeline",
+        ordering_reason="根实体导览；红心命中关系权重优先，同权重按来源时间，未知时间单列。"
+        if node_priorities
+        else ListeningJourney.model_fields["ordering_reason"].default,
         evidence_state=overall,
         nodes=tuple(nodes),
         excluded_node_ids=tuple(sorted(set(graph_nodes) - reachable)),
@@ -418,7 +447,11 @@ def render_journey(journey: ListeningJourney) -> str:
         if journey.omitted_node_ids:
             return "路径内容超过既有转交载荷预算，未生成队列；请缩小探索范围。"
         return "没有可核实来源的探索节点，暂时不能生成聆听路径；请提供可识别的歌曲、歌手或专辑。"
-    lines = ["聆听路径（根实体导览＋来源时间线；未知时间单列）："]
+    lines = [
+        "聆听路径（根实体导览＋红心关系权重/来源时间线；未知时间单列）："
+        if journey.ordering == "preference_then_timeline"
+        else "聆听路径（根实体导览＋来源时间线；未知时间单列）："
+    ]
     for index, node in enumerate(journey.nodes, 1):
         song = (
             f"代表歌曲《{node.song_title}》（目录 ID {node.song_id}，未执行播放）"

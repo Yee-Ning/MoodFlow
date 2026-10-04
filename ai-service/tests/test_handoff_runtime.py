@@ -377,8 +377,8 @@ async def test_invalid_transfer_is_paired_and_cannot_execute_business_tools(fail
 @pytest.mark.parametrize(
     "routes,text",
     [
-        ((RouteKey.WORLDLINE,), "探索时代"),
-        ((RouteKey.TOOL_CALLING, RouteKey.WORLDLINE), "暂停一下；探索时代"),
+        ((RouteKey.WORLDLINE,), "探索歌手《周杰伦》的时代"),
+        ((RouteKey.TOOL_CALLING, RouteKey.WORLDLINE), "暂停一下；探索歌手《周杰伦》的时代"),
     ],
 )
 async def test_explorer_dependency_failure_preserves_completed_music_results(

@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.routing import RouteKey
 from app.agent.foundation.subgraphs.tool_calling.models import ReferencedEntities
-from app.agent.foundation.subgraphs.worldline.models import WorldLineResult
+from app.agent.foundation.subgraphs.worldline.models import WorldLineSessionResult
 
 
 def latest_entities(results: Sequence[TaskResult]) -> ReferencedEntities:
@@ -31,7 +31,8 @@ def exploration_projection(results: Sequence[TaskResult]) -> dict | None:
             or result.status is not TaskStatus.SUCCESS
         ):
             continue
-        world = WorldLineResult.model_validate(result.data["worldline_result"])
+        # Explorer sessions can exhaust their real branch choices (0..3).
+        world = WorldLineSessionResult.model_validate(result.data["worldline_result"])
         return {
             "task_id": result.task_id,
             "text_fields": "untrusted",
