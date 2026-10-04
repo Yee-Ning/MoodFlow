@@ -12,7 +12,7 @@
 - 已有修改、删除和未跟踪数据保留；仅显式暂存本任务文件。
 - 本地准备范围：生产 Compose 增加关闭默认值的 `HANDOFF_CANARY_ENABLED` 接线；新增只读 `deploy/v5_canary_preflight.py`、对应测试和本报告/脱敏证据。
 - 没有修改路由决策、Guard 阈值、记账、ACK、生产配置、镜像或服务。Compose 接线尚未部署。
-- 准备及验证提交：最终验证后记录于 §8；**没有开闸提交**。
+- 准备提交：`08d18c517c98094aff1c5303b6031dffb6366178`；验证记录另作提交，见 §8；**没有开闸提交**。
 
 ## 2. Phase 0：按顺序核验硬门控
 
@@ -50,7 +50,7 @@
 | V5→Hybrid 回退告警 | 无告警交付/触发演练证据；现有 Shadow 汇总不能证明 active 回退告警 | 未满足 |
 | canary / non-canary 实际路径 | 未开闸，未发起业务探针；本地已有分桶/API 回归另作自动化验证 | 生产未验证 |
 | 一键回滚预案 | §5 已记录命令、触发阈值与前置条件 | 文档完成；生产未演练 |
-| 全量相关验证 | §8 | 完成后填写 |
+| 全量相关验证 | 2101 passed、45 skipped、288 subtests passed；静态检查通过，详见 §8 | 离线通过；外部验证有明确限制 |
 
 最近 2h 读取 AI 日志 **187 行**，tail 上限 **10000**，未达到上限，没有发现截断。只归档白名单配置、源码 hash、服务状态、计数及已有脱敏 Shadow 汇总，不归档原始日志、用户文本或身份。`jev.v5_shadow`、入口、入口快判、入口异常、Guard 与 handoff trace 的事件计数均为 **0**。这只能证明该日志窗口没有可用的相关事件，不能证明整站无用户请求、没有错误或监控健康。
 
@@ -143,6 +143,39 @@ HANDOFF_CANARY_ENABLED=false docker compose --env-file .env.production -f docker
 
 准备阶段的定向验证：`ai-service/.venv/Scripts/python.exe -m pytest deploy/tests/test_v5_canary_preflight.py -q`，**18 passed**；同解释器 `-m ruff check deploy/v5_canary_preflight.py deploy/tests/test_v5_canary_preflight.py` 与 `-m compileall -q` 同范围，均通过。覆盖白名单读取、缺失字段/模块、错误配置、日志窗口边界、Compose NDJSON/数组、只读命令、隐私过滤、异常不泄露与关闭默认值。
 
-全量验证与准备提交 hash 在最终验证记录提交补充。
+最终全量命令在工作区根目录执行：
+
+```powershell
+$env:PYTHONPATH = (Get-Location).Path
+ai-service/.venv/Scripts/python.exe docs/reports/rule-layer-r2-20261003/check.py ../docs/reports/v5-canary-20261003/pytest_entry.py tests ../deploy/tests -q --junitxml=../.dev/v5-canary-20261003/all-tests-pass.xml
+ai-service/.venv/Scripts/python.exe -m ruff check deploy/v5_canary_preflight.py deploy/tests/test_v5_canary_preflight.py docs/reports/v5-canary-20261003/pytest_entry.py
+ai-service/.venv/Scripts/python.exe -m compileall -q deploy/v5_canary_preflight.py deploy/tests/test_v5_canary_preflight.py docs/reports/v5-canary-20261003/pytest_entry.py
+```
+
+实际最终全量使用 `../.dev/v5-canary-20261003/pytest_entry.py` 临时入口，已将相同内容归档为本目录的 [pytest_entry.py](pytest_entry.py)，上面是可重跑命令。该入口只移除 R2 包装器注入的占位 `TYPESAFE_API_KEY`，使设置测试自己的临时 dotenv 生效；保留已有离线环境和原测试断言。R2 包装器只在冻结文件内容相同、差异仅为换行时临时恢复 Git blob，finally 恢复原 checkout 字节，不改 `.env`。
+
+| 检查 | 最终结果 |
+|---|---|
+| 全量 AI 应用 `tests/` + 部署 `deploy/tests/` | **2101 passed、45 skipped、288 subtests passed**，0 failures/errors，265.33s |
+| 设置测试 + 预检的归档验证入口复验 | **28 passed**，0 failures，0.42s |
+| 新增预检定向测试 | **18 passed** |
+| Ruff | **All checks passed**，3 个本任务 Python 文件 |
+| Python 编译 | **通过**，同范围 compileall |
+| 任务 diff / 暂存检查 | **通过**；原有无关用户改动不纳入提交 |
+| SSH 预检与文档复现命令 | 采集成功，预检返回 **1 / NO-GO**；生产 HEAD 未变，没有重启、构建、部署或切流 |
+
+178 个既有 LangGraph durability warning 保留，未修改持久化代码来消除 warning。45 个既有外部集成跳过分别为：21 隔离 PostgreSQL 验收、7 PG E2E、7 native 恢复进程验收、4 live PG smoke、3真实 PG 重启、2真实 Qdrant、1真实 TypeSafe；跳过条件未改变，这些项目不能算作本轮通过。D 的历史隔离 PG/native 证据仍以原报告为准。
+
+保留的中间失败：第一次跨目录收集出现 **8 errors**（未设置根目录 `PYTHONPATH`）；修正后首轮全量为 **2100 passed、45 skipped、1 failed、288 subtests passed**，失败为 `test_jev_fields_use_existing_settings_and_hide_key`，原因是包装器占位 key 优先于测试临时 dotenv。移除该占位覆盖后重新运行完整集合得到上述最终通过结果，没有删除、跳过、弱化测试或修改应用设置逻辑。
+
+[validation-summary.json](validation-summary.json) 保存顺序门控、每份原报告的提交号与规范化 LF SHA256、生产预检证据摘要 hash、四次 JUnit 汇总、失败用例名和外部跳过原因。JUnit 测试计数包括子测试，因此与 pytest 主测试计数分开说明；完整 XML 留在 `.dev/v5-canary-20261003/`，没有将原始日志/凭据纳入 Git。
+
+提交记录：
+
+- 准备实现、18 项测试、关闭的开关接线、初版报告和生产证据：`08d18c517c98094aff1c5303b6031dffb6366178`。
+- 最终报告/验证摘要/归档验证入口：独立验证记录提交，可用 `git log -1 --format=%H -- docs/reports/v5-canary-20261003/validation-summary.json` 查询；最终交付消息给出真实 hash。报告不填入尚未产生的自引用提交号。
+- 开闸提交：**无**。
+
+没有业务 API、Java、Node 适配器或前端实现变更，本轮未重新做 Java/Node/前端构建、视觉/音频验收，也未构建/部署新生产镜像。无目录限制的 evals 集合需要既有缺失的 `deepeval`，本轮没有运行或安装；全量范围为上面的 AI 应用与部署测试。静态 Compose/默认开关由部署回归验证；生产版本、配置与所有实际功能/监控缺口不能由离线通过结果替代。
 
 未完成的生产验收：全部门控能力的部署/镜像溯源、真实 false/10%/V5 active/Guard 0.8 配置、各项监控数据、降级告警触发与交付、回滚连续性演练、切流与双 cohort 路径、初始观察、≥50 真实快判采样及 Replay。单开关限制使本轮不能部署新镜像或改其他 V5 配置来解决这些阻碍。
