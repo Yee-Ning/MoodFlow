@@ -15,6 +15,7 @@ from app.agent.foundation.subgraphs.general_chat.assistant import (
     GENERAL_CHAT_SYSTEM_PROMPT,
 )
 from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
+from app.agent.foundation.subgraphs.general_chat.results import grounded_response, read_result_receipt
 from app.agent.foundation.subgraphs.tool_calling import create_tool_calling_subgraph
 from app.agent.foundation.subgraphs.tool_calling.assistant import all_tool_calling_tools
 from app.agent.handoff.song_context import SongContextRead, create_song_context_tool
@@ -205,6 +206,7 @@ async def execute_owned_task(
             if history and isinstance(history[-1], HumanMessage):
                 history.pop()
             status_tool = create_combination_status_tool(view.get("task_results", []))
+            receipt = await read_result_receipt(view.get("task_results", []))
             read_tools = {context_tool.name: context_tool}
             progress = latest_combination_progress(view.get("task_results", []))
             if progress and len(progress["tasks"]) > 1:
@@ -221,13 +223,13 @@ async def execute_owned_task(
                     messages=history,
                     business_state=routing_context.model_dump_json(),
                     structured_output=json.dumps(
-                        [
+                        {"result_receipt": receipt.projection(), "prior_task_results": [
                             {
                                 "status": item.status.value,
                                 "content": (item.content or "")[:800],
                             }
                             for item in prior_results[-8:]
-                        ],
+                        ]},
                         ensure_ascii=False,
                     ),
                     continuity_context=view.get("continuity_context"),
@@ -236,7 +238,7 @@ async def execute_owned_task(
                 if not isinstance(response, AIMessage) or response.invalid_tool_calls:
                     raise ValueError("invalid chat message")
                 if not response.tool_calls:
-                    return response
+                    return grounded_response(response, text, receipt)
                 if attempt == 2 or len(response.tool_calls) != 1:
                     raise ValueError("chat context tool limit exceeded")
                 call = response.tool_calls[0]
