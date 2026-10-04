@@ -181,6 +181,30 @@ def verified_applied_p1(paths: list[str], target: str) -> dict:
 
 def reviewed_services(previous: str, target: str, paths: list[str], services: list[str],
                       approve_contract: bool) -> list[str]:
+    if services == ["ai-service"]:
+        # Explicit review for this observability release; existing deployment,
+        # backup, provenance and health gates still run without exemptions.
+        if not approve_contract:
+            raise UpdateError("ai_observability_release_requires_explicit_review")
+        if command("git", "show", f"{previous}:docker-compose.production.yml") != command(
+            "git", "show", f"{target}:docker-compose.production.yml"
+        ):
+            raise UpdateError("ai_observability_release_compose_must_be_unchanged")
+        allowed = {"ai-service/app/agent/handoff/observability.py", "ai-service/app/agent/handoff/routing.py",
+                   "ai-service/app/agent/handoff/guard.py", "ai-service/app/agent/handoff/trace.py",
+                   "ai-service/app/agent/foundation/main_graph.py", "ai-service/app/api/chat.py",
+                   "ai-service/app/agent/foundation/long_horizon/runner.py",
+                   "ai-service/app/agent/foundation/long_horizon/coordinator.py",
+                   "deploy/runtime.py", "deploy/handoff_observer.py", "deploy/moodflow-handoff-observer.service",
+                   "deploy/update.py"}
+        if any(path not in allowed and not path.startswith(("docs/reports/", "ai-service/tests/", "deploy/tests/"))
+               for path in paths):
+            raise UpdateError("ai_observability_release_contains_unreviewed_path")
+        if command("git", "rev-parse", f"{previous}:netease-music-api") != command(
+            "git", "rev-parse", f"{target}:netease-music-api"
+        ):
+            raise UpdateError("ai_observability_release_submodule_must_be_unchanged")
+        return services
     if services != ["netease", "java", "ai-service"] or not approve_contract:
         raise UpdateError("scoped_release_requires_reviewed_three_services_and_contract")
     # This release permits exactly the previously reviewed closed switch.

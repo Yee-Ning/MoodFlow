@@ -20,6 +20,37 @@ def test_update_rebuilds_only_affected_images():
         "ai-service"]
 
 
+def test_reviewed_ai_observability_only_release_keeps_contract_and_submodule(monkeypatch):
+    monkeypatch.setattr(update, 'command', lambda *args: 'unchanged')
+    paths = ['ai-service/app/agent/handoff/observability.py','ai-service/app/api/chat.py',
+             'deploy/runtime.py','deploy/handoff_observer.py','docs/reports/current/report.md']
+    assert update.reviewed_services('old','new',paths,['ai-service'],True)==['ai-service']
+    with pytest.raises(update.UpdateError, match='requires_explicit_review'):
+        update.reviewed_services('old','new',paths,['ai-service'],False)
+
+
+@pytest.mark.parametrize('path', ['docker-compose.production.yml','music-backend/src/App.java',
+                                'ai-service/app/agent/handoff/state.py','ai-service/app/llm/runtime.py',
+                                'ai-service/migrations/005.sql','.env.example','netease-music-api'])
+def test_ai_observability_release_rejects_other_paths(monkeypatch, path):
+    monkeypatch.setattr(update, 'command', lambda *args: 'unchanged')
+    with pytest.raises(update.UpdateError,match='unreviewed_path'):
+        update.reviewed_services('old','new',[path],['ai-service'],True)
+
+
+@pytest.mark.parametrize('changed', ['compose','submodule'])
+def test_ai_observability_release_rejects_contract_or_pinned_submodule_drift(monkeypatch, changed):
+    def command(*args):
+        if changed=='compose' and args[-1]=='new:docker-compose.production.yml':
+            return 'different'
+        if changed=='submodule' and args[-1]=='new:netease-music-api':
+            return 'different'
+        return 'unchanged'
+    monkeypatch.setattr(update,'command',command)
+    with pytest.raises(update.UpdateError,match='must_be_unchanged'):
+        update.reviewed_services('old','new',['deploy/runtime.py'],['ai-service'],True)
+
+
 @pytest.mark.parametrize("path", ["docker-compose.production.yml", ".env.example", "deploy/nginx-host.conf"])
 def test_update_blocks_sensitive_contract_changes(path):
     with pytest.raises(update.UpdateError, match="manual_review_required"):
