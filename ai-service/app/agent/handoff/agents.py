@@ -114,6 +114,9 @@ async def choose_transfer(
     if run.current_agent is AgentKey.EXPLORER:
         from app.agent.handoff.journey import attach_journey_transfer
         response = attach_journey_transfer(response, run)
+    from app.agent.handoff.chain_receivers import attach_receiver_summary
+
+    response = attach_receiver_summary(response, run)
     return response
 
 
@@ -192,6 +195,16 @@ async def execute_owned_task(
             },
         )
     if task.route_key is RouteKey.TOOL_CALLING:
+        from app.agent.handoff.journey_consumer import consume_journey
+
+        consumed = await consume_journey(
+            state,
+            run,
+            runtime,
+            tools=tool_tools if tool_tools is not None else all_tool_calling_tools(),
+        )
+        if consumed is not None:
+            return consumed
         request = curation_request(task.input_text)
         if request is not None:
             return await execute_curation(
@@ -208,8 +221,13 @@ async def execute_owned_task(
             ])),
         )
     else:
+        from app.agent.handoff.chain_receivers import receive_general_chat
 
         async def chat(messages, text, routing_context, prior_results):
+            received = await receive_general_chat(state, run)
+            if received is not None:
+                return received
+
             from app.agent.foundation.long_horizon.write_reconciliation import (
                 answer_write_status_query,
             )
