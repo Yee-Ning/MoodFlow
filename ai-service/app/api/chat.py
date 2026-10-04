@@ -248,6 +248,25 @@ class RecoveryStatusRequest(BaseModel):
     graph_mode: Literal["foundation", "handoff"]
 
 
+class WriteOperationStatusRequest(RecoveryStatusRequest):
+    operation_id: str = Field(pattern=r"^op:[0-9a-f]{64}$")
+
+
+@router.post("/continuity/operations/status")
+async def write_operation_status(body: WriteOperationStatusRequest, request: Request):
+    """Return persisted failed/unknown/confirmed only; no reconciliation or business write."""
+    from app.agent.foundation.long_horizon.coordinator import get_continuity_coordinator
+    user_id = await UserIdentityProvider().resolve(_spring_session_cookie(request))
+    if user_id is None:
+        raise HTTPException(status_code=401, detail={"code": "write_status_auth_required"})
+    try:
+        return await asyncio.to_thread(get_continuity_coordinator().write_operation_status,
+            **body.model_dump(), user_id=user_id)
+    except ContinuityConflict as exc:
+        raise HTTPException(status_code=409, detail={"code": "write_status_scope_or_operation_mismatch",
+            "message": "账号、图类型、会话或 operation ID 与写操作归属不一致"}) from exc
+
+
 @router.post("/continuity/recovery/status")
 async def recovery_status(body: RecoveryStatusRequest, request: Request):
     """Read diagnostics only; querying status cannot resume tools or reset limits."""

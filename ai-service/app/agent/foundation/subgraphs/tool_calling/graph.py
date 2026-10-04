@@ -93,6 +93,7 @@ _ACTION_REQUESTS = {
     "set_song_liked_tool": r"收藏|喜欢|点赞|点个喜欢|红心",
     "create_playlist_tool": r"(?:新建|创建).{0,40}歌单",
     "remove_song_from_playlist_tool": r"移除|删除",
+    "delete_playlist_tool": r"(?:确认|确定).{0,6}删除.{0,20}歌单",
     "open_lyrics": r"打开歌词|显示歌词|查看歌词|展开歌词",
     "add_song_to_playlist": r"加入.{0,8}歌单|添加到.{0,8}歌单|放进.{0,8}歌单|(?:新建|创建).{0,40}歌单.{0,40}(?:加入|添加|放进)",
 }
@@ -439,6 +440,14 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
     album_details, playlist_details = _known_collection_details(state)
     current_song_id = state["routing_context"].current_song_id
     known_song_ids = {*songs, *([current_song_id] if current_song_id else [])}
+    from app.schemas.music import LikedSongsResult
+    cloud_liked_ids = set()
+    for result in state.get("tool_results", []):
+        if result.get("name") == "get_liked_songs":
+            try:
+                cloud_liked_ids.update(LikedSongsResult.model_validate_json(result["content"]).song_ids)
+            except (ValueError, KeyError):
+                continue
     errors: dict[str, str] = {}
     for call in _latest_tool_calls(state):
         call_id = str(call.get("id", ""))
@@ -452,6 +461,7 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
             "get_playlist_detail_tool": ("playlist_id",), "play_album": ("album_id",),
             "play_playlist": ("playlist_id",), "add_song_to_playlist": ("song_id", "playlist_id"),
             "remove_song_from_playlist_tool": ("song_id", "playlist_id"),
+            "delete_playlist_tool": ("playlist_id",),
         }.get(name, ())
         # Grounding checks must see the same IDs as the executor, even if a schema
         # would otherwise coerce a numeric string or boolean into an integer.
@@ -460,7 +470,8 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
             continue
         if name in {"get_song_lyrics", "set_liked", "set_song_liked_tool"}:
             song_id = args.get("song_id")
-            if isinstance(song_id, int) and song_id not in known_song_ids:
+            permitted_ids = known_song_ids | cloud_liked_ids if name == "set_song_liked_tool" else known_song_ids
+            if isinstance(song_id, int) and song_id not in permitted_ids:
                 errors[call_id] = "歌曲 ID 没有可信来源；请先搜索歌曲或请用户明确选择。"
             if name == "set_liked":
                 synced = [
@@ -532,6 +543,13 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
                 errors[call_id] = "目标位置超出当前播放队列范围。"
             elif isinstance(song_id, int) and song_id not in known_song_ids:
                 errors[call_id] = "目标歌曲 ID 没有可信来源；请先搜索歌曲。"
+        elif name == "delete_playlist_tool":
+            from app.tools.music import has_delete_confirmation
+            playlist_id = args.get("playlist_id")
+            if not args.get("confirmed") or not has_delete_confirmation(state["current_input"], playlist_id):
+                errors[call_id] = "删除整张歌单需要用户确认准确歌单 ID；请先展示目标并请求二次确认。"
+            elif playlist_id not in playlists or not playlists[playlist_id].editable:
+                errors[call_id] = "删除前必须从当前用户歌单取得可信的可编辑目标。"
         elif name in {"add_song_to_playlist", "remove_song_from_playlist_tool"}:
             song_id = args.get("song_id")
             playlist_id = args.get("playlist_id")
@@ -616,6 +634,7 @@ def _final_task_result(
         if result.get("name") in {
             "add_song_to_playlist", "remove_song_from_playlist_tool",
             "create_playlist_tool", "set_song_liked_tool",
+            "delete_playlist_tool",
         }
         if (payload := _read_json(result.get("content"))) is not None
         and (payload.get("success") is False or payload.get("status") == "forbidden")

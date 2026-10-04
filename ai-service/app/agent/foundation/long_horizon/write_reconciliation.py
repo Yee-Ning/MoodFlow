@@ -68,6 +68,17 @@ class MusicWriteReconciler:
         return {"playlist_ids": [row.playlist_id for row in playlists.playlists if row.editable],
                 "source_hash": digest(playlists.model_dump(mode="json"))}
 
+    async def delete_baseline(self, playlist_id):
+        account_id = await self.client.get_account_id()
+        detail = await self.client.get_playlist_detail(playlist_id)
+        if (detail.playlist_id != playlist_id or detail.creator_id != account_id
+                or detail.special_type != 0 or detail.subscribed is not False):
+            raise ValueError("delete_ownership_unproven")
+        return {"playlist_id": playlist_id, "account_id": account_id,
+                "creator_id": detail.creator_id, "special_type": detail.special_type,
+                "subscribed": detail.subscribed,
+                "source_hash": digest(detail.model_dump(mode="json"))}
+
     async def inspect(self, proposal, proposal_ref, baseline=None):
         args, name = proposal.parameters, proposal.name
         reads, observations, result, error_code = [], {}, None, None
@@ -100,6 +111,25 @@ class MusicWriteReconciler:
                                 "source_hash": digest(ids)}
                 if present == args["liked"]:
                     result = {**args, "status": "synced", "message": "原写请求未确认；只读核对已确认云端红心状态。"}
+            elif name == "delete_playlist_tool":
+                if (not baseline or baseline.get("playlist_id") != args["playlist_id"]
+                        or baseline.get("creator_id") != baseline.get("account_id")
+                        or baseline.get("special_type") != 0 or baseline.get("subscribed") is not False):
+                    error_code = "delete_baseline_unproven"
+                else:
+                    reads.append("GET /api/user/profile")
+                    account_id = await self.client.get_account_id()
+                    if account_id != baseline["account_id"]:
+                        error_code = "delete_account_mismatch"
+                    else:
+                        reads.append("GET /api/user/playlists")
+                        playlists = await self.client.get_user_playlists()
+                        present = any(row.playlist_id == args["playlist_id"] for row in playlists.playlists)
+                        observations = {"playlist_id": args["playlist_id"], "account_id": account_id,
+                                        "present": present, "source_hash": digest(playlists.model_dump(mode="json"))}
+                        if not present:
+                            result = {"playlist_id": args["playlist_id"], "status": "deleted",
+                                      "message": "只读核对已确认当前账号自建歌单从自有歌单列表消失。"}
             elif name == "create_playlist_tool":
                 reads.append("GET /api/user/playlists")
                 playlists = await self.client.get_user_playlists()

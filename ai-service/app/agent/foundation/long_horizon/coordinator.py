@@ -384,6 +384,25 @@ class ContinuityCoordinator:
         session = self.store.active_session(task.task_id)
         return latest_recovery_status(self.store, task.task_id, session_id=session.session_id)
 
+    def write_operation_status(self, *, graph_mode, thread_id, user_id, operation_id):
+        """Query A's states in server-owned task scopes without resuming or writing."""
+        from types import SimpleNamespace
+        from .operations import OperationJournal
+        conversation = f"handoff:v1:{thread_id}" if graph_mode == "handoff" else thread_id
+        scope = digest([graph_mode, user_id])
+        self.locks.require_scope(conversation, scope)
+        for task in self.store.tasks_for_conversation(conversation):
+            session = self.store.active_session(task.task_id)
+            if session is None:
+                continue
+            identity = ContinuityIdentity(conversation_id=conversation, continuity_task_id=task.task_id,
+                session_id=session.session_id, request_id="write-status", graph_mode=graph_mode)
+            accounting = SimpleNamespace(identity=identity, lease=SimpleNamespace(scope=scope))
+            operations = OperationJournal(self.writer, accounting)
+            if operations.write_events(operation_id):
+                return operations.state(operation_id)
+        raise ContinuityConflict("write operation not found in this conversation")
+
     def draft(self, session, snapshot, live_body, goal):
         live = LiveSnapshot.model_validate(live_body) if live_body else LiveSnapshot()
         known = {item.field: {"value": item.value, "revision": item.revision} for item in live.observations}

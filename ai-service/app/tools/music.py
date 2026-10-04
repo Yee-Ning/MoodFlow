@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Annotated, Any, Literal
 
 import httpx
@@ -14,6 +15,10 @@ from app.schemas.music import (
     AddSongToPlaylistResult,
     CreatePlaylistArgs,
     CreatedPlaylistResult,
+    DeletePlaylistArgs,
+    DeletedPlaylistResult,
+    LikedSongsResult,
+    SpringDeletedPlaylistResponse,
     RemoveSongFromPlaylistArgs,
     RemoveSongFromPlaylistResult,
     SetSongLikedArgs,
@@ -275,6 +280,9 @@ class MusicServiceClient:
             creator=playlist.creator,
             track_count=playlist.track_count,
             songs=parsed.data.songs,
+            creator_id=playlist.creator_id,
+            special_type=playlist.special_type,
+            subscribed=playlist.subscribed,
         )
 
     async def get_album_detail(self, album_id: int) -> AlbumDetailResult:
@@ -336,6 +344,24 @@ class MusicServiceClient:
         """Read the authenticated account's full cloud like list; never mutate it."""
         payload = await self._request("GET", "/api/user/liked-songs")
         parsed = self._validate_response(payload, SpringLikedSongsResponse)
+        return parsed.data
+
+    async def get_account_id(self) -> int:
+        """Resolve ownership for deletion evidence using the same authenticated session."""
+        from app.schemas.context import SpringUserIdentityResponse
+        payload = await self._request("GET", "/api/user/profile")
+        parsed = self._validate_response(payload, SpringUserIdentityResponse)
+        return parsed.data.user_id
+
+    async def delete_playlist(self, playlist_id: int, confirmed: bool = False) -> DeletedPlaylistResult:
+        args = DeletePlaylistArgs(playlist_id=playlist_id, confirmed=confirmed)
+        if not args.confirmed:
+            raise MusicServiceError("http_422", "删除整张歌单需要用户确认准确歌单 ID。")
+        payload = await self._request("DELETE", f"/api/playlists/{args.playlist_id}",
+                                      params={"confirmed": "true"})
+        parsed = self._validate_response(payload, SpringDeletedPlaylistResponse)
+        if parsed.data.playlist_id != args.playlist_id:
+            raise MusicServiceError("invalid_response", "音乐服务返回了不匹配的删除歌单数据。")
         return parsed.data
 
     async def create_playlist(self, name: str, privacy: int = 0) -> CreatedPlaylistResult:
@@ -529,6 +555,49 @@ async def remove_song_from_playlist_tool(
     return result.model_dump_json()
 
 
+@tool("get_liked_songs")
+async def get_liked_songs_tool(runtime: ToolRuntime[MusicAgentContext, Any]) -> str:
+    """只读：读取当前登录账号云端红心歌曲 ID 集合，不添加、不取消红心，不执行任何写入。"""
+    ids = await _authenticated_client(runtime).get_liked_song_ids()
+    return LikedSongsResult(song_ids=sorted(set(ids))).model_dump_json()
+
+
+def has_delete_confirmation(text: str, playlist_id: int) -> bool:
+    """Model arguments cannot manufacture permission; require trusted user text and exact target."""
+    # A later cancellation/question in the same turn overrides an earlier
+    # affirmative clause. Do not discard it when splitting the input.
+    if re.search(r"别|不要|不用|无需|不再|取消|不确认|撤销|先不|停止|是否|能否|能不能|可以吗", text):
+        return False
+    for clause in re.split(r"[,，。;；!?！？\n]|但是|不过|然后", text):
+        if re.fullmatch(
+            rf"\s*[“\"']?(?:请|麻烦)?(?:帮我)?(?:我)?(?:确认|确定)(?:要)?删除(?:整张|这张)?歌单"
+            rf"\s*(?:(?:ID|编号)\s*[:：=]?\s*)?{playlist_id}\s*[”\"']?\s*",
+            clause, re.IGNORECASE,
+        ):
+            return True
+    return False
+
+
+@tool("delete_playlist_tool")
+async def delete_playlist_tool(
+    playlist_id: Annotated[int, Field(gt=0, strict=True)],
+    runtime: ToolRuntime[MusicAgentContext, Any],
+    confirmed: Annotated[bool, Field(strict=True)] = False,
+) -> str:
+    """删除整张当前账号自建歌单。先读歌单并展示准确名称/ID，请用户二次确认。
+    仅当本轮用户明确说“确认删除歌单 ID”且 confirmed=true 才执行；模型不能代为确认。
+    系统/收藏/归属不明歌单拒绝删除。必须有 operation journal，删除后由 A 只读核对补记成功。
+    """
+    from app.agent.foundation.long_horizon.operations import active_operations
+    text = (runtime.state or {}).get("current_input", "")
+    if not confirmed or not has_delete_confirmation(text, playlist_id):
+        raise MusicServiceError("http_422", f"请用户明确回复“确认删除歌单 {playlist_id}”；未执行删除。")
+    if active_operations.get() is None:
+        raise MusicServiceError("http_422", "缺少 operation journal，未执行删除。")
+    result = await _authenticated_client(runtime).delete_playlist(playlist_id, confirmed)
+    return result.model_dump_json()
+
+
 MUSIC_AGENT_TOOLS: list[BaseTool] = [
     search_music_tool,
     search_entities_tool,
@@ -540,6 +609,8 @@ MUSIC_AGENT_TOOLS: list[BaseTool] = [
     set_song_liked_tool,
     create_playlist_tool,
     remove_song_from_playlist_tool,
+    get_liked_songs_tool,
+    delete_playlist_tool,
 ]
 
 

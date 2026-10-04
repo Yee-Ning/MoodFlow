@@ -16,13 +16,14 @@ from .write_reconciliation import (
 )
 
 active_operations = ContextVar("continuity_operations", default=None)
-WRITES = {"create_playlist_tool", "add_song_to_playlist", "remove_song_from_playlist_tool", "set_song_liked_tool"}
+WRITES = {"create_playlist_tool", "add_song_to_playlist", "remove_song_from_playlist_tool", "set_song_liked_tool",
+          "delete_playlist_tool"}
 
 
 def safe_tool_result(name, content):
     from app.schemas.music import (CreatedPlaylistResult, AddSongToPlaylistResult, RemoveSongFromPlaylistResult,
         SongLikeResult, MusicSearchResult, EntitySearchResult, SongLyricsResult, UserPlaylistsResult,
-        PlaylistDetailResult, AlbumDetailResult)
+        PlaylistDetailResult, AlbumDetailResult, LikedSongsResult, DeletedPlaylistResult)
     from app.agent.handoff.song_context import SongContextRead
 
     schemas = {"create_playlist_tool": CreatedPlaylistResult, "add_song_to_playlist": AddSongToPlaylistResult,
@@ -30,7 +31,8 @@ def safe_tool_result(name, content):
                "search_music": MusicSearchResult, "search_entities_tool": EntitySearchResult,
                "get_song_lyrics": SongLyricsResult, "get_user_playlists": UserPlaylistsResult,
                "get_playlist_detail_tool": PlaylistDetailResult, "get_album_detail_tool": AlbumDetailResult,
-               "get_current_song_context": SongContextRead}
+               "get_current_song_context": SongContextRead, "get_liked_songs": LikedSongsResult,
+               "delete_playlist_tool": DeletedPlaylistResult}
     if name not in schemas:
         raise ValueError("tool result has no artifact whitelist")
     value = schemas[name].model_validate_json(content).model_dump(mode="json")
@@ -214,7 +216,7 @@ class OperationJournal:
         elif proposals:
             names = ("add_song_to_playlist",) if re.search(r"加上|加进|加入|添加", text) else (
                 ("set_song_liked_tool",) if re.search(r"收藏|红心|喜欢", text) else (
-                ("remove_song_from_playlist_tool",) if re.search(r"移除|删除", text) else ("create_playlist_tool",)))
+                ("delete_playlist_tool", "remove_song_from_playlist_tool") if re.search(r"移除|删除", text) else ("create_playlist_tool",)))
             candidates = [row for row in proposals if row.payload["name"] in names]
             if not candidates:
                 return "当前会话没有对应写操作的可核对记录，无法确认外部效果。"
@@ -292,6 +294,27 @@ class OperationJournal:
             self.accounting.lease.check()
             if baseline is not None:
                 proposal = proposal.model_copy(update={"baseline_ref": self.artifact(operation_id, baseline, "write_baseline:v1")})
+        if name == "delete_playlist_tool":
+            try:
+                if parameters["confirmed"] is not True:
+                    raise ValueError("delete not confirmed")
+                if self.reconciler is None:
+                    raise ValueError("delete read client missing")
+                baseline = await self.reconciler.delete_baseline(parameters["playlist_id"])
+            except ContinuityConflict:
+                raise
+            except Exception as exc:
+                from app.tools.music import MusicServiceError
+                self.accounting.lease.check()
+                self.writer.append_public_event(self.identity, key + ":proposed", HistoryEventType.TOOL_CALL, proposal)
+                failure = {"error_code": "http_422", "error_message": "删除前无法确认当前账号自建歌单，未执行删除。"}
+                self.writer.append_public_event(self.identity, key + ":failed", HistoryEventType.TOOL_RESULT,
+                    proposal.model_copy(update={"status": "failed", **failure}))
+                error = MusicServiceError(failure["error_code"], failure["error_message"])
+                error.operation_id, error.write_state = operation_id, "failed"
+                raise error from exc
+            self.accounting.lease.check()
+            proposal = proposal.model_copy(update={"baseline_ref": self.artifact(operation_id, baseline, "write_baseline:v1")})
         self.writer.append_public_event(self.identity, key + ":proposed", HistoryEventType.TOOL_CALL, proposal)
         try:
             response = await execute(request)
@@ -335,9 +358,14 @@ class OperationJournal:
         status = "success" if success else (
             "failed" if definite_failure(failure, response) else "unknown"
         ) if effect == "write" else "failed"
+        if success and name == "delete_playlist_tool":
+            # A response alone never commits a deletion receipt. The shared A
+            # reconciler owns the read evidence and the sole success append.
+            status = "unknown"
+            failure = {"error_code": "readback_required", "error_message": "删除响应已收到，等待只读核对。"}
         self.writer.append_public_event(self.identity, key + ":" + status, HistoryEventType.TOOL_RESULT,
             proposal.model_copy(update={"status": status, "result_ref": ref, **failure,
-                "confirmation_source": "response" if success and effect == "write" else None}))
+                "confirmation_source": "response" if status == "success" and effect == "write" else None}))
         if effect == "write" and status == "unknown":
             state = await self.reconcile(operation_id)
             if state["state"] == "confirmed":

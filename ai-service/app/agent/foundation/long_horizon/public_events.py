@@ -64,6 +64,8 @@ class PublicTool(ContinuityContract):
             return self
         if self.name not in tools:
             raise ValueError("unknown public tool")
+        if self.name == "get_liked_songs" and self.effect != "read":
+            raise ValueError("cloud like lookup is read-only")
         schema = tools[self.name].tool_call_schema
         if set(self.parameters) - set(schema.model_fields):
             raise ValueError("non-public tool arguments")

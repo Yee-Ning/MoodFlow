@@ -184,7 +184,7 @@ def test_tool_domain_sources_cover_existing_implementations():
     assert {tool.name for tool in all_tool_calling_tools()} == {
         tool.name for tool in [*MUSIC_AGENT_TOOLS, *CLIENT_ACTION_TOOLS]
     }
-    assert len(MUSIC_AGENT_TOOLS) == 10
+    assert len(MUSIC_AGENT_TOOLS) == 12
 
 
 def test_only_the_four_planned_edges_are_exposed():
