@@ -210,17 +210,41 @@ async def execute_owned_task(
     else:
 
         async def chat(messages, text, routing_context, prior_results):
-            from app.agent.foundation.long_horizon.write_reconciliation import answer_write_status_query
-            from app.agent.foundation.long_horizon.recovery_receipts import answer_recovery_query
+            from app.agent.foundation.long_horizon.write_reconciliation import (
+                answer_write_status_query,
+            )
+            from app.agent.foundation.long_horizon.recovery_receipts import (
+                answer_recovery_query,
+            )
+            from app.agent.foundation.subgraphs.general_chat.session import (
+                preference_context,
+                preference_safe_history,
+                session_for,
+            )
+            from app.agent.foundation.subgraphs.general_chat.song_dialogue import (
+                is_song_conversation,
+                pending_switch,
+                render_song_read,
+                safe_song_payload,
+                unavailable_song_response,
+            )
 
-            answer = await answer_recovery_query(text) or await answer_write_status_query(text)
+            answer = await answer_recovery_query(
+                text
+            ) or await answer_write_status_query(text)
             if answer is not None:
                 return AIMessage(content=answer)
-            history = list(messages)
+            history = preference_safe_history(messages)
             if history and isinstance(history[-1], HumanMessage):
                 history.pop()
             status_tool = create_combination_status_tool(view.get("task_results", []))
             receipt = await read_result_receipt(view.get("task_results", []))
+            session = session_for(view.get("continuity_context"))
+            song_read = None
+            if is_song_conversation(text) or session.song_choices:
+                switching = pending_switch(receipt, prior_results)
+                if switching is not None:
+                    return switching
             read_tools = {context_tool.name: context_tool}
             progress = latest_combination_progress(view.get("task_results", []))
             if progress and len(progress["tasks"]) > 1:
@@ -237,13 +261,17 @@ async def execute_owned_task(
                     messages=history,
                     business_state=routing_context.model_dump_json(),
                     structured_output=json.dumps(
-                        {"result_receipt": receipt.projection(), "prior_task_results": [
-                            {
-                                "status": item.status.value,
-                                "content": (item.content or "")[:800],
-                            }
-                            for item in prior_results[-8:]
-                        ]},
+                        {
+                            "result_receipt": receipt.projection(),
+                            **preference_context(session),
+                            "prior_task_results": [
+                                {
+                                    "status": item.status.value,
+                                    "content": (item.content or "")[:800],
+                                }
+                                for item in prior_results[-8:]
+                            ],
+                        },
                         ensure_ascii=False,
                     ),
                     continuity_context=view.get("continuity_context"),
@@ -252,6 +280,19 @@ async def execute_owned_task(
                 if not isinstance(response, AIMessage) or response.invalid_tool_calls:
                     raise ValueError("invalid chat message")
                 if not response.tool_calls:
+                    if (
+                        is_song_conversation(text)
+                        or session.song_choices
+                        or song_read is not None
+                    ):
+                        from app.agent.handoff.song_context import invoke_song_context
+
+                        try:
+                            if song_read is None:
+                                song_read = await invoke_song_context(context_tool, {})
+                            return render_song_read(song_read, text, receipt, session)
+                        except Exception:
+                            return unavailable_song_response()
                     return grounded_response(response, text, receipt)
                 if attempt == 2 or len(response.tool_calls) != 1:
                     raise ValueError("chat context tool limit exceeded")
@@ -259,10 +300,20 @@ async def execute_owned_task(
                 if call["name"] not in read_tools or not call.get("id"):
                     raise ValueError("chat tool is outside its read-only domain")
                 from app.agent.handoff.song_context import invoke_song_context
+
                 if call["name"] == context_tool.name:
-                    content = await invoke_song_context(context_tool, call["args"], tool_call_id=call["id"])
+                    try:
+                        content = await invoke_song_context(
+                            context_tool, call["args"], tool_call_id=call["id"]
+                        )
+                        song_read = content
+                        content = safe_song_payload(content)
+                    except Exception:
+                        return unavailable_song_response()
                 else:
-                    content = json.dumps(await status_tool.ainvoke(call["args"]), ensure_ascii=False)
+                    content = json.dumps(
+                        await status_tool.ainvoke(call["args"]), ensure_ascii=False
+                    )
                 history.extend(
                     [
                         response,
