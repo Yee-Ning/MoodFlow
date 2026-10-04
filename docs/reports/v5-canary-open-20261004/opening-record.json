@@ -1,0 +1,190 @@
+{
+  "initial_local_head": "97b7c6e379026b111cb4ed35c6cb9d604726da41",
+  "production_head": "613db7311e4c224c1ee3a57f4693d3e0322090a7",
+  "branch": "codex/v5-canary-open-20261004",
+  "authorization": "West approved both switches; router shadow remains true, all other production config unchanged",
+  "config_method": "service-scoped Docker Compose override at /opt/moodflow-runtime/v5-canary-20261004/switches.yml",
+  "reload_command": "docker compose --env-file .env.production -f docker-compose.production.yml -f /opt/moodflow-runtime/v5-canary-20261004/switches.yml up -d --no-deps --no-build --force-recreate ai-service",
+  "image_build_or_code_deployment": false,
+  "stages": {
+    "router": {
+      "started_at_utc": "2026-10-04T05:46:01.093537+00:00",
+      "healthy_at_utc": "2026-10-04T05:46:37.778340+00:00",
+      "configuration_check": {
+        "only_two_allowed_ai_environment_keys_differ": true,
+        "other_compose_config_sha256": "520dc48e9698ae20d3e132ed68c2092b2a6e6a81e2c622b432f03f4eadc6845a",
+        "switches": {
+          "HANDOFF_CANARY_ENABLED": "false",
+          "JEV_HANDOFF_ROUTER_ENABLED": "true"
+        },
+        "override_sha256": "d99e4ca188032eaf39d63fe09eafa7940fd90f214daa079195595881bfd13395"
+      },
+      "scope_checks": {
+        "postgres": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "qdrant": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "netease": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "java": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "ai-service": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": false
+        },
+        "frontend": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "migrate": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        }
+      },
+      "passed_config_and_health": true
+    },
+    "open": {
+      "started_at_utc": "2026-10-04T05:48:15.238451+00:00",
+      "healthy_at_utc": "2026-10-04T05:48:52.072632+00:00",
+      "configuration_check": {
+        "only_two_allowed_ai_environment_keys_differ": true,
+        "other_compose_config_sha256": "520dc48e9698ae20d3e132ed68c2092b2a6e6a81e2c622b432f03f4eadc6845a",
+        "switches": {
+          "HANDOFF_CANARY_ENABLED": "true",
+          "JEV_HANDOFF_ROUTER_ENABLED": "true"
+        },
+        "override_sha256": "41d5254260b0b912ace0a626accf0568d2efc8ac0326fd576fa2ab4749fe7a07"
+      },
+      "scope_checks": {
+        "postgres": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "qdrant": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "netease": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "java": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "ai-service": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": false
+        },
+        "frontend": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "migrate": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        }
+      },
+      "passed_config_and_health": true
+    },
+    "rollback": {
+      "started_at_utc": "2026-10-04T05:50:10.366284+00:00",
+      "healthy_at_utc": "2026-10-04T05:50:47.180339+00:00",
+      "configuration_check": {
+        "only_two_allowed_ai_environment_keys_differ": true,
+        "other_compose_config_sha256": "520dc48e9698ae20d3e132ed68c2092b2a6e6a81e2c622b432f03f4eadc6845a",
+        "switches": {
+          "HANDOFF_CANARY_ENABLED": "false",
+          "JEV_HANDOFF_ROUTER_ENABLED": "false"
+        },
+        "override_sha256": "883902c5d29b32f4bb4713d5e270f573ce346c5641ff2ae45e7aa20f17526033"
+      },
+      "scope_checks": {
+        "postgres": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "qdrant": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "netease": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "java": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "ai-service": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": false
+        },
+        "frontend": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        },
+        "migrate": {
+          "image_id_unchanged": true,
+          "mounts_sha256_unchanged": true,
+          "environment_except_allowed_switches_sha256_unchanged": true,
+          "container_id_unchanged": true
+        }
+      },
+      "passed_config_and_health": true
+    }
+  },
+  "outcome": "opened_then_rolled_back_due_to_failed_candidate_and_telemetry_validation",
+  "final_switches": {
+    "HANDOFF_CANARY_ENABLED": false,
+    "JEV_HANDOFF_ROUTER_ENABLED": false
+  }
+}
