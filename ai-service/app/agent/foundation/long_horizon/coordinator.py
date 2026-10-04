@@ -517,6 +517,8 @@ class ContinuityCoordinator:
         event = await asyncio.to_thread(self.writer.append_public_event, identity, "ack:" + action_id,
             HistoryEventType.ACTION_ACK, PublicActionAck(action_id=action_id, status=status,
                 action_ref=HistoryPointer(kind="event", target_id=action.event_id)))
+        from app.agent.handoff.observability import record_ack
+        record_ack(identity, action_id, event.payload["status"])
         return {"action_id": action_id, "status": event.payload["status"]}
 
 

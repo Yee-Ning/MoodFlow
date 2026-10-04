@@ -83,6 +83,9 @@ def build_main_graph(
             raise ValueError("current_input must not be blank")
         return {"current_input": current_input, "final_response": None, "route_decision": None}
 
+    from app.agent.handoff.observability import observe_foundation_routing
+
+    @observe_foundation_routing
     async def intent_route(state: MainState) -> dict[str, RouteDecision]:
         from app.config.settings import get_settings
         settings = get_settings() if (

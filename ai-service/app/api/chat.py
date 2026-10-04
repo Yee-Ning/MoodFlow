@@ -16,6 +16,7 @@ from app.agent.foundation.streaming import (
 from app.config.settings import get_settings
 from app.agent.handoff.streaming import invoke_handoff_assistant, stream_handoff_assistant
 from app.agent.handoff.rollout import select_chat_graph
+from app.agent.handoff.observability import begin_observation, end_observation, finish_observation
 from app.context.identity import UserIdentityProvider
 from app.agent.foundation.long_horizon.execution import ContinuityConflict
 from app.agent.foundation.long_horizon.action_ack import ActionAckConflict
@@ -38,7 +39,8 @@ router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 def _telemetry_sample_kind(request: Request) -> str:
     # This header changes observability labels only; it grants no privileges.
-    return "acceptance" if request.headers.get("X-MoodFlow-Telemetry-Class") == "acceptance" else "production"
+    value = request.headers.get("X-MoodFlow-Telemetry-Class")
+    return value if value in {"acceptance", "synthetic"} else "production"
 
 
 def _spring_session_cookie(request: Request) -> str | None:
@@ -123,9 +125,12 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
     session_cookie = _spring_session_cookie(request)
 
     async def generate_events() -> AsyncIterator[str]:
+        observation = observation_token = None
         try:
             thread_id = chat_request.thread_id or str(uuid4())
             mode = select_chat_graph(get_settings(), chat_request.thread_id)
+            observation, observation_token = begin_observation(mode, thread_id,
+                _telemetry_sample_kind(request), entrypoint="chat")
             if mode in {"foundation", "handoff"}:
                 user_id = await UserIdentityProvider().resolve(session_cookie)
                 stream = stream_handoff_assistant if mode == "handoff" else stream_foundation_assistant
@@ -166,6 +171,8 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
                     )
                 elif isinstance(event, FinalStreamEvent):
                     response = event.response
+                    if not observation.worker_started:
+                        finish_observation(observation, getattr(response, "status", "unknown"))
                     if mode in {"foundation", "handoff"} and isinstance(response, FoundationResponse):
                         response = _with_action_owner(response, mode, thread_id)
                     yield _encode_sse(
@@ -173,11 +180,16 @@ async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse
                         response.model_dump(mode="json"),
                     )
         except Exception:
+            if observation is not None and not observation.worker_started:
+                finish_observation(observation, "failed")
             logger.exception("AI agent streaming request failed")
             yield _encode_sse(
                 "error",
                 {"message": "MoodFlow AI 暂时离线，请稍后再试"},
             )
+        finally:
+            if observation_token is not None:
+                end_observation(observation_token)
 
         yield _encode_sse("done", {})
 

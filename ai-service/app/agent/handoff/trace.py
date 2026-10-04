@@ -1,10 +1,10 @@
 """Allowlisted internal trace events; never include user text or credentials."""
 
-import json
 import logging
 from hashlib import sha256
 
 from app.agent.handoff.contracts import HandoffTrace
+from app.agent.handoff.observability import emit
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class TraceRecorder:
             tokens=tokens,
         ).model_dump(mode="json")
         self.events.append(event)
-        logger.info("handoff.trace %s", json.dumps(event, separators=(",", ":")))
+        emit("handoff.trace", {**event, "reason_code": event["code"]})
         if self.sink is not None:
             try:
                 self.sink(event.copy())

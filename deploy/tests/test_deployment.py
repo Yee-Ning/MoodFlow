@@ -44,17 +44,24 @@ def test_ai_image_requires_verified_local_cpu_torch():
 
 def test_production_shadow_telemetry_info_is_emitted_once():
     shadow_logger = logging.getLogger("app.agent.decision.jev.shadow_v5")
+    handoff_logger = logging.getLogger("app.agent.handoff.observability")
     original = (list(shadow_logger.handlers), shadow_logger.level, shadow_logger.propagate)
+    handoff_original = (list(handoff_logger.handlers), handoff_logger.level, handoff_logger.propagate)
     output = io.StringIO()
     try:
         shadow_logger.handlers = []
+        handoff_logger.handlers = []
         configure_shadow_telemetry_logging(output)
         configure_shadow_telemetry_logging(output)
         shadow_logger.info('jev.v5_shadow {"decision_type":"router_v5_shadow"}')
+        handoff_logger.info('jev.handoff_entry {"decision_class":"Single"}')
         assert len(shadow_logger.handlers) == 1
+        assert len(handoff_logger.handlers) == 1
         assert output.getvalue().count("jev.v5_shadow ") == 1
+        assert output.getvalue().count("jev.handoff_entry ") == 1
     finally:
         shadow_logger.handlers, shadow_logger.level, shadow_logger.propagate = original
+        handoff_logger.handlers, handoff_logger.level, handoff_logger.propagate = handoff_original
 
 
 def fixture_lock(root):

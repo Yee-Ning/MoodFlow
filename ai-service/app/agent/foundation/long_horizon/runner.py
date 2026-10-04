@@ -16,10 +16,12 @@ from app.schemas.context import MusicAgentContext
 from .accounting import active_accounting
 from .coordinator import active_call
 from .operations import active_operations
+from app.agent.handoff.observability import observe_execution
 
 workers = set()
 
 
+@observe_execution
 async def produce(*, message, thread_id, routing_context, graph_mode="foundation", session_cookie=None,
                   user_id=None, request_id=None, resume=False, new_session=False, decisions=(),
                   coordinator=None, graph=None, telemetry_sample_kind="production", emit=lambda event: None,

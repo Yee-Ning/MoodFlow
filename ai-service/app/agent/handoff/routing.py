@@ -1,8 +1,8 @@
 """Local preflight and rules precede optional V5 triage and Hybrid fallback."""
 
-import json
 import logging
 import re
+from time import perf_counter
 
 from app.agent.decision.jev.client import JevClient
 from app.agent.decision.jev.router_v5 import JevRouterV5, RuleGuard
@@ -15,6 +15,7 @@ from app.agent.foundation.routing import IntentSource, RouteDecision, RouteKey
 from app.agent.foundation.rule_routing.rule_router import RuleRouter
 from app.config.settings import get_settings, jev_requested
 from app.llm.runtime import RuntimeLimitError
+from app.agent.handoff.observability import emit, record_fallback
 
 logger = logging.getLogger(__name__)
 NO_PLAN_QUESTION = "暂时无法确定可执行的音乐或聊天任务，请说明目标或把请求拆成具体步骤。"
@@ -141,18 +142,27 @@ class HandoffEntryRouter:
         return RouteDecision.model_validate(data)
 
     async def route(self, text, context):
+        started = perf_counter()
         question = input_question(text)
         if question:
+            emit("jev.handoff_entry_local", {"decision_class": "clarification", "v5_attempted": False})
             return clarify(question)
         clauses = self.preflight.inspect(text)
+        attempt_class = "Single" if len(clauses) == 1 else "Multi"
         question = self.preflight.preflight_question(clauses)
         if question or not clauses:
+            emit("jev.handoff_entry_local", {"decision_class": "clarification", "v5_attempted": False,
+                                             "attempt_class": attempt_class})
             return clarify(question or "请说明希望执行的任务；已否定的操作不会执行。")
         decision = self.rule_plan(text, context, clauses)
         if decision is not None:
-            logger.info("jev.handoff_entry_local source=rule tasks=%s", len(decision.tasks))
+            emit("jev.handoff_entry_local", {"decision_class": "rule", "attempt_class": attempt_class,
+                 "source": "rule", "tasks": len(decision.tasks), "v5_attempted": False,
+                 "latency_ms": round((perf_counter() - started) * 1000, 2)})
             return decision
         if self.candidate is None:
+            emit("jev.handoff_entry_local", {"decision_class": "hybrid", "attempt_class": attempt_class,
+                                             "v5_attempted": False})
             return await self.fallback.route(text, context)
         # Awaited inside the parent ledger: observation remains subject to the
         # same budget/deadline and cannot leave unaccounted background requests.
@@ -161,36 +171,49 @@ class HandoffEntryRouter:
             trace = await self.candidate.route_with_trace(
                 text, context, fallback_decision=baseline
             )
-        except RuntimeLimitError:
+        except RuntimeLimitError as exc:
+            emit("jev.handoff_entry", {"decision_class": "error", "attempt_class": attempt_class,
+                 "v5_attempted": True, "fallback_reason": exc.reason,
+                 "latency_ms": round((perf_counter() - started) * 1000, 2)}, warning=True)
             raise
         except Exception as exc:
             logger.warning(
                 "jev.handoff_entry_failure error_type=%s", type(exc).__name__
             )
+            fields = {"decision_class": "fallback", "attempt_class": attempt_class,
+                      "v5_attempted": True, "router_source": "legacy_hybrid_fallback",
+                      "fallback_reason": "entry_exception", "error_type": type(exc).__name__,
+                      "latency_ms": round((perf_counter() - started) * 1000, 2)}
+            emit("jev.handoff_entry", fields)
+            record_fallback(fields)
             if baseline is not None:
                 return baseline
             return await self.fallback.route(text, context)
-        logger.info(
-            "jev.handoff_entry %s",
-            json.dumps(
-                {
+        fields = {
                     "shadow": self.shadow,
+                    "decision_class": {"jev_single": "Single", "jev_multi": "Multi",
+                                       "legacy_hybrid_fallback": "fallback"}[trace.router_source],
+                    "attempt_class": attempt_class,
+                    "v5_attempted": True,
                     "router_source": trace.router_source,
                     "fallback_reason": trace.fallback_reason,
                     "response_model": trace.response_model,
                     "latency_ms": trace.total_router_latency_ms,
+                    "entry_wall_latency_ms": round((perf_counter() - started) * 1000, 2),
                     "api_calls": trace.api_calls,
                     "usage": trace.usage,
                     "candidate_task_count": len(trace.decision.tasks),
+                    "candidate_complete": trace.decision.is_complete,
+                    "candidate_needs_input": trace.decision.needs_clarification,
                     "plan_agreement": plan_signature(baseline)
                     == plan_signature(trace.decision)
                     if baseline is not None
                     and trace.router_source != "legacy_hybrid_fallback"
                     else None,
-                },
-                separators=(",", ":"),
-            ),
-        )
+                }
+        emit("jev.handoff_entry", fields)
+        if trace.router_source == "legacy_hybrid_fallback":
+            record_fallback(fields)
         decision = baseline if self.shadow else trace.decision
         if not decision.is_complete or not decision.tasks:
             return clarify(decision.clarification_question or NO_PLAN_QUESTION)

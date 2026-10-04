@@ -1,7 +1,6 @@
 """JEV reviews a contract-valid proposal; local rules remain authoritative."""
 
 from dataclasses import dataclass
-import json
 import logging
 
 from typesafe_sdk import Noul
@@ -9,6 +8,7 @@ from typesafe_sdk import Noul
 from app.agent.decision.jev.client import JevClient
 from app.config.settings import get_settings, jev_requested
 from app.llm.runtime import RuntimeLimitError
+from app.agent.handoff.observability import emit, score_bucket
 from app.agent.handoff.registry import AGENT_REGISTRY, CAPABILITY_OWNERS
 
 logger = logging.getLogger(__name__)
@@ -118,23 +118,19 @@ class JevHandoffGuard:
             )
             # A conservative display value, not a calibrated joint probability.
             score = min(scores["task_fidelity"], 1 - scores["authority_override"])
-            logger.info(
-                "jev.handoff_guard %s",
-                json.dumps(
-                    {
+            emit("jev.handoff_guard", {
                         "prompt_version": GUARD_PROMPT_VERSION,
                         "shadow": self.shadow,
                         "would_allow": allowed,
                         "scores": scores,
+                        "score": score,
+                        "score_bucket": score_bucket(score),
                         "threshold": self.threshold,
                         "injection_threshold": self.injection_threshold,
                         "response_model": response.response_model,
                         "latency_ms": response.latency_ms,
                         "usage": response.usage,
-                    },
-                    separators=(",", ":"),
-                ),
-            )
+                    })
             return GuardVerdict(
                 True if self.shadow else allowed,
                 "guard_shadow"
@@ -148,8 +144,12 @@ class JevHandoffGuard:
                 response.response_model,
             )
         except RuntimeLimitError:
+            emit("jev.handoff_guard", {"score": None, "score_bucket": "missing",
+                 "threshold": self.threshold, "shadow": self.shadow, "status": "budget_blocked"}, warning=True)
             raise
         except Exception:
+            emit("jev.handoff_guard", {"score": None, "score_bucket": "missing",
+                 "threshold": self.threshold, "shadow": self.shadow, "status": "guard_unavailable"}, warning=True)
             # The validated envelope already passed path/order/authority rules.
             # One local fallback, no recursive model or JEV calls.
             return GuardVerdict(True, "guard_unavailable")

@@ -16,15 +16,17 @@ ROOT = Path("/app")
 
 
 def configure_shadow_telemetry_logging(stream=None) -> None:
-    """Emit only the privacy-filtered V5 Shadow events at INFO in production."""
-    shadow_logger = logging.getLogger("app.agent.decision.jev.shadow_v5")
-    if not any(handler.name == "moodflow-v5-shadow" for handler in shadow_logger.handlers):
-        handler = logging.StreamHandler(stream if stream is not None else sys.stdout)
-        handler.name = "moodflow-v5-shadow"
-        handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s:%(message)s"))
-        shadow_logger.addHandler(handler)
-    shadow_logger.setLevel(logging.INFO)
-    shadow_logger.propagate = False
+    """Collect the existing Shadow logger and the allowlisted handoff channel."""
+    for name, handler_name in (("app.agent.decision.jev.shadow_v5", "moodflow-v5-shadow"),
+                               ("app.agent.handoff.observability", "moodflow-handoff")):
+        channel = logging.getLogger(name)
+        if not any(handler.name == handler_name for handler in channel.handlers):
+            handler = logging.StreamHandler(stream if stream is not None else sys.stdout)
+            handler.name = handler_name
+            handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s:%(message)s"))
+            channel.addHandler(handler)
+        channel.setLevel(logging.INFO)
+        channel.propagate = False
 
 
 def load_secrets(secret_root: Path = Path("/run/secrets")) -> None:
