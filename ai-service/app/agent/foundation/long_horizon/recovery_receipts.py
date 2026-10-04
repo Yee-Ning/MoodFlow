@@ -156,7 +156,11 @@ async def answer_recovery_query(text):
         return None
     from .operations import active_operations
     operations = active_operations.get()
+    explicit_recovery = "恢复" in text
     if operations is None:
-        return "当前没有可查询的恢复账本，无法确认阻塞原因。"
-    return recovery_message(latest_recovery_status(operations.writer.store,
-        operations.identity.continuity_task_id, session_id=operations.identity.session_id))
+        return "当前没有可查询的恢复账本，无法确认阻塞原因。" if explicit_recovery else None
+    status = latest_recovery_status(operations.writer.store,
+        operations.identity.continuity_task_id, session_id=operations.identity.session_id)
+    if status["status"] == "unavailable" and not explicit_recovery:
+        return None
+    return recovery_message(status)
