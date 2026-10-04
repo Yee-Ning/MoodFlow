@@ -15,7 +15,7 @@ import yaml
 from deploy.artifacts import LOCK_PATH, digest, export, verify, within
 from deploy.audit_inventory import category, inventory
 from deploy.runtime import (configure, configure_shadow_telemetry_logging, load_secrets,
-                            validate_contract, validate_http, validate_schema, warm_models)
+                            index_dependencies, validate_contract, validate_http, validate_schema, warm_models)
 from deploy.model_cache import export_model_cache, verify_model_cache
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -71,8 +71,7 @@ def test_current_frozen_artifacts_pass_without_mutation():
     assert lock["source_release_id"] == "knowledge-v2-daa965c10984eefa"
     assert lock["files"][lock["manifest_path"]] == "sha256:445b7263221ae5864015752a6689e5d8303c21409407375a6e0b33ac831f50f3"
     # Exercise frozen schema/release validators, with no online query or Eval.
-    from app.rag.retrieval import load_retrieval_config, load_retrieval_index_binding
-    from app.agent.foundation.subgraphs.worldline.runtime_entity_binding import VerifiedEndpointMaterializer
+    VerifiedEndpointMaterializer, load_retrieval_config, load_retrieval_index_binding, _ = index_dependencies()
     binding = load_retrieval_index_binding(ROOT / "ai-service", Path(lock["manifest_path"]), load_retrieval_config())
     materializer = VerifiedEndpointMaterializer.from_binding(ROOT / "ai-service", binding)
     assert len(materializer.payloads) == 41

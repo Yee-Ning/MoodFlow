@@ -112,10 +112,18 @@ def validate_schema() -> None:
             raise ValueError("pgvector_missing")
 
 
-async def validate_index(root: Path = ROOT) -> None:
+def index_dependencies():
+    # Foundation imports Retrieval while its package initializes. Starting with
+    # Retrieval instead leaves its exports partially initialized in a fresh
+    # production process; pytest's shared import cache can hide that failure.
+    from app.agent.foundation.subgraphs.worldline.runtime_entity_binding import VerifiedEndpointMaterializer
     from app.rag.retrieval import load_retrieval_config, load_retrieval_index_binding
     from app.rag.retrieval.qdrant import QdrantHybridSearchBackend
-    from app.agent.foundation.subgraphs.worldline.runtime_entity_binding import VerifiedEndpointMaterializer
+    return VerifiedEndpointMaterializer, load_retrieval_config, load_retrieval_index_binding, QdrantHybridSearchBackend
+
+
+async def validate_index(root: Path = ROOT) -> None:
+    VerifiedEndpointMaterializer, load_retrieval_config, load_retrieval_index_binding, QdrantHybridSearchBackend = index_dependencies()
     verify(root)
     config = load_retrieval_config()
     binding = load_retrieval_index_binding(root, Path(os.environ["AI_RAG_INDEX_MANIFEST"]), config)
