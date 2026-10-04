@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-04",
+  "baseline": "6667b70ecc1ad27786559bacb389f6f65d42098b",
+  "branch": "codex/agent-generalchat-v1",
+  "new_general_chat_cases": 37,
+  "targeted": {
+    "passed": 151,
+    "subtests_passed": 2,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 57.99
+  },
+  "business": {
+    "passed": 2063,
+    "subtests_passed": 288,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 46,
+    "seconds": 274.84
+  },
+  "skip_reasons": {
+    "isolated PostgreSQL acceptance requires DATABASE_URL": 21,
+    "set JEV_LIVE_TEST=1 to use the real TypeSafe API": 1,
+    "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB": 4,
+    "DATABASE_URL is required for PostgreSQL E2E": 7,
+    "project Clean v0.2 fixture is not available": 1,
+    "set QDRANT_INTEGRATION_URL to run against a real Qdrant server": 2,
+    "recovery process acceptance requires isolated DATABASE_URL": 7,
+    "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance": 3
+  },
+  "ruff": "passed",
+  "compileall": "passed",
+  "diff_check": "passed",
+  "validation_mode": "Offline process-only settings; real local SQLite, controlled models and HTTP responses.",
+  "unverified": [
+    "live model provider",
+    "real browser playback and ACK",
+    "production PostgreSQL restart",
+    "live Qdrant"
+  ],
+  "evidence": {
+    "targeted": ".dev/agent-generalchat-v1/targeted-verified.xml",
+    "business": ".dev/agent-generalchat-v1/business-tests-verified.xml"
+  },
+  "implementation_commit": "583931ba350e515e35a0105092f7cadb8c402366"
+}
