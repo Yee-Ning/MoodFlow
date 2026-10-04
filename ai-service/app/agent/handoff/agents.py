@@ -23,6 +23,7 @@ from app.agent.handoff.search_scope import scoped_search_tools
 from app.agent.foundation.subgraphs.tool_calling.scope import scoped_playback_tools
 from app.agent.handoff.context import exploration_projection
 from app.agent.handoff.explorer import execute_exploration, get_worldline_subgraph
+from app.agent.handoff.curator import curation_request, execute_curation
 from app.agent.handoff.state import HandoffRun
 from app.agent.handoff.progress import create_combination_status_tool, latest_combination_progress
 from app.agent.handoff.tools import create_transfer_tools
@@ -191,6 +192,13 @@ async def execute_owned_task(
             },
         )
     if task.route_key is RouteKey.TOOL_CALLING:
+        request = curation_request(task.input_text)
+        if request is not None:
+            return await execute_curation(
+                task, view, runtime, request=request,
+                model=instrument_chat_model(curator_model or get_base_chat_model()),
+                tools=tool_tools if tool_tools is not None else all_tool_calling_tools(),
+            )
         # Bind the same allowlist to model and executor, including the read tool.
         graph = create_tool_calling_subgraph(
             model=instrument_chat_model(curator_model or get_base_chat_model()),
