@@ -1,0 +1,15 @@
+{
+  "lite": {"input_tokens": 1800, "history_messages": 6, "projection_tokens": 400},
+  "sources": {
+    "user_profile": {"type": "user_profile", "priority": 10, "tokens": 240, "candidate_limit": 16, "excerpt_characters": 120},
+    "history_memory": {"type": "long_term_memory", "priority": 20, "tokens": 600, "candidate_limit": 24, "task_limit": 4, "excerpt_characters": 400}
+  },
+  "profile_categories": {
+    "music": ["current_song", "tool_calling", "worldline"],
+    "artist": ["tool_calling", "worldline"],
+    "genre": ["current_song", "tool_calling", "worldline"],
+    "mood": ["general_chat", "current_song", "tool_calling"],
+    "communication": ["general_chat"],
+    "default": ["general_chat"]
+  }
+}

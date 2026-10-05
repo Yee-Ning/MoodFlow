@@ -1,0 +1,1209 @@
+{
+  "sample_size": 38,
+  "accuracy": {
+    "lite": 0.9210526315789473,
+    "full": 0.9210526315789473
+  },
+  "lite_minus_full": 0.0,
+  "max_allowed_drop": 0.05,
+  "regression_gate_passed": true,
+  "contextual_sample_size": 8,
+  "fallback_counts": {
+    "lite": 1,
+    "full": 1
+  },
+  "results": [
+    {
+      "case_id": "v5-01",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 9,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 9,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-02",
+      "expected_routes": [
+        "current_song"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 16,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 16,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-03",
+      "expected_routes": [
+        "general_chat"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 10,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 10,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-04",
+      "expected_routes": [
+        "worldline"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "worldline"
+        ],
+        "clarify": false,
+        "pack_tokens": 13,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "worldline"
+        ],
+        "clarify": false,
+        "pack_tokens": 13,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-05",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 8,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 8,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-06",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 18,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 18,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-07",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 19,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 19,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-08",
+      "expected_routes": [
+        "general_chat"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 19,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 19,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-09",
+      "expected_routes": [
+        "general_chat"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 10,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 10,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-10",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 18,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 18,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-11",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 14,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 14,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-12",
+      "expected_routes": [
+        "tool_calling",
+        "worldline"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling",
+          "worldline"
+        ],
+        "clarify": false,
+        "pack_tokens": 18,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling",
+          "worldline"
+        ],
+        "clarify": false,
+        "pack_tokens": 18,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-13",
+      "expected_routes": [
+        "current_song",
+        "general_chat"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "current_song",
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 22,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "current_song",
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 22,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-14",
+      "expected_routes": [
+        "worldline",
+        "general_chat"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "worldline",
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 21,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "worldline",
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 21,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-15",
+      "expected_routes": [
+        "tool_calling",
+        "current_song"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling",
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 20,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling",
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 20,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-16",
+      "expected_routes": [
+        "current_song",
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "current_song",
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 23,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "current_song",
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 23,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-17",
+      "expected_routes": [
+        "tool_calling",
+        "worldline",
+        "general_chat"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling",
+          "worldline"
+        ],
+        "clarify": false,
+        "pack_tokens": 28,
+        "router_source": "legacy_hybrid_fallback",
+        "fallback_reason": "task_conflict",
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": false
+      },
+      "full": {
+        "routes": [
+          "tool_calling",
+          "worldline"
+        ],
+        "clarify": false,
+        "pack_tokens": 28,
+        "router_source": "legacy_hybrid_fallback",
+        "fallback_reason": "task_conflict",
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": false
+      }
+    },
+    {
+      "case_id": "v5-18",
+      "expected_routes": [
+        "tool_calling",
+        "general_chat"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling",
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 22,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling",
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 22,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-19",
+      "expected_routes": [
+        "current_song"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 17,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 17,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-20",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 13,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 13,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-21",
+      "expected_routes": [],
+      "expected_clarify": true,
+      "contextual": false,
+      "lite": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 18,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 18,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-22",
+      "expected_routes": [],
+      "expected_clarify": true,
+      "contextual": false,
+      "lite": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 20,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 20,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-23",
+      "expected_routes": [],
+      "expected_clarify": true,
+      "contextual": false,
+      "lite": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 11,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 11,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-24",
+      "expected_routes": [],
+      "expected_clarify": true,
+      "contextual": false,
+      "lite": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 7,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 7,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-25",
+      "expected_routes": [],
+      "expected_clarify": true,
+      "contextual": false,
+      "lite": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 18,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 0,
+        "response_model": null,
+        "correct": true
+      },
+      "full": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 18,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 0,
+        "response_model": null,
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-26",
+      "expected_routes": [],
+      "expected_clarify": true,
+      "contextual": false,
+      "lite": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 18,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 0,
+        "response_model": null,
+        "correct": true
+      },
+      "full": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 18,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 0,
+        "response_model": null,
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-27",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 9,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 9,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-28",
+      "expected_routes": [
+        "general_chat",
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "general_chat",
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 17,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "general_chat",
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 17,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-29",
+      "expected_routes": [],
+      "expected_clarify": true,
+      "contextual": false,
+      "lite": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 16,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 16,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "v5-30",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": false,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 23,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 23,
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "api_calls": 2,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "ctx-01",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": true,
+      "lite": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 178,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": false
+      },
+      "full": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 352,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": false
+      }
+    },
+    {
+      "case_id": "ctx-02",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": true,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 175,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 349,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "ctx-03",
+      "expected_routes": [
+        "current_song"
+      ],
+      "expected_clarify": false,
+      "contextual": true,
+      "lite": {
+        "routes": [
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 183,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 357,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "ctx-04",
+      "expected_routes": [
+        "worldline"
+      ],
+      "expected_clarify": false,
+      "contextual": true,
+      "lite": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 185,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": false
+      },
+      "full": {
+        "routes": [],
+        "clarify": true,
+        "pack_tokens": 359,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": false
+      }
+    },
+    {
+      "case_id": "ctx-05",
+      "expected_routes": [
+        "general_chat"
+      ],
+      "expected_clarify": false,
+      "contextual": true,
+      "lite": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 181,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 355,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "ctx-06",
+      "expected_routes": [
+        "current_song"
+      ],
+      "expected_clarify": false,
+      "contextual": true,
+      "lite": {
+        "routes": [
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 185,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "current_song"
+        ],
+        "clarify": false,
+        "pack_tokens": 359,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "ctx-07",
+      "expected_routes": [
+        "tool_calling"
+      ],
+      "expected_clarify": false,
+      "contextual": true,
+      "lite": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 184,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "tool_calling"
+        ],
+        "clarify": false,
+        "pack_tokens": 358,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    },
+    {
+      "case_id": "ctx-08",
+      "expected_routes": [
+        "general_chat"
+      ],
+      "expected_clarify": false,
+      "contextual": true,
+      "lite": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 181,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      },
+      "full": {
+        "routes": [
+          "general_chat"
+        ],
+        "clarify": false,
+        "pack_tokens": 355,
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "api_calls": 1,
+        "response_model": "jev-1.13.0",
+        "correct": true
+      }
+    }
+  ],
+  "mode": "live_jev_v5_paired"
+}

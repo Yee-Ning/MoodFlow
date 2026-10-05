@@ -1,7 +1,11 @@
-from dataclasses import dataclass
+from __future__ import annotations
 
-from app.agent.foundation.llm_routing.schemas import LLMRouteResult
-from app.agent.foundation.model_routing.schemas import ModelRouteResult
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.agent.foundation.llm_routing.schemas import LLMRouteResult
+    from app.agent.foundation.model_routing.schemas import ModelRouteResult
 from app.agent.foundation.routing import IntentItem, IntentSource, IntentType, RouteDecision, UnresolvedSegment
 from app.agent.foundation.rule_routing.coverage import calculate_coverage
 

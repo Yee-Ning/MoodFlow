@@ -69,6 +69,16 @@ def _check_public_text(value) -> None:
             _check_public_text(item)
 
 
+def validate_public_document(schema, body, *, max_bytes=16_384) -> dict:
+    """Shared allowlist, private-text and byte gate for public structured writes."""
+    values = body.model_dump(mode="json") if isinstance(body, BaseModel) else body
+    payload = schema.model_validate(values).model_dump(mode="json", exclude_none=True)
+    _check_public_text(payload)
+    if len(json.dumps(payload, ensure_ascii=False).encode()) > max_bytes:
+        raise ValueError("public event exceeds byte budget")
+    return payload
+
+
 class HistoryWriter:
     def __init__(self, store: ContinuityStore, *, max_bytes=16_384, now=None):
         self.store = store
@@ -97,8 +107,7 @@ class HistoryWriter:
         schema = PUBLIC_SCHEMAS.get(event_kind)
         if schema is None:
             raise ValueError("public event type has no allowlisted schema")
-        values = body.model_dump(mode="json") if isinstance(body, BaseModel) else body
-        payload = schema.model_validate(values).model_dump(mode="json", exclude_none=True)
+        payload = validate_public_document(schema, body, max_bytes=self.max_bytes)
         body_run_id = payload.get("run_id") or payload.get("summary", {}).get("run_id") or payload.get("run", {}).get("run_id")
         if identity.run_id is not None and body_run_id is not None and identity.run_id != body_run_id:
             raise ValueError("public history run identity mismatch")

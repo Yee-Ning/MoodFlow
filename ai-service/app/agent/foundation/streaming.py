@@ -279,7 +279,8 @@ async def stream_foundation_assistant(
         message,
         messages=[HumanMessage(content=message)],
         routing_context=routing_context,
-        continuity_context={**continuity_context, "telemetry_sample_kind": telemetry_sample_kind},
+        continuity_context={**continuity_context, "telemetry_sample_kind": telemetry_sample_kind,
+                            "user_id": user_id},
     )
 
     async for part in selected_graph.astream(

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from app.agent.foundation.context_engineering import POLICIES, ContextPack, ContextSelector, build_context_async
+from app.agent.foundation.context_engineering import POLICIES, ContextAssembler, ContextPack, ContextSelector, build_context_async
 from app.llm.client import _provider_compatible_schema
 from app.llm.runtime import ProviderBudget, RuntimeLimitError, active_ledger, estimate_tokens
 
@@ -57,6 +57,7 @@ async def prepare_model_input(node, *, schema, schema_name, renderer=responses_i
     # surviving pack; never rebuild from raw sources or resurrect dropped text.
     for _ in range(len(pack.items) + 2):
         items, instructions = renderer(pack)
+        instructions = ContextAssembler().model_instructions(pack, instructions)
         framed = {**framing, "input": items, "instructions": instructions}
         excess = estimate_tokens(framed) - budget.input_tokens
         if excess <= 0:
@@ -67,7 +68,7 @@ async def prepare_model_input(node, *, schema, schema_name, renderer=responses_i
             break
         selection_policy = selection_policy.model_copy(update={"total_input_budget": available + policy.reserved_output_tokens + policy.safety_margin})
         try:
-            pack = ContextSelector().build(pack.items, selection_policy)
+            pack = ContextSelector().build(pack.items, selection_policy, intent=pack.intent)
         except ValueError:
             if ledger:
                 ledger.blocked = "token_limit"

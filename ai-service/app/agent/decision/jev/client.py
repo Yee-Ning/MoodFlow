@@ -119,6 +119,8 @@ class JevClient:
         key = self.settings.typesafe_api_key
         if key is None or not key.get_secret_value():
             raise JevDecisionError("missing_api_key")
+        from app.agent.foundation.decision_input import prepare_decision_input
+        safe = prepare_decision_input(_safe_state(state, key.get_secret_value()), questions)
         started = perf_counter()
         try:
             async with AsyncTypeSafeClient(
@@ -127,7 +129,6 @@ class JevClient:
                 timeout=self.settings.jev_timeout_seconds,
                 retry=RetryPolicy(max_retries=0),
             ) as client:
-                safe = _safe_state(state, key.get_secret_value())
                 raw = await accounted_call(
                     lambda: client.system_one(
                         state=safe,

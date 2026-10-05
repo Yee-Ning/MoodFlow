@@ -327,6 +327,7 @@ class PostgresContinuityStore:
         keyword: str | None = None,
         limit: int = 100,
         after_seq: int | None = None,
+        descending: bool = False,
     ) -> list[HistoryEvent]:
         clauses = ["task_id=%s"]
         values: list[Any] = [task_id]
@@ -343,10 +344,11 @@ class PostgresContinuityStore:
             clauses.append("event_seq > %s")
             values.append(after_seq)
         values.append(limit)
+        order = "event_seq DESC, event_timestamp DESC, event_id DESC" if descending else "event_seq, event_timestamp, event_id"
         rows = self._all(
             "SELECT body, event_seq FROM agent_history_event WHERE "
             + " AND ".join(clauses)
-            + " ORDER BY event_seq, event_timestamp, event_id LIMIT %s",
+            + f" ORDER BY {order} LIMIT %s",
             tuple(values),
         )
         return [HistoryEvent.model_validate(row["body"]).model_copy(

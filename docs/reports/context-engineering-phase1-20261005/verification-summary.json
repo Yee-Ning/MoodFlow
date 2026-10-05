@@ -1,0 +1,29 @@
+{
+  "suites": [
+    "ai-service/tests",
+    "ai-service/evals/tests"
+  ],
+  "exit_code": 0,
+  "passed": 2287,
+  "subtests_passed": 288,
+  "skipped": 12,
+  "failures": 0,
+  "errors": 0,
+  "warnings": 180,
+  "junit_cases_including_subtests": 2587,
+  "duration_seconds": 741.987,
+  "timestamp": "2026-10-05T19:07:42.591959+08:00",
+  "skipped_by_module": {
+    "tests.test_jev_live": 1,
+    "tests.test_live_postgres_smoke.LivePostgresSmokeTests": 4,
+    "tests.test_rag_indexing.QdrantStoreTests": 1,
+    "tests.test_recovery_selfhealing_process": 2,
+    "tests.test_retrieval_fusion_qdrant.QdrantHybridSearchBackendTests": 1,
+    "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests": 3
+  },
+  "static_checks": {
+    "ruff": "passed",
+    "compileall": "passed",
+    "task_diff_check": "passed"
+  }
+}

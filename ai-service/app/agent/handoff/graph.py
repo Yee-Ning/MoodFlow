@@ -3,7 +3,7 @@
 import asyncio
 from collections.abc import Callable
 from datetime import datetime, timedelta
-from time import monotonic
+from time import monotonic, perf_counter
 from typing import Any, NotRequired
 from uuid import uuid4
 
@@ -17,6 +17,7 @@ from app.agent.foundation.main_graph import create_hybrid_router
 from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.routing import RouteDecision
 from app.agent.foundation.state.main import MainState
+from app.agent.foundation.entry_context import EntryContextEngine, build_lite_pack, triage_scope
 from app.agent.handoff.agents import choose_transfer, execute_owned_task
 from app.agent.handoff.progress import with_combination_progress, explain_combination_progress
 from app.agent.handoff.guard import configured_guard
@@ -72,8 +73,10 @@ def build_handoff_graph(
     handoff_guard=None,
     trace_sink=None,
     transfer_journal=None,
+    entry_context: EntryContextEngine | None = None,
 ) -> StateGraph:
     router = intent_router or configured_entry_router(LazyHybridRouter(create_hybrid_router))
+    entry = entry_context or EntryContextEngine()
     bounds = limits or RunLimits()
 
     def prepare(state):
@@ -93,6 +96,8 @@ def build_handoff_graph(
             "routing_usage": [],
             "guard_retry": False,
             "guard_retry_deadline": None,
+            "entry_intent": None,
+            "context_manifest": {},
         }
 
     async def route(state) -> Command:
@@ -121,12 +126,32 @@ def build_handoff_graph(
         try:
             with request_scope(ledger):
                 ledger.check()
+                # Reuse the deployed entry router's local preflight/rule plan so
+                # negation, unsupported-action handling and task spans stay intact.
+                from app.agent.handoff.routing import HandoffEntryRouter
+                entry_started = perf_counter()
+                fast = None
+                if isinstance(router, HandoffEntryRouter):
+                    clauses = router.preflight.inspect(state["current_input"])
+                    if clauses and not router.preflight.preflight_question(clauses):
+                        fast = router.rule_plan(state["current_input"], state["routing_context"], clauses)
+                elif entry_context is not None:
+                    fast = entry.preflight(state)
+                lite = None if fast else build_lite_pack(state)
                 async with asyncio.timeout(max(0, remaining)):
-                    routed = await router.route(
-                        state["current_input"], state["routing_context"]
-                    )
+                    if fast:
+                        from app.agent.handoff.observability import emit
+                        emit("jev.handoff_entry_local", {"decision_class": "rule", "source": "rule",
+                             "attempt_class": "Single" if len(fast.tasks) == 1 else "Multi",
+                             "tasks": len(fast.tasks), "v5_attempted": False,
+                             "latency_ms": round((perf_counter() - entry_started) * 1000, 2)})
+                        routed = fast
+                    else:
+                        with triage_scope(lite):
+                            routed = await router.route(state["current_input"], state["routing_context"])
                 ledger.check()
                 decision = RouteDecision.model_validate(routed.model_dump())
+                packed = await entry.complete(state, decision, lite=lite)
             run = new_run(
                 state["run_id"],
                 state["current_input"],
@@ -157,6 +182,7 @@ def build_handoff_graph(
         return Command(
             goto="final_response" if run.terminal else "general_chat_agent",
             update={
+                **packed,
                 "route_decision": decision,
                 "handoff_run": run.model_dump(mode="json"),
                 "handoff_trace": trace.events,

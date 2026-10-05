@@ -208,6 +208,10 @@ async def test_default_handoff_graph_builds_rule_plan_without_loading_classifier
     assert plan["intents"][0]["source"] == "rule"
     assert plan["intents"][0]["sub_intent"] == "pause_music"
     assert out["handoff_run"]["results"][0]["task_id"] == plan["tasks"][0]["task_id"]
+    assert out["context_manifest"]["lite"] is None
+    full = out["context_manifest"]["full"]["tool_calling"]
+    assert full["tokens"] <= full["budget"]
+    assert {"user_profile", "history_memory"} <= set(full["sources"])
     factory.assert_not_called()
 
 

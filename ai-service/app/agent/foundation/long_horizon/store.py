@@ -48,6 +48,7 @@ class ContinuityStore(Protocol):
         keyword: str | None = None,
         limit: int = 100,
         after_seq: int | None = None,
+        descending: bool = False,
     ) -> list[HistoryEvent]: ...
     def put_artifact(self, artifact: ArtifactRecord) -> None: ...
     def get_artifact(self, ref: str) -> ArtifactRecord | None: ...
@@ -388,7 +389,8 @@ class SQLiteContinuityStore:
 
     def query_task_history(self, task_id: str, *, event_type: str | None = None,
                            session_id: str | None = None, keyword: str | None = None,
-                           limit: int = 100, after_seq: int | None = None) -> list[HistoryEvent]:
+                           limit: int = 100, after_seq: int | None = None,
+                           descending: bool = False) -> list[HistoryEvent]:
         clauses, values = ["task_id=?"], [task_id]
         if event_type:
             clauses.append("event_type=?")
@@ -403,9 +405,10 @@ class SQLiteContinuityStore:
             clauses.append("event_seq > ?")
             values.append(after_seq)
         values.append(str(limit))
+        order = "event_seq DESC, timestamp DESC, event_id DESC" if descending else "event_seq, timestamp, event_id"
         rows = self._all(
             f"SELECT body FROM history_events WHERE {' AND '.join(clauses)} "
-            "ORDER BY event_seq, timestamp, event_id LIMIT ?",
+            f"ORDER BY {order} LIMIT ?",
             tuple(values),
         )
         return [HistoryEvent.model_validate_json(row["body"]) for row in rows]
