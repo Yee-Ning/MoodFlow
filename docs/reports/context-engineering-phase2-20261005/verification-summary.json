@@ -1,0 +1,14 @@
+{
+  "exit_code": 0,
+  "duration_seconds": 796.27,
+  "counts": {
+    "passed": 2316,
+    "warnings": 185,
+    "subtests passed": 288,
+    "skipped": 12
+  },
+  "failed_tests": [],
+  "error_tests": [],
+  "scope": "tests + evals/tests",
+  "postgres": "disposable loopback test server; no production migration"
+}
