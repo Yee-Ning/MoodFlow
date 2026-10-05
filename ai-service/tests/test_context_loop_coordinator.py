@@ -154,6 +154,110 @@ async def test_coordinator_streams_only_visible_answer_tokens_before_result_chec
 
 
 @pytest.mark.asyncio
+async def test_foundation_budget_refusal_is_public_and_does_not_dispatch(setup, monkeypatch):
+    from app.agent.foundation.main_graph import build_main_graph
+    from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
+    from app.agent.foundation.context_sources import load_context_policy
+    from app.llm.runtime import BUDGET_LIMIT_MESSAGE
+    configured = {**load_context_policy()["budget"], "l3_tokens": 200}
+    monkeypatch.setattr("app.llm.budget.policy", lambda: configured)
+    model = ToolModel(responses=[AIMessage(content="不应调用")])
+    graph = build_main_graph(development_routes=[RouteKey.GENERAL_CHAT],
+        general_chat_subgraph=create_general_chat_subgraph(model=model)).compile()
+    response = await invoke(message="聊聊音乐", thread_id="foundation-budget-refusal", routing_context=player_context(),
+        graph_mode="foundation", coordinator=setup.coordinator, graph=graph)
+    assert response.status == "needs_input" and response.message == BUDGET_LIMIT_MESSAGE
+    assert model.i == 0
+    task = setup.store.active_task("foundation-budget-refusal")
+    events = setup.store.query_task_history(task.task_id, event_type=HistoryEventType.MODEL_USAGE)
+    budget_events = [event.payload for event in events if event.payload["phase"] == "budget"]
+    assert [event["budget_stage"] for event in budget_events] == ["task_degradation", "refuse"]
+    assert len({event["run_id"] for event in budget_events}) == 1
+
+
+@pytest.mark.asyncio
+async def test_budget_refusal_excludes_previous_request_results(setup, monkeypatch):
+    from app.agent.foundation.main_graph import build_main_graph
+    from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
+    from app.agent.foundation.context_sources import load_context_policy
+    graph = build_main_graph(development_routes=[RouteKey.GENERAL_CHAT],
+        general_chat_subgraph=create_general_chat_subgraph(model=ToolModel(responses=[AIMessage(content="上一轮结果")]))).compile()
+    common = dict(thread_id="budget-result-scope", routing_context=player_context(), graph_mode="foundation",
+                  coordinator=setup.coordinator, graph=graph)
+    first = await invoke(**common, message="先聊聊", request_id="first")
+    assert first.status == "success" and len(first.results) == 1
+    configured = {**load_context_policy()["budget"], "l3_tokens": 200}
+    monkeypatch.setattr("app.llm.budget.policy", lambda: configured)
+    refused = await invoke(**common, message="再聊聊", request_id="second")
+    assert refused.status == "needs_input" and refused.results == []
+    assert "上一轮结果" not in refused.model_dump_json()
+
+
+@pytest.mark.asyncio
+async def test_auxiliary_overshoot_is_refused_before_final_and_replay_keeps_refusal(setup):
+    from unittest.mock import AsyncMock
+    from app.agent.foundation.main_graph import build_main_graph
+    from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
+    from app.agent.memory.models import MemoryRetrievalResult
+    from app.schemas.chat import FinalStreamEvent
+    extracts = []
+    class Memory:
+        async def retrieve(self, request):
+            return MemoryRetrievalResult(user_id=request.user_id, items=[])
+        async def extract_and_store(self, **kwargs):
+            extracts.append(kwargs)
+            await accounted_call(AsyncMock(return_value=AIMessage(content="提取", usage_metadata={
+                "input_tokens": 34999, "output_tokens": 1, "total_tokens": 35000})), "memory-extraction",
+                output_tokens=50, model="deepseek-chat")
+    graph = build_main_graph(development_routes=[RouteKey.GENERAL_CHAT],
+        general_chat_subgraph=create_general_chat_subgraph(model=ToolModel(responses=[AIMessage(content="本轮已完成结果")]))).compile()
+    events = []
+    common = dict(message="聊聊爵士", thread_id="aux-overshoot", routing_context=player_context(), graph_mode="foundation",
+                  coordinator=setup.coordinator, graph=graph, user_id="alice", memory_runtime=Memory(), request_id="one")
+    result = await invoke(**common, emit=events.append)
+    assert result.status == "needs_input" and "预算已用完" in result.message
+    assert len(result.results) == 1 and result.results[0].answer == "本轮已完成结果"
+    assert sum(isinstance(event, FinalStreamEvent) for event in events) == 1
+    assert await invoke(**common) == result
+    assert len(extracts) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", ["foundation", "handoff"])
+async def test_auxiliary_memory_calls_share_original_request_budget(setup, mode):
+    from unittest.mock import AsyncMock
+    from app.agent.foundation.main_graph import build_main_graph
+    from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
+    from app.agent.memory.models import MemoryRetrievalResult
+    from app.llm.runtime import active_ledger
+    scopes = []
+    class Memory:
+        async def retrieve(self, request):
+            scopes.append(active_ledger.get().run_id)
+            await accounted_call(AsyncMock(return_value=AIMessage(content="筛选", usage_metadata={
+                "input_tokens": 10, "output_tokens": 1, "total_tokens": 11})), "memory-filter",
+                output_tokens=50, model="jev-latest", billing_agent="jev")
+            return MemoryRetrievalResult(user_id=request.user_id, items=[])
+        async def extract_and_store(self, **kwargs):
+            scopes.append(active_ledger.get().run_id)
+            await accounted_call(AsyncMock(return_value=AIMessage(content="提取", usage_metadata={
+                "input_tokens": 30, "output_tokens": 3, "total_tokens": 33})), "memory-extraction",
+                output_tokens=50, model="deepseek-chat")
+    graph = setup.graph if mode == "handoff" else build_main_graph(development_routes=[RouteKey.GENERAL_CHAT],
+        general_chat_subgraph=create_general_chat_subgraph(model=ToolModel(responses=[AIMessage(content="已完成")]))).compile()
+    result = await invoke(**{**options(setup), "graph": graph, "graph_mode": mode, "thread_id": "aux-" + mode,
+        "user_id": "alice", "memory_runtime": Memory()})
+    assert result.status == "success"
+    task = setup.store.active_task(("handoff:v1:" if mode == "handoff" else "") + "aux-" + mode)
+    events = setup.store.query_task_history(task.task_id, event_type=HistoryEventType.MODEL_USAGE, limit=500)
+    assert len(set(scopes)) == 1
+    assert {event.payload["run_id"] for event in events} == set(scopes)
+    settled = [event.payload for event in events if event.payload["phase"] == "settled"]
+    assert any(event["model"] == "jev-latest" and event["billing_agent"] == "jev" and event["tokens"] == 11 for event in settled)
+    assert any(event["model"] == "deepseek-chat" and event["tokens"] == 33 for event in settled)
+
+
+@pytest.mark.asyncio
 async def test_scope_and_pending_request_guards_release_lease(setup):
     h = setup
     call = await h.coordinator.begin_call(**{key: value for key, value in options(h).items() if key != "coordinator"})

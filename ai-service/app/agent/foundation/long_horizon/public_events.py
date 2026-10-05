@@ -111,13 +111,29 @@ class PublicUsage(ContinuityContract):
     run_id: str = Field(max_length=128)
     agent: Literal["general_chat", "curator", "explorer"]
     call_id: str = Field(min_length=1, max_length=160)
-    phase: Literal["baseline", "reserved", "settled", "retry"]
+    phase: Literal["baseline", "reserved", "settled", "retry", "budget"]
     tokens: int = Field(ge=0)
     reported: bool = False
     model_calls: int = Field(default=0, ge=0)
     retries: int = Field(default=0, ge=0)
     reported_tokens: int = Field(default=0, ge=0)
     estimated_tokens: int = Field(default=0, ge=0)
+    input_tokens: int | None = Field(default=None, ge=0)
+    output_tokens: int | None = Field(default=None, ge=0)
+    model: str = Field(default="unknown", min_length=1, max_length=160)
+    billing_agent: Literal["general_chat", "curator", "explorer", "jev"] | None = None
+    estimated: bool = True
+    max_output_tokens: int | None = Field(default=None, gt=0)
+    budget_level: Literal["l2", "l3"] | None = None
+    budget_stage: Literal["truncate_history", "summarize_history", "stop_sources", "honest_degradation",
+                          "task_degradation", "refuse"] | None = None
+
+    @model_validator(mode="after")
+    def split_matches_total(self):
+        if self.input_tokens is not None and self.output_tokens is not None:
+            if self.input_tokens + self.output_tokens != self.tokens:
+                raise ValueError("usage split must equal token total")
+        return self
 
 
 class PublicCheckpoint(ContinuityContract):

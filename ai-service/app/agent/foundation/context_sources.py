@@ -25,6 +25,7 @@ class SourceRequest:
     continuity: dict[str, Any]
     profile_store: ProfileStore | None = None
     history_store: Any = None
+    allow_new_sources: bool = True
 
 
 class ContextSource(Protocol):
@@ -153,6 +154,8 @@ class SourceRegistry:
 
     def collect(self, request):
         result, status = [], {}
+        if not request.allow_new_sources:
+            return [], {name: "budget_stopped" for name in self.sources}
         for name, source in self.sources.items():
             try:
                 items = source.collect(request, limit=load_context_policy()["sources"][name]["candidate_limit"])

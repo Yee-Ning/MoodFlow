@@ -9,7 +9,7 @@ from app.agent.foundation.routing import RouteDecision
 from app.agent.handoff.registry import AgentKey
 from app.agent.handoff.state import AgentUsage, HandoffRun, RunLimits
 from app.agent.handoff.integrity import TransferIntegrityConflict
-from app.llm.runtime import RequestLedger, request_scope
+from app.llm.runtime import BUDGET_LIMIT_MESSAGE, RequestLedger, RuntimeLimitError, request_scope
 from app.schemas.chat import ClientActionStreamEvent, FinalStreamEvent, MessageStreamEvent, UpdateStreamEvent
 from app.schemas.context import MusicAgentContext
 
@@ -66,34 +66,40 @@ async def produce(*, message, thread_id, routing_context, graph_mode="foundation
             await asyncio.to_thread(call.lease.renew)
 
     renew = asyncio.create_task(heartbeat())
+    budget_scope = None
     try:
         if call.blocked_response:
             response = foundation_response(call.blocked_response, [], needs_clarification=True)
             emit(FinalStreamEvent(response=response))
             return response
         if call.graph_input is not None:
+            state_values = call.graph_input
             context = call.graph_input["continuity_context"]
             context["telemetry_sample_kind"] = telemetry_sample_kind
-            await _retrieve_query_memories(context=context, user_id=user_id, message=message,
-                enabled=memory_runtime is None, memory_runtime=memory_runtime, request_id=call.identity.request_id)
         else:
             row = await graph.checkpointer.aget_tuple(call.config)
             state = await graph.aget_state({**call.config, "configurable": {**call.config["configurable"], "checkpoint_id": row.checkpoint["id"]}})
             if not state.next:
                 output = state.values
                 return await _final(call, output, emit)
+            state_values = state.values
             for raw in state.values.get("task_results", []):
                 result = raw if isinstance(raw, TaskResult) else TaskResult.model_validate(raw)
                 emitted.update(action["action_id"] for action in result.data.get("client_actions", []))
-        # Foundation also has a persistent model budget, while Handoff creates
-        # per-agent ledgers with the original run limits at each node boundary.
-        ledger = None
-        if graph_mode == "foundation":
-            state = call.graph_input or (await graph.aget_state(call.config)).values
-            context = state["continuity_context"]
-            remaining = 120 - (datetime.now(UTC) - datetime.fromisoformat(context["started_at"])).total_seconds()
-            ledger = RequestLedger(tuple(AgentUsage(agent=key) for key in AgentKey), AgentKey.GENERAL_CHAT,
-                RunLimits(), deadline=remaining, run_id=context["run_id"])
+        # Include auxiliary memory calls as well as graph calls. Handoff's
+        # per-node scopes restore these same receipts under the same request ID.
+        context = state_values["continuity_context"]
+        saved_run = HandoffRun.model_validate(state_values["handoff_run"]) if state_values.get("handoff_run") else None
+        limits = saved_run.limits if saved_run else RunLimits()
+        started = saved_run.started_at if saved_run else datetime.fromisoformat(context["started_at"])
+        remaining = limits.run_timeout_seconds - (datetime.now(UTC) - started).total_seconds()
+        ledger = RequestLedger(tuple(AgentUsage(agent=key) for key in AgentKey), AgentKey.GENERAL_CHAT,
+            limits, deadline=remaining, run_id=saved_run.run_id if saved_run else context["run_id"])
+        budget_scope = request_scope(ledger)
+        budget_scope.__enter__()
+        if call.graph_input is not None:
+            await _retrieve_query_memories(context=context, user_id=user_id, message=message,
+                enabled=memory_runtime is None, memory_runtime=memory_runtime, request_id=call.identity.request_id)
         async def run_graph():
             streamed_nodes = set()
             visible_scope = None
@@ -147,17 +153,31 @@ async def produce(*, message, thread_id, routing_context, graph_mode="foundation
                             has_visible_text = True
                     streamed_nodes.discard(node)
                     visible_scope = None
-        if ledger is not None:
-            with request_scope(ledger):
-                await run_graph()
-        else:
-            await run_graph()
+        await run_graph()
+        call.accounting.bind(ledger, ledger.run_id)
         latest_config = {**call.config, "configurable": {key: value for key, value in call.config["configurable"].items() if key != "checkpoint_id"}}
         output = (await graph.aget_state(latest_config)).values
+        if not _budget_refused(call, output):
+            await _extract_memories(user_id=user_id, thread_id=thread_id, user_message=message,
+                                   enabled=bool(message), memory_runtime=memory_runtime)
         response = await _final(call, output, emit)
-        await _extract_memories(user_id=user_id, thread_id=thread_id, user_message=message,
-                               enabled=bool(message), memory_runtime=memory_runtime)
         coordinator.history.archive(call.identity)
+        return response
+    except RuntimeLimitError as exc:
+        if exc.reason != "token_limit":
+            raise
+        # Recover completed public results from the latest durable checkpoint.
+        # A refusal consumes no additional model calls and does not replay tools.
+        latest = {**call.config, "configurable": {key: value for key, value in call.config["configurable"].items()
+                                                 if key != "checkpoint_id"}}
+        values = (await graph.aget_state(latest)).values
+        route = RouteDecision.model_validate(values["route_decision"]) if values.get("route_decision") else None
+        active = {task.task_id for task in route.tasks} if route else set()
+        results = [item if isinstance(item, TaskResult) else TaskResult.model_validate(item)
+                   for item in values.get("task_results", [])]
+        results = [item for item in results if item.task_id in active]
+        response = foundation_response(BUDGET_LIMIT_MESSAGE, results, needs_clarification=True)
+        emit(FinalStreamEvent(response=response))
         return response
     except TransferIntegrityConflict:
         response = foundation_response(
@@ -166,6 +186,8 @@ async def produce(*, message, thread_id, routing_context, graph_mode="foundation
         emit(FinalStreamEvent(response=response))
         return response
     finally:
+        if budget_scope is not None:
+            budget_scope.__exit__(None, None, None)
         renew.cancel()
         await asyncio.gather(renew, return_exceptions=True)
         active_operations.reset(operations_token)
@@ -173,6 +195,19 @@ async def produce(*, message, thread_id, routing_context, graph_mode="foundation
         active_call.reset(token)
         call.action_sink = None
         await call.close()
+
+
+def _budget_refused(call, output):
+    raw = output.get("handoff_run")
+    run_id = raw["run_id"] if raw else output.get("continuity_context", {}).get("run_id")
+    if not run_id:
+        return False
+    return any(
+        event.phase == "budget" and event.budget_stage in {"honest_degradation", "refuse"}
+        or event.phase == "settled" and event.output_tokens is not None and event.max_output_tokens is not None
+        and event.output_tokens > event.max_output_tokens
+        for event in call.accounting.events(run_id)
+    )
 
 
 async def _final(call, output, emit):
@@ -194,7 +229,16 @@ async def _final(call, output, emit):
     # replay consumes the same state and does not create a second history event.
     route = output.get("route_decision")
     clarification = RouteDecision.model_validate(route).needs_clarification if route else False
-    response = _public_response(text.strip(), results, needs_clarification=bool(output.get("handoff_needs_input")) or clarification,
+    budget_refused = _budget_refused(call, output)
+    if budget_refused:
+        text = BUDGET_LIMIT_MESSAGE
+        raw = output.get("handoff_run")
+        run_id = raw["run_id"] if raw else output["continuity_context"]["run_id"]
+        from .models import HistoryEventType
+        identity = call.identity.model_copy(update={"run_id": run_id})
+        call.coordinator.history.public_text(identity, "budget-final:" + run_id,
+                                            HistoryEventType.ASSISTANT_MESSAGE, text)
+    response = _public_response(text.strip(), results, needs_clarification=budget_refused or bool(output.get("handoff_needs_input")) or clarification,
                                 execution_failed=bool(output.get("handoff_failed")))
     emit(FinalStreamEvent(response=response))
     return response

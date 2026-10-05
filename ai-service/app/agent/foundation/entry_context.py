@@ -98,6 +98,12 @@ class EntryContextEngine:
 
     async def complete(self, state, decision, *, lite=None):
         import asyncio
+        from app.llm.runtime import active_ledger
+        ledger = active_ledger.get()
+        if ledger is not None:
+            ledger.check_task_budget()
+            if ledger.usage[ledger.current_agent]["tokens"] >= ledger.agent_limit:
+                ledger.fail_budget("l2")
         context = dict(state.get("continuity_context", {}))
         history_store = self.history_store
         if history_store is None and context.get("session_id"):
@@ -105,6 +111,7 @@ class EntryContextEngine:
             history_store = get_long_horizon_service().store
         candidates, statuses = await asyncio.to_thread(self.registry.collect, SourceRequest(
             state["current_input"], context, self.profile_store, history_store,
+            allow_new_sources=ledger is None or ledger.current_agent not in ledger.source_stops,
         ))
         section = intent_section(decision)
         context.update(entry_candidates=[item.model_dump(mode="json") for item in candidates], entry_intent=section)

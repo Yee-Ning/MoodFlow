@@ -67,7 +67,8 @@ async def test_actual_serialized_request_is_checked_after_schema_and_output_are_
     content = "文" * 2000 if fault == "content" else "查询"
     schema = {"description": "说" * 2000} if fault == "schema" else {}
     output = 1900 if fault == "output" else 128
-    with patch("app.llm.client.AsyncOpenAI", FakeAsyncOpenAI), patch("app.llm.client.get_settings", fake_settings):
+    with (patch("app.llm.client.AsyncOpenAI", FakeAsyncOpenAI), patch("app.llm.client.get_settings", fake_settings),
+          patch("app.llm.budget.output_limit", return_value=3000)):
         with pytest.raises(ValueError, match="final model payload"):
             await create_structured_response([{"role": "user", "content": content}], "rules", schema,
                                              schema_name="test", max_output_tokens=output, request_budget=budget)

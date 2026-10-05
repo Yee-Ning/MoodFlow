@@ -121,6 +121,8 @@ class JevClient:
             raise JevDecisionError("missing_api_key")
         from app.agent.foundation.decision_input import prepare_decision_input
         safe = prepare_decision_input(_safe_state(state, key.get_secret_value()), questions)
+        from app.llm.budget import output_limit
+        maximum = output_limit("jev-latest")
         started = perf_counter()
         try:
             async with AsyncTypeSafeClient(
@@ -134,10 +136,12 @@ class JevClient:
                         state=safe,
                         questions=questions,
                         model=self.settings.jev_model,
+                        extra_body={"max_tokens": maximum},
                     ),
                     {"state": safe, "questions": dict(questions)},
-                    output_tokens=256,
+                    output_tokens=maximum,
                     retry=False,
+                    model="jev-latest", billing_agent="jev",
                 )
             if set(raw.answers) != set(questions):
                 raise ValueError("missing or unexpected answers")

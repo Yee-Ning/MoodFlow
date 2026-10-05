@@ -13,7 +13,22 @@ class DurableAccounting:
     def __init__(self, writer, identity, lease):
         self.writer, self.identity, self.lease = writer, identity, lease
 
+    @property
+    def budget_ledger(self):
+        from app.llm.budget import HistoryBudgetLedger, PostgresBudgetLedger
+        from .postgres_store import PostgresContinuityStore
+        adapter = PostgresBudgetLedger if isinstance(self.writer.store, PostgresContinuityStore) else HistoryBudgetLedger
+        return adapter(self)
+
+    def write_usage(self, body):
+        self.lease.check()
+        self.writer.append_public_event(self.identity, f"usage:{body.call_id}:{body.phase}",
+                                       HistoryEventType.MODEL_USAGE, body)
+
     def events(self, run_id):
+        if hasattr(self.writer.store, "query_run_usage"):
+            return [PublicUsage.model_validate(event.payload) for event in
+                    self.writer.store.query_run_usage(self.identity.continuity_task_id, run_id)]
         cursor, result = 0, []
         while True:
             rows = self.writer.store.query_task_history(self.identity.continuity_task_id,
@@ -61,25 +76,32 @@ class DurableAccounting:
                         tokens=row["tokens"], model_calls=row["model_calls"], retries=row["retries"],
                         reported_tokens=row["reported_tokens"], estimated_tokens=row["estimated_tokens"]))
         ledger.usage = {row["agent"]: row for row in self.totals(run_id, tuple(ledger.usage.values()))}
+        ledger.source_stops.update(event.agent for event in self.events(run_id)
+                                   if event.phase == "budget" and event.budget_stage == "stop_sources")
 
-    def reserve(self, ledger, amount):
+    def reserve(self, ledger, amount, *, input_tokens=None, output_tokens=None, model="unknown", billing_agent=None):
         self.lease.check()
         call_id = uuid4().hex
-        self.writer.append_public_event(self.identity, f"usage:{call_id}:reserved", HistoryEventType.MODEL_USAGE,
-            PublicUsage(run_id=self.identity.run_id, agent=ledger.agent, call_id=call_id, phase="reserved", tokens=amount))
+        self.write_usage(PublicUsage(run_id=self.identity.run_id, agent=ledger.current_agent, call_id=call_id,
+            phase="reserved", tokens=amount, input_tokens=input_tokens, output_tokens=output_tokens,
+            model=model, billing_agent=billing_agent, max_output_tokens=output_tokens))
         return call_id
 
-    def settle(self, ledger, call_id, amount, response):
+    def settle(self, ledger, call_id, amount, response, *, usage=None, model="unknown", billing_agent=None, owner=None,
+               max_output_tokens=None):
         from app.llm.runtime import reported_tokens
 
         self.lease.check()
         reported = reported_tokens(response)
-        self.writer.append_public_event(self.identity, f"usage:{call_id}:settled", HistoryEventType.MODEL_USAGE,
-            PublicUsage(run_id=self.identity.run_id, agent=ledger.agent, call_id=call_id, phase="settled",
-                        tokens=amount if reported is None else reported, reported=reported is not None))
+        tokens = usage.total_tokens if usage is not None else amount if reported is None else reported
+        estimated = usage.estimated if usage is not None else reported is None
+        self.write_usage(PublicUsage(run_id=self.identity.run_id, agent=owner or ledger.current_agent, call_id=call_id,
+            phase="settled", tokens=tokens, reported=reported is not None,
+            input_tokens=usage.input_tokens if usage else None, output_tokens=usage.output_tokens if usage else None,
+            model=model, billing_agent=billing_agent, estimated=estimated, max_output_tokens=max_output_tokens))
 
     def retry(self, ledger):
         self.lease.check()
         call_id = uuid4().hex
         self.writer.append_public_event(self.identity, f"usage:{call_id}:retry", HistoryEventType.MODEL_USAGE,
-            PublicUsage(run_id=self.identity.run_id, agent=ledger.agent, call_id=call_id, phase="retry", tokens=0))
+            PublicUsage(run_id=self.identity.run_id, agent=ledger.current_agent, call_id=call_id, phase="retry", tokens=0))

@@ -618,6 +618,8 @@ def build_context(node: RouteKey, *, policy: ContextPolicy | None = None, counte
                   trace_context: dict[str, str] | None = None,
                   intent: dict[str, Any] | None = None,
                   **sources: Any) -> ContextPack:
+    from app.llm.budget_strategy import prepare_sources
+    sources = prepare_sources(sources, reserved_output=(policy or POLICIES[node]).reserved_output_tokens)
     token_counter = counter or UnicodeHeuristicTokenCounter()
     collected = ContextCollector(token_counter).collect(**sources)
     return ContextSelector(token_counter).build(
@@ -632,6 +634,8 @@ async def build_context_async(node: RouteKey, *, policy: ContextPolicy | None = 
                               intent: dict[str, Any] | None = None,
                               jev_client: Any = None, **sources: Any) -> ContextPack:
     """Apply Jev before the unchanged dedup, budget, compression and assembly stages."""
+    from app.llm.budget_strategy import prepare_sources
+    sources = prepare_sources(sources, reserved_output=(policy or POLICIES[node]).reserved_output_tokens)
     token_counter = counter or UnicodeHeuristicTokenCounter()
     collected = ContextCollector(token_counter).collect(**sources)
     policy = registered_policy(policy or POLICIES[node])
@@ -664,9 +668,12 @@ async def build_context_async(node: RouteKey, *, policy: ContextPolicy | None = 
         )
         collected.extend(registered)
     try:
-        return ContextSelector(token_counter).build(
+        pack = ContextSelector(token_counter).build(
             collected, policy, trace_context=trace_context, intent=intent,
         )
+        from app.llm.runtime import active_manifest
+        active_manifest.set(pack.manifest)
+        return pack
     except ValueError:
         if ledger is not None:
             from app.llm.runtime import RuntimeLimitError

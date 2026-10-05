@@ -82,6 +82,7 @@ def build_handoff_graph(
     def prepare(state):
         raw = state["current_input"]
         text = raw.strip() if isinstance(raw, str) else raw
+        context = state.get("continuity_context", {})
         return {
             "current_input": text,
             "route_decision": None,
@@ -90,8 +91,8 @@ def build_handoff_graph(
             "transfer_envelope": None,
             "handoff_failed": False,
             "handoff_needs_input": False,
-            "run_started_at": clock().isoformat(),
-            "run_id": uuid4().hex,
+            "run_started_at": context.get("started_at") or clock().isoformat(),
+            "run_id": context.get("run_id") or uuid4().hex,
             "handoff_trace": [],
             "routing_usage": [],
             "guard_retry": False,
@@ -126,6 +127,7 @@ def build_handoff_graph(
         try:
             with request_scope(ledger):
                 ledger.check()
+                ledger.check_task_budget()
                 # Reuse the deployed entry router's local preflight/rule plan so
                 # negation, unsupported-action handling and task spans stay intact.
                 from app.agent.handoff.routing import HandoffEntryRouter
@@ -174,7 +176,7 @@ def build_handoff_graph(
                 goto="final_response",
                 update={
                     "handoff_failed": True,
-                    "final_response": EXECUTION_FAILURE,
+                    "final_response": ledger.limit_message if ledger.blocked == "token_limit" else EXECUTION_FAILURE,
                     "handoff_trace": trace.events,
                     "routing_usage": list(ledger.usage.values()),
                 },
@@ -239,6 +241,7 @@ def build_handoff_graph(
         try:
             with request_scope(ledger):
                 ledger.check()
+                ledger.check_task_budget()
                 if journal is not None:
                     await journal.await_committed(
                         _continuity_identity(state, run), run, timeout=max(0, node_window),
@@ -337,7 +340,7 @@ def build_handoff_graph(
                 failed = rejected_command(run, response)
                 stopped = finish_run(
                     run,
-                    EXECUTION_FAILURE,
+                    ledger.limit_message if reason is StopReason.TOKEN_LIMIT else EXECUTION_FAILURE,
                     reason=reason
                     if reason is not StopReason.TASK_FAILED
                     else StopReason.INVALID_TRANSFER,
@@ -352,14 +355,14 @@ def build_handoff_graph(
                     task_id=task.task_id,
                     route_key=task.route_key,
                     status=TaskStatus.FAILED,
-                    content=EXECUTION_FAILURE,
+                    content=ledger.limit_message if reason is StopReason.TOKEN_LIMIT else EXECUTION_FAILURE,
                     error=EXECUTION_FAILURE,
                     data={"reason": reason.value},
                 )
             result = with_combination_progress(run, result)
             updated = record_task_result(run, result)
             if reason is not StopReason.TASK_FAILED:
-                updated = finish_run(updated, EXECUTION_FAILURE, reason=reason)
+                updated = finish_run(updated, ledger.limit_message if reason is StopReason.TOKEN_LIMIT else EXECUTION_FAILURE, reason=reason)
         if result.status is TaskStatus.FAILED:
             # A bounded GeneralChat text fallback; no tools/model or new transfer.
             trace.emit(code="task_failed")

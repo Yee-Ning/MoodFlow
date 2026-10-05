@@ -10,13 +10,17 @@ from app.rag.chunk.token_counter import UnicodeHeuristicTokenCounter
 
 
 def prepare_decision_input(state, questions):
+    from app.llm.budget import output_limit
+    output_tokens = output_limit("jev-latest")
     counter = UnicodeHeuristicTokenCounter()
     policy = POLICIES[RouteKey.GENERAL_CHAT]
     ledger = active_ledger.get()
     total = min(policy.total_input_budget, ledger.remaining) if ledger else policy.total_input_budget
-    budget = ProviderBudget(total - 256 - policy.safety_margin, total, policy.safety_margin)
+    budget = ProviderBudget(total - output_tokens - policy.safety_margin, total, policy.safety_margin)
     overhead = estimate_tokens({"state": {}, "questions": dict(questions)}) + 64
     text = json.dumps(state, ensure_ascii=False, default=str)
+    if ledger is not None:
+        ledger.ensure_available(overhead + counter.count(text) + output_tokens + policy.safety_margin)
     items = [ContextItem(id="decision_request", type="user_query", source="user_query",
         content=text, token_count=counter.count(text), required=True, compressible=False)]
     lite = active_triage_pack.get()
@@ -38,9 +42,11 @@ def prepare_decision_input(state, questions):
         payload = {"state": rendered, "questions": dict(questions)}
         excess = estimate_tokens(payload) - budget.input_tokens
         if excess <= 0:
-            budget.validate(payload, output_tokens=256)
+            budget.validate(payload, output_tokens=output_tokens)
+            from app.llm.runtime import active_manifest
+            active_manifest.set(pack.manifest)
             return rendered
         available = pack.budget - excess - 32
         items = pack.items
-    budget.validate(payload, output_tokens=256)
+    budget.validate(payload, output_tokens=output_tokens)
     raise ValueError("decision input exceeds token budget")

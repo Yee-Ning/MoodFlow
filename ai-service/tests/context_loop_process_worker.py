@@ -68,8 +68,8 @@ async def execute():
                 die()
         coordinator.before_agent = before_agent
         original_reserve = DurableAccounting.reserve
-        def reserve(accounting, ledger, amount):
-            result = original_reserve(accounting, ledger, amount)
+        def reserve(accounting, ledger, amount, **usage_fields):
+            result = original_reserve(accounting, ledger, amount, **usage_fields)
             if point == "model_dispatch":
                 die()
             return result

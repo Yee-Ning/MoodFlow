@@ -39,6 +39,7 @@ class ContinuityStore(Protocol):
     def append_event(self, event: HistoryEvent) -> None: ...
     def append_event_once(self, event: HistoryEvent) -> HistoryEvent: ...
     def get_history_event(self, event_id: str) -> HistoryEvent | None: ...
+    def query_run_usage(self, task_id: str, run_id: str) -> list[HistoryEvent]: ...
     def query_task_history(
         self,
         task_id: str,
@@ -386,6 +387,14 @@ class SQLiteContinuityStore:
     def get_history_event(self, event_id: str) -> HistoryEvent | None:
         row = self._one("SELECT body FROM history_events WHERE event_id=?", (event_id,))
         return HistoryEvent.model_validate_json(row["body"]) if row else None
+
+    def query_run_usage(self, task_id: str, run_id: str) -> list[HistoryEvent]:
+        rows = self._all(
+            "SELECT body FROM history_events WHERE task_id=? AND event_type='model_usage' "
+            "AND json_extract(body, '$.payload.run_id')=? ORDER BY event_seq",
+            (task_id, run_id),
+        )
+        return [HistoryEvent.model_validate_json(row["body"]) for row in rows]
 
     def query_task_history(self, task_id: str, *, event_type: str | None = None,
                            session_id: str | None = None, keyword: str | None = None,

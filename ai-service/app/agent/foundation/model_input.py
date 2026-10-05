@@ -62,6 +62,8 @@ async def prepare_model_input(node, *, schema, schema_name, renderer=responses_i
         excess = estimate_tokens(framed) - budget.input_tokens
         if excess <= 0:
             budget.validate(framed, output_tokens=policy.reserved_output_tokens)
+            from app.llm.runtime import active_manifest
+            active_manifest.set(pack.manifest)
             return BudgetedModelInput(pack, items, instructions, budget)
         available = pack.budget - excess - 32
         if available <= 0:

@@ -97,7 +97,7 @@ async def test_nonrecoverable_error_is_not_retried_and_has_general_text_fallback
 
 
 @pytest.mark.asyncio
-async def test_reservation_blocks_first_transfer_model_and_action():
+async def test_budget_preflight_blocks_first_transfer_model_and_action():
     model = SequenceModel(call())
     out = (
         await build_handoff_graph(
@@ -108,9 +108,14 @@ async def test_reservation_blocks_first_transfer_model_and_action():
         .compile()
         .ainvoke(input_state())
     )
-    run = HandoffRun.model_validate(out["handoff_run"])
-    assert run.stop_reason is StopReason.TOKEN_LIMIT and run.handoff_count == 0
-    assert run.results == () and model.calls == 0
+    # Full-entry preflight now refuses before a business run can be created.
+    assert out["handoff_failed"] and out["handoff_run"] is None
+    assert out.get("task_results", []) == [] and model.calls == 0
+    assert StopReason.TOKEN_LIMIT.value in {event["code"] for event in out["handoff_trace"]}
+    assert all(row["model_calls"] == 0 for row in out["routing_usage"])
+    assert not any(isinstance(message, ToolMessage) or getattr(message, "tool_calls", [])
+                   for message in out["messages"])
+    assert "预算已用完" in out["final_response"]
 
 
 @pytest.mark.asyncio

@@ -318,6 +318,15 @@ class PostgresContinuityStore:
             update={"event_seq": row["event_seq"]}
         ) if row else None
 
+    def query_run_usage(self, task_id: str, run_id: str) -> list[HistoryEvent]:
+        rows = self._all(
+            "SELECT body, event_seq FROM agent_history_event "
+            "WHERE task_id=%s AND event_type='model_usage' AND body->'payload'->>'run_id'=%s "
+            "ORDER BY event_seq", (task_id, run_id),
+        )
+        return [HistoryEvent.model_validate(row["body"]).model_copy(
+            update={"event_seq": row["event_seq"]}) for row in rows]
+
     def query_task_history(
         self,
         task_id: str,

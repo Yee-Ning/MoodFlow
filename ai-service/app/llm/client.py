@@ -79,6 +79,9 @@ async def _create_response(
     request_budget: ProviderBudget | None = None,
 ) -> Response:
     settings = get_settings()
+    from app.llm.budget import output_limit
+    selected_model = model or settings.model
+    selected_output = min(max_output_tokens or settings.max_output_tokens, output_limit(selected_model))
 
     try:
         async with AsyncOpenAI(
@@ -88,11 +91,11 @@ async def _create_response(
             max_retries=0 if output_format is not None or active_ledger.get() is not None else 2,
         ) as client:
             request: dict[str, Any] = {
-                "model": model or settings.model,
+                "model": selected_model,
                 "instructions": instructions,
                 "input": input_items,
                 "reasoning": {"effort": "none"},
-                "max_output_tokens": max_output_tokens or settings.max_output_tokens,
+                "max_output_tokens": selected_output,
                 "text": {"format": output_format or OUTPUT_FORMAT},
             }
             if output_format is not None:
@@ -108,6 +111,7 @@ async def _create_response(
                 lambda: client.responses.create(**request),
                 {key: value for key, value in request.items() if key != "model"},
                 output_tokens=request["max_output_tokens"],
+                model=selected_model,
             )
     except OpenAIError as exc:
         if active_ledger.get() is not None:

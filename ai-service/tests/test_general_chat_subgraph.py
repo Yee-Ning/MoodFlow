@@ -85,8 +85,9 @@ class GeneralChatSubGraphTests(unittest.IsolatedAsyncioTestCase):
         model = SimpleNamespace()
         captured = {}
 
-        async def ainvoke(messages):
+        async def ainvoke(messages, **kwargs):
             captured["messages"] = messages
+            captured["max_tokens"] = kwargs["max_tokens"]
             return AIMessage(content="可以，我们继续聊。")
 
         model.ainvoke = ainvoke
@@ -116,6 +117,8 @@ class GeneralChatSubGraphTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(response.text, "可以，我们继续聊。")
+        from app.llm.budget import output_limit
+        self.assertEqual(captured["max_tokens"], output_limit())
         sent = captured["messages"]
         self.assertIsInstance(sent[0], SystemMessage)
         self.assertIn('"volume":0.4', sent[0].content)

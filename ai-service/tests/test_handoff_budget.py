@@ -98,7 +98,7 @@ async def test_call_reserves_then_settles_actual_and_resets_context():
 
 
 @pytest.mark.asyncio
-async def test_unknown_usage_retains_full_reservation_as_estimated():
+async def test_unknown_success_usage_estimates_actual_input_and_response():
     book = ledger()
     with request_scope(book):
         await accounted_call(
@@ -106,9 +106,12 @@ async def test_unknown_usage_retains_full_reservation_as_estimated():
             "hello",
             output_tokens=100,
         )
-    expected = estimate_tokens("hello") + 100
+    from app.llm.runtime import measure_usage
+    expected = measure_usage(AIMessage(content="无用量"), "hello", 100).total_tokens
     assert book.usage["general_chat"]["estimated_tokens"] == expected
     assert book.usage["general_chat"]["reported_tokens"] == 0
+    assert expected < estimate_tokens("hello") + 100
+    assert book.call_manifests[0]["estimated"]
 
 
 @pytest.mark.asyncio
@@ -209,8 +212,10 @@ async def test_provider_retries_and_usage_stream_are_isolated_from_cached_model(
     assert raw.max_retries == 2 and raw.stream_usage is False
     assert wrapped.model.max_retries == 0 and wrapped.model.stream_usage is True
     assert wrapped.model.root_async_client.max_retries == 0
-    assert raw.root_async_client.max_retries == 2 and wrapped.output_tokens == 4096
-    assert wrapped.bind_tools([]).output_tokens == 4096
+    from app.llm.budget import output_limit
+    assert raw.root_async_client.max_retries == 2 and wrapped.output_tokens == output_limit("offline")
+    assert wrapped.bind_tools([]).output_tokens == wrapped.output_tokens
+    assert raw.max_tokens == 4096 and wrapped.model.max_tokens == wrapped.output_tokens
 
 
 @pytest.mark.asyncio
@@ -310,7 +315,9 @@ async def test_required_context_budget_failure_is_sticky_and_optional_history_sh
             query="你好",
             messages=[HumanMessage(content="旧历史" * 800)],
         )
-        assert pack.total_tokens <= 696 and pack.dropped_items
+        assert pack.total_tokens <= 696
+        assert [row["stage"] for row in book.budget_trace] == ["truncate_history", "summarize_history"]
+        assert "旧历史" in str(pack.messages) and "旧历史" * 800 not in str(pack.messages)
         with pytest.raises(RuntimeLimitError, match="token_limit"):
             await build_context_async(
                 RouteKey.GENERAL_CHAT, system="必须保留规则" * 500, query="你好"

@@ -343,11 +343,16 @@ def test_jev_final_framing_budget_and_lite_context_are_assembled():
 
 def test_jev_budget_failure_preserves_existing_request_limit_behavior():
     from typesafe_sdk import Choice
-    from app.llm.runtime import RuntimeLimitError, request_scope
-    ledger = SimpleNamespace(remaining=20, blocked=None)
+    from app.llm.runtime import RequestLedger, RuntimeLimitError, request_scope
+    from app.agent.handoff.registry import AgentKey
+    from app.agent.handoff.state import AgentUsage, RunLimits
+    ledger = RequestLedger(tuple(AgentUsage(agent=key) for key in AgentKey), AgentKey.GENERAL_CHAT,
+                           RunLimits(agent_token_budget=20), deadline=30)
     with request_scope(ledger), pytest.raises(RuntimeLimitError, match="token_limit"):
         prepare_decision_input({"query": "中文" * 100}, {"route": Choice(instructions="choose", criteria={"chat": "chat"})})
     assert ledger.blocked == "token_limit"
+    assert [event["stage"] for event in ledger.budget_trace] == [
+        "truncate_history", "summarize_history", "stop_sources", "honest_degradation"]
 
 
 def test_source_modules_cannot_construct_provider_prompts_or_call_models():
