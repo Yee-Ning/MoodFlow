@@ -438,6 +438,8 @@ class ContinuityCoordinator:
         return draft
 
     def after_checkpoint(self, row):
+        # Journal is immutable public evidence; the saved checkpoint proves
+        # execution commit. Recovery deliberately needs both (Phase 3 contract).
         call = active_call.get()
         if call is None:
             return

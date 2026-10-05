@@ -17,9 +17,9 @@ from .models import (
     HistoryPointer,
     SessionRecord,
     TaskRecord,
-    read_handoff_projection,
     same_event_content,
 )
+from .journal_contracts import archive_projection, resolve_projection
 
 
 class PostgresContinuityStore:
@@ -421,7 +421,7 @@ class PostgresContinuityStore:
                 handoff.task_id,
                 handoff.session_id,
                 handoff.created_at,
-                self._body(handoff),
+                self._body(archive_projection(self, handoff)),
             ),
         )
 
@@ -429,7 +429,7 @@ class PostgresContinuityStore:
         row = self._one(
             "SELECT body FROM agent_handoff WHERE handoff_id=%s", (handoff_id,)
         )
-        return read_handoff_projection(row["body"]) if row else None
+        return resolve_projection(self, row["body"]) if row else None
 
     def validate_pointers(
         self, pointers: Iterable[HistoryPointer], *, task_id: str

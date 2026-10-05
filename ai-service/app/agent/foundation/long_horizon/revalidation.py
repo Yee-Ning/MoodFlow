@@ -11,7 +11,7 @@ from app.agent.handoff.registry import AGENT_REGISTRY, next_agent_for_task
 from app.agent.handoff.state import HandoffRun
 
 from .history_writer import HistoryWriter
-from .models import HistoryEventType, HistoryPointer, LiveSnapshot, PublicTaskResult, RevalidationReport, TransferJournalEvent
+from .models import HistoryEventType, HistoryPointer, LiveSnapshot, PublicTaskResult, RevalidationReport
 
 STATE_SOURCES = {
     "current_song_id": {"client_player"}, "player_state": {"client_player"},
@@ -153,7 +153,8 @@ class RealityRevalidator:
         integrity = "valid"
         try:
             for event in journal:
-                receipt = TransferJournalEvent.model_validate(event.payload)
+                from .journal_contracts import JournalReader
+                receipt = JournalReader(self.store).transfer(event)
                 if receipt.summary.run_id != run.run_id:
                     continue
                 journal_refs.append(HistoryPointer(kind="event", target_id=event.event_id))
@@ -166,7 +167,7 @@ class RealityRevalidator:
                     proposal_event = self.store.get_history_event(receipt.summary_ref.target_id)
                     if proposal_event is None or (proposal_event.task_id, proposal_event.session_id) != (event.task_id, event.session_id):
                         raise ValueError("committed summary provenance scope mismatch")
-                    original = TransferJournalEvent.model_validate(proposal_event.payload)
+                    original = JournalReader(self.store).transfer(proposal_event)
                     if original.phase != "proposed" or original.summary != receipt.summary:
                         raise ValueError("committed summary provenance mismatch")
                     cp = receipt.checkpoint_ref

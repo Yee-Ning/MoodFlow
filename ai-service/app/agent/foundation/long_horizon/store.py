@@ -17,9 +17,9 @@ from .models import (
     HistoryPointer,
     SessionRecord,
     TaskRecord,
-    read_handoff_projection,
     same_event_content,
 )
+from .journal_contracts import archive_projection, resolve_projection
 
 
 class ContinuityStore(Protocol):
@@ -447,11 +447,11 @@ class SQLiteContinuityStore:
             if artifact is None or artifact.task_id != handoff.task_id:
                 raise ValueError(f"unresolvable artifact pointer:{ref}")
         self._insert("handoffs", (handoff.handoff_id, handoff.task_id, handoff.session_id,
-                     handoff.created_at.isoformat(), self._json(handoff)))
+                     handoff.created_at.isoformat(), self._json(archive_projection(self, handoff))))
 
     def get_handoff(self, handoff_id: str) -> HandoffProjection | HandoffProjectionV2 | None:
         row = self._one("SELECT body FROM handoffs WHERE handoff_id=?", (handoff_id,))
-        return read_handoff_projection(json.loads(row["body"])) if row else None
+        return resolve_projection(self, json.loads(row["body"])) if row else None
 
     def validate_pointers(self, pointers: Iterable[HistoryPointer], *, task_id: str) -> None:
         for pointer in pointers:

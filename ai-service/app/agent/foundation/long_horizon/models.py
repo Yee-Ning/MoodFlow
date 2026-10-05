@@ -4,7 +4,8 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
+from app.agent.foundation.context_pointers import EventPointer as EventPointer
 
 
 class HistoryEventType(StrEnum):
@@ -31,9 +32,11 @@ class HistoryEventType(StrEnum):
     MODEL_USAGE = "model_usage"
     HISTORY_ARCHIVE = "history_archive"
     NAMESPACE_MIGRATION = "namespace_migration"
+    SESSION_PROJECTION = "session_projection"
 
 
 class HistoryPointer(BaseModel):
+    """Legacy protocol pointer; task ownership is supplied by the reader."""
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     kind: Literal["event", "artifact"]
@@ -237,6 +240,7 @@ class AgentTransferSummaryV1(ContinuityContract):
 
 
 class TransferJournalEvent(ContinuityContract):
+    """Legacy persisted event or a materialized read view of a v2 receipt."""
     schema_version: Literal[1] = 1
     phase: TransferPhase
     transfer_id: str = Field(pattern=r"^transfer:[0-9a-f]{64}$")
@@ -258,6 +262,47 @@ class TransferJournalEvent(ContinuityContract):
         return self
 
 
+class TransferJournalReference(ContinuityContract):
+    """No second summary/digest: subsequent phases reference the proposal."""
+    schema_version: Literal[2] = 2
+    phase: Literal["rejected", "committed", "reconciled", "target_started", "target_finished"]
+    transfer_id: str = Field(pattern=r"^transfer:[0-9a-f]{64}$")
+    summary_ref: HistoryPointer
+    checkpoint_ref: CheckpointRef | None = None
+    result_refs: tuple[HistoryPointer, ...] | None = Field(default=None, max_length=32)
+    reason_code: str | None = Field(default=None, min_length=1, max_length=64)
+    retry_allowed: bool | None = None
+
+    @model_validator(mode="after")
+    def reference_is_event(self):
+        if self.summary_ref.kind != "event":
+            raise ValueError("transfer summary must reference a proposal event")
+        if self.phase == "rejected":
+            if self.reason_code is None or self.retry_allowed is None:
+                raise ValueError("rejected transfer requires its verdict and retry discipline")
+            if self.checkpoint_ref is not None or self.result_refs is not None:
+                raise ValueError("rejected transfer cannot claim checkpoint commit")
+        elif self.checkpoint_ref is None or self.reason_code is not None or self.retry_allowed is not None:
+            raise ValueError("committed observation requires checkpoint, not a rejection verdict")
+        if self.phase in {"committed", "reconciled"} and self.result_refs is not None:
+            raise ValueError("commit results belong to the proposal")
+        return self
+
+
+class TransferProposalReference(ContinuityContract):
+    """A migrated namespace anchors the existing proposal, never a copy."""
+    schema_version: Literal[3] = 3
+    phase: Literal["proposed"] = "proposed"
+    transfer_id: str = Field(pattern=r"^transfer:[0-9a-f]{64}$")
+    summary_ref: HistoryPointer
+
+    @model_validator(mode="after")
+    def proposal_is_event(self):
+        if self.summary_ref.kind != "event":
+            raise ValueError("migrated proposal must reference an event")
+        return self
+
+
 class PublicTaskResult(ContinuityContract):
     schema_version: Literal[1] = 1
     run_id: str = Field(min_length=1, max_length=128)
@@ -267,8 +312,7 @@ class PublicTaskResult(ContinuityContract):
     content: str = Field(default="", max_length=1000)
 
 
-class PublicRunMetadata(ContinuityContract):
-    schema_version: Literal[1] = 1
+class PublicRunIdentity(ContinuityContract):
     run_id: str = Field(min_length=1, max_length=128)
     entry_agent: AgentId
     current_agent: AgentId
@@ -278,7 +322,6 @@ class PublicRunMetadata(ContinuityContract):
     accepted_hop_count: int = Field(ge=0, le=5)
     pending_task_ids: tuple[str, ...] = Field(default=(), max_length=32)
     plan_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    usage: tuple[PublicAgentUsage, ...]
     limits: PublicRunLimits
 
     @model_validator(mode="after")
@@ -289,9 +332,23 @@ class PublicRunMetadata(ContinuityContract):
         )
         if self.chain[0] != self.entry_agent:
             raise ValueError("public run entry must match chain head")
+        return self
+
+
+class PublicRunMetadata(PublicRunIdentity):
+    schema_version: Literal[1] = 1
+    usage: tuple[PublicAgentUsage, ...]
+
+    @model_validator(mode="after")
+    def usage_owners(self):
         if tuple(item.agent for item in self.usage) != ("general_chat", "curator", "explorer"):
             raise ValueError("public run usage requires each agent in registry order")
         return self
+
+
+class PublicRunReference(PublicRunIdentity):
+    """Run ID references MODEL_USAGE; cumulative snapshots stay in checkpoint."""
+    schema_version: Literal[2] = 2
 
 
 class PublicAgentUsage(ContinuityContract):
@@ -313,11 +370,17 @@ class PublicRunLimits(ContinuityContract):
 
 
 class RunProgressRecord(ContinuityContract):
-    schema_version: Literal[1] = 1
-    run: PublicRunMetadata
+    schema_version: Literal[1, 2] = 1
+    run: PublicRunMetadata | PublicRunReference
     checkpoint_ref: CheckpointRef
     result_refs: tuple[HistoryPointer, ...] = Field(default=(), max_length=32)
     transfer_refs: tuple[HistoryPointer, ...] = Field(default=(), max_length=5)
+
+    @model_validator(mode="after")
+    def matching_versions(self):
+        if self.schema_version != self.run.schema_version:
+            raise ValueError("progress and run contract versions disagree")
+        return self
 
 
 class PublicHistoryError(ContinuityContract):
@@ -374,6 +437,24 @@ class HandoffProjectionV2(HandoffDraftV2):
     token_count: int = Field(ge=0)
     token_budget: int = Field(gt=0)
     dropped_fields: list[str] = Field(default_factory=list)
+
+
+class SessionProjectionArchive(ContinuityContract):
+    """Canonical bounded projection document, archived exactly once."""
+    projection: HandoffProjectionV2 | HandoffProjection
+
+    @field_validator("projection", mode="before")
+    @classmethod
+    def exact_projection_version(cls, value):
+        return read_handoff_projection(value) if isinstance(value, dict) else value
+
+
+class SessionProjectionPointer(ContinuityContract):
+    storage_schema: Literal["history-pointer:v1"] = "history-pointer:v1"
+    handoff_id: str
+    task_id: str
+    session_id: str
+    event_ref: HistoryPointer
 
 
 def read_handoff_projection(body: dict[str, Any]) -> HandoffProjection | HandoffProjectionV2:

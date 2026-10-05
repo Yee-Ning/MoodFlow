@@ -80,7 +80,8 @@ async def test_sender_digest_is_allowlisted_persisted_and_committed_unchanged(tm
     await transfer(h, "curator")
     saved = checkpoint(h)
     journal = events(h, HistoryEventType.AGENT_TRANSFER)
-    proposed, committed = [TransferJournalEvent.model_validate(event.payload) for event in journal]
+    from app.agent.foundation.long_horizon.journal_contracts import JournalReader
+    proposed, committed = [JournalReader(h.store).transfer(event) for event in journal]
     assert proposed.summary.payload_digest == payload_digest(saved.envelope.model_dump(mode="json"))
     assert committed.summary == proposed.summary
     assert committed.summary_ref.target_id == journal[0].event_id

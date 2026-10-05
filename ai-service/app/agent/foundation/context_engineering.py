@@ -13,7 +13,9 @@ from collections import defaultdict
 from typing import Any, Literal
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.agent.foundation.context_contracts import PackManifest
 
 from app.agent.foundation.routing import RouteKey
 from app.rag.chunk.token_counter import TokenCounter, UnicodeHeuristicTokenCounter
@@ -83,6 +85,7 @@ class ContextPolicy(BaseModel):
 
 
 class ContextPack(BaseModel):
+    """Single-call assembled view; retained manifests never feed Collect."""
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     items: list[ContextItem]
@@ -94,6 +97,14 @@ class ContextPack(BaseModel):
     trace: ContextTrace
     manifest: dict[str, Any] = Field(default_factory=dict)
     intent: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def manifest_matches_view(self):
+        if self.manifest:
+            projection = PackManifest.model_validate(self.manifest)
+            if (projection.tokens, projection.budget) != (self.total_tokens, self.budget):
+                raise ValueError("Pack manifest disagrees with assembled view")
+        return self
 
 
 POLICIES: dict[RouteKey, ContextPolicy] = {

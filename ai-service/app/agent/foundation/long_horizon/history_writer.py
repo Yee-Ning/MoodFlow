@@ -16,6 +16,9 @@ from .models import (
     PublicTaskResult,
     RunProgressRecord,
     TransferJournalEvent,
+    TransferJournalReference,
+    TransferProposalReference,
+    SessionProjectionArchive,
 )
 from .store import ContinuityStore
 from .public_events import (
@@ -44,6 +47,7 @@ PUBLIC_SCHEMAS = {
     HistoryEventType.HISTORY_ARCHIVE: PublicArchive,
     HistoryEventType.NAMESPACE_MIGRATION: PublicMigration,
     HistoryEventType.SESSION_HANDOFF: PublicSessionHandoff,
+    HistoryEventType.SESSION_PROJECTION: SessionProjectionArchive,
 }
 PRIVATE_TEXT = re.compile(
     r"scratchpad|<\s*(?:analysis|reasoning)\b|(?:raw|system)[_ ]?prompt|"
@@ -107,7 +111,28 @@ class HistoryWriter:
         schema = PUBLIC_SCHEMAS.get(event_kind)
         if schema is None:
             raise ValueError("public event type has no allowlisted schema")
+        if event_kind is HistoryEventType.AGENT_TRANSFER:
+            from .journal_contracts import transfer_document
+            body = transfer_document(self.store, identity, body)
+            schema = {1: TransferJournalEvent, 2: TransferJournalReference, 3: TransferProposalReference}[body.get("schema_version", 1)]
+        elif event_kind is HistoryEventType.RUN_PROGRESS:
+            values = RunProgressRecord.model_validate(
+                body.model_dump(mode="json") if isinstance(body, BaseModel) else body,
+            ).model_dump(mode="json")
+            values["schema_version"] = values["run"]["schema_version"] = 2
+            values["run"].pop("usage", None)
+            body = RunProgressRecord.model_validate(values)
         payload = validate_public_document(schema, body, max_bytes=self.max_bytes)
+        if event_kind is HistoryEventType.SESSION_PROJECTION:
+            projection = payload["projection"]
+            if (projection["task_id"], projection["session_id"]) != (identity.continuity_task_id, identity.session_id):
+                raise ValueError("projection archive identity scope mismatch")
+        elif event_kind is HistoryEventType.RUN_PROGRESS:
+            ref = payload["checkpoint_ref"]
+            if (ref["session_id"], ref["checkpoint_ns"], ref["execution_thread_id"]) != (
+                identity.session_id, identity.session_id, identity.conversation_id,
+            ):
+                raise ValueError("progress checkpoint identity scope mismatch")
         body_run_id = payload.get("run_id") or payload.get("summary", {}).get("run_id") or payload.get("run", {}).get("run_id")
         if identity.run_id is not None and body_run_id is not None and identity.run_id != body_run_id:
             raise ValueError("public history run identity mismatch")
@@ -119,10 +144,7 @@ class HistoryWriter:
             raise ValueError("public event reference budget exceeded")
         # Nested references must receive the same task ownership checks as top-level refs.
         all_refs = list(refs)
-        if isinstance(body, BaseModel):
-            values = body.model_dump(mode="json")
-        else:
-            values = payload
+        values = payload
 
         def collect(value):
             if isinstance(value, dict):
@@ -151,6 +173,22 @@ class HistoryWriter:
         )
         if len(event.model_dump_json().encode()) > self.max_bytes:
             raise ValueError("public event envelope exceeds byte budget")
+        # Cross-version replay keeps the original immutable receipt. Only an
+        # equivalent materialized view can match; changed content still fails.
+        existing = (self.store.get_history_event(event.event_id)
+                    if event_kind in {HistoryEventType.AGENT_TRANSFER, HistoryEventType.RUN_PROGRESS} else None)
+        if existing and existing.event_type is event_kind and existing.payload and existing.payload.get("schema_version", 1) == 1:
+            if event_kind is HistoryEventType.AGENT_TRANSFER and payload.get("schema_version") in {2, 3}:
+                from .journal_contracts import JournalReader
+                reader = JournalReader(self.store)
+                if reader.transfer(existing).model_dump(exclude={"summary_ref"}) == reader.transfer(event).model_dump(exclude={"summary_ref"}):
+                    return existing
+            elif event_kind is HistoryEventType.RUN_PROGRESS and payload.get("schema_version") == 2:
+                old = RunProgressRecord.model_validate(existing.payload).model_dump(mode="json", exclude_none=True)
+                old["schema_version"] = old["run"]["schema_version"] = 2
+                old["run"].pop("usage", None)
+                if old == payload:
+                    return existing
         try:
             return self.store.append_event_once(event)
         except ValueError as exc:

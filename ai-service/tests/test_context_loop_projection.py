@@ -76,7 +76,12 @@ async def test_result_failure_is_not_completed_and_snapshot_usage_survives(tmp_p
     assert projected.completed_steps == []
     event = h.store.get_history_event(projected.agent_progress.run_state_ref.target_id)
     assert event.payload["run"]["started_at"] == h.run.model_dump(mode="json")["started_at"]
-    assert event.payload["run"]["usage"] == h.run.model_dump(mode="json")["usage"]
+    # The execution snapshot retains the same usage; public progress references
+    # the ledger by run_id instead of persisting a second cumulative balance.
+    saved = h.saver.get_tuple(h.config)
+    assert saved.checkpoint["channel_values"]["handoff_run"]["usage"] == h.run.model_dump(mode="json")["usage"]
+    assert "usage" not in event.payload["run"]
+    assert event.payload["run"]["run_id"] == h.run.run_id
 
 
 @pytest.mark.asyncio

@@ -263,6 +263,7 @@ class RequestLedger:
 
 @contextmanager
 def request_scope(ledger):
+    parent = active_ledger.get()
     token = active_ledger.set(ledger)
     manifest_token = active_manifest.set(None)
     try:
@@ -270,6 +271,9 @@ def request_scope(ledger):
     finally:
         active_manifest.reset(manifest_token)
         active_ledger.reset(token)
+        if parent is None:
+            # End of the outer request: never resurrect a prior ephemeral Pack.
+            active_manifest.set(None)
 
 
 def retryable(exc):
@@ -334,6 +338,14 @@ async def accounted_call(operation, payload, *, output_tokens=1024, retry=True, 
                 "output_limit_exceeded": measured.output_tokens > output_tokens,
                 "status": "completed" if response is not None else "unknown",
                 "budget_events": list(ledger.budget_trace) if ledger else []}
+            if ledger is not None and ledger.accounting is not None:
+                # Numeric observability points at the already-settled fact.
+                identity = ledger.accounting.identity
+                manifest["usage_ref"] = {"task_id": identity.continuity_task_id,
+                    "event_id": ledger.accounting.writer.event_id(identity, f"usage:{call_id}:settled")}
+            from app.agent.foundation.context_contracts import CallManifest
+            # Validate observability only; authoritative settlement already exists.
+            CallManifest.model_validate(manifest)
             if ledger:
                 ledger.call_manifests.append(manifest)
             logger.info("context_engineering.call_manifest %s", json.dumps(manifest, ensure_ascii=False))

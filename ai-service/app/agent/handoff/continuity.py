@@ -11,6 +11,7 @@ from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from app.agent.foundation.long_horizon.history_writer import HistoryWriter, digest
+from app.agent.foundation.long_horizon.journal_contracts import JournalReader
 from app.agent.foundation.long_horizon.models import (
     AgentTransferSummaryV1,
     AgentProgress,
@@ -216,7 +217,7 @@ class AgentTransferJournal:
             receipt = self._event(identity, transfer_id, "committed") or self._event(identity, transfer_id, "reconciled")
             if receipt is None:
                 raise ValueError("transfer commit receipt unavailable")
-            summary = TransferJournalEvent.model_validate(receipt.payload).summary
+            summary = JournalReader(self.writer.store).transfer(receipt).summary
             hop = run.hops[-1]
             if (summary.run_id, summary.source_agent, summary.target_agent, summary.route_task_id, summary.hop_index) != (
                 run.run_id, hop.source_agent.value, hop.target_agent.value, hop.task_id, len(run.hops) - 1
@@ -259,10 +260,10 @@ class AgentTransferJournal:
                 receipt = self._event(identity, related, "committed") or self._event(identity, related, "reconciled")
                 if proposal is None or (require_receipts and receipt is None):
                     raise ValueError("transfer payload digest has no immutable anchor")
-                expected = TransferJournalEvent.model_validate(proposal.payload).summary.payload_digest
+                expected = JournalReader(self.writer.store).transfer(proposal).summary.payload_digest
                 if expected is None or actual[hop.tool_call_id] != expected:
                     raise ValueError("transfer payload digest mismatch")
-                if receipt and TransferJournalEvent.model_validate(receipt.payload).summary.payload_digest != expected:
+                if receipt and JournalReader(self.writer.store).transfer(receipt).summary.payload_digest != expected:
                     raise ValueError("transfer receipt payload digest mismatch")
         except (ValueError, KeyError, TypeError):
             self.writer.append_public_event(
@@ -288,7 +289,7 @@ class AgentTransferJournal:
         if existing:
             return existing
         receipt = self._event(identity, transfer_id, "committed") or self._event(identity, transfer_id, "reconciled")
-        summary = TransferJournalEvent.model_validate(receipt.payload).summary
+        summary = JournalReader(self.writer.store).transfer(receipt).summary
         return self.writer.transfer(identity, f"{transfer_id}:{phase}", TransferJournalEvent(
             phase=phase, transfer_id=transfer_id, summary=summary, summary_ref=pointer(receipt),
             checkpoint_ref=snapshot.ref, result_refs=self._result_refs(identity, run),
@@ -345,7 +346,7 @@ class AgentTransferJournal:
             transfer_id = transfer_identity(run.run_id, hop.tool_call_id)
             existing = self._event(identity, transfer_id, "committed") or self._event(identity, transfer_id, "reconciled")
             if existing:
-                receipt = TransferJournalEvent.model_validate(existing.payload)
+                receipt = JournalReader(self.writer.store).transfer(existing)
                 if (receipt.summary.run_id, receipt.summary.hop_index, receipt.summary.source_agent,
                     receipt.summary.target_agent, receipt.summary.route_task_id) != (
                     run.run_id, index, hop.source_agent.value, hop.target_agent.value, hop.task_id
@@ -360,7 +361,7 @@ class AgentTransferJournal:
             proposal = self._event(identity, transfer_id, "proposed")
             if proposal is None:
                 raise ValueError("checkpoint transfer proposal missing; reconciliation requires history")
-            summary = TransferJournalEvent.model_validate(proposal.payload).summary
+            summary = JournalReader(self.writer.store).transfer(proposal).summary
             if (summary.run_id, summary.hop_index, summary.source_agent, summary.target_agent,
                 summary.route_task_id) != (run.run_id, index, hop.source_agent.value, hop.target_agent.value, hop.task_id):
                 raise ValueError("transfer proposal disagrees with checkpoint")
@@ -398,7 +399,7 @@ class ProgressProjector:
                 raise ValueError("run progress transfer scope mismatch")
             if receipt_event.semantic_type is not HistoryEventType.AGENT_TRANSFER:
                 raise ValueError("run progress reference is not a transfer")
-            receipt = TransferJournalEvent.model_validate(receipt_event.payload)
+            receipt = JournalReader(self.store).transfer(receipt_event)
             summary = receipt.summary
             if receipt.phase not in {"committed", "reconciled"}:
                 raise ValueError("uncommitted transfer cannot count as accepted")
@@ -447,7 +448,7 @@ class ProgressProjector:
         latest_transfer = None
         for event in all_events:
             if event.semantic_type is HistoryEventType.AGENT_TRANSFER:
-                transfer = TransferJournalEvent.model_validate(event.payload)
+                transfer = JournalReader(self.store).transfer(event)
                 latest_transfer = (event, transfer)
                 if transfer.phase in {"proposed", "rejected"}:
                     audit_refs.append(pointer(event))
@@ -571,6 +572,8 @@ class JournalCheckpointer(BaseCheckpointSaver):
         )
 
     def put(self, config, checkpoint, metadata, new_versions):
+        # Checkpoint is the commit witness: proposal first, save, then receipt.
+        # Do not reverse this order or synthesize a digest from received state.
         stored = self.saver.put(config, checkpoint, metadata, new_versions)
         row = self.saver.get_tuple(stored)
         identity = self._identity(row)

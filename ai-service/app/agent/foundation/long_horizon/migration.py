@@ -12,7 +12,7 @@ from app.agent.handoff.continuity import snapshot_from_row
 
 from .execution import ContinuityConflict
 from .history_writer import digest
-from .models import HistoryEventType, RolloverReason, TransferJournalEvent
+from .models import HistoryEventType, HistoryPointer, RolloverReason, TransferProposalReference
 from .public_events import PublicMigration
 
 
@@ -107,9 +107,12 @@ class NamespaceMigrator:
             if not events:
                 break
             for event in events:
-                transfer = TransferJournalEvent.model_validate(event.payload)
+                from .journal_contracts import JournalReader
+                transfer = JournalReader(coordinator.store).transfer(event)
                 if transfer.summary.run_id == body.run_id and transfer.phase == "proposed":
-                    coordinator.writer.transfer(target_identity, transfer.transfer_id + ":proposed", transfer)
+                    coordinator.writer.append_public_event(target_identity, transfer.transfer_id + ":proposed",
+                        HistoryEventType.AGENT_TRANSFER, TransferProposalReference(transfer_id=transfer.transfer_id,
+                            summary_ref=HistoryPointer(kind="event", target_id=event.event_id)))
                 cursor = event.event_seq
         snapshot = snapshot_from_row(saved, target_identity)
         coordinator.journal.confirm_checkpoint(snapshot, reconcile=True)
