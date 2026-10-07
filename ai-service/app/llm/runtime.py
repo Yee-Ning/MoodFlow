@@ -155,10 +155,22 @@ class RequestLedger:
         self.call_manifests = []
         self.budget_trace = []
         self.source_stops = set()
+        self.hot_budget = None
+        self._pending_reservations = []
+        self._reservation_context = ContextVar("request_budget_reservation", default=None)
         from app.agent.foundation.long_horizon.accounting import active_accounting
         self.accounting = active_accounting.get()
         if self.accounting is not None:
             self.accounting.bind(self, run_id)
+            from app.llm.redis_budget import RedisBudgetLedger, RedisBudgetUnavailable
+            adapter = self.accounting.budget_ledger
+            if isinstance(adapter, RedisBudgetLedger):
+                adapter.ttl = max(adapter.config.ttl_seconds, limits.run_timeout_seconds)
+                try:
+                    adapter.reconcile(self.run_id, minimum={owner: row["tokens"] for owner, row in self.usage.items()})
+                    self.hot_budget = adapter
+                except RedisBudgetUnavailable:
+                    pass
 
     @property
     def current_agent(self):
@@ -191,10 +203,24 @@ class RequestLedger:
 
     def check_task_budget(self):
         self.check()
-        if sum(row["tokens"] for row in self.usage.values()) + self.reserved >= self.task_limit:
+        hot = self._hot_counters()
+        total = hot[1] if hot is not None else sum(row["tokens"] for row in self.usage.values()) + self.reserved
+        if total >= self.task_limit:
             self.fail_budget("l3")
 
+    def _hot_counters(self):
+        from app.llm.redis_budget import RedisBudgetUnavailable
+        if self.hot_budget is not None:
+            try:
+                return self.hot_budget.counters(self.run_id, self.current_agent)
+            except RedisBudgetUnavailable:
+                self.hot_budget = None
+        return None
+
     def fail_budget(self, level):
+        hot = self._hot_counters()
+        if hot is not None and hot[1] >= self.task_limit:
+            level = "l3"
         stages = ("truncate_history", "summarize_history", "stop_sources", "honest_degradation") if level == "l2" else ("task_degradation", "refuse")
         for stage in stages:
             if not any(row["level"] == level and row["stage"] == stage for row in self.budget_trace):
@@ -204,6 +230,9 @@ class RequestLedger:
 
     @property
     def remaining(self):
+        hot = self._hot_counters()
+        if hot is not None:
+            return min(self.agent_limit - hot[0], self.task_limit - hot[1])
         return (
             min(
                 self.agent_limit - self.usage[self.current_agent]["tokens"],
@@ -225,26 +254,71 @@ class RequestLedger:
     def ensure_available(self, amount):
         self.check()
         if amount > self.remaining:
-            task_remaining = self.task_limit - sum(row["tokens"] for row in self.usage.values()) - self.reserved
+            hot = self._hot_counters()
+            task_remaining = (self.task_limit - hot[1] if hot is not None else
+                              self.task_limit - sum(row["tokens"] for row in self.usage.values()) - self.reserved)
             self.fail_budget("l3" if amount > task_remaining else "l2")
 
     def reserve(self, amount):
-        self.ensure_available(amount)
+        from app.llm.redis_budget import RedisBudgetUnavailable
+        from uuid import uuid4
+        self.check()
+        call_id = uuid4().hex
+        hot_reserved = False
+        if self.hot_budget is not None:
+            try:
+                result, _ = self.hot_budget.reserve(self.run_id, self.current_agent, amount,
+                                                    self.agent_limit, self.task_limit, call_id=call_id)
+                if result in {"l2", "l3"}:
+                    self.fail_budget(result)
+                if result != "accepted":
+                    raise RedisBudgetUnavailable("unconfirmed reservation")
+                hot_reserved = True
+            except RedisBudgetUnavailable:
+                self.hot_budget = None
+        if not hot_reserved:
+            self.ensure_available(amount)
         self.reserved += amount
+        receipt = {"call_id": call_id, "agent": self.current_agent,
+                   "amount": amount, "hot": hot_reserved, "claimed": False}
+        self._pending_reservations.append(receipt)
+        self._reservation_context.set(receipt)
+
+    def claim_reservation(self):
+        """Give the cold receipt the same identity as the just-created hot hold."""
+        receipt = self._reservation_context.get()
+        if receipt is not None and not receipt["claimed"] and receipt["agent"] == self.current_agent:
+            receipt["claimed"] = True
+            return receipt["call_id"]
+        return None
 
     def settle(self, amount, response=None, *, usage=None, owner=None):
         self.reserved -= amount
         actual = reported_tokens(response)
         cost = usage.total_tokens if usage is not None else amount if actual is None else actual
+        from app.llm.redis_budget import RedisBudgetUnavailable
+        current = self._reservation_context.get()
+        for receipt in self._pending_reservations:
+            if receipt is current:
+                self._pending_reservations.remove(receipt)
+                self._reservation_context.set(None)
+                if receipt["hot"] and self.hot_budget is not None:
+                    try:
+                        self.hot_budget.settle(self.run_id, receipt["agent"], receipt["call_id"], cost)
+                    except RedisBudgetUnavailable:
+                        self.hot_budget = None
+                break
         row = self.usage[owner or self.current_agent]
         row["tokens"] += cost
         row["estimated_tokens" if actual is None else "reported_tokens"] += cost
         row["model_calls"] += 1
+        hot = self._hot_counters()
         # Keep overshoot as observed, never truncate a bill to the configured cap.
         if (
             row["tokens"] >= self.agent_limit
             or sum(item["tokens"] for item in self.usage.values())
             >= self.task_limit
+            or hot is not None and (hot[0] > self.agent_limit or hot[1] > self.task_limit)
         ):
             self.blocked = "token_limit"
         return cost
@@ -274,6 +348,9 @@ def request_scope(ledger):
         if parent is None:
             # End of the outer request: never resurrect a prior ephemeral Pack.
             active_manifest.set(None)
+            accounting = getattr(ledger, "accounting", None)
+            if accounting is not None:
+                accounting.flush_budget()
 
 
 def retryable(exc):
