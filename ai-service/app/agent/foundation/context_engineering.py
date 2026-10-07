@@ -16,6 +16,9 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, System
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.agent.foundation.context_contracts import PackManifest
+from app.agent.foundation.derived_cache import (
+    cached_derivation_stage, derived_dedup_keys, personalized_derivations,
+)
 
 from app.agent.foundation.routing import RouteKey
 from app.rag.chunk.token_counter import TokenCounter, UnicodeHeuristicTokenCounter
@@ -172,6 +175,7 @@ class ContextCollector:
     def __init__(self, counter: TokenCounter | None = None):
         self.counter = counter or UnicodeHeuristicTokenCounter()
 
+    @cached_derivation_stage
     def collect(
         self, *, query: str, system: str, messages: list[BaseMessage] | None = None,
         current_song: Any = None, business_state: Any = None, route_decision: Any = None,
@@ -310,6 +314,10 @@ class ContextCollector:
 
 
 def _dedup_keys(item: ContextItem) -> set[str]:
+    return derived_dedup_keys(item, _compute_dedup_keys)
+
+
+def _compute_dedup_keys(item: ContextItem) -> set[str]:
     normalized = " ".join(item.content.casefold().split())
     keys = {"content:" + hashlib.sha256(normalized.encode("utf-8")).hexdigest()}
     if item.type == "rag_evidence" and item.metadata.get("evidence_id"):
@@ -481,6 +489,7 @@ class ContextSelector:
         self.counter = counter or UnicodeHeuristicTokenCounter()
         self.assembler = ContextAssembler()
 
+    @cached_derivation_stage
     def build(self, items: list[ContextItem], policy: ContextPolicy,
               trace_context: dict[str, str] | None = None,
               *, intent: dict[str, Any] | None = None) -> ContextPack:
@@ -625,6 +634,7 @@ def _call_intent(node, intent, sources):
     return {**section, "routes": [node.value]} if section is not None else None
 
 
+@personalized_derivations
 def build_context(node: RouteKey, *, policy: ContextPolicy | None = None, counter: TokenCounter | None = None,
                   trace_context: dict[str, str] | None = None,
                   intent: dict[str, Any] | None = None,
@@ -639,6 +649,7 @@ def build_context(node: RouteKey, *, policy: ContextPolicy | None = None, counte
     )
 
 
+@personalized_derivations
 async def build_context_async(node: RouteKey, *, policy: ContextPolicy | None = None,
                               counter: TokenCounter | None = None,
                               trace_context: dict[str, str] | None = None,
