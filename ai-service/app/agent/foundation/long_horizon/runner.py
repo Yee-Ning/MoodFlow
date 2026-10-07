@@ -30,6 +30,8 @@ async def produce(*, message, thread_id, routing_context, graph_mode="foundation
     from .coordinator import get_continuity_coordinator
 
     coordinator = coordinator or get_continuity_coordinator()
+    from app.redis_events.runtime import attach_transfers, publish_progress
+    attach_transfers(coordinator)
     graph = graph or (get_handoff_graph() if graph_mode == "handoff" else get_foundation_graph())
     # Preserve injected savers, while giving old compiled graphs the same hooks
     # as the production factories. Never replace an existing persistence backend.
@@ -141,6 +143,7 @@ async def produce(*, message, thread_id, routing_context, graph_mode="foundation
                             public_node = "current_song_subgraph"
                     if public_node in {"prepare_context", "intent_router", "final_response", "clarify", "aggregate_results", "development_route",
                                        "tool_calling_subgraph", "general_chat_subgraph", "worldline_subgraph", "current_song_subgraph"}:
+                        await publish_progress(call, public_node)
                         emit(UpdateStreamEvent(node=public_node, status="completed"))
                     if not isinstance(update, dict):
                         continue

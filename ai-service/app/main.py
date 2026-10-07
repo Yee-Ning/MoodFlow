@@ -15,6 +15,7 @@ from app.agent.memory.runtime import close_memory_runtime, get_memory_runtime, m
 from app.agent.foundation.user_profile import close_profile_store
 from app.api.chat import router as chat_router
 from app.api.worldline import router as worldline_router
+from app.api.redis_events import router as redis_events_router
 from app.agent.foundation.subgraphs.worldline.session import get_worldline_session_service
 from app.config.settings import load_runtime_environment
 
@@ -27,6 +28,8 @@ async def lifespan(_app: FastAPI):
         get_long_horizon_service()
     if memory_backend() != "disabled":
         get_memory_runtime()
+    from app.redis_events.runtime import start_flush, close_runtime
+    flush_task = await start_flush()
     try:
         yield
     finally:
@@ -34,6 +37,7 @@ async def lifespan(_app: FastAPI):
         from app.agent.foundation.long_horizon.coordinator import get_continuity_coordinator
         from app.agent.foundation.streaming import get_foundation_graph, get_handoff_graph
         await drain_workers()
+        await close_runtime(flush_task)
         get_continuity_coordinator.cache_clear()
         get_foundation_graph.cache_clear()
         get_handoff_graph.cache_clear()
@@ -47,6 +51,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="MoodFlow AI Service", version="0.1.0", lifespan=lifespan)
 app.include_router(chat_router)
 app.include_router(worldline_router)
+app.include_router(redis_events_router)
 
 
 @app.get("/health")
