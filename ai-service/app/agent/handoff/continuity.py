@@ -31,6 +31,7 @@ from app.agent.handoff.messages import parse_transfer_call
 from app.agent.handoff.integrity import TransferIntegrityConflict, payload_digest, transfer_payload
 from app.agent.handoff.registry import transfer_tool_name
 from app.agent.handoff.state import HandoffRun
+from app.agent.session_cache import cached_progress_projection
 
 
 def transfer_identity(run_id: str, call_id: str) -> str:
@@ -422,6 +423,7 @@ class ProgressProjector:
             raise ValueError("run progress contains duplicate results")
         return record, results
 
+    @cached_progress_projection
     def project_progress(self, session, event_cursor=0, projection_budget=None, *, draft):
         """Project only persisted receipts; proposal text never marks work done."""
         session = self.store.require_session(session if isinstance(session, str) else session.session_id)
