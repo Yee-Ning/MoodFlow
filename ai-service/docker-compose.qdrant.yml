@@ -1,4 +1,16 @@
 services:
+  redis:
+    image: redis:8@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6
+    restart: unless-stopped
+    command: [redis-server, --maxmemory, 512mb, --maxmemory-policy, noeviction, --save, "", --appendonly, "no"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks: [redis_internal]
+
   qdrant:
     image: qdrant/qdrant:v1.19.0
     restart: unless-stopped
@@ -10,3 +22,7 @@ services:
 
 volumes:
   qdrant_storage:
+
+networks:
+  redis_internal:
+    internal: true

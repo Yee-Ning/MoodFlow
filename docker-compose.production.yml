@@ -12,6 +12,16 @@ x-ai: &ai
     POSTGRES_DB: ${POSTGRES_DB:-moodflow_agent}
     POSTGRES_USER: ${POSTGRES_USER:-moodflow}
     DATABASE_URL: ${DATABASE_URL:-postgresql://moodflow@postgres:5432/moodflow_agent}
+    REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    BUDGET_LEDGER_BACKEND: ${BUDGET_LEDGER_BACKEND:-history}
+    SESSION_CACHE_BACKEND: ${SESSION_CACHE_BACKEND:-none}
+    RATELIMIT_BACKEND: ${RATELIMIT_BACKEND:-none}
+    CONTEXT_DERIVED_CACHE_BACKEND: ${CONTEXT_DERIVED_CACHE_BACKEND:-none}
+    PROFILE_CACHE_BACKEND: ${PROFILE_CACHE_BACKEND:-none}
+    DEDUP_LOCK_BACKEND: ${DEDUP_LOCK_BACKEND:-none}
+    TRANSFER_IDEMPOTENCY_BACKEND: ${TRANSFER_IDEMPOTENCY_BACKEND:-none}
+    PLAYCOUNT_BACKEND: ${PLAYCOUNT_BACKEND:-none}
+    PROGRESS_EVENTS_BACKEND: ${PROGRESS_EVENTS_BACKEND:-none}
     SPRING_BOOT_BASE_URL: ${SPRING_BOOT_BASE_URL:-http://java:8080}
     SPRING_BOOT_TIMEOUT_SECONDS: ${SPRING_BOOT_TIMEOUT_SECONDS:-10}
     NETEASE_API_BASE_URL: ${NETEASE_API_BASE_URL:-http://netease:3000}
@@ -69,9 +79,21 @@ x-ai: &ai
       read_only: true
       bind:
         create_host_path: false
-  networks: [backend]
+  networks: [backend, redis_internal]
 
 services:
+  redis:
+    image: redis:8@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6
+    restart: unless-stopped
+    command: [redis-server, --maxmemory, 512mb, --maxmemory-policy, noeviction, --save, "", --appendonly, "no"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks: [redis_internal]
+
   postgres:
     image: pgvector/pgvector:pg16-trixie@sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b
     restart: unless-stopped
@@ -156,6 +178,9 @@ services:
     restart: unless-stopped
     command: [serve]
     depends_on:
+      redis:
+        condition: service_healthy
+        required: false
       migrate:
         condition: service_completed_successfully
       qdrant:
@@ -185,6 +210,8 @@ volumes:
 
 networks:
   backend:
+  redis_internal:
+    internal: true
 
 secrets:
   postgres_password:

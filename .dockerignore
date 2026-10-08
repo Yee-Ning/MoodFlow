@@ -15,8 +15,11 @@
 !ai-service/migrations/
 !ai-service/migrations/**
 !ai-service/requirements.txt
+!ai-service/requirements.redis.txt
 !ai-service/scripts/
 !ai-service/scripts/migrate_agent_postgres.py
+!ai-service/scripts/reconcile_redis_budget.py
+!ai-service/scripts/flush_redis_playcounts.py
 !music-backend/
 !music-backend/pom.xml
 !music-backend/src/
