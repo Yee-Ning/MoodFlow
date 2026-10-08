@@ -272,6 +272,9 @@ class ContinuityCoordinator:
                 if self.pending_actions(identity):
                     raise ContinuityConflict("unconfirmed client actions prevent rollover")
                 draft = self.draft(session, snapshot, context.get("live_snapshot"), previous.get("current_input") or message)
+                if graph_mode == "foundation":
+                    from .foundation_projection import FoundationProgressProjector
+                    draft = FoundationProgressProjector(self.service).project(session, previous, draft)
                 rollover = self.service.rollover(session.session_id, draft, rollover_reason,
                                                  automatic=True, writer=self.writer, identity=identity)
                 session = rollover.new_session
