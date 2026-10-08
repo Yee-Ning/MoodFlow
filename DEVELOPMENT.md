@@ -21,6 +21,16 @@ MoodFlow 的本地环境包含四个独立服务：
 
 启动成功后访问 <http://localhost:5173>。请使用 `localhost`，以匹配 Spring Boot 当前允许的前端开发来源。
 
+如果 `ai-service/.env` 启用了 PostgreSQL，首次启动和更新代码后应先手动补齐数据库迁移：
+
+```powershell
+cd ai-service
+.\.venv\Scripts\python.exe -m scripts.migrate_agent_postgres
+cd ..
+```
+
+迁移命令读取现有环境配置，只执行尚未登记的迁移。服务启动和 `/health` 成功不代表数据库结构已与聊天代码同步；缺少迁移时聊天仍可能返回“AI 暂时离线”。
+
 如果 Windows 阻止执行本地脚本，可以只对本次命令放开策略：
 
 ```powershell

@@ -15,6 +15,11 @@ def load_runtime_environment() -> None:
     load_dotenv(ENV_FILE, override=False)
 
 
+def memory_backend() -> str:
+    """Read the backend without importing retrieval or constructing agent graphs."""
+    return os.getenv("MEMORY_BACKEND", "memory").strip().lower()
+
+
 def jev_requested() -> bool:
     """Cheap gate before full Settings validation; never mutates process environment."""
     raw = os.environ.get("JEV_ENABLED")

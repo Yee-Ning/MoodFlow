@@ -1,6 +1,5 @@
-from app.agent.memory.runtime import memory_backend
 from app.agent.postgres_migrations import run_all_migrations
-from app.config.settings import load_runtime_environment
+from app.config.settings import load_runtime_environment, memory_backend
 
 
 def main() -> None:

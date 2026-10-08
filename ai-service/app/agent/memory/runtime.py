@@ -8,6 +8,7 @@ from functools import lru_cache
 from typing import Protocol
 
 from app.agent.structured_output import StructuredOutputError
+from app.config.settings import memory_backend
 
 from .embeddings import QwenMemoryEmbedder
 from .extraction import MemoryExtractor
@@ -90,10 +91,6 @@ class MemoryRuntime:
 
 
 _persistent_store_factory: MemoryStoreFactory | None = None
-
-
-def memory_backend() -> str:
-    return os.getenv("MEMORY_BACKEND", "memory").strip().lower()
 
 
 def configure_persistent_memory_store(factory: MemoryStoreFactory | None) -> None:
