@@ -31,6 +31,7 @@ from app.schemas.chat import (
     UpdateStreamEvent,
 )
 from app.schemas.player import PlayerContext
+from app.api.rate_limit import RateLimitExceeded, enforce_chat_session_limit, get_rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,7 @@ async def foundation_chat(chat_request: ChatRequest, request: Request) -> Founda
         session_cookie = _spring_session_cookie(request)
         user_id = await UserIdentityProvider().resolve(session_cookie)
         thread_id = chat_request.thread_id or str(uuid4())
+        await enforce_chat_session_limit(thread_id, "foundation", user_id)
         response = await invoke_foundation_assistant(
             message=chat_request.message,
             thread_id=thread_id,
@@ -90,6 +92,8 @@ async def foundation_chat(chat_request: ChatRequest, request: Request) -> Founda
         return _with_action_owner(response, "foundation", thread_id)
     except ContinuityConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except RateLimitExceeded:
+        raise
     except Exception as exc:
         logger.exception("Foundation JSON request failed")
         raise HTTPException(
@@ -104,6 +108,7 @@ async def handoff_chat(chat_request: ChatRequest, request: Request) -> Foundatio
         session_cookie = _spring_session_cookie(request)
         user_id = await UserIdentityProvider().resolve(session_cookie)
         thread_id = chat_request.thread_id or str(uuid4())
+        await enforce_chat_session_limit(thread_id, "handoff", user_id)
         response = await invoke_handoff_assistant(
             message=chat_request.message,
             thread_id=thread_id,
@@ -115,6 +120,8 @@ async def handoff_chat(chat_request: ChatRequest, request: Request) -> Foundatio
         return _with_action_owner(response, "handoff", thread_id)
     except ContinuityConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except RateLimitExceeded:
+        raise
     except Exception as exc:
         logger.warning("Handoff JSON request failed: %s", type(exc).__name__)
         raise HTTPException(status_code=502, detail="MoodFlow AI 暂时离线，请稍后再试") from exc
@@ -123,16 +130,33 @@ async def handoff_chat(chat_request: ChatRequest, request: Request) -> Foundatio
 @router.post("/chat", response_class=StreamingResponse)
 async def chat(chat_request: ChatRequest, request: Request) -> StreamingResponse:
     session_cookie = _spring_session_cookie(request)
+    limiter = get_rate_limiter()
+    admitted_thread = admitted_mode = admitted_user = None
+    if limiter is not None:
+        # Reject before StreamingResponse sends HTTP 200 or starts a worker.
+        admitted_thread = chat_request.thread_id or str(uuid4())
+        admitted_mode = select_chat_graph(get_settings(), chat_request.thread_id)
+        try:
+            if admitted_mode != "legacy":
+                admitted_user = await UserIdentityProvider().resolve(session_cookie)
+            await enforce_chat_session_limit(admitted_thread, admitted_mode, admitted_user, limiter=limiter)
+        except ContinuityConflict as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except RateLimitExceeded:
+            raise
+        except Exception as exc:
+            logger.warning("Chat admission failed: %s", type(exc).__name__)
+            raise HTTPException(status_code=502, detail="MoodFlow AI 暂时离线，请稍后再试") from exc
 
     async def generate_events() -> AsyncIterator[str]:
         observation = observation_token = None
         try:
-            thread_id = chat_request.thread_id or str(uuid4())
-            mode = select_chat_graph(get_settings(), chat_request.thread_id)
+            thread_id = admitted_thread or chat_request.thread_id or str(uuid4())
+            mode = admitted_mode or select_chat_graph(get_settings(), chat_request.thread_id)
             observation, observation_token = begin_observation(mode, thread_id,
                 _telemetry_sample_kind(request), entrypoint="chat")
             if mode in {"foundation", "handoff"}:
-                user_id = await UserIdentityProvider().resolve(session_cookie)
+                user_id = admitted_user if limiter is not None else await UserIdentityProvider().resolve(session_cookie)
                 stream = stream_handoff_assistant if mode == "handoff" else stream_foundation_assistant
                 event_stream = stream(
                     message=chat_request.message,
