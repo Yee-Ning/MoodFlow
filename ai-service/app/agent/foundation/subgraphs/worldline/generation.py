@@ -1,5 +1,6 @@
 import json
 import logging
+from contextlib import nullcontext
 from types import SimpleNamespace
 from typing import Any, Protocol
 
@@ -28,7 +29,10 @@ from app.agent.foundation.subgraphs.worldline.models import (
 )
 from app.agent.foundation.subgraphs.worldline.prompts import (
     BRANCH_SYSTEM_PROMPT,
+    EXPLORATION_BRANCH_BASE_V1,
+    EXPLORATION_BRANCH_RULE_V1,
     NARRATIVE_SYSTEM_PROMPT,
+    WORLDLINE_RETRY_RULE_V1,
 )
 from app.agent.structured_output import (
     ModelOutput,
@@ -70,10 +74,9 @@ class ProviderWorldLineRuntime:
         retry: bool,
     ) -> ModelOutput:
         if retry:
-            instructions += (
-                "\n上次输出未通过 JSON Schema 或事实落地校验。"
-                "请只修正结构和依据，不要增加新事实。"
-            )
+            instructions += "\n" + WORLDLINE_RETRY_RULE_V1
+        stage = {"worldline_narrative": "narrative", "worldline_branches": "branches"}.get(schema_name)
+        from .stage_pack import evidence_row, prepare_explorer_input, record_selected_evidence
         # The graph and facts are structured constraints; existing RAG sources
         # are selected independently before the provider sees this one call.
         source_rows = payload.get("sources", [])
@@ -98,6 +101,8 @@ class ProviderWorldLineRuntime:
             for item in pack.items:
                 if item.type == "system":
                     system = item.content
+                elif item.source == "retry_feedback":
+                    continue
                 elif item.type == "structured_output":
                     projected.update(json.loads(item.content))
                 elif item.type == "user_query":
@@ -105,40 +110,44 @@ class ProviderWorldLineRuntime:
                 elif item.type == "search_plan":
                     projected["search_plan"] = json.loads(item.content)
                 elif item.type == "rag_evidence":
-                    evidence_id = item.metadata["evidence_id"]
-                    sources.append({"id": evidence_id, "title": item.metadata["title"][:160],
-                                    "excerpt": item.content, **source_metadata.get(evidence_id, {})})
+                    sources.append(evidence_row(item, source_metadata))
                 else:
                     context.append({"type": item.type, "content": item.content})
             projected["sources"] = sources
+            if stage == "narrative" and any(item.source == "rag" for item in pack.items):
+                projected["knowledge_available"] = True
             if context:
                 projected["context"] = context
             return [{"role": "user", "content": json.dumps(projected, ensure_ascii=False, separators=(",", ":"))}], system
 
-        model_input = await prepare_model_input(
-            RouteKey.WORLDLINE,
-            schema=schema, schema_name=schema_name, renderer=render,
-            query=str(payload.get("user_query") or payload.get("root_entity", {}).get("name") or "音乐世界线"),
-            system=instructions,
-            structured_output={key: value for key, value in payload.items()
+        source_inputs = dict(structured_output={key: value for key, value in payload.items()
                                if key not in {"sources", "search_plan", "user_query", "continuity_context"}},
             search_plan=payload.get("search_plan"),
             rag_pack=SimpleNamespace(items=source_rows),
             rag_required_ids=required_source_ids,
-            continuity_context=payload.get("continuity_context"),
-            trace_context={
+            continuity_context=payload.get("continuity_context"))
+        trace_context = {
                 key: payload["continuity_context"][key]
                 for key in ("task_id", "session_id", "request_id")
                 if payload.get("continuity_context") and key in payload["continuity_context"]
-            },
-        )
-        response = await create_generation_response(
-            model_input.input_items,
-            model_input.instructions,
-            schema,
-            schema_name=schema_name,
-            request_budget=model_input.budget,
-        )
+            }
+        query = str(payload.get("user_query") or payload.get("root_entity", {}).get("name") or "音乐世界线")
+        from app.llm.runtime import agent_scope
+        with agent_scope("explorer") if stage else nullcontext():
+            if stage:
+                from app.agent.foundation.agent_pack import AgentPackInputs
+                model_input = await prepare_explorer_input(stage, query=query, instructions=instructions,
+                    schema=schema, schema_name=schema_name, renderer=render, inputs=AgentPackInputs(**source_inputs),
+                    retry=retry, exploration=stage == "branches" and "eligible_target_node_ids" in payload,
+                    trace_context=trace_context)
+                if stage == "narrative":
+                    sent = json.loads(model_input.input_items[0]["content"])
+                    record_selected_evidence(sent["sources"], knowledge_available=sent.get("knowledge_available", False))
+            else:
+                model_input = await prepare_model_input(RouteKey.WORLDLINE, schema=schema, schema_name=schema_name,
+                    renderer=render, query=query, system=instructions, trace_context=trace_context, **source_inputs)
+            response = await create_generation_response(model_input.input_items, model_input.instructions, schema,
+                schema_name=schema_name, request_budget=model_input.budget)
         return model_output_from_response(response)
 
 
@@ -205,6 +214,8 @@ class StructuredWorldLineGenerator:
             ],
         }
         for source_row, source in zip(payload["sources"], sources):
+            if source.metadata.get("rag_item_id"):
+                source_row["_prior_formal_source"] = True
             span = source.metadata.get("evidence_span")
             if isinstance(span, str) and span:
                 source_row["evidence_span"] = span
@@ -220,17 +231,26 @@ class StructuredWorldLineGenerator:
             )
             payload["focus_entity"] = payload["root_entity"]
         disclosure = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
+        from .stage_pack import active_evidence, raise_hard_source_failure, selected_evidence_scope
+
+        def knowledge_available():
+            selected = active_evidence.get()
+            if selected is not None and selected.knowledge_available is not None:
+                return selected.knowledge_available
+            return bool(documents)
 
         def validate(draft: NarrativeDraft) -> None:
             narrative = draft.narrative.strip()
-            if not documents and not narrative.startswith(disclosure):
+            if not knowledge_available() and not narrative.startswith(disclosure):
                 raise SemanticValidationError("missing_no_knowledge_disclosure")
             output = NarrativeOutput(
                 narrative=narrative,
                 citation_ids=inline_citation_ids(narrative),
             )
             try:
-                self._grounding_validator.validate(output, sources)
+                selected = active_evidence.get()
+                actual_sources = selected.sources if selected is not None and selected.sources is not None else sources
+                self._grounding_validator.validate(output, actual_sources)
             except WorldLineGroundingError as exc:
                 raise SemanticValidationError(exc.code) from exc
 
@@ -239,7 +259,7 @@ class StructuredWorldLineGenerator:
             # Previous LLM schema exposed a duplicate citation list. Prose is authoritative.
             repaired.pop("citation_ids", None)
             narrative = repaired.get("narrative")
-            if isinstance(narrative, str) and not documents and not narrative.strip().startswith(disclosure):
+            if isinstance(narrative, str) and not knowledge_available() and not narrative.strip().startswith(disclosure):
                 repaired["narrative"] = f"{disclosure}\n{narrative.strip()}"
             return repaired if repaired != raw else None
 
@@ -261,8 +281,10 @@ class StructuredWorldLineGenerator:
             )
 
         try:
-            draft = await service.run(generate)
+            with selected_evidence_scope() if active_evidence.get() is None else nullcontext():
+                draft = await service.run(generate)
         except StructuredOutputError as exc:
+            raise_hard_source_failure(exc)
             raise WorldLineGenerationError("worldline_narrative_invalid") from exc
         narrative = draft.narrative.strip()
         return NarrativeOutput(
@@ -296,7 +318,8 @@ class StructuredWorldLineGenerator:
             "root_entity": entity.model_dump(mode="json", include={"entity_id", "name"}),
             "worldline_graph": _graph_payload(graph),
             "sources": [
-                item.model_dump(mode="json", include={"id", "title"})
+                {**item.model_dump(mode="json", include={"id", "title"}),
+                 **({"_prior_formal_source": True} if item.metadata.get("rag_item_id") else {})}
                 for item in sources
             ],
         }
@@ -344,10 +367,7 @@ class StructuredWorldLineGenerator:
         async def generate(attempt: int, feedback: str | None) -> str | ModelOutput:
             instructions = BRANCH_SYSTEM_PROMPT
             if exploration:
-                instructions = instructions.replace("必须返回正好 3 条分支", "返回 0 到 3 条分支").replace(
-                    "三个分支应指向三个不同的真实节点", "分支应指向不同的真实节点"
-                )
-                instructions += "\n仅使用 eligible_target_node_ids 中的节点；只支持 song、artist、album。"
+                instructions = EXPLORATION_BRANCH_BASE_V1 + "\n" + EXPLORATION_BRANCH_RULE_V1
             if feedback:
                 instructions += f"\n{feedback}"
             return await self._runtime.generate(
@@ -361,6 +381,8 @@ class StructuredWorldLineGenerator:
         try:
             draft = await service.run(generate)
         except StructuredOutputError as exc:
+            from .stage_pack import raise_hard_source_failure
+            raise_hard_source_failure(exc)
             if exploration:
                 logger.warning("worldline.exploration_branch_fallback")
                 return _grounded_exploration_branches(graph, sources, eligible)

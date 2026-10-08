@@ -32,6 +32,21 @@ def responses_input(pack):
 
 async def prepare_model_input(node, *, schema, schema_name, renderer=responses_input, policy=None, **sources):
     policy = policy or POLICIES[node]
+
+    async def build(selected_policy):
+        return await build_context_async(node, policy=selected_policy, **sources)
+
+    return await prepare_pack_model_input(build, schema=schema, schema_name=schema_name,
+                                         renderer=renderer, policy=policy)
+
+
+async def prepare_pack_model_input(build_pack, *, schema, schema_name, renderer, policy, reselect=None):
+    """One framing gate for ordinary packs and stage recipe adapters."""
+    def select_survivors(pack, selected_policy):
+        if reselect is not None:
+            return reselect(pack, selected_policy)
+        return ContextSelector().build(pack.items, selected_policy, intent=pack.intent)
+
     ledger = active_ledger.get()
     total = min(policy.total_input_budget, ledger.remaining) if ledger else policy.total_input_budget
     budget = ProviderBudget(total - policy.reserved_output_tokens - policy.safety_margin, total, policy.safety_margin)
@@ -52,7 +67,12 @@ async def prepare_model_input(node, *, schema, schema_name, renderer=responses_i
             raise RuntimeLimitError("token_limit")
         raise ValueError("model schema exceeds input budget")
     selection_policy = policy.model_copy(update={"total_input_budget": available + policy.reserved_output_tokens + policy.safety_margin})
-    pack = await build_context_async(node, policy=selection_policy, **sources)
+    pack = await build_pack(selection_policy)
+    # A formal stage Source can consume L2/L3 during Collect. Its settled cost
+    # must reduce this call's framing budget without collecting a second time.
+    if ledger and ledger.remaining < total:
+        total = ledger.remaining
+        budget = ProviderBudget(total - policy.reserved_output_tokens - policy.safety_margin, total, policy.safety_margin)
     # JSON rendering can add overhead to tags/framing. Re-select only from the
     # surviving pack; never rebuild from raw sources or resurrect dropped text.
     for _ in range(len(pack.items) + 2):
@@ -67,10 +87,15 @@ async def prepare_model_input(node, *, schema, schema_name, renderer=responses_i
             return BudgetedModelInput(pack, items, instructions, budget)
         available = pack.budget - excess - 32
         if available <= 0:
-            break
+            if reselect is None:
+                break
+            # A recipe renderer may add large optional source metadata. Give
+            # its selector one chance to retain only required materials; the
+            # unchanged final framing gate still refuses oversized payloads.
+            available = 1
         selection_policy = selection_policy.model_copy(update={"total_input_budget": available + policy.reserved_output_tokens + policy.safety_margin})
         try:
-            pack = ContextSelector().build(pack.items, selection_policy, intent=pack.intent)
+            pack = select_survivors(pack, selection_policy)
         except ValueError:
             if ledger:
                 ledger.blocked = "token_limit"

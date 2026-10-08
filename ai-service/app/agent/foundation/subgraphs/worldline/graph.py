@@ -349,24 +349,26 @@ def build_worldline_subgraph(
         if len(parts) == 3 and parts[0] == entity.source:
             raw_catalog_id = parts[2]
         try:
-            query_output = await query_graph.ainvoke(
-                create_query_understanding_state(
-                    state["current_input"],
-                    messages=state["messages"],
-                    routing_context=state["routing_context"],
-                    context=context,
-                    catalog_references=[
-                        CatalogReference(
-                            provider=entity.source,
-                            entity_id=raw_catalog_id,
-                            entity_type=KnowledgeEntityType(
-                                entity.entity_type.value
-                            ),
-                            name=entity.name,
-                        )
-                    ],
+            from .stage_pack import explorer_stage_context
+            with explorer_stage_context(state.get("continuity_context")):
+                query_output = await query_graph.ainvoke(
+                    create_query_understanding_state(
+                        state["current_input"],
+                        messages=state["messages"],
+                        routing_context=state["routing_context"],
+                        context=context,
+                        catalog_references=[
+                            CatalogReference(
+                                provider=entity.source,
+                                entity_id=raw_catalog_id,
+                                entity_type=KnowledgeEntityType(
+                                    entity.entity_type.value
+                                ),
+                                name=entity.name,
+                            )
+                        ],
+                    )
                 )
-            )
             result = query_output["result"]
         except Exception:
             _log_node(
@@ -674,16 +676,18 @@ def build_worldline_subgraph(
                 entity, facts, state.get("retrieved_docs", []), graph,
                 state.get("sources", []),
             )
-            if isinstance(worldline_generator, StructuredWorldLineGenerator):
-                generated = await worldline_generator.generate_narrative(
-                    *generation_args, user_query=state["user_query"],
-                    search_plan=state.get("search_plan"),
-                    continuity_context=state.get("continuity_context"),
-                    **({"original_root": state.get("root_entity")}
-                       if state.get("session_mode") else {}),
-                )
-            else:
-                generated = await worldline_generator.generate_narrative(*generation_args)
+            from .stage_pack import selected_evidence_scope
+            with selected_evidence_scope() as evidence:
+                if isinstance(worldline_generator, StructuredWorldLineGenerator):
+                    generated = await worldline_generator.generate_narrative(
+                        *generation_args, user_query=state["user_query"],
+                        search_plan=state.get("search_plan"),
+                        continuity_context=state.get("continuity_context"),
+                        **({"original_root": state.get("root_entity")}
+                           if state.get("session_mode") else {}),
+                    )
+                else:
+                    generated = await worldline_generator.generate_narrative(*generation_args)
             if isinstance(generated, str):
                 narrative = generated
                 citation_ids: list[str] = []
@@ -718,7 +722,11 @@ def build_worldline_subgraph(
             entity_id=entity.entity_id,
             entity_type=entity.entity_type.value,
         )
-        return {"narrative": narrative, "citation_ids": citation_ids}
+        sources = state.get("sources", [])
+        if evidence.sources is not None and any(source.metadata.get("rag_item_id") for source in evidence.sources):
+            existing = {source.id: source for source in sources}
+            sources = [existing.get(source.id, source) for source in evidence.sources]
+        return {"narrative": narrative, "citation_ids": citation_ids, "sources": sources}
 
     async def generate_branches(
         state: WorldLineState,

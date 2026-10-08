@@ -501,6 +501,16 @@ class ContextSelector:
         self.counter = counter or UnicodeHeuristicTokenCounter()
         self.assembler = ContextAssembler()
 
+    def _quota_source(self, item: ContextItem) -> str:
+        """Recipes may share a quota while retaining each source's audit identity."""
+        return item.source
+
+    def _selection_key(self, item: ContextItem):
+        return (not item.required, -item.priority, -item.relevance)
+
+    def _drop_key(self, item: ContextItem):
+        return (item.priority, item.relevance, -item.token_count)
+
     def build(self, items: list[ContextItem], policy: ContextPolicy,
               trace_context: dict[str, str] | None = None,
               *, intent: dict[str, Any] | None = None, source_audit=None) -> ContextPack:
@@ -548,13 +558,14 @@ class ContextSelector:
         # Projection is performed during collection. Enforce source quotas before global budget.
         source_used: dict[str, int] = defaultdict(int)
         candidates: list[ContextItem] = []
-        for item in sorted(kept, key=lambda value: (not value.required, -value.priority, -value.relevance)):
-            source_limit = policy.source_budgets.get(item.source)
-            if not item.required and source_limit is not None and source_used[item.source] + item.token_count > source_limit:
+        for item in sorted(kept, key=self._selection_key):
+            quota_source = self._quota_source(item)
+            source_limit = policy.source_budgets.get(quota_source)
+            if not item.required and source_limit is not None and source_used[quota_source] + item.token_count > source_limit:
                 dropped.append(item.id)
                 event(item, "dropped", f"{item.source}_budget_exceeded", 0)
                 continue
-            source_used[item.source] += item.token_count
+            source_used[quota_source] += item.token_count
             candidates.append(item)
 
         def total(values: list[ContextItem]) -> int:
@@ -570,7 +581,7 @@ class ContextSelector:
             optional = [item for item in candidates if not item.required]
             if not optional:
                 break
-            victim = min(optional, key=lambda value: (value.priority, value.relevance, -value.token_count))
+            victim = min(optional, key=self._drop_key)
             candidates.remove(victim)
             dropped.append(victim.id)
             event(victim, "dropped", "total_budget_exceeded", 0)
