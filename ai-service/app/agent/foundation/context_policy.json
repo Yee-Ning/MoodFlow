@@ -2,7 +2,8 @@
   "lite": {"input_tokens": 1800, "history_messages": 6, "projection_tokens": 400},
   "sources": {
     "user_profile": {"type": "user_profile", "priority": 10, "tokens": 240, "candidate_limit": 16, "excerpt_characters": 120},
-    "history_memory": {"type": "long_term_memory", "priority": 20, "tokens": 600, "candidate_limit": 24, "task_limit": 4, "excerpt_characters": 400}
+    "history_memory": {"type": "long_term_memory", "priority": 20, "tokens": 600, "candidate_limit": 24, "task_limit": 4, "excerpt_characters": 400},
+    "rag": {"type": "rag_evidence", "priority": 85, "tokens": 5000, "candidate_limit": 24}
   },
   "budget": {
     "defaults_status": "initial defaults; tune with eval before production rollout",

@@ -457,7 +457,7 @@ def registered_policy(policy: ContextPolicy) -> ContextPolicy:
     })
 
 
-def context_manifest(original, final, trace, tokens, budget):
+def context_manifest(original, final, trace, tokens, budget, source_audit=None):
     from app.agent.foundation.context_sources import load_context_policy
     sources = {name: {"candidate_tokens": 0, "final_tokens": 0, "events": [], "dedup_dropped": []}
                for name in load_context_policy()["sources"]}
@@ -473,6 +473,26 @@ def context_manifest(original, final, trace, tokens, budget):
             row["events"].append(event.model_dump(mode="json", exclude_none=True))
             if event.stage == "deduplicated":
                 row["dedup_dropped"].append(event.item_id)
+    # Add observation only after selection. Old aggregate fields keep their meaning.
+    for name, audit in (source_audit or {}).items():
+        if name == "rag" and name in sources:
+            sources[name].update({key: audit[key] for key in ("model_usage", "collection") if key in audit})
+    final_by_id = {(item.source, item.id): item for item in final}
+    for item in original:
+        if item.source != "rag":
+            continue
+        metadata = item.metadata
+        final_item = final_by_id.get((item.source, item.id))
+        fields = ("doc_id", "source_id", "source_name", "source_url", "title", "chunk_id",
+                  "fusion_score", "rerank_score", "score", "score_basis")
+        sources["rag"].setdefault("chunks", []).append({
+            **{key: metadata[key] for key in fields}, "item_id": item.id,
+            "candidate_tokens": item.token_count,
+            "final_tokens": final_item.token_count if final_item is not None else 0,
+            "included": final_item is not None,
+            "reasons": [event.reason for event in trace if event.item_id == item.id
+                        and event.stage in {"dropped", "deduplicated", "compressed"}],
+        })
     return {"tokens": tokens, "budget": budget, "sources": sources}
 
 
@@ -483,7 +503,7 @@ class ContextSelector:
 
     def build(self, items: list[ContextItem], policy: ContextPolicy,
               trace_context: dict[str, str] | None = None,
-              *, intent: dict[str, Any] | None = None) -> ContextPack:
+              *, intent: dict[str, Any] | None = None, source_audit=None) -> ContextPack:
         if policy.input_budget <= 0:
             raise ValueError("context input budget must be positive")
         trace: list[ContextTraceEntry] = []
@@ -593,7 +613,8 @@ class ContextSelector:
         pack = ContextPack(items=final, total_tokens=total(final), budget=policy.input_budget,
                            dropped_items=dropped, compressed_items=compressed,
                            messages=self.assembler.assemble(final, intent=intent), trace=ContextTrace(entries=trace),
-                           intent=intent, manifest=context_manifest(items, final, trace, total(final), policy.input_budget))
+                           intent=intent, manifest=context_manifest(items, final, trace, total(final), policy.input_budget,
+                                                                    source_audit=source_audit))
         logger.info("context_engineering node=%s collected=%d final=%d tokens=%d budget=%d dropped=%s compressed=%s",
                     policy.node, len(items), len(final), pack.total_tokens, pack.budget, dropped, compressed,
                     extra=trace_context or {})
@@ -636,6 +657,7 @@ def build_context(node: RouteKey, *, policy: ContextPolicy | None = None, counte
     return ContextSelector(token_counter).build(
         collected, registered_policy(policy or POLICIES[node]), trace_context=trace_context,
         intent=_call_intent(node, intent, sources),
+        source_audit=(sources.get("continuity_context") or {}).get("entry_source_audit"),
     )
 
 
@@ -681,6 +703,7 @@ async def build_context_async(node: RouteKey, *, policy: ContextPolicy | None = 
     try:
         pack = ContextSelector(token_counter).build(
             collected, policy, trace_context=trace_context, intent=intent,
+            source_audit=(sources.get("continuity_context") or {}).get("entry_source_audit"),
         )
         from app.llm.runtime import active_manifest
         active_manifest.set(pack.manifest)

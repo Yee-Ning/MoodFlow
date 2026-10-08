@@ -21,11 +21,67 @@ class ManifestEvent(ProjectionContract):
     request_id: str | None = None
 
 
+class RagChunkAudit(ProjectionContract):
+    item_id: str
+    doc_id: str = Field(min_length=1)
+    source_id: str = Field(min_length=1)
+    source_name: str = Field(min_length=1)
+    source_url: str | None = None
+    title: str
+    chunk_id: str = Field(min_length=1)
+    fusion_score: float = Field(ge=0, allow_inf_nan=False)
+    rerank_score: float | None = Field(default=None, ge=0, le=1, allow_inf_nan=False)
+    score: float = Field(ge=0, allow_inf_nan=False)
+    score_basis: Literal["rerank", "rrf_fallback"]
+    candidate_tokens: int = Field(ge=0)
+    final_tokens: int = Field(ge=0)
+    included: bool
+    reasons: list[str]
+
+
+class RagModelUsage(ProjectionContract):
+    call_id: str = Field(min_length=1)
+    stage: Literal["embedding", "rerank"]
+    model: str = Field(min_length=1)
+    model_revision: str = Field(min_length=1)
+    input_tokens: int = Field(ge=0)
+    output_tokens: Literal[0]
+    total_tokens: int = Field(ge=0)
+    estimated: bool
+    usage_basis: str = Field(min_length=1)
+    status: Literal["completed", "unknown"]
+    budget_scope: Literal["l2+l3", "unscoped"]
+    usage_ref: EventPointer | None = None
+
+    @model_validator(mode="after")
+    def coherent_usage(self):
+        if self.total_tokens != self.input_tokens:
+            raise ValueError("non-generative retrieval usage must equal input tokens")
+        return self
+
+
+class RagCollectionAudit(ProjectionContract):
+    mode: Literal["empty", "shadow", "hybrid"]
+    rerank_enabled: Literal[True]
+    retrieval_status: str
+    rerank_status: str
+    candidate_limit: int = Field(ge=0)
+    rejected_without_provenance: int = Field(ge=0)
+    warnings: list[str]
+    plan_id: str | None = None
+    index_profile: dict[str, str] | None = None
+    rerank_input_count: int | None = Field(default=None, ge=0)
+    rerank_fallback_used: bool | None = None
+
+
 class SourceManifest(ProjectionContract):
     candidate_tokens: int = Field(ge=0)
     final_tokens: int = Field(ge=0)
     events: list[ManifestEvent]
     dedup_dropped: list[str]
+    chunks: list[RagChunkAudit] = Field(default_factory=list)
+    model_usage: list[RagModelUsage] = Field(default_factory=list)
+    collection: RagCollectionAudit | None = None
 
 
 class PackManifest(ProjectionContract):

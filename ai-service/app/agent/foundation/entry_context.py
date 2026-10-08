@@ -114,7 +114,8 @@ class EntryContextEngine:
             allow_new_sources=ledger is None or ledger.current_agent not in ledger.source_stops,
         ))
         section = intent_section(decision)
-        context.update(entry_candidates=[item.model_dump(mode="json") for item in candidates], entry_intent=section)
+        context.update(entry_source_audit=getattr(candidates, "source_audit", {}),
+                       entry_candidates=[item.model_dump(mode="json") for item in candidates], entry_intent=section)
         packs = {}
         # Multi-intent entry uses each route's existing L1 policy, never a policy union.
         for route in dict.fromkeys(task.route_key for task in decision.tasks):

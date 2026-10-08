@@ -68,3 +68,23 @@ Phase 2 的 `context_engineering.call_manifest` 合并以上字段，并增加 c
 ## 校验与禁止事项
 
 Pack/调用 manifest 的数值、来源字段和缺失/多余字段在契约边界校验。SDK dispatch 必须在 accounted_call 内；来源不得调用 SDK 或自行构造 prompt。不得在最终预算门后追加来源全文。原 AST lint 继续生效。
+
+## RAG Source 增补（2026-10-08）
+
+新来源的 item ID 使用 `evidence:rag:{parent_id}`，metadata.evidence_id 保持原 parent_id 去重语义。与旧 rag_pack 同时出现时，观测 ID 不混用；chunk 是否被保留按 source + item_id 判断。
+
+正式注册的 `rag` 来源读取现有 hybrid 检索器，用当前输入构造单条确定性的 SearchPlan；不调用 LLM 改写、HyDE 或生成接口。`AI_RAG_RETRIEVAL_MODE` 仍为 empty / shadow / hybrid，在线模式仍要求现有 `AI_RAG_INDEX_MANIFEST`。empty 不检索，shadow 执行检索及重排并记录成本但不向 Pack 提供证据。Source 的 rerank 始终启用，不受旧 WorldLine 的 `AI_RAG_RERANK_MODE=off` 影响；旧 `rag_pack` 侧通道保留原行为。
+
+`rag` 配额为 24 个重排输入候选、5000 个来源内容 token、优先级 85。候选上限参考既有 history_memory 的 24 项，来源预算/优先级沿用 WorldLine 的 rag_evidence 配额。无文档 ID、来源 ID/名称、chunk ID 的候选先剔除；只将命中的 Child 内容送入 L1，不隐式展开 Parent。代码 Select → Dedup → Budget → Assemble 保持原实现，来源超限整条丢弃并进入 dropped_items，不增加新的压缩策略。
+
+既有 candidate_tokens、final_tokens、events、dedup_dropped 保持原含义。新增字段均为可选，旧 manifest 继续校验通过：
+
+| sources.rag 新增字段 | 含义 |
+| --- | --- |
+| chunks | 逐候选 item_id、doc_id、chunk_id、来源 ID/名称/URL、标题、fusion_score、rerank_score、score 及 score_basis；candidate_tokens / final_tokens、included、丢弃/去重原因。不含 chunk 全文 |
+| model_usage | 每次 Embedding / rerank 的独立模型维度、版本、call_id、输入/总 token、output_tokens=0、估算标记、计数口径、completed/unknown、预算作用域和可选 usage_ref |
+| collection | mode、rerank_enabled=true、检索/重排状态、候选限制、无出处拒绝数量、plan/index 版本、回退标记及机器原因 |
+
+Embedding / rerank 是本地非生成推理，按实际格式化/截断后的 tokenizer 输入计数，basis=local_model_tokenizer。替身编码器/打分器使用显式 unicode_heuristic 估算。模型维度分别为 `rag-embedding:Qwen/Qwen3-Embedding-0.6B` 与 `rag-rerank:Qwen/Qwen3-Reranker-0.6B`；不新增 Agent 枚举或 BudgetLedger 方法，当前 Agent 的 L2 和任务 L3 均累计。无请求作用域的离线调用明确标为 unscoped，不伪造持久指针。
+
+所有模型 forward 前调用现有 RequestLedger.reserve，使用 DurableAccounting 写 MODEL_USAGE 预留；成功后 settle，usage_ref 指向长期 task_id 中的结算事件。没有生成输出上限，PublicUsage 的 max_output_tokens 留空。推理失败保留预留事实并按 unknown 估算计费，usage_ref 指向 reserved 事件；重排沿用现有 RRF 回退。预算拒绝穿透检索器回退和可选 Source 捕获，仍触发现有 L2/L3 降级；持久记账失败中止请求。manifest 不计第二笔账，也不反向参与选择。
