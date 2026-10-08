@@ -107,7 +107,7 @@ class ProfileWriter:
         self.now = now or (lambda: datetime.now(UTC))
 
     def update(self, user_id: str, entries: list[ProfileEntry], *, expected_version: int):
-        previous = self.store.read(user_id)
+        previous = getattr(self.store, "read_for_update", self.store.read)(user_id)
         if (previous.version if previous else 0) != expected_version:
             raise ValueError("profile version conflict")
         merged = {entry.key: entry for entry in previous.entries} if previous else {}
@@ -162,7 +162,10 @@ def get_profile_store() -> ProfileStore:
     import os
     from app.agent.foundation.long_horizon.runtime import persistence_backend
     if persistence_backend() == "postgres":
-        return PostgresProfileStore(os.environ["DATABASE_URL"])
+        from app.agent.foundation.profile_cache import CachedProfileStore, configured_profile_cache
+        cache = configured_profile_cache()
+        store = PostgresProfileStore(os.environ["DATABASE_URL"])
+        return CachedProfileStore(store, cache) if cache is not None else store
     return SQLiteProfileStore(Path(__file__).resolve().parents[3] / "tmp" / "user_profiles.sqlite")
 
 
