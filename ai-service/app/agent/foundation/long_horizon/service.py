@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.agent.foundation.context_engineering import ContextPack, build_context
 from app.agent.foundation.routing import RouteKey
+from app.agent.session_cache import read_session_projection
 from app.rag.chunk.token_counter import TokenCounter, UnicodeHeuristicTokenCounter
 
 from .models import (
@@ -324,7 +325,7 @@ class LongHorizonContextService:
 
     def cold_start(self, session_id: str, *, live_state: dict[str, Any]) -> ColdStartContext:
         session = self.store.require_session(session_id)
-        handoff = (self.store.get_handoff(session.inherited_handoff_id)
+        handoff = (read_session_projection(self.store, session_id, session.inherited_handoff_id)
                    if session.inherited_handoff_id else None)
         if handoff is None:
             return ColdStartContext(task_id=session.task_id, session_id=session_id,

@@ -18,6 +18,7 @@ from app.agent.foundation.routing import RouteDecision
 from app.agent.foundation.state.main import create_main_state
 from app.agent.handoff.continuity import AgentTransferJournal, ProgressProjector, snapshot_from_row
 from app.agent.handoff.state import HandoffRun, RunStatus
+from app.agent.session_cache import authoritative_session_evidence, read_session_projection
 
 from .accounting import DurableAccounting
 from .drilldown import HistoryDrilldown
@@ -330,7 +331,7 @@ class ContinuityCoordinator:
             elif blocked is None:
                 run_id = "foundation:" + digest(identity.request_id)[7:]
                 history = self.history.read(identity)
-                inherited = self.store.get_handoff(session.inherited_handoff_id) if session.inherited_handoff_id else None
+                inherited = read_session_projection(self.store, session.session_id, session.inherited_handoff_id) if session.inherited_handoff_id else None
                 if inherited:
                     inherited = self.service.apply_revocations(inherited, session.task_id)
                 field_results = self.recovery.validator.check_fields(inherited, live, conversation_id) if inherited else {}
@@ -403,6 +404,7 @@ class ContinuityCoordinator:
                 return operations.state(operation_id)
         raise ContinuityConflict("write operation not found in this conversation")
 
+    @authoritative_session_evidence
     def draft(self, session, snapshot, live_body, goal):
         live = LiveSnapshot.model_validate(live_body) if live_body else LiveSnapshot()
         known = {item.field: {"value": item.value, "revision": item.revision} for item in live.observations}
@@ -533,9 +535,11 @@ class ContinuityCheckpointer(BaseCheckpointSaver):
     def config_specs(self):
         return self.saver.config_specs
 
+    @authoritative_session_evidence
     def get_tuple(self, config):
         return self.restore(self.saver.get_tuple(config))
 
+    @authoritative_session_evidence
     async def aget_tuple(self, config):
         return self.restore(await self.saver.aget_tuple(config))
 

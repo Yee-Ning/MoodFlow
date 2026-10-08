@@ -253,6 +253,9 @@ async def initialize_runtime_checkpointer() -> None:
         )
     if _postgres_checkpointer is not None:
         return
+    from app.agent.session_cache import configured_session_cache
+
+    cache = configured_session_cache()
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
         raise RuntimeError("DATABASE_URL is required for PostgreSQL checkpointing")
@@ -284,9 +287,14 @@ async def initialize_runtime_checkpointer() -> None:
             "python -m scripts.migrate_agent_postgres first"
         )
     _postgres_pool = pool
-    _postgres_checkpointer = AsyncCompatiblePostgresSaver(
+    saver_type, options = AsyncCompatiblePostgresSaver, {}
+    if cache is not None:
+        from .cached_checkpointing import CachedPostgresSaver
+        saver_type, options = CachedPostgresSaver, {"session_cache": cache}
+    _postgres_checkpointer = saver_type(
         pool,
         serde=create_checkpoint_serializer(),
+        **options,
     )
 
 
