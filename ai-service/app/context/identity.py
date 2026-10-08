@@ -19,7 +19,8 @@ class UserIdentityProvider:
         url = f"{str(settings.spring_boot_base_url).rstrip('/')}/api/user/profile"
         try:
             async with httpx.AsyncClient(
-                timeout=settings.spring_boot_timeout_seconds
+                timeout=settings.spring_boot_timeout_seconds,
+                trust_env=False,
             ) as client:
                 response = await client.get(url, headers={"Cookie": session_cookie})
             if response.status_code == 401:

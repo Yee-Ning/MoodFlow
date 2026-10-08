@@ -23,7 +23,8 @@ class MusicContextProvider:
 
         try:
             async with httpx.AsyncClient(
-                timeout=settings.spring_boot_timeout_seconds
+                timeout=settings.spring_boot_timeout_seconds,
+                trust_env=False,
             ) as client:
                 response = await client.get(url)
                 response.raise_for_status()

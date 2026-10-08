@@ -92,7 +92,8 @@ class MusicServiceClient:
 
         try:
             async with httpx.AsyncClient(
-                timeout=settings.spring_boot_timeout_seconds
+                timeout=settings.spring_boot_timeout_seconds,
+                trust_env=False,
             ) as client:
                 response = await client.request(
                     method,
