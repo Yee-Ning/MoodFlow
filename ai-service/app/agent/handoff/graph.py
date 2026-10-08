@@ -22,6 +22,7 @@ from app.agent.handoff.agents import choose_transfer, execute_owned_task
 from app.agent.handoff.progress import with_combination_progress, explain_combination_progress
 from app.agent.handoff.guard import configured_guard
 from app.agent.handoff.integrity import TransferIntegrityConflict
+from app.agent.handoff.hop_context import hop_source_scope
 from app.agent.handoff.registry import AGENT_REGISTRY, CAPABILITY_OWNERS, AgentKey
 from app.agent.handoff.routing import LazyHybridRouter, configured_entry_router, input_question
 from app.agent.handoff.state import (
@@ -252,7 +253,10 @@ def build_handoff_graph(
                         await continuity_call.coordinator.before_agent(state, run)
                 if ledger.remaining <= 0:
                     raise RuntimeLimitError("token_limit")
-                async with asyncio.timeout(max(0, ledger.deadline - monotonic())):
+                async with asyncio.timeout(max(0, ledger.deadline - monotonic())), hop_source_scope(
+                    state, run, journal=journal,
+                    identity=_continuity_identity(state, run) if journal is not None else None,
+                ):
                     if CAPABILITY_OWNERS[task.route_key] != run.current_agent:
                         response = await choose_transfer(
                             state,

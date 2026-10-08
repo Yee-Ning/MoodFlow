@@ -11,6 +11,7 @@ from app.agent.foundation.long_horizon.history_writer import validate_public_doc
 from app.agent.foundation.long_horizon.models import HistoryEventType
 from app.agent.foundation.long_horizon.public_events import PublicText
 from app.agent.foundation.routing import RouteKey
+from app.agent.foundation.source_errors import SourceIntegrityError
 from app.agent.foundation.user_profile import ProfileDocument, ProfileStore
 
 
@@ -163,6 +164,8 @@ class SourceRegistry:
                     raise ValueError("optional source cannot inject required context")
                 result.extend(items)
                 status[name] = "available" if items else "empty"
+            except SourceIntegrityError:
+                raise
             except Exception as exc:
                 # Never expose history/profile text or exception messages in manifests.
                 status[name] = "unavailable:" + type(exc).__name__
