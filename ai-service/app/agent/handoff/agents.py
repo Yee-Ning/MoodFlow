@@ -11,9 +11,6 @@ from app.agent.foundation.routing import RouteKey
 from app.agent.foundation.subgraphs.current_song.assistant import (
     answer_current_song_task,
 )
-from app.agent.foundation.subgraphs.general_chat.assistant import (
-    GENERAL_CHAT_SYSTEM_PROMPT,
-)
 from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
 from app.agent.foundation.subgraphs.tool_calling import create_tool_calling_subgraph
 from app.agent.foundation.subgraphs.tool_calling.assistant import all_tool_calling_tools
@@ -26,7 +23,6 @@ from app.agent.handoff.state import HandoffRun
 from app.agent.handoff.progress import create_combination_status_tool, latest_combination_progress
 from app.agent.handoff.tools import create_transfer_tools
 from app.agent.handoff.prompts import (
-    GENERAL_CHAT_HANDOFF_READ_PROMPT,
     HANDOFF_TRANSFER_PROMPT,
     TRANSFER_RETRY_PROMPT,
 )
@@ -164,6 +160,7 @@ async def execute_owned_task(
             state["routing_context"],
             model=instrument_chat_model(song_model or get_base_chat_model()),
             continuity_context=view.get("continuity_context"),
+            route_task_id=task.task_id,
         )
         if (
             response.tool_calls
@@ -218,12 +215,16 @@ async def execute_owned_task(
                 general_model or get_base_chat_model()
             ).bind_tools(list(read_tools.values()))
             for attempt in range(3):
-                pack = await build_context_async(
-                    RouteKey.GENERAL_CHAT,
-                    query=text,
-                    system=GENERAL_CHAT_SYSTEM_PROMPT
-                    + GENERAL_CHAT_HANDOFF_READ_PROMPT,
-                    messages=history,
+                from app.agent.foundation.agent_pack import AgentPackInputs
+                from app.agent.foundation.agent_history_source import bind_produced_message
+                from app.agent.foundation.business_pack import business_invocation, build_business_pack
+
+                invocation = business_invocation(RouteKey.GENERAL_CHAT, text,
+                    phase="answer" if attempt == 0 else "read_observation",
+                    prompt_refs=("general-chat-base/v1", "general-chat-handoff-read/v1"),
+                    route_task_id=task.task_id,
+                    invocation_run_id=run.run_id,
+                    inputs=AgentPackInputs(messages=history,
                     business_state=routing_context.model_dump_json(),
                     structured_output=json.dumps(
                         [
@@ -235,8 +236,8 @@ async def execute_owned_task(
                         ],
                         ensure_ascii=False,
                     ),
-                    continuity_context=view.get("continuity_context"),
-                )
+                    continuity_context=view.get("continuity_context")))
+                pack = build_business_pack(invocation)
                 response = await bound.ainvoke(pack.messages)
                 if not isinstance(response, AIMessage) or response.invalid_tool_calls:
                     raise ValueError("invalid chat message")
@@ -254,12 +255,12 @@ async def execute_owned_task(
                     content = json.dumps(await status_tool.ainvoke(call["args"]), ensure_ascii=False)
                 history.extend(
                     [
-                        response,
-                        ToolMessage(
+                        bind_produced_message(response, invocation),
+                        bind_produced_message(ToolMessage(
                             content=content,
                             tool_call_id=call["id"],
                             name=call["name"],
-                        ),
+                        ), invocation),
                     ]
                 )
             raise RuntimeError("unreachable chat loop")
