@@ -1,0 +1,104 @@
+{
+  "general_chat": {
+    "lite": null,
+    "full": {
+      "general_chat": {
+        "tokens": 117,
+        "budget": 5888,
+        "sources": {
+          "user_profile": {
+            "candidate_tokens": 124,
+            "final_tokens": 62,
+            "events": [
+              {
+                "item_id": "profile:artist",
+                "stage": "dropped",
+                "reason": "intent_excluded",
+                "token_before": 62,
+                "token_after": 0
+              }
+            ],
+            "dedup_dropped": []
+          },
+          "history_memory": {
+            "candidate_tokens": 63,
+            "final_tokens": 0,
+            "events": [
+              {
+                "item_id": "recall:evt:c0e45dfd5ada0f183c801c1035a95debeaf4fd1332cfc47237d90c9b60f764b9",
+                "stage": "dropped",
+                "reason": "intent_excluded",
+                "token_before": 63,
+                "token_after": 0
+              }
+            ],
+            "dedup_dropped": []
+          },
+          "system": {
+            "candidate_tokens": 7,
+            "final_tokens": 7,
+            "events": [],
+            "dedup_dropped": []
+          },
+          "user_query": {
+            "candidate_tokens": 6,
+            "final_tokens": 6,
+            "events": [],
+            "dedup_dropped": []
+          }
+        }
+      }
+    },
+    "source_status": {
+      "user_profile": "available",
+      "history_memory": "available"
+    }
+  },
+  "worldline": {
+    "lite": null,
+    "full": {
+      "worldline": {
+        "tokens": 197,
+        "budget": 9532,
+        "sources": {
+          "user_profile": {
+            "candidate_tokens": 124,
+            "final_tokens": 62,
+            "events": [
+              {
+                "item_id": "profile:tone",
+                "stage": "dropped",
+                "reason": "intent_excluded",
+                "token_before": 62,
+                "token_after": 0
+              }
+            ],
+            "dedup_dropped": []
+          },
+          "history_memory": {
+            "candidate_tokens": 63,
+            "final_tokens": 63,
+            "events": [],
+            "dedup_dropped": []
+          },
+          "system": {
+            "candidate_tokens": 7,
+            "final_tokens": 7,
+            "events": [],
+            "dedup_dropped": []
+          },
+          "user_query": {
+            "candidate_tokens": 6,
+            "final_tokens": 6,
+            "events": [],
+            "dedup_dropped": []
+          }
+        }
+      }
+    },
+    "source_status": {
+      "user_profile": "available",
+      "history_memory": "available"
+    }
+  }
+}

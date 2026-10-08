@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-01",
+  "timezone": "Asia/Shanghai",
+  "baseline_commit": "08010fe265ecc990cdc045fa1103bccd9368b381",
+  "branch": "codex/parse-normalize-corpus-v1",
+  "scope": "Phase 1 internal handoff contracts; runtime graph not enabled",
+  "controlled_environment": "Same offline profile as phase 0; LLM placeholder only; live opt-ins disabled; sqlite/memory backends",
+  "checks": {
+    "contracts": {
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_handoff_contracts.py -q -ra --tb=short",
+      "exit_code": 0,
+      "summary": "94 passed in 6.18s",
+      "junit_totals": {
+        "tests": 94,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "log_sha256": "4e993cb34d365757e3252007457bae9f1194aabac81a91485817f243af9d7b82",
+      "junit_sha256": "c561c96546936b3b9509b9cc356efa59ee7d4d1cb0deff1a5127d98c7c75ebc6"
+    },
+    "application": {
+      "command": ".venv/Scripts/python.exe -m pytest tests -q -ra --tb=short",
+      "exit_code": 0,
+      "summary": "1429 passed, 14 skipped, 1 warning, 286 subtests passed in 131.95s (0:02:11)",
+      "junit_totals": {
+        "tests": 1729,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 14
+      },
+      "log_sha256": "c2291d7b507e5e69d65c9c74167b15ef48b50d3dc70b55c44fafd2ad0964eeb5",
+      "junit_sha256": "586f468c1b359b1f77325f542400f08c51168f3dfd4e83fe98343c9fa0ad6d22"
+    },
+    "evaluation_framework": {
+      "command": ".venv/Scripts/python.exe -m pytest evals/tests/test_*.py excluding test_judges.py -q -ra --tb=short",
+      "exit_code": 0,
+      "summary": "173 passed in 35.09s",
+      "junit_totals": {
+        "tests": 173,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "log_sha256": "f9490b4e759613a924a7e249b474968c01c9c74a20da20c763585eda47fe021e",
+      "junit_sha256": "ebebb17e690b2e80ae809846664b3f314d397666b0ce721f18337f25aeaa804f"
+    },
+    "judges": {
+      "command": ".venv-eval/Scripts/python.exe -m pytest evals/tests/test_judges.py -q -ra --tb=short",
+      "exit_code": 0,
+      "summary": "4 passed in 0.50s",
+      "junit_totals": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "log_sha256": "2190ef8d63a91c909d55ebfb1c41af94dd6dc32bdf7e1c0ed5aab24b19de6295",
+      "junit_sha256": "4a73e921711024b301614598f957b50701c513d97e3faed023d7d171f23918a3"
+    },
+    "ruff_changed": {
+      "command": ".venv/Scripts/python.exe -m ruff check app/agent/handoff tests/test_handoff_contracts.py",
+      "exit_code": 0
+    },
+    "format": {
+      "command": ".venv/Scripts/python.exe -m ruff format --check app/agent/handoff tests/test_handoff_contracts.py",
+      "exit_code": 0
+    },
+    "compileall": {
+      "command": ".venv/Scripts/python.exe -m compileall -q app tests evals scripts",
+      "exit_code": 0
+    },
+    "pip_check": {
+      "command": ".venv/Scripts/python.exe -m pip check",
+      "exit_code": 0
+    }
+  },
+  "lint_baseline_comparison": {
+    "exit_code": 1,
+    "command": ".venv/Scripts/python.exe -m ruff check . --output-format json",
+    "baseline_findings": 45,
+    "current_findings": 45,
+    "differences": 0
+  },
+  "worktree_protection": {
+    "unrelated_status_unchanged": true,
+    "protected_file_hash_unchanged": true,
+    "protected_file_sha256": "23dfc590a1068a4211c1d689fdca7c4e57a83bdc6841e631f1cbf22785a529c8"
+  },
+  "source_sha256": {
+    "ai-service/app/agent/handoff/__init__.py": "a9e261232acb4257b42268c8960351d4087ecb4b728f81cffb247bf1e6314dd1",
+    "ai-service/app/agent/handoff/registry.py": "c8b20a1639f524e4d6e669e588b1fa7ef348006b2f0113bc2314b43e9a1a7aab",
+    "ai-service/app/agent/handoff/contracts.py": "96f125698d21825416f03d18fc0bf908cab2b838dcb753e1177bc596b25e4298",
+    "ai-service/app/agent/handoff/state.py": "c05fda719f4cb016ff2e72675f7fd56dd1085665cfa0e22fefc38055ec864ff5",
+    "ai-service/app/agent/handoff/messages.py": "d5188b2ee9ed83e2d8e69a8afade1e65273bcfb3ad078d503ef022d815d3421e",
+    "ai-service/tests/test_handoff_contracts.py": "30722e7bf4b278e9e62a7da349d647726a482945c4524702a254b77e87407cc4",
+    "docs/architecture/handoff-contract-v1.md": "90fcdbc67c22b858a568a13b3b0533161969b9231c0bab06fc7647934fd4b3a7",
+    "docs/reports/handoff-phase1-20261001/validation.md": "996d7b8b1956cfa57a243e55ef6b3635412654bf0ea6d1468c5f3b25cd30d6bd"
+  },
+  "not_verified": [
+    "live LLM/JEV quality",
+    "PostgreSQL checkpoint restart",
+    "real Qdrant integration in this phase",
+    "handoff runtime graph and Command routing",
+    "runtime usage accounting/cancellation/retry",
+    "new-node SSE/action replay integration",
+    "browser audio and responsive visuals"
+  ]
+}

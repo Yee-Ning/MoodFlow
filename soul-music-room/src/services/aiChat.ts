@@ -1,6 +1,29 @@
 import type { AiChatNode, AiSongRecommendation } from '../types/aiChat'
 
 const AI_API_BASE_URL = (import.meta.env.VITE_AI_API_BASE_URL ?? '').replace(/\/$/, '')
+
+export type GraphMode = 'foundation' | 'handoff'
+
+export async function acknowledgeAiAction(
+  threadId: string, actionId: string, status: 'applied' | 'failed', graphMode?: GraphMode,
+): Promise<void> {
+  const response = await fetch(`${AI_API_BASE_URL}/api/ai/actions/ack`, {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ thread_id: threadId, action_id: actionId, status, graph_mode: graphMode }),
+  })
+  if (!response.ok) {
+    let message = '播放器操作回执尚未保存，请稍后重试确认'
+    try {
+      const payload: unknown = await response.json()
+      if (isRecord(payload) && isRecord(payload.detail)
+        && typeof payload.detail.code === 'string' && typeof payload.detail.message === 'string') {
+        message = `${payload.detail.message} (${payload.detail.code})`
+      }
+    } catch { /* Keep the fallback for older servers and non-JSON responses. */ }
+    throw new AiChatApiError(message, response.status)
+  }
+}
 const ACCEPTANCE_TELEMETRY_KEY = 'moodflow-acceptance-telemetry'
 let acceptanceTelemetryActive = false
 
@@ -58,6 +81,8 @@ interface ClientTrack {
 interface ClientActionBase {
   action_id: string
   task_id: string
+  graph_mode?: GraphMode
+  thread_id?: string
 }
 
 type EmptyClientActionName =
@@ -214,10 +239,12 @@ function parseClientTracks(value: unknown): ClientTrack[] {
   return value.map(parseClientTrack)
 }
 
-function parseClientAction(payload: unknown): ClientAction {
+export function parseClientAction(payload: unknown): ClientAction {
   if (!isRecord(payload) || !hasExactKeys(
     payload,
-    ['action_id', 'task_id', 'name', 'arguments'],
+    ['action_id', 'task_id', 'name', 'arguments',
+      ...('graph_mode' in payload ? ['graph_mode'] : []),
+      ...('thread_id' in payload ? ['thread_id'] : [])],
   )) {
     throw new AiChatApiError('AI 返回了无法识别的播放器动作')
   }
@@ -230,11 +257,17 @@ function parseClientAction(payload: unknown): ClientAction {
     || payload.task_id.length > 128
     || typeof payload.name !== 'string'
     || !isRecord(payload.arguments)
+    || ('graph_mode' in payload && payload.graph_mode !== 'foundation' && payload.graph_mode !== 'handoff')
+    || ('thread_id' in payload && (typeof payload.thread_id !== 'string' || !payload.thread_id || payload.thread_id.length > 128))
   ) {
     throw new AiChatApiError('AI 返回了无法识别的播放器动作')
   }
 
-  const base = { action_id: payload.action_id, task_id: payload.task_id }
+  const base: ClientActionBase = {
+    action_id: payload.action_id, task_id: payload.task_id,
+    ...('graph_mode' in payload ? { graph_mode: payload.graph_mode as GraphMode } : {}),
+    ...('thread_id' in payload ? { thread_id: payload.thread_id as string } : {}),
+  }
   const args = payload.arguments
   switch (payload.name) {
     case 'pause_player':

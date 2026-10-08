@@ -1,0 +1,46 @@
+[
+  {
+    "kind": "hybrid_plan",
+    "complete": true,
+    "intents": [
+      {
+        "start": 0,
+        "end": 8,
+        "order": 0,
+        "route": "tool_calling"
+      },
+      {
+        "start": 9,
+        "end": 19,
+        "order": 1,
+        "route": "worldline"
+      }
+    ],
+    "tasks": [
+      {
+        "route": "tool_calling",
+        "intent_orders": [
+          0
+        ],
+        "input_length": 8
+      },
+      {
+        "route": "worldline",
+        "intent_orders": [
+          1
+        ],
+        "input_length": 10
+      }
+    ]
+  },
+  {
+    "kind": "run",
+    "run_id": "38eaa17bb6b1471d9cd56b82ae022f8a",
+    "status": "needs_input",
+    "stop_reason": "clarification",
+    "tasks": [],
+    "chain": [
+      "general_chat"
+    ]
+  }
+]

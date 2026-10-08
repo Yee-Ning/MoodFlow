@@ -16,15 +16,17 @@ ROOT = Path("/app")
 
 
 def configure_shadow_telemetry_logging(stream=None) -> None:
-    """Emit only the privacy-filtered V5 Shadow events at INFO in production."""
-    shadow_logger = logging.getLogger("app.agent.decision.jev.shadow_v5")
-    if not any(handler.name == "moodflow-v5-shadow" for handler in shadow_logger.handlers):
-        handler = logging.StreamHandler(stream if stream is not None else sys.stdout)
-        handler.name = "moodflow-v5-shadow"
-        handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s:%(message)s"))
-        shadow_logger.addHandler(handler)
-    shadow_logger.setLevel(logging.INFO)
-    shadow_logger.propagate = False
+    """Collect the existing Shadow logger and the allowlisted handoff channel."""
+    for name, handler_name in (("app.agent.decision.jev.shadow_v5", "moodflow-v5-shadow"),
+                               ("app.agent.handoff.observability", "moodflow-handoff")):
+        channel = logging.getLogger(name)
+        if not any(handler.name == handler_name for handler in channel.handlers):
+            handler = logging.StreamHandler(stream if stream is not None else sys.stdout)
+            handler.name = handler_name
+            handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s:%(message)s"))
+            channel.addHandler(handler)
+        channel.setLevel(logging.INFO)
+        channel.propagate = False
 
 
 def load_secrets(secret_root: Path = Path("/run/secrets")) -> None:
@@ -112,10 +114,18 @@ def validate_schema() -> None:
             raise ValueError("pgvector_missing")
 
 
-async def validate_index(root: Path = ROOT) -> None:
+def index_dependencies():
+    # Foundation imports Retrieval while its package initializes. Starting with
+    # Retrieval instead leaves its exports partially initialized in a fresh
+    # production process; pytest's shared import cache can hide that failure.
+    from app.agent.foundation.subgraphs.worldline.runtime_entity_binding import VerifiedEndpointMaterializer
     from app.rag.retrieval import load_retrieval_config, load_retrieval_index_binding
     from app.rag.retrieval.qdrant import QdrantHybridSearchBackend
-    from app.agent.foundation.subgraphs.worldline.runtime_entity_binding import VerifiedEndpointMaterializer
+    return VerifiedEndpointMaterializer, load_retrieval_config, load_retrieval_index_binding, QdrantHybridSearchBackend
+
+
+async def validate_index(root: Path = ROOT) -> None:
+    VerifiedEndpointMaterializer, load_retrieval_config, load_retrieval_index_binding, QdrantHybridSearchBackend = index_dependencies()
     verify(root)
     config = load_retrieval_config()
     binding = load_retrieval_index_binding(root, Path(os.environ["AI_RAG_INDEX_MANIFEST"]), config)

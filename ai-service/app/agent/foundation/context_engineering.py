@@ -13,7 +13,9 @@ from collections import defaultdict
 from typing import Any, Literal
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.agent.foundation.context_contracts import PackManifest
 
 from app.agent.foundation.routing import RouteKey
 from app.rag.chunk.token_counter import TokenCounter, UnicodeHeuristicTokenCounter
@@ -24,7 +26,7 @@ ContextType = Literal[
     "system", "user_query", "conversation", "current_song", "business_state",
     "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence",
     "handoff_projection", "history_drilldown", "artifact_projection", "memory_source",
-    "long_term_memory",
+    "long_term_memory", "user_profile",
 ]
 
 
@@ -83,6 +85,7 @@ class ContextPolicy(BaseModel):
 
 
 class ContextPack(BaseModel):
+    """Single-call assembled view; retained manifests never feed Collect."""
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     items: list[ContextItem]
@@ -92,12 +95,22 @@ class ContextPack(BaseModel):
     compressed_items: list[str]
     messages: list[BaseMessage]
     trace: ContextTrace
+    manifest: dict[str, Any] = Field(default_factory=dict)
+    intent: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def manifest_matches_view(self):
+        if self.manifest:
+            projection = PackManifest.model_validate(self.manifest)
+            if (projection.tokens, projection.budget) != (self.total_tokens, self.budget):
+                raise ValueError("Pack manifest disagrees with assembled view")
+        return self
 
 
 POLICIES: dict[RouteKey, ContextPolicy] = {
     RouteKey.CURRENT_SONG: ContextPolicy(
         node=RouteKey.CURRENT_SONG,
-        allowed_types=frozenset({"system", "user_query", "conversation", "current_song", "business_state", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory"}),
+        allowed_types=frozenset({"system", "user_query", "conversation", "current_song", "business_state", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory", "user_profile"}),
         source_budgets={"conversation": 1600, "current_song": 2800, "long_term_memory": 700},
         priorities={"current_song": 90, "long_term_memory": 70, "conversation": 35, "business_state": 60},
     ),
@@ -105,13 +118,13 @@ POLICIES: dict[RouteKey, ContextPolicy] = {
         node=RouteKey.TOOL_CALLING,
         total_input_budget=12288,
         reserved_output_tokens=2048,
-        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "tool_result", "route_decision", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory"}),
+        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "tool_result", "route_decision", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory", "user_profile"}),
         source_budgets={"conversation": 2200, "tool_result": 4500, "long_term_memory": 900},
         priorities={"structured_output": 90, "long_term_memory": 80, "tool_result": 75, "conversation": 40},
     ),
     RouteKey.GENERAL_CHAT: ContextPolicy(
         node=RouteKey.GENERAL_CHAT,
-        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory"}),
+        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory", "user_profile"}),
         source_budgets={"conversation": 2400, "structured_output": 1000, "long_term_memory": 1000},
         priorities={"conversation": 80, "long_term_memory": 75, "structured_output": 65, "business_state": 55},
     ),
@@ -119,7 +132,7 @@ POLICIES: dict[RouteKey, ContextPolicy] = {
         node=RouteKey.WORLDLINE,
         total_input_budget=12288,
         reserved_output_tokens=2500,
-        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory"}),
+        allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory", "user_profile"}),
         source_budgets={"conversation": 800, "rag_evidence": 5000, "tool_result": 1800, "long_term_memory": 600},
         priorities={"search_plan": 90, "rag_evidence": 85, "long_term_memory": 68, "tool_result": 65, "conversation": 30},
     ),
@@ -168,6 +181,8 @@ class ContextCollector:
         artifact_projections: list[Any] | None = None, memory_source: Any = None,
         long_term_memory: list[Any] | None = None,
         continuity_context: dict[str, Any] | None = None,
+        registered_items: list[ContextItem | dict] | None = None,
+        triage_items: list[ContextItem] | None = None,
     ) -> list[ContextItem]:
         items: list[ContextItem] = []
 
@@ -221,6 +236,13 @@ class ContextCollector:
         add("structured_output", "structured_output", structured_output, required=structured_output is not None, compressible=False)
         add("search_plan", "search_plan", search_plan)
         if continuity_context:
+            from app.agent.foundation.long_horizon.coordinator import active_call
+            continuity_call = active_call.get()
+            add("revalidation", "business_state", (continuity_call.revalidation if continuity_call else None)
+                or continuity_context.get("revalidation"), compressible=False)
+            decisions = continuity_context.get("effective_decisions")
+            add("effective_decisions", "business_state", decisions,
+                required=bool(decisions), compressible=False)
             handoff_projection = handoff_projection or continuity_context.get("handoff")
             history_drilldown = [*(history_drilldown or []), *continuity_context.get("key_events", [])]
             artifact_projections = [*(artifact_projections or []), *continuity_context.get("artifacts", [])]
@@ -272,6 +294,18 @@ class ContextCollector:
                           "title": str(get("title", "")),
                           "exact_text": str(get("evidence_span") or get("exact_text") or "")},
                 references=[citation])
+        registered = registered_items if registered_items is not None else (continuity_context or {}).get("entry_candidates", [])
+        for raw in registered:
+            from app.agent.foundation.context_sources import load_context_policy
+            item = ContextItem.model_validate(raw)
+            config = load_context_policy()["sources"].get(item.source)
+            if item.required or config is None or item.type != config["type"]:
+                raise ValueError("unregistered or required external context source")
+            items.append(item.model_copy(update={"token_count": self.counter.count(item.content)}))
+        for item in triage_items or []:
+            if item.type != "business_state" or not item.id.startswith("triage:") or item.required:
+                raise ValueError("invalid triage context")
+            items.append(item.model_copy(update={"token_count": self.counter.count(item.content)}))
         return items
 
 
@@ -343,10 +377,10 @@ class ContextAssembler:
     ORDER = {"system": 0, "handoff_projection": 1, "route_decision": 2,
              "structured_output": 3, "search_plan": 4, "current_song": 5,
              "business_state": 6, "artifact_projection": 7, "history_drilldown": 8,
-             "memory_source": 9, "long_term_memory": 9, "rag_evidence": 10, "conversation": 11,
+             "memory_source": 9, "long_term_memory": 9, "user_profile": 9, "rag_evidence": 10, "conversation": 11,
              "tool_result": 11, "user_query": 12}
 
-    def assemble(self, items: list[ContextItem]) -> list[BaseMessage]:
+    def assemble(self, items: list[ContextItem], *, intent: dict[str, Any] | None = None) -> list[BaseMessage]:
         ordered = sorted(enumerate(items), key=lambda pair: (self.ORDER[pair[1].type], pair[0]))
         result: list[BaseMessage] = []
         instructions: list[str] = []
@@ -373,11 +407,73 @@ class ContextAssembler:
                 citation = f' citation="{item.metadata["citation"]}"' if item.type == "rag_evidence" else ""
                 trust = (
                     ' trusted="true" text_fields="untrusted"'
-                    if item.type == "long_term_memory"
+                    if item.type in {"long_term_memory", "user_profile"}
                     else ""
                 )
                 instructions.append(f"<{label}{citation}{trust}>{item.content}</{label}>")
+        if intent is not None:
+            instructions.append(self.intent_section(intent))
         return [SystemMessage(content="\n".join(instructions)), *result]
+
+    def intent_section(self, intent: dict[str, Any]) -> str:
+        return "<current_intent>" + _serialize(intent).replace("<", "\\u003c").replace(">", "\\u003e") + "</current_intent>"
+
+    def model_instructions(self, pack: ContextPack, instructions: str) -> str:
+        if pack.intent is not None:
+            section = self.intent_section(pack.intent)
+            if section not in instructions:
+                return instructions + "\n" + section
+        return instructions
+
+    def decision_state(self, pack: ContextPack) -> Any:
+        """Jev state is rendered exclusively from budget-selected items."""
+        query = next(item for item in pack.items if item.type == "user_query")
+        state = json.loads(query.content)
+        context = [item for item in pack.items if item.type != "user_query"]
+        if context:
+            assembled = self.assemble(context)
+            text = "\n".join(str(message.content) for message in assembled)
+            state = {**state, "entry_context": text} if isinstance(state, dict) else {"request": state, "entry_context": text}
+        return state
+
+    def triage_items(self, pack: ContextPack) -> list[ContextItem]:
+        counter = UnicodeHeuristicTokenCounter()
+        result = []
+        for item in pack.items:
+            if item.type == "user_query":
+                continue
+            content = _serialize({"kind": item.type, "role": item.metadata.get("role"), "content": item.content})
+            result.append(ContextItem(id="triage:" + item.id, type="business_state", source="business_state",
+                                      content=content, token_count=counter.count(content)))
+        return result
+
+
+def registered_policy(policy: ContextPolicy) -> ContextPolicy:
+    from app.agent.foundation.context_sources import load_context_policy
+    configured = load_context_policy()["sources"]
+    return policy.model_copy(update={
+        "priorities": {**{name: row["priority"] for name, row in configured.items()}, **policy.priorities},
+        "source_budgets": {**{name: row["tokens"] for name, row in configured.items()}, **policy.source_budgets},
+    })
+
+
+def context_manifest(original, final, trace, tokens, budget):
+    from app.agent.foundation.context_sources import load_context_policy
+    sources = {name: {"candidate_tokens": 0, "final_tokens": 0, "events": [], "dedup_dropped": []}
+               for name in load_context_policy()["sources"]}
+    by_id = {item.id: item for item in original}
+    for item in original:
+        row = sources.setdefault(item.source, {"candidate_tokens": 0, "final_tokens": 0, "events": [], "dedup_dropped": []})
+        row["candidate_tokens"] += item.token_count
+    for item in final:
+        sources[item.source]["final_tokens"] += item.token_count
+    for event in trace:
+        if event.stage in {"compressed", "dropped", "deduplicated"}:
+            row = sources[by_id[event.item_id].source]
+            row["events"].append(event.model_dump(mode="json", exclude_none=True))
+            if event.stage == "deduplicated":
+                row["dedup_dropped"].append(event.item_id)
+    return {"tokens": tokens, "budget": budget, "sources": sources}
 
 
 class ContextSelector:
@@ -386,7 +482,8 @@ class ContextSelector:
         self.assembler = ContextAssembler()
 
     def build(self, items: list[ContextItem], policy: ContextPolicy,
-              trace_context: dict[str, str] | None = None) -> ContextPack:
+              trace_context: dict[str, str] | None = None,
+              *, intent: dict[str, Any] | None = None) -> ContextPack:
         if policy.input_budget <= 0:
             raise ValueError("context input budget must be positive")
         trace: list[ContextTraceEntry] = []
@@ -402,17 +499,21 @@ class ContextSelector:
                                            **(trace_context or {})))
 
         for original in items:
-            item = original.model_copy(update={"priority": policy.priorities.get(original.type, original.priority)})
+            item = original.model_copy(update={"priority": policy.priorities.get(original.source, policy.priorities.get(original.type, original.priority))})
             event(item, "collected", "source_available")
             before_projection = item.metadata.get("token_before_projection")
             if isinstance(before_projection, int) and before_projection > item.token_count:
                 compressed.append(item.id)
-                trace.append(ContextTraceEntry(item_id=item.id, stage="compressed", reason="schema_projection",
+                trace.append(ContextTraceEntry(item_id=item.id, stage="compressed", reason=item.metadata.get("projection_reason", "schema_projection"),
                                                token_before=before_projection, token_after=item.token_count,
                                                **(trace_context or {})))
             if item.type not in policy.allowed_types and not item.required:
                 dropped.append(item.id)
                 event(item, "dropped", "policy_excluded", 0)
+                continue
+            if item.metadata.get("intents") and (intent is None or not set(item.metadata["intents"]) & set(intent.get("routes", []))):
+                dropped.append(item.id)
+                event(item, "dropped", "intent_excluded", 0)
                 continue
             event(item, "selected", "required" if item.required else "policy_allowed")
             keys = _dedup_keys(item)
@@ -437,7 +538,7 @@ class ContextSelector:
             candidates.append(item)
 
         def total(values: list[ContextItem]) -> int:
-            assembled = self.assembler.assemble(values)
+            assembled = self.assembler.assemble(values, intent=intent)
             return sum(
                 self.counter.count(str(message.content))
                 + (self.counter.count(_serialize(message.tool_calls)) if isinstance(message, AIMessage) and message.tool_calls else 0)
@@ -491,35 +592,75 @@ class ContextSelector:
             event(item, "final", "included_in_model_input")
         pack = ContextPack(items=final, total_tokens=total(final), budget=policy.input_budget,
                            dropped_items=dropped, compressed_items=compressed,
-                           messages=self.assembler.assemble(final), trace=ContextTrace(entries=trace))
+                           messages=self.assembler.assemble(final, intent=intent), trace=ContextTrace(entries=trace),
+                           intent=intent, manifest=context_manifest(items, final, trace, total(final), policy.input_budget))
         logger.info("context_engineering node=%s collected=%d final=%d tokens=%d budget=%d dropped=%s compressed=%s",
                     policy.node, len(items), len(final), pack.total_tokens, pack.budget, dropped, compressed,
+                    extra=trace_context or {})
+        logger.info("context_engineering.manifest node=%s manifest=%s", policy.node,
+                    json.dumps(pack.manifest, ensure_ascii=False, separators=(",", ":")),
                     extra=trace_context or {})
         if policy.node is RouteKey.WORLDLINE:
             logger.info("context_engineering.rag retrieved=%d final=%d dropped=%s",
                         sum(item.type == "rag_evidence" for item in items),
                         sum(item.type == "rag_evidence" for item in final),
                         [item_id for item_id in dropped if item_id.startswith("evidence:")])
+        from app.agent.foundation.long_horizon.coordinator import active_call
+        call = active_call.get()
+        if call is not None:
+            from uuid import uuid4
+            from app.agent.foundation.long_horizon.models import HistoryEventType
+            from app.agent.foundation.long_horizon.public_events import PublicContextTrace
+            call.lease.check()
+            call.coordinator.writer.append_public_event(call.accounting.identity, "context:" + uuid4().hex,
+                HistoryEventType.CONTEXT_TRACE, PublicContextTrace(selected_tokens=pack.total_tokens,
+                    candidate_tokens=sum(item.token_count for item in items), budget=pack.budget, dropped_count=len(dropped)))
         return pack
+
+
+def _call_intent(node, intent, sources):
+    if intent is not None:
+        return intent
+    section = (sources.get("continuity_context") or {}).get("entry_intent")
+    return {**section, "routes": [node.value]} if section is not None else None
 
 
 def build_context(node: RouteKey, *, policy: ContextPolicy | None = None, counter: TokenCounter | None = None,
                   trace_context: dict[str, str] | None = None,
+                  intent: dict[str, Any] | None = None,
                   **sources: Any) -> ContextPack:
+    from app.llm.budget_strategy import prepare_sources
+    sources = prepare_sources(sources, reserved_output=(policy or POLICIES[node]).reserved_output_tokens)
     token_counter = counter or UnicodeHeuristicTokenCounter()
     collected = ContextCollector(token_counter).collect(**sources)
     return ContextSelector(token_counter).build(
-        collected, policy or POLICIES[node], trace_context=trace_context,
+        collected, registered_policy(policy or POLICIES[node]), trace_context=trace_context,
+        intent=_call_intent(node, intent, sources),
     )
 
 
 async def build_context_async(node: RouteKey, *, policy: ContextPolicy | None = None,
                               counter: TokenCounter | None = None,
                               trace_context: dict[str, str] | None = None,
+                              intent: dict[str, Any] | None = None,
                               jev_client: Any = None, **sources: Any) -> ContextPack:
     """Apply Jev before the unchanged dedup, budget, compression and assembly stages."""
+    from app.llm.budget_strategy import prepare_sources
+    sources = prepare_sources(sources, reserved_output=(policy or POLICIES[node]).reserved_output_tokens)
     token_counter = counter or UnicodeHeuristicTokenCounter()
     collected = ContextCollector(token_counter).collect(**sources)
+    policy = registered_policy(policy or POLICIES[node])
+    intent = _call_intent(node, intent, sources)
+    from app.llm.runtime import active_ledger
+    ledger = active_ledger.get()
+    if ledger is not None:
+        selected_policy = policy or POLICIES[node]
+        policy = selected_policy.model_copy(update={
+            "total_input_budget": max(
+                selected_policy.reserved_output_tokens + selected_policy.safety_margin + 1,
+                min(selected_policy.total_input_budget, ledger.remaining),
+            ),
+        })
     from app.config.settings import get_settings, jev_requested
     if jev_client is not None or jev_requested():
         settings = get_settings()
@@ -528,11 +669,25 @@ async def build_context_async(node: RouteKey, *, policy: ContextPolicy | None = 
     if settings is not None and settings.jev_enabled and settings.jev_context_select_enabled:
         from app.agent.decision.jev.client import JevClient
         from app.agent.decision.jev.context_selector import select_context
+        from app.agent.foundation.context_sources import load_context_policy
+        registered_names = load_context_policy()["sources"]
+        registered = [item for item in collected if item.source in registered_names]
         collected = await select_context(
-            collected, str(sources.get("query", "")), settings=settings,
+            [item for item in collected if item.source not in registered_names], str(sources.get("query", "")), settings=settings,
             client=jev_client or JevClient(settings),
             trace_id=(trace_context or {}).get("request_id"),
         )
-    return ContextSelector(token_counter).build(
-        collected, policy or POLICIES[node], trace_context=trace_context,
-    )
+        collected.extend(registered)
+    try:
+        pack = ContextSelector(token_counter).build(
+            collected, policy, trace_context=trace_context, intent=intent,
+        )
+        from app.llm.runtime import active_manifest
+        active_manifest.set(pack.manifest)
+        return pack
+    except ValueError:
+        if ledger is not None:
+            from app.llm.runtime import RuntimeLimitError
+            ledger.blocked = "token_limit"
+            raise RuntimeLimitError("token_limit") from None
+        raise

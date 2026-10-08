@@ -1,0 +1,322 @@
+{
+  "note": "Synthetic local fixture. No remote model calls or user data.",
+  "envelope": {
+    "schema_version": 1,
+    "run_id": "run:synthetic-contracts",
+    "tool_call_id": "call:one",
+    "source_agent": "general_chat",
+    "request": {
+      "reason": "转交下一能力",
+      "context_summary": "公开的任务进度",
+      "target_agent": "curator"
+    },
+    "original_input": "探索音乐世界线并暂停播放",
+    "active_task": {
+      "task_id": "task:0",
+      "route_key": "worldline",
+      "input_text": "探索音乐世界线并暂停播放",
+      "intent_orders": [],
+      "depends_on": []
+    },
+    "pending_tasks": [
+      {
+        "task_id": "task:0",
+        "route_key": "worldline",
+        "input_text": "探索音乐世界线并暂停播放",
+        "intent_orders": [],
+        "depends_on": []
+      }
+    ],
+    "completed_results": [],
+    "entities": {
+      "songs": [],
+      "artists": [],
+      "albums": [],
+      "playlists": []
+    },
+    "evidence_refs": []
+  },
+  "canonical_proposal": {
+    "event_id": "evt:6afd9bd21d7a90ba85dc52b8637a7befad705b0a92f64a1e608e18bb05c08e0b",
+    "task_id": "task:12f16cbc20a946fb98568d77d7f07b6f",
+    "session_id": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+    "event_type": "agent_transfer",
+    "timestamp": "2026-10-05T15:13:15.814314Z",
+    "node": "public_history",
+    "source": "typed_writer:v1",
+    "payload": {
+      "schema_version": 1,
+      "phase": "proposed",
+      "transfer_id": "transfer:af9b1475444329f6b9f4b26b8cb95d01224589a89195df84d78974606e49b7ca",
+      "summary": {
+        "schema_version": 1,
+        "transfer_id": "transfer:af9b1475444329f6b9f4b26b8cb95d01224589a89195df84d78974606e49b7ca",
+        "run_id": "run:synthetic-contracts",
+        "hop_index": 0,
+        "source_agent": "general_chat",
+        "target_agent": "curator",
+        "route_task_id": "task:0",
+        "reason_code": "capability_owner",
+        "candidate_summary": "公开的任务进度",
+        "payload_digest": "sha256:2dd28812b64ea6367d6df47c1448f795e2b00be69d9aac862fe71346423e0412",
+        "completed_result_refs": [],
+        "pending_task_refs": [
+          "task:0"
+        ],
+        "entity_refs": [],
+        "evidence_refs": [],
+        "summary_provenance": "server_state;candidate_text_untrusted"
+      },
+      "result_refs": [],
+      "retry_allowed": false
+    },
+    "references": [],
+    "metadata": {},
+    "request_id": "request:synthetic-contracts",
+    "event_key": "public:6afd9bd21d7a90ba85dc52b8637a7befad705b0a92f64a1e608e18bb05c08e0b",
+    "event_seq": 1
+  },
+  "reference_receipt": {
+    "event_id": "evt:6c679595685baa207a85ee85d0b263fe0620be7c23ef0992dfacedbeb9d8d80f",
+    "task_id": "task:12f16cbc20a946fb98568d77d7f07b6f",
+    "session_id": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+    "event_type": "agent_transfer",
+    "timestamp": "2026-10-05T15:13:15.818019Z",
+    "node": "public_history",
+    "source": "typed_writer:v1",
+    "payload": {
+      "schema_version": 2,
+      "phase": "committed",
+      "transfer_id": "transfer:af9b1475444329f6b9f4b26b8cb95d01224589a89195df84d78974606e49b7ca",
+      "summary_ref": {
+        "kind": "event",
+        "target_id": "evt:6afd9bd21d7a90ba85dc52b8637a7befad705b0a92f64a1e608e18bb05c08e0b"
+      },
+      "checkpoint_ref": {
+        "execution_thread_id": "handoff:v1:synthetic-contracts",
+        "session_id": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+        "checkpoint_ns": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+        "checkpoint_id": "1f1c0cf4-a0a8-6bea-bffe-b30f7dc101f2",
+        "graph_version": "handoff:v1",
+        "public_state_digest": "sha256:01a05e2fb9706e7610304ce956150c97cd389b8ad41da5b6157d48281ece47dd"
+      }
+    },
+    "references": [
+      {
+        "kind": "event",
+        "target_id": "evt:6afd9bd21d7a90ba85dc52b8637a7befad705b0a92f64a1e608e18bb05c08e0b"
+      }
+    ],
+    "metadata": {},
+    "request_id": "request:synthetic-contracts",
+    "event_key": "public:6c679595685baa207a85ee85d0b263fe0620be7c23ef0992dfacedbeb9d8d80f",
+    "event_seq": 2
+  },
+  "run_progress": {
+    "event_id": "evt:dc2f7db1088a8d0170f8a37f44ec5fb60de14684aedebb2f7b108b58fa59c04b",
+    "task_id": "task:12f16cbc20a946fb98568d77d7f07b6f",
+    "session_id": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+    "event_type": "run_progress",
+    "timestamp": "2026-10-05T15:13:15.818541Z",
+    "node": "public_history",
+    "source": "typed_writer:v1",
+    "payload": {
+      "schema_version": 2,
+      "run": {
+        "run_id": "run:synthetic-contracts",
+        "entry_agent": "general_chat",
+        "current_agent": "curator",
+        "status": "running",
+        "started_at": "2026-10-05T15:13:15.813689Z",
+        "chain": [
+          "general_chat",
+          "curator"
+        ],
+        "accepted_hop_count": 1,
+        "pending_task_ids": [
+          "task:0"
+        ],
+        "plan_digest": "sha256:53e647dcd8b97e9250f2cda74c765ed8fcedb12af754cfd9834e3af3ba4c221d",
+        "limits": {
+          "max_handoffs": 5,
+          "max_retries_per_agent": 1,
+          "agent_timeout_seconds": 45,
+          "run_timeout_seconds": 120,
+          "agent_token_budget": 16000,
+          "run_token_budget": 32000
+        },
+        "schema_version": 2
+      },
+      "checkpoint_ref": {
+        "execution_thread_id": "handoff:v1:synthetic-contracts",
+        "session_id": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+        "checkpoint_ns": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+        "checkpoint_id": "1f1c0cf4-a0a8-6bea-bffe-b30f7dc101f2",
+        "graph_version": "handoff:v1",
+        "public_state_digest": "sha256:01a05e2fb9706e7610304ce956150c97cd389b8ad41da5b6157d48281ece47dd"
+      },
+      "result_refs": [],
+      "transfer_refs": [
+        {
+          "kind": "event",
+          "target_id": "evt:6c679595685baa207a85ee85d0b263fe0620be7c23ef0992dfacedbeb9d8d80f"
+        }
+      ]
+    },
+    "references": [
+      {
+        "kind": "event",
+        "target_id": "evt:6c679595685baa207a85ee85d0b263fe0620be7c23ef0992dfacedbeb9d8d80f"
+      }
+    ],
+    "metadata": {},
+    "request_id": "request:synthetic-contracts",
+    "event_key": "public:dc2f7db1088a8d0170f8a37f44ec5fb60de14684aedebb2f7b108b58fa59c04b",
+    "event_seq": 3
+  },
+  "projection_index": {
+    "storage_schema": "history-pointer:v1",
+    "handoff_id": "handoff:a1db9ba8c9c24678ae6ad03881d08d6c",
+    "task_id": "task:12f16cbc20a946fb98568d77d7f07b6f",
+    "session_id": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+    "event_ref": {
+      "kind": "event",
+      "target_id": "evt:81be0e12a765bc3e3c1a43f0d04526a4e663af4a4d5b209ef419819a4e11ab73"
+    }
+  },
+  "projection_archive": {
+    "event_id": "evt:81be0e12a765bc3e3c1a43f0d04526a4e663af4a4d5b209ef419819a4e11ab73",
+    "task_id": "task:12f16cbc20a946fb98568d77d7f07b6f",
+    "session_id": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+    "event_type": "session_projection",
+    "timestamp": "2026-10-05T15:13:15.819626Z",
+    "node": "public_history",
+    "source": "typed_writer:v1",
+    "payload": {
+      "projection": {
+        "goal": "探索音乐",
+        "summary": "合成示例的有界摘要",
+        "constraints": [],
+        "constraint_refs": {},
+        "preferences": [],
+        "decisions": [],
+        "decision_refs": {},
+        "current_stage": "待执行",
+        "completed_steps": [],
+        "pending_items": [],
+        "next_actions": [],
+        "important_entities": [],
+        "key_message_refs": [],
+        "artifact_refs": [],
+        "evidence_refs": [],
+        "revalidate_fields": [],
+        "last_known_state": {},
+        "schema_version": 2,
+        "projection_version": 2,
+        "agent_progress": {
+          "run_status": "unknown",
+          "recent_run_chain": [],
+          "accepted_hop_count": 0,
+          "transfer_phase": "unknown",
+          "progress_refs": [],
+          "earlier_chain_refs": []
+        },
+        "source_event_cursor": 0,
+        "counter_name": "unicode_heuristic:v1",
+        "handoff_id": "handoff:a1db9ba8c9c24678ae6ad03881d08d6c",
+        "task_id": "task:12f16cbc20a946fb98568d77d7f07b6f",
+        "session_id": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+        "created_at": "2026-10-05T15:13:15.819063Z",
+        "token_count": 274,
+        "token_budget": 1200,
+        "dropped_fields": []
+      }
+    },
+    "references": [],
+    "metadata": {},
+    "request_id": "handoff:a1db9ba8c9c24678ae6ad03881d08d6c",
+    "event_key": "public:81be0e12a765bc3e3c1a43f0d04526a4e663af4a4d5b209ef419819a4e11ab73",
+    "event_seq": 4
+  },
+  "call_manifest": {
+    "tokens": 10,
+    "budget": 5888,
+    "sources": {
+      "user_profile": {
+        "candidate_tokens": 0,
+        "final_tokens": 0,
+        "events": [],
+        "dedup_dropped": []
+      },
+      "history_memory": {
+        "candidate_tokens": 0,
+        "final_tokens": 0,
+        "events": [],
+        "dedup_dropped": []
+      },
+      "system": {
+        "candidate_tokens": 6,
+        "final_tokens": 6,
+        "events": [],
+        "dedup_dropped": []
+      },
+      "user_query": {
+        "candidate_tokens": 4,
+        "final_tokens": 4,
+        "events": [],
+        "dedup_dropped": []
+      }
+    },
+    "call_id": "7d3d2a01931a44cab89b940b9b2bdf7c",
+    "trace_id": "run:synthetic-contracts",
+    "task_id": "run:synthetic-contracts",
+    "agent": "curator",
+    "model": "deepseek-chat",
+    "input_tokens": 30,
+    "output_tokens": 4,
+    "total_tokens": 34,
+    "estimated": false,
+    "usage_basis": "provider_usage",
+    "max_output_tokens": 10,
+    "output_limit_exceeded": false,
+    "status": "completed",
+    "budget_events": [],
+    "usage_ref": {
+      "task_id": "task:12f16cbc20a946fb98568d77d7f07b6f",
+      "event_id": "evt:e4465ff78448ac7c04d9da01154f8aa4f03100afdc0e6c519421c97ee54fa1da"
+    }
+  },
+  "usage_event": {
+    "event_id": "evt:e4465ff78448ac7c04d9da01154f8aa4f03100afdc0e6c519421c97ee54fa1da",
+    "task_id": "task:12f16cbc20a946fb98568d77d7f07b6f",
+    "session_id": "session:e41cdc3d0f4c4b2a84cbda9096f6ec96",
+    "event_type": "model_usage",
+    "timestamp": "2026-10-05T15:13:15.827227Z",
+    "node": "public_history",
+    "source": "typed_writer:v1",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "run:synthetic-contracts",
+      "agent": "curator",
+      "call_id": "7d3d2a01931a44cab89b940b9b2bdf7c",
+      "phase": "settled",
+      "tokens": 34,
+      "reported": true,
+      "model_calls": 0,
+      "retries": 0,
+      "reported_tokens": 0,
+      "estimated_tokens": 0,
+      "input_tokens": 30,
+      "output_tokens": 4,
+      "model": "deepseek-chat",
+      "billing_agent": "curator",
+      "estimated": false,
+      "max_output_tokens": 10
+    },
+    "references": [],
+    "metadata": {},
+    "request_id": "request:synthetic-contracts",
+    "event_key": "public:e4465ff78448ac7c04d9da01154f8aa4f03100afdc0e6c519421c97ee54fa1da",
+    "event_seq": 9
+  }
+}

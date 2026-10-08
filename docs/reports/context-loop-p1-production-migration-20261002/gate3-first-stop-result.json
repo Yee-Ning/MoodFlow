@@ -1,0 +1,54 @@
+{
+  "backup_completed_at_utc": "2026-10-01T23:41:24.275303+00:00",
+  "backup_integrity_rechecked": true,
+  "backup_manifest": "20261001T234103Z-3a11237c.json",
+  "backup_restore_verified": true,
+  "completed_at_utc": "2026-10-02T12:41:04.788161+00:00",
+  "gate_3_observations": [
+    {
+      "database": "moodflow_agent",
+      "role": "moodflow",
+      "checked_at": "2026-10-02T12:41:04.33921+00:00",
+      "readonly": "on",
+      "standby": false,
+      "ledger": [
+        "001_agent_continuity.sql",
+        "002_long_term_memory.sql"
+      ],
+      "history_rows": 328,
+      "database_bytes": 53894167,
+      "execution_exists": false,
+      "event_seq_exists": false,
+      "immutable_enabled": true,
+      "active_sessions": 0,
+      "advisory_locks": 0,
+      "active_runs": 0,
+      "pending_runs": 0,
+      "unknown_runs": 0,
+      "latest_pending_writes": 0,
+      "legacy_pending_sends": 0,
+      "pending_controls": 1,
+      "unknown_checkpoints": 423,
+      "replication_senders": 0,
+      "replication_slots": 0,
+      "ai_listeners": 1,
+      "ai_inbound_established": 0
+    }
+  ],
+  "lock_timeout": "5s",
+  "migration_sha256": {
+    "003_context_loop_history.sql": "db21752bcb86affae039634342e5b6df8ec113053aa5ecb213f07c854acb67b3",
+    "004_continuity_execution.sql": "5622723c341f6782085039ad2d0872d35ed93303a6f1114d7878e96eb0a388d2"
+  },
+  "production_commit_confirmed": false,
+  "production_transaction_attempted": false,
+  "real_write_verification": "skipped_no_dedicated_test_account",
+  "reason": "gate_3_not_quiet_pending_controls_no_migration",
+  "recovery_responsible": "唐艺宁",
+  "rehearsal_report": "/secure/moodflow/migration-rehearsals/context-loop-20261002-y0pxiydv/report.json",
+  "replication_lag_seconds": null,
+  "started_at_utc": "2026-10-02T12:41:03.687717+00:00",
+  "statement_timeout": "60s",
+  "status": "stopped_or_failed",
+  "temporary_profile_cleanup": "passed"
+}

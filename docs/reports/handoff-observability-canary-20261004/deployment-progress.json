@@ -1,0 +1,45 @@
+{
+  "run_id": "20261004T064429Z-6667b70e",
+  "phase": "smoke",
+  "status": "passed",
+  "health": {
+    "ai-service": "healthy",
+    "frontend": "healthy",
+    "java": "healthy",
+    "migrate": "exited_0",
+    "netease": "healthy",
+    "postgres": "healthy",
+    "qdrant": "healthy"
+  },
+  "smoke": {
+    "/": "passed",
+    "/api/auth/status": "passed",
+    "/healthz": "passed",
+    "sse": {
+      "final_seconds": 1.981,
+      "status": "passed",
+      "update_seconds": 0.116
+    },
+    "worldline": {
+      "attempts": 1,
+      "node_count": 9,
+      "status": "passed"
+    }
+  },
+  "reason": null,
+  "started_at_utc": "2026-10-04T06:44:29.459984+00:00",
+  "finished_at_utc": "2026-10-04T06:45:46.536230+00:00",
+  "backup_manifest": "/secure/moodflow/backups/manifests/20261004T064431Z-6667b70e.json",
+  "previous_commit": "613db7311e4c224c1ee3a57f4693d3e0322090a7",
+  "new_commit": "6667b70ecc1ad27786559bacb389f6f65d42098b",
+  "new_image_ids": {
+    "ai-service": "sha256:7619d3f85457d9413c6577bae9209b6d5cc68f7cea82224dbfba408edea565b3"
+  },
+  "release_tags": {
+    "ai-service": "moodflow/ai-service:release-6667b70ecc1a"
+  },
+  "migration": "not_needed",
+  "build_services": [
+    "ai-service"
+  ]
+}

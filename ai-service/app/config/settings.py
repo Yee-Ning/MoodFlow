@@ -45,10 +45,13 @@ class Settings(BaseSettings):
         le=60,
         validation_alias="SPRING_BOOT_TIMEOUT_SECONDS",
     )
-    agent_graph_mode: Literal["legacy", "foundation"] = Field(
+    agent_graph_mode: Literal["legacy", "foundation", "handoff"] = Field(
         default="foundation",
         validation_alias="AI_AGENT_GRAPH_MODE",
     )
+    handoff_canary_enabled: bool = Field(default=False, validation_alias="HANDOFF_CANARY_ENABLED")
+    handoff_canary_percentage: float = Field(default=10, ge=0, le=100, validation_alias="HANDOFF_CANARY_PERCENTAGE")
+    handoff_canary_salt: str = Field(default="moodflow-handoff-v1", min_length=1, max_length=128, validation_alias="HANDOFF_CANARY_SALT")
     typesafe_api_key: SecretStr | None = Field(default=None, validation_alias="TYPESAFE_API_KEY")
     jev_enabled: bool = Field(default=False, validation_alias="JEV_ENABLED")
     jev_shadow_mode: bool = Field(default=True, validation_alias="JEV_SHADOW_MODE")
@@ -68,6 +71,12 @@ class Settings(BaseSettings):
     jev_model: str = Field(default="jev-latest", min_length=1, validation_alias="JEV_MODEL")
     jev_timeout_seconds: float = Field(default=5, gt=0, le=60, validation_alias="JEV_TIMEOUT_SECONDS")
     jev_router_confidence_threshold: float = Field(default=0.8, ge=0, le=1, validation_alias="JEV_ROUTER_CONFIDENCE_THRESHOLD")
+    jev_handoff_router_enabled: bool = Field(default=False, validation_alias="JEV_HANDOFF_ROUTER_ENABLED")
+    jev_handoff_router_shadow_mode: bool = Field(default=True, validation_alias="JEV_HANDOFF_ROUTER_SHADOW_MODE")
+    jev_handoff_guard_enabled: bool = Field(default=True, validation_alias="JEV_HANDOFF_GUARD_ENABLED")
+    jev_handoff_guard_shadow_mode: bool = Field(default=True, validation_alias="JEV_HANDOFF_GUARD_SHADOW_MODE")
+    jev_handoff_guard_threshold: float = Field(default=0.8, ge=0, le=1, validation_alias="JEV_HANDOFF_GUARD_THRESHOLD")
+    jev_handoff_injection_threshold: float = Field(default=0.2, ge=0, le=1, validation_alias="JEV_HANDOFF_INJECTION_THRESHOLD")
     jev_memory_filter_threshold: float = Field(default=0.5, ge=0, le=1, validation_alias="JEV_MEMORY_FILTER_THRESHOLD")
     jev_context_select_threshold: float = Field(default=0.5, ge=0, le=1, validation_alias="JEV_CONTEXT_SELECT_THRESHOLD")
 

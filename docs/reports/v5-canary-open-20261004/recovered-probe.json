@@ -1,0 +1,40 @@
+{
+  "sample_kind": "acceptance",
+  "case": "recovered",
+  "thread_id": "v5-canary-open-acceptance-recovered-20261004-5",
+  "bucket": 402,
+  "bucket_is_canary_when_enabled": true,
+  "at_utc": "2026-10-04T05:51:28.515015+00:00",
+  "http_status": 200,
+  "events": [
+    "update",
+    "message",
+    "final",
+    "done"
+  ],
+  "event_counts": {
+    "update": 5,
+    "message": 1,
+    "final": 1,
+    "done": 1
+  },
+  "nodes": [
+    "prepare_context",
+    "intent_router",
+    "tool_calling_subgraph",
+    "aggregate_results",
+    "final_response"
+  ],
+  "status": "success",
+  "results": [
+    {
+      "subgraph": "tool_calling",
+      "status": "success",
+      "tool_call_count": 1
+    }
+  ],
+  "seconds": 5.516,
+  "passed_response": true,
+  "handoff_agent_node_observed": false,
+  "v5_candidate_verified_by_response": false
+}

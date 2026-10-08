@@ -38,6 +38,9 @@ _NEGATED_ACTION = re.compile(
     r"(?:切歌|换歌|下一首|上一首|暂停|继续播放|播放|收藏|喜欢|"
     r"加入|添加到|搜索|查找|打开歌词|调大|调小|静音|快进|快退)"
 )
+_SEQUENTIAL_PREFIX = re.compile(
+    r"^\s*先(?=(?:暂停|播放|探索|搜索|查找|收藏|分析|陪我|和我))"
+)
 
 
 @dataclass(frozen=True)
@@ -61,6 +64,10 @@ def _effective_positions(text: str, *, ignore_negated_action: bool = False) -> s
         for start, end in _segment_spans(text):
             if _NEGATED_ACTION.search(text[start:end].strip()):
                 _mark_span(ignored, start, end)
+            prefix = _SEQUENTIAL_PREFIX.match(text[start:end])
+            if prefix:
+                position = start + prefix.end() - 1
+                ignored[position] = True
     for match in re.finditer(r"\s+", text):
         _mark_span(ignored, *match.span())
     for index, character in enumerate(text):

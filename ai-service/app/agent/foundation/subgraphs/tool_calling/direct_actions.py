@@ -8,7 +8,8 @@ from typing import Any
 from langgraph.runtime import Runtime
 
 from app.agent.foundation.models import TaskResult, TaskStatus
-from app.agent.foundation.routing import RouteKey
+from app.agent.foundation.routing import IntentType, RouteKey
+from app.agent.foundation.rule_routing import RuleRouter
 from app.agent.foundation.subgraphs.tool_calling.models import (
     ClientAction,
     ClientActionName,
@@ -99,6 +100,18 @@ async def resolve_direct_actions(
     state: ToolCallingState, runtime: Runtime[MusicAgentContext],
 ) -> dict[str, Any]:
     intents = state.get("routing_intents", [])
+    # Semantic routing may identify the domain without a sub-intent. Refine
+    # only this assigned clause, and only when existing rules cover it fully.
+    # History, prior Explorer output and transfer summaries grant no authority.
+    if intents and all(
+        item.intent is IntentType.TOOL_CALLING and item.sub_intent is None
+        for item in intents
+    ):
+        decision = RuleRouter().route(state["current_input"], state["routing_context"])
+        if decision.is_complete and all(
+            item.sub_intent in DIRECT_SUB_INTENTS for item in decision.intents
+        ):
+            intents = decision.intents
     sub_intents = list(dict.fromkeys(item.sub_intent for item in intents))
     if not sub_intents or any(item not in DIRECT_SUB_INTENTS for item in sub_intents):
         return {"direct_complete": False}
@@ -147,7 +160,20 @@ async def resolve_direct_actions(
             liked = sub_intent == "favorite_song"
             session_cookie = runtime.context.session_cookie if runtime.context else None
             try:
-                result = await MusicServiceClient(session_cookie).set_song_liked(context.current_song_id, liked)
+                from types import SimpleNamespace
+                from langchain_core.messages import ToolMessage
+                from app.agent.foundation.long_horizon.operations import active_operations
+                operations = active_operations.get()
+                if operations is None:
+                    result = await MusicServiceClient(session_cookie).set_song_liked(context.current_song_id, liked)
+                else:
+                    async def execute_like(_):
+                        response = await MusicServiceClient(session_cookie).set_song_liked(context.current_song_id, liked)
+                        return ToolMessage(content=response.model_dump_json(), name="set_song_liked_tool", tool_call_id=action_id)
+                    response = await operations.call(SimpleNamespace(tool_call={"id": action_id,
+                        "name": "set_song_liked_tool", "args": {"song_id": context.current_song_id, "liked": liked}}), execute_like)
+                    from app.schemas.music import SongLikeResult
+                    result = SongLikeResult.model_validate_json(response.content)
             except Exception as exc:
                 failure = handle_music_tool_error(exc)
                 message = json.loads(failure)["message"]

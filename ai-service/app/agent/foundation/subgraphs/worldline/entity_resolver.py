@@ -15,7 +15,8 @@ from app.agent.foundation.subgraphs.worldline.music_service import (
 
 _QUOTED_ENTITY = re.compile(r"[《\"“'](?P<name>[^》\"”']{1,300})[》\"”']")
 _LEADING_REQUEST = re.compile(
-    r"^(?:请|麻烦)?(?:帮我)?(?:生成|创建|构建|探索|查看|看看|讲讲|分析)?(?:一下)?"
+    r"^(?:请|麻烦)?(?:帮我)?(?:(?:先|再|然后|接着)\s*)?"
+    r"(?:生成|创建|构建|探索|查看|看看|讲讲|分析)(?:一下)?"
 )
 _TRAILING_WORLDLINE = re.compile(
     r"(?:的)?(?:音乐)?(?:世界线|world\s*line)(?:图谱)?[。.!！?？]*$",

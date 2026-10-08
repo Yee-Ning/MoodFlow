@@ -1,0 +1,238 @@
+{
+  "reasons": [
+    "observation_watch_failure"
+  ],
+  "at_utc": "2026-10-04T07:41:10.539519+00:00",
+  "returncode": 0,
+  "result": {
+    "started_at_utc": "2026-10-04T07:40:34.608683+00:00",
+    "healthy_at_utc": "2026-10-04T07:41:08.633822+00:00",
+    "configuration_check": {
+      "only_two_allowed_ai_environment_keys_differ": true,
+      "other_compose_config_sha256": "520dc48e9698ae20d3e132ed68c2092b2a6e6a81e2c622b432f03f4eadc6845a",
+      "switches": {
+        "HANDOFF_CANARY_ENABLED": "false",
+        "JEV_HANDOFF_ROUTER_ENABLED": "false"
+      },
+      "override_sha256": "883902c5d29b32f4bb4713d5e270f573ce346c5641ff2ae45e7aa20f17526033"
+    },
+    "scope_checks": {
+      "postgres": {
+        "image_id_unchanged": true,
+        "mounts_sha256_unchanged": true,
+        "environment_except_allowed_switches_sha256_unchanged": true,
+        "container_id_unchanged": true
+      },
+      "qdrant": {
+        "image_id_unchanged": true,
+        "mounts_sha256_unchanged": true,
+        "environment_except_allowed_switches_sha256_unchanged": true,
+        "container_id_unchanged": true
+      },
+      "netease": {
+        "image_id_unchanged": true,
+        "mounts_sha256_unchanged": true,
+        "environment_except_allowed_switches_sha256_unchanged": true,
+        "container_id_unchanged": true
+      },
+      "java": {
+        "image_id_unchanged": true,
+        "mounts_sha256_unchanged": true,
+        "environment_except_allowed_switches_sha256_unchanged": true,
+        "container_id_unchanged": true
+      },
+      "ai-service": {
+        "image_id_unchanged": true,
+        "mounts_sha256_unchanged": true,
+        "environment_except_allowed_switches_sha256_unchanged": true,
+        "container_id_unchanged": false
+      },
+      "frontend": {
+        "image_id_unchanged": true,
+        "mounts_sha256_unchanged": true,
+        "environment_except_allowed_switches_sha256_unchanged": true,
+        "container_id_unchanged": true
+      },
+      "migrate": {
+        "image_id_unchanged": true,
+        "mounts_sha256_unchanged": true,
+        "environment_except_allowed_switches_sha256_unchanged": true,
+        "container_id_unchanged": true
+      }
+    },
+    "after": {
+      "at_utc": "2026-10-04T07:41:10.506095+00:00",
+      "head": "6667b70ecc1ad27786559bacb389f6f65d42098b",
+      "ancestor_checks": {
+        "f97d5d2": {
+          "full_commit": "f97d5d259cfcf153185581905ca7abb0aca33b50",
+          "merge_base_exit": 0
+        },
+        "588fa6f": {
+          "full_commit": "588fa6f776776e2d4662cdaf09e38e872745623a",
+          "merge_base_exit": 0
+        },
+        "37ffdab": {
+          "full_commit": "37ffdabb8e7c5a959027928b94b3de092b54be23",
+          "merge_base_exit": 0
+        },
+        "feea347": {
+          "full_commit": "feea34747f98081f613467be71cef00614e73d9e",
+          "merge_base_exit": 0
+        },
+        "a3cc649": {
+          "full_commit": "a3cc649c643b3167805a2c6e36722b6344d8beef",
+          "merge_base_exit": 0
+        },
+        "b983411b": {
+          "full_commit": "b983411b0029b154b8d50c4fe23b579128c758f9",
+          "merge_base_exit": 0
+        },
+        "c4096608": {
+          "full_commit": "c4096608e92ac6ad3077b807beced04932d3f5c6",
+          "merge_base_exit": 0
+        },
+        "08d18c5": {
+          "full_commit": "08d18c517c98094aff1c5303b6031dffb6366178",
+          "merge_base_exit": 0
+        }
+      },
+      "production_worktree_clean": true,
+      "services": {
+        "postgres": {
+          "container_id": "b0b37d1aed690a99c6c4c856ab6e5598d0df03346df5f2ddc6ef28d928d1e367",
+          "image_id": "sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b",
+          "environment_except_allowed_switches_sha256": "028b9aa581bedb92778a061b3a8435e085da2cfec34d90bb051689ea69ecccbd",
+          "mounts_sha256": "ea079d09dfe3c12fb0f474a753ea3d48945e09a265a43b7a33674a084f828c9f",
+          "state": "running",
+          "health": "healthy",
+          "exit_code": 0
+        },
+        "qdrant": {
+          "container_id": "b7dbd6e0d2c60c24d1e7c5d18891e90a39882463d1459722fc4a4ef7b5497bff",
+          "image_id": "sha256:cdae0d52cfe04283adc0e086932bd7ccc1893f7c48cd2d6ac936c4e6cc4a0a82",
+          "environment_except_allowed_switches_sha256": "76c255f7745e07d848666b0d6d3d7f63e4a94928727bb6982e0e72ceaf9b5606",
+          "mounts_sha256": "04232a807ab4a8c4839b315ecf14448234e60cab8a21e89b47e2ab1e590d41f5",
+          "state": "running",
+          "health": "healthy",
+          "exit_code": 0
+        },
+        "netease": {
+          "container_id": "cee6ad090c46a287846227e41bd020d96ab67a39dd3ebd3741620f10b5064a72",
+          "image_id": "sha256:91cabd3272431f66356724d8dd21b822cf4597533a57cb8e45f2c75a992212c5",
+          "environment_except_allowed_switches_sha256": "42e3e89e72ccfef8866f48598dbba9441842fad9618887e6415eea8017840161",
+          "mounts_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "state": "running",
+          "health": "healthy",
+          "exit_code": 0
+        },
+        "java": {
+          "container_id": "014794a625ec958e3a87f3b28cb7c679e0b1657c45f1d1bf3c16556eb9d80073",
+          "image_id": "sha256:1f28d1388a37fd6be2a695083420dfb014d00fed3c49d21105ebe3a8dbab32e7",
+          "environment_except_allowed_switches_sha256": "87488d65ffb3dce542db4f2928a41fe21c7e77553ce041ac6fc9898cf09bc27d",
+          "mounts_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "state": "running",
+          "health": "healthy",
+          "exit_code": 0
+        },
+        "ai-service": {
+          "container_id": "407573f39b4ddda985f0604b2351e3aa381025cea4799927e45978557fadb97f",
+          "image_id": "sha256:7619d3f85457d9413c6577bae9209b6d5cc68f7cea82224dbfba408edea565b3",
+          "environment_except_allowed_switches_sha256": "4b0ef3238b26cf48525b81e2cd1b2b88b03d56f6ba48fd44247488b32955c5ed",
+          "mounts_sha256": "dc65d72b00de7f66726d7e6a842d8b45a6377a02d868f9ec7b681eb20d307599",
+          "state": "running",
+          "health": "healthy",
+          "exit_code": 0
+        },
+        "frontend": {
+          "container_id": "b40cef60e49d73e2cd4a0b4144c7106eb80a0e19ef739534080461719da14309",
+          "image_id": "sha256:c08f60a5a8145fb6f7ceafa025037a244bd2edbec268a36b9ae2455f8aa6fb5e",
+          "environment_except_allowed_switches_sha256": "a19c4ebb94be91e33ddfcc5b402b78a0723522ad95f5415355096921f4f4d909",
+          "mounts_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "state": "running",
+          "health": "healthy",
+          "exit_code": 0
+        },
+        "migrate": {
+          "container_id": "a0189a40af9069485e4e04721a51b5e83d99afb535fc0683d0ecb2f9405b100f",
+          "image_id": "sha256:20a1fb99eb6fcf8951ae186663d5bdcc2fa791984445ff2fa7fe8de50611099b",
+          "environment_except_allowed_switches_sha256": "4b0ef3238b26cf48525b81e2cd1b2b88b03d56f6ba48fd44247488b32955c5ed",
+          "mounts_sha256": "dc65d72b00de7f66726d7e6a842d8b45a6377a02d868f9ec7b681eb20d307599",
+          "state": "exited",
+          "health": null,
+          "exit_code": 0
+        }
+      },
+      "runtime": {
+        "environment": {
+          "AI_AGENT_GRAPH_MODE": "foundation",
+          "HANDOFF_CANARY_ENABLED": "false",
+          "HANDOFF_CANARY_PERCENTAGE": null,
+          "JEV_ENABLED": "true",
+          "JEV_ROUTER_ENABLED": "false",
+          "JEV_ROUTER_V5_SHADOW_ENABLED": "true",
+          "JEV_HANDOFF_ROUTER_ENABLED": "false",
+          "JEV_HANDOFF_ROUTER_SHADOW_MODE": null,
+          "JEV_HANDOFF_GUARD_ENABLED": null,
+          "JEV_HANDOFF_GUARD_SHADOW_MODE": null,
+          "JEV_HANDOFF_GUARD_THRESHOLD": null
+        },
+        "source_defaults": {
+          "AI_AGENT_GRAPH_MODE": "foundation",
+          "HANDOFF_CANARY_ENABLED": false,
+          "HANDOFF_CANARY_PERCENTAGE": 10,
+          "JEV_ENABLED": false,
+          "JEV_ROUTER_ENABLED": false,
+          "JEV_HANDOFF_ROUTER_ENABLED": false,
+          "JEV_HANDOFF_ROUTER_SHADOW_MODE": true,
+          "JEV_HANDOFF_GUARD_ENABLED": true,
+          "JEV_HANDOFF_GUARD_SHADOW_MODE": true,
+          "JEV_HANDOFF_GUARD_THRESHOLD": 0.8
+        },
+        "effective_config": {
+          "AI_AGENT_GRAPH_MODE": "foundation",
+          "HANDOFF_CANARY_ENABLED": "false",
+          "HANDOFF_CANARY_PERCENTAGE": 10,
+          "JEV_ENABLED": "true",
+          "JEV_ROUTER_ENABLED": "false",
+          "JEV_ROUTER_V5_SHADOW_ENABLED": "true",
+          "JEV_HANDOFF_ROUTER_ENABLED": "false",
+          "JEV_HANDOFF_ROUTER_SHADOW_MODE": true,
+          "JEV_HANDOFF_GUARD_ENABLED": true,
+          "JEV_HANDOFF_GUARD_SHADOW_MODE": true,
+          "JEV_HANDOFF_GUARD_THRESHOLD": 0.8
+        },
+        "source_sha256": {
+          "app/config/settings.py": "2c92eebdd580a9d8e33a314e0faca29afe9069e04345a2aeef17e153fc3cdd67",
+          "app/api/chat.py": "5a79e856108637e27780e355412a87d8a29ef4229b8c723d039be8cb413b0ee8",
+          "app/agent/handoff/rollout.py": "10763a5a70a567adae93d34efe7cc734f9bfe31ce2a7977e52c36b68b64723e0",
+          "app/agent/handoff/routing.py": "cf588cc09f71c3a2c05e0a91e474761e8fb1b0b6fe3ac09b9af191d5fe7c5f19",
+          "app/agent/handoff/guard.py": "0e67685e5bf0ecc600baf6f3a6f3a785e62b98fd858204ddf6787fde6e69e026",
+          "app/agent/handoff/progress.py": "eeb7ae1952bd761a19e13fc162fb18478ac78a0a7eb162e21e082f3c1d582824",
+          "app/agent/foundation/long_horizon/operations.py": "68ea1323a27081be2193a5d14768e1e4d5e48b718249ed7e21eb22a531f42bfb",
+          "app/agent/foundation/long_horizon/write_reconciliation.py": "0988bf4a883d022402c3bb3cf5a6fd0619e90ba3f1e1f8f769a3510fd014d39a",
+          "app/agent/foundation/long_horizon/recovery_receipts.py": "241287ad6808daeb19368350f0c59fa12f501c4efd9f92e6d7ff4d0f1ee6f8b5",
+          "app/agent/foundation/long_horizon/coordinator.py": "0897d92f5e9c4cceb4718534c7007fd4750b1d9b179eb904a51bfc02f63bb3da",
+          "app/agent/foundation/subgraphs/tool_calling/assistant.py": "1742b5c75c44c386c14a9533c6d977a737e9b34795e39690a134cc77f0bc12a2",
+          "app/tools/music.py": "2b5ae47693b8e0497af7f059d1a1fc27c31a29347abf10f729e87d132fd45425"
+        }
+      },
+      "all_sources_match": true,
+      "source_matches": {
+        "app/config/settings.py": true,
+        "app/api/chat.py": true,
+        "app/agent/handoff/rollout.py": true,
+        "app/agent/handoff/routing.py": true,
+        "app/agent/handoff/guard.py": true,
+        "app/agent/handoff/progress.py": true,
+        "app/agent/foundation/long_horizon/operations.py": true,
+        "app/agent/foundation/long_horizon/write_reconciliation.py": true,
+        "app/agent/foundation/long_horizon/recovery_receipts.py": true,
+        "app/agent/foundation/long_horizon/coordinator.py": true,
+        "app/agent/foundation/subgraphs/tool_calling/assistant.py": true,
+        "app/tools/music.py": true
+      }
+    },
+    "passed": true
+  }
+}

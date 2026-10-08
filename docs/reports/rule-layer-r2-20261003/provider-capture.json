@@ -1,0 +1,4340 @@
+{
+  "sample_origin": "public_manual_seed_and_test_utterances",
+  "production_traffic_count": 0,
+  "context": {
+    "has_current_song": true,
+    "current_song_id": 11,
+    "player_state": "unknown",
+    "volume": 0.72,
+    "is_muted": false,
+    "play_mode": "list-loop",
+    "current_time": 0.0,
+    "duration": 0.0,
+    "queue_size": 0,
+    "current_index": -1,
+    "current_song_liked": null
+  },
+  "sources_sha256": {
+    "data/intent/raw/manual_seeds.jsonl": "6729762b1efee1d85bd3cd7b0286349b45af4083cefce814e9c0e9b5fb4b91ff",
+    "tests/test_rule_router.py": "d124692822694a4fb5e8f772505a37bddb8eb87f122ced3bec5de21c05ebaa31",
+    "tests/test_handoff_entry_rules.py": "6e0d77a11f99617dc23d00cab69959619be61ab35f1464d4e3b1595e477884b9",
+    "tests/test_handoff_network.py": "47f5400f7034a7fd023342f12f784e2a393b7a02080b190606d9f34226967460",
+    "tests/test_jev_router_v5.py": "5d6441116097756533f9891052b09344e60b9d47236f9fe1ef3685bbca039469",
+    "tests/test_hybrid_graph.py": "1681f1418a2378eaa84bdc47a3da3a2641faa73b85a3e8f59fa62432a7658028",
+    "tests/test_handoff_jev_routing.py": "3e5e418c8f2f1e20d32b1b3efec3a5d8f11d8902169b7123ea5c5f86e461d67b"
+  },
+  "samples": [
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 11,
+      "query_sha256": "05d6fc9a98d29e79a9dddf50c107787729492a11c744872d9d55545639fead17"
+    },
+    {
+      "source": "tests/test_handoff_entry_rules.py",
+      "line": 28,
+      "query_sha256": "0dd4df7c9e4f87dbc91d3fc25980081f7b412071e06430360bae95b4ed7ba6fc"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 1,
+      "query_sha256": "197a982a67d6790ad740a3b65b9ef530a5c3521e202a1f98346b41ac82824f58"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 34,
+      "query_sha256": "a9d6daeb71d537f72fbf0cc8dfc243643f2cf349548daf2661324b406e152c14"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 34,
+      "query_sha256": "f61a1dd59cfcd9f186313d30ac0ae284b3d6b02b49b527069b4f89ef63d9f198"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 106,
+      "query_sha256": "732ccadaf06c2c07331a7fd21c9bbdc60488e7bd9e5db501dce841fec331dea7"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 24,
+      "query_sha256": "e54e24fc0046d68a00fd03d78166c8f70152cbef69a128e75786b33e1eee292e"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 151,
+      "query_sha256": "6bb330c5cf608fc17a34e1091c8c0c674b39282986cb3beddf85765b8af0b9e8"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 28,
+      "query_sha256": "356db8f25b8bc90dd26baad4f02828b056a7b2e32820552bdb80df6294258a7d"
+    },
+    {
+      "source": "tests/test_jev_router_v5.py",
+      "line": 101,
+      "query_sha256": "4a5dc05791c18eb64a3251b1f28d468307439e2bc09af2b5c1f32b87f8afafad"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 37,
+      "query_sha256": "a1f1681c7bc5b32e6963ac5c6f22edc9a8299a0db5ec12680e955de7f2ca3d99"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 528,
+      "query_sha256": "027a7e6906c2f7cbbc324a164328050bef07851fffd0d094b42da99fdfd3f2ec"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 27,
+      "query_sha256": "ed126da80d156916215ba13bf8308a2ede1a612f3e4eb447195bd6a6f74066b5"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 21,
+      "query_sha256": "b533e032589b1f87cf7f9e5fca10046060410f488a8b5753211cc7b14decec60"
+    },
+    {
+      "source": "tests/test_jev_router_v5.py",
+      "line": 171,
+      "query_sha256": "09886e0d7b2258b3a4b21ac3595307d2ae17917a2daf4f5bea3df2bdeea66664"
+    },
+    {
+      "source": "tests/test_handoff_entry_rules.py",
+      "line": 77,
+      "query_sha256": "8de63e578cf4ce082e61bdf0db499d4469d1c37c07d362f433b63e84fe238ae6"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 106,
+      "query_sha256": "38d398d7c5c64358384f72630aed7080dfc628adb5180f840cc8d1beb5f552ef"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 470,
+      "query_sha256": "c60af0aa5592b8a710bd86a814bb65d789574723949a384ec89c2c63be1b1881"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 29,
+      "query_sha256": "36620185f8f2168fbf110559e372f4129580df2d771b47577a10d3df4a371d44"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 33,
+      "query_sha256": "c256bb68af58c86ebf6d2e43c71c71a370d5a1463f107f7d8184496b8c20ec66"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 141,
+      "query_sha256": "3c2eed41d7d9d348467d74f8a2391843fd2883f7a8361900d69f3c2b98b46fd8"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 59,
+      "query_sha256": "c140d861df21f3b0ffcbff8351a7be84c0275b256f8f04076fa1c8b9e24b5d93"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 126,
+      "query_sha256": "54481717b4541d54f1c076bb40cf10db83053c3ec5fc4d7870268b110f066c39"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 595,
+      "query_sha256": "2ecfab8c597495934222cdc296c0ba89f8b448110ffc7fa3030750ee312c3aac"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 744,
+      "query_sha256": "29a5ce45e3313bfd1f246bdfd32662c597a748877b6dcba3b52174f59cf561f1"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 240,
+      "query_sha256": "666a7251e9c1cf043030377897929613cc0f88b0d2c077fd2889855b34ff084b"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 61,
+      "query_sha256": "59838acedd450af01cd1f748488dbdc04a1637053308f9a2b8a96e42e35d84c0"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 35,
+      "query_sha256": "c791698b3d6f036dafccdb866d5179446d561da06db2f6958ab4bb545ad6669a"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 33,
+      "query_sha256": "1bb5dce027e734d4444ba12212ed4ebf5e1ede499608189508fe5c0f8dc56f42"
+    },
+    {
+      "source": "tests/test_handoff_entry_rules.py",
+      "line": 53,
+      "query_sha256": "83ea1f7dd8784258d17c1003df85bcb97070aabdfc12c539c66a9ecee9255c6d"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 58,
+      "query_sha256": "6e161f30edab87907416b979d79da3b5b6f21ae17a612dbf8912639bb6c392e5"
+    },
+    {
+      "source": "tests/test_handoff_entry_rules.py",
+      "line": 27,
+      "query_sha256": "345267e682109f056d7fbe62875035ddeda5766482c6ba714e330725e3bc72be"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 27,
+      "query_sha256": "dda48c4403f8322c7bca9b66dec1224d578d72f9e94a9d8d15e95d14037b5315"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 148,
+      "query_sha256": "ea89542088685153e37cd7bc589d5894577a5404b8a3cdbf7c9d57e86e3b04db"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 35,
+      "query_sha256": "e8f4aaaf1a90c0606be7a1cb021d5b654195eee49862f56d7d7f5936b538b721"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 50,
+      "query_sha256": "c60cd265e7fff0c934d8bb9b2b5f1de386c88f2f4eb71018e92efa3a8209bb79"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 81,
+      "query_sha256": "dfbf6bdab23b01b67347d20ed073d902e67e0da7ed6d0a2c489d74112a9ea892"
+    },
+    {
+      "source": "tests/test_handoff_entry_rules.py",
+      "line": 26,
+      "query_sha256": "bd82ca8843f2a7dd70ebb33f4336a2f42f77ad92d13f0b83a0d560b0b8826bab"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 37,
+      "query_sha256": "36191a51404209fd806d672301d6f40d27bc3995c0a7016db825de90bce9f366"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 36,
+      "query_sha256": "f3692e1af168e56b9bdec3f10a0d43b786bd8cf4e4a037debcac95bf79f27916"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 518,
+      "query_sha256": "42619c46ccce183c3f429e360744b116559e0dd98b44236c252175560a84e35c"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 19,
+      "query_sha256": "d30ca6250f7a751201b32d0eed591973db0a604e73a4f2f50c938f55e480ee0f"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 807,
+      "query_sha256": "9a12896681549ea621faf8f48e6ac2fd499671ad9cdf1e43c4f182ac087847dd"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 344,
+      "query_sha256": "75ac8f9f03866cd867c2457ea9ab40346f61456dd11b9cb9bed05d27b79ea156"
+    },
+    {
+      "source": "tests/test_rule_router.py",
+      "line": 236,
+      "query_sha256": "39b9b05f159c4f63263b774d313de9b1648aae55fd6fbf6e81650b5f921e74a0"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 101,
+      "query_sha256": "30af921300754892e81b3161fa9680238fac7d2864541fdc2596c71ff13affca"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 26,
+      "query_sha256": "6c8335cb5f897c79930fce3f639faadf1c2a8d0fca5dd97895647a63329baadc"
+    },
+    {
+      "source": "data/intent/raw/manual_seeds.jsonl",
+      "line": 102,
+      "query_sha256": "9294e523dbb21af28de874d0f8c6c08dd0b9611623e079271cca7f99285033fe"
+    },
+    {
+      "source": "tests/test_handoff_network.py",
+      "line": 499,
+      "query_sha256": "d87fc494e3a61ee9e8ddf674c7e625770149f69301c89d5f53a2ca5316816a12"
+    },
+    {
+      "source": "tests/test_handoff_entry_rules.py",
+      "line": 25,
+      "query_sha256": "ee0722c027daf47cd3d99aefa5fac07e00515a87953ed3ede7cce42054bae499"
+    }
+  ],
+  "cases": [
+    {
+      "calls": [
+        {
+          "state_sha256": "f108fdae451554ddb9bcc72eca5976b9dfad64672383647a4e13520aa9ca090c",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:28.649900+00:00",
+            "latency_ms": 2333.34,
+            "usage": {
+              "input_tokens": 1041,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 0.39,
+                "probabilities": {
+                  "worldline": 0.37,
+                  "general_chat": 0.08,
+                  "tool_calling": 0.01,
+                  "current_song": 0.54
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 11,
+        "query_sha256": "05d6fc9a98d29e79a9dddf50c107787729492a11c744872d9d55545639fead17",
+        "comparable": false,
+        "agrees": null,
+        "attribution": "low_confidence",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "帮我分析一下这首歌的创作背景",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "帮我分析一下这首歌的创作背景",
+              []
+            ]
+          ]
+        ],
+        "router_source": "legacy_hybrid_fallback",
+        "fallback_reason": "low_confidence",
+        "response_model": null,
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [],
+      "comparison": {
+        "source": "tests/test_handoff_entry_rules.py",
+        "line": 28,
+        "query_sha256": "0dd4df7c9e4f87dbc91d3fc25980081f7b412071e06430360bae95b4ed7ba6fc",
+        "comparable": false,
+        "agrees": null,
+        "attribution": "orchestration_failure",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停播放",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停播放",
+              []
+            ]
+          ]
+        ],
+        "router_source": "legacy_hybrid_fallback",
+        "fallback_reason": "orchestration_failure",
+        "response_model": null,
+        "api_calls": 0
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "e224632dfb64c2cefe74a1f8dcde1ab6bbe38dfd0fda3f58dac26414ee2b960f",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:29.219511+00:00",
+            "latency_ms": 535.37,
+            "usage": {
+              "input_tokens": 1034,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 0.99,
+                "probabilities": {
+                  "general_chat": 0.01,
+                  "current_song": 0.99,
+                  "worldline": 0.0,
+                  "tool_calling": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 1,
+        "query_sha256": "197a982a67d6790ad740a3b65b9ef530a5c3521e202a1f98346b41ac82824f58",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下这首歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下这首歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "196fee34f0e4465073f671dfd90971a09b77fa6b61b08119cdd30028cabc9036",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:29.779892+00:00",
+            "latency_ms": 540.54,
+            "usage": {
+              "input_tokens": 1038,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "current_song": 0.0,
+                  "general_chat": 0.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 34,
+        "query_sha256": "a9d6daeb71d537f72fbf0cc8dfc243643f2cf349548daf2661324b406e152c14",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "把晴天加到播放队列末尾",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "把晴天加到播放队列末尾",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "7defdb6197ce5f32b72bd10d28bfd68245725ce6aa53e8d3e222a427ec70a921",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:30.329413+00:00",
+            "latency_ms": 536.71,
+            "usage": {
+              "input_tokens": 1034,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 34,
+        "query_sha256": "f61a1dd59cfcd9f186313d30ac0ae284b3d6b02b49b527069b4f89ef63d9f198",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "取消收藏这首歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "取消收藏这首歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "448c31ed43a453fcc0ff819829c23ecd378656c6e6dea1210681da161b95bb04",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:30.881854+00:00",
+            "latency_ms": 530.28,
+            "usage": {
+              "input_tokens": 1035,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 0.0,
+                  "general_chat": 0.0,
+                  "current_song": 1.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 106,
+        "query_sha256": "732ccadaf06c2c07331a7fd21c9bbdc60488e7bd9e5db501dce841fec331dea7",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "这首歌表达了什么",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "这首歌表达了什么",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "072574ed16b45808644157fb4068bc14443193451beb4c0b58686599d66f192c",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:31.428348+00:00",
+            "latency_ms": 536.06,
+            "usage": {
+              "input_tokens": 1032,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0,
+                  "current_song": 0.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 24,
+        "query_sha256": "e54e24fc0046d68a00fd03d78166c8f70152cbef69a128e75786b33e1eee292e",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "搜索周杰伦",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "搜索周杰伦",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "f4a848e151415f0727c59af4f49574a14a72a80253cadf00c541aec289f7503e",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:32.057636+00:00",
+            "latency_ms": 608.57,
+            "usage": {
+              "input_tokens": 1041,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 0.98,
+                "probabilities": {
+                  "tool_calling": 0.02,
+                  "worldline": 0.0,
+                  "general_chat": 0.0,
+                  "current_song": 0.98
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 151,
+        "query_sha256": "6bb330c5cf608fc17a34e1091c8c0c674b39282986cb3beddf85765b8af0b9e8",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下当前这首歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下当前这首歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "2ad10a21e5d4034b741c283817968b92c07b592d593b5cb274fa4707b957efb9",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:32.618322+00:00",
+            "latency_ms": 547.8,
+            "usage": {
+              "input_tokens": 1032,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "general_chat": 0.0,
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 28,
+        "query_sha256": "356db8f25b8bc90dd26baad4f02828b056a7b2e32820552bdb80df6294258a7d",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "切到下一首",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "切到下一首",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "5a3a7ac2b0c343688a2b43827a1fb84aea7a5bf9b9279283d88e5dfbc8af5092",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:33.185690+00:00",
+            "latency_ms": 536.54,
+            "usage": {
+              "input_tokens": 1035,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 1.0,
+                  "tool_calling": 0.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_jev_router_v5.py",
+        "line": 101,
+        "query_sha256": "4a5dc05791c18eb64a3251b1f28d468307439e2bc09af2b5c1f32b87f8afafad",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析当前这首歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析当前这首歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "0b0641ab663a99fb8678a1095353e37320854c5714849cd3b674fe2b084483b9",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:33.752714+00:00",
+            "latency_ms": 546.49,
+            "usage": {
+              "input_tokens": 1037,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 1.0,
+                  "current_song": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 37,
+        "query_sha256": "a1f1681c7bc5b32e6963ac5c6f22edc9a8299a0db5ec12680e955de7f2ca3d99",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "切到队列里的《晴天》",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "切到队列里的《晴天》",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "b0c8929f21152f5b0ce4c4324b668d5220733d3bdec11125124bec7979508400",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:34.437909+00:00",
+            "latency_ms": 638.26,
+            "usage": {
+              "input_tokens": 1036,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "worldline",
+                "confidence": 0.95,
+                "probabilities": {
+                  "tool_calling": 0.0,
+                  "current_song": 0.03,
+                  "worldline": 0.96,
+                  "general_chat": 0.01
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 528,
+        "query_sha256": "027a7e6906c2f7cbbc324a164328050bef07851fffd0d094b42da99fdfd3f2ec",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索这首歌的世界线",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索这首歌的世界线",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "183c5489847ddf620a1c1b4aa98228f7f7fa303d86bcb2ca265421d799126b83",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:35.009449+00:00",
+            "latency_ms": 549.43,
+            "usage": {
+              "input_tokens": 1041,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 1.0,
+                  "current_song": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 27,
+        "query_sha256": "ed126da80d156916215ba13bf8308a2ede1a612f3e4eb447195bd6a6f74066b5",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "查看我的学习歌单里面有哪些歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "查看我的学习歌单里面有哪些歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "3fdcd41f29870f8e89ee6141e78eafba27da7a9d3119762ca146104bb46b4650",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:35.961278+00:00",
+            "latency_ms": 937.36,
+            "usage": {
+              "input_tokens": 1039,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 1.0,
+                  "tool_calling": 0.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 21,
+        "query_sha256": "b533e032589b1f87cf7f9e5fca10046060410f488a8b5753211cc7b14decec60",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下这首歌的情绪变化",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下这首歌的情绪变化",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "d8fd793a41d87c0611934d1e12f3df343d4d219f161253bfa1b5dff38709f8e6",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:36.943015+00:00",
+            "latency_ms": 958.51,
+            "usage": {
+              "input_tokens": 1268,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.8,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.58,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.07,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.15,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "d3f48ae2cafae0407ab0ec1732427f08aca360d44495ad5c1fe2e4153813b2bd",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:36.595088+00:00",
+            "latency_ms": 604.19,
+            "usage": {
+              "input_tokens": 1814,
+              "output_tokens": 106
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 1.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 0.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 1.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_jev_router_v5.py",
+        "line": 171,
+        "query_sha256": "09886e0d7b2258b3a4b21ac3595307d2ae17917a2daf4f5bea3df2bdeea66664",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析这首歌",
+              []
+            ],
+            [
+              "tool_calling",
+              "暂停",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析这首歌",
+              []
+            ],
+            [
+              "tool_calling",
+              "暂停",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    },
+    {
+      "calls": [],
+      "comparison": {
+        "source": "tests/test_handoff_entry_rules.py",
+        "line": 77,
+        "query_sha256": "8de63e578cf4ce082e61bdf0db499d4469d1c37c07d362f433b63e84fe238ae6",
+        "comparable": false,
+        "agrees": null,
+        "attribution": "orchestration_failure",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停播放",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停播放",
+              []
+            ]
+          ]
+        ],
+        "router_source": "legacy_hybrid_fallback",
+        "fallback_reason": "orchestration_failure",
+        "response_model": null,
+        "api_calls": 0
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "d3e8e12332a551542d48fb96f77aa7a736e46ee74d5ee332378a8e8fc88b4212",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:37.527526+00:00",
+            "latency_ms": 546.18,
+            "usage": {
+              "input_tokens": 1036,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 1.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 106,
+        "query_sha256": "38d398d7c5c64358384f72630aed7080dfc628adb5180f840cc8d1beb5f552ef",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下现在这首歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下现在这首歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "cdf35c420299241d4bdc08b521b4d29809d23f1699991d8eaa6d6f33f1510277",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:38.120868+00:00",
+            "latency_ms": 543.91,
+            "usage": {
+              "input_tokens": 1037,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "worldline",
+                "confidence": 0.89,
+                "probabilities": {
+                  "worldline": 0.92,
+                  "current_song": 0.08,
+                  "general_chat": 0.0,
+                  "tool_calling": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 470,
+        "query_sha256": "c60af0aa5592b8a710bd86a814bb65d789574723949a384ec89c2c63be1b1881",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索当前歌曲的世界线",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索当前歌曲的世界线",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "95f906bc6f213cadbbf6f523cf0c1a6809d0b9ca7d711d159cc5cc637cc5c1e7",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:38.726961+00:00",
+            "latency_ms": 590.0,
+            "usage": {
+              "input_tokens": 1032,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "general_chat": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 29,
+        "query_sha256": "36620185f8f2168fbf110559e372f4129580df2d771b47577a10d3df4a371d44",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "播放上一首",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "播放上一首",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "bf0ebda443a41c1505dc5c546e28dbe3a2d444b2dfdfaf5bd8b8aa6d8d453926",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:39.318206+00:00",
+            "latency_ms": 579.79,
+            "usage": {
+              "input_tokens": 1032,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "general_chat": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 33,
+        "query_sha256": "c256bb68af58c86ebf6d2e43c71c71a370d5a1463f107f7d8184496b8c20ec66",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "收藏这首歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "收藏这首歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "37ffae6c811537848be89a5b1fc3244744ca84a8afb877a0f05382302550dcb5",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:39.927071+00:00",
+            "latency_ms": 586.49,
+            "usage": {
+              "input_tokens": 1277,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.9,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.65,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.07,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.32,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "cb725f9952d93b97092b6452755213d25cd53cf7c11d020e7de8a0baed8ab795",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:39.918774+00:00",
+            "latency_ms": 574.0,
+            "usage": {
+              "input_tokens": 1825,
+              "output_tokens": 106
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 0.0,
+                  "general_chat": 0.0,
+                  "worldline": 0.0,
+                  "current_song": 1.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0,
+                  "worldline": 0.0,
+                  "current_song": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 141,
+        "query_sha256": "3c2eed41d7d9d348467d74f8a2391843fd2883f7a8361900d69f3c2b98b46fd8",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析当前这首歌为什么这么伤感",
+              []
+            ],
+            [
+              "tool_calling",
+              "收藏它",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析当前这首歌为什么这么伤感",
+              []
+            ],
+            [
+              "tool_calling",
+              "收藏它",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "2f67b7e8e39004819432fe3f71fe1105010b0ca2ed5914619d63085fb66e1a39",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:40.517614+00:00",
+            "latency_ms": 552.82,
+            "usage": {
+              "input_tokens": 1032,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 0.99,
+                "probabilities": {
+                  "current_song": 1.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 0.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 59,
+        "query_sha256": "c140d861df21f3b0ffcbff8351a7be84c0275b256f8f04076fa1c8b9e24b5d93",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析这首歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析这首歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "310a7dfb954f4031a765f6ad40fa98e7cafdab267ee60315f4f752f050a08681",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:41.073789+00:00",
+            "latency_ms": 546.21,
+            "usage": {
+              "input_tokens": 1040,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 0.99,
+                "probabilities": {
+                  "tool_calling": 0.99,
+                  "general_chat": 0.01,
+                  "current_song": 0.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 126,
+        "query_sha256": "54481717b4541d54f1c076bb40cf10db83053c3ec5fc4d7870268b110f066c39",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "如果声音太大就帮我调小一点",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "如果声音太大就帮我调小一点",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "a7055217442914cdb742333b2c407f5201628e9ac42863dea68f497bfb4bed86",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:41.683865+00:00",
+            "latency_ms": 560.07,
+            "usage": {
+              "input_tokens": 1032,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 0.87,
+                "probabilities": {
+                  "tool_calling": 0.9,
+                  "current_song": 0.0,
+                  "general_chat": 0.1,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 595,
+        "query_sha256": "2ecfab8c597495934222cdc296c0ba89f8b448110ffc7fa3030750ee312c3aac",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "搜索结果",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "搜索结果",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "f2b8e95b5e73ac512d49e29fa751ade2afb380cf52ad0dc85b75d9e7243cca69",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:42.354299+00:00",
+            "latency_ms": 618.22,
+            "usage": {
+              "input_tokens": 1275,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.03,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.48,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.78,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.17,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "3655e51e6a5274714692ea8f246d43fabef1bb570d6c3af7f422d8ab6670179d",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:42.352842+00:00",
+            "latency_ms": 607.93,
+            "usage": {
+              "input_tokens": 1820,
+              "output_tokens": 107
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 1.0,
+                  "current_song": 0.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "worldline",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 1.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 0.0,
+                  "current_song": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 744,
+        "query_sha256": "29a5ce45e3313bfd1f246bdfd32662c597a748877b6dcba3b52174f59cf561f1",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "搜索周杰伦",
+              []
+            ],
+            [
+              "worldline",
+              "探索他的世界线",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "搜索周杰伦",
+              []
+            ],
+            [
+              "worldline",
+              "探索他的世界线",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "e433d5e56798578fba7fedfb9d8c0dedb322a313c2a577537f796b7793c258a8",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:42.959965+00:00",
+            "latency_ms": 579.27,
+            "usage": {
+              "input_tokens": 1269,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.06,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.92,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.04,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.04,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "9f18ea821dc836a719e6fa892ab169e7b9c452b52529d6a144bf5ae026a53e5e",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:42.952666+00:00",
+            "latency_ms": 562.92,
+            "usage": {
+              "input_tokens": 1817,
+              "output_tokens": 107
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 240,
+        "query_sha256": "666a7251e9c1cf043030377897929613cc0f88b0d2c077fd2889855b34ff084b",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ],
+            [
+              "tool_calling",
+              "收藏这首歌",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ],
+            [
+              "tool_calling",
+              "收藏这首歌",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "c7b43f82a748241dbd9c7900b21df27aa77ceed57a52b9645e67e6fcd9d63816",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:43.557788+00:00",
+            "latency_ms": 553.73,
+            "usage": {
+              "input_tokens": 1040,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "worldline",
+                "confidence": 1.0,
+                "probabilities": {
+                  "current_song": 0.0,
+                  "general_chat": 0.0,
+                  "worldline": 1.0,
+                  "tool_calling": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 61,
+        "query_sha256": "59838acedd450af01cd1f748488dbdc04a1637053308f9a2b8a96e42e35d84c0",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索歌手《周杰伦》的世界线",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索歌手《周杰伦》的世界线",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "edd5e1ebc457a6debca9e89c27a2e4e1005e0ee3d6d3ccded398feb3c9f73830",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:44.138107+00:00",
+            "latency_ms": 559.24,
+            "usage": {
+              "input_tokens": 1037,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "current_song": 0.0,
+                  "general_chat": 0.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 35,
+        "query_sha256": "c791698b3d6f036dafccdb866d5179446d561da06db2f6958ab4bb545ad6669a",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "把这首歌加入我的歌单",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "把这首歌加入我的歌单",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "b025f17824f243d9d290ea54d68e3da660600de5c2073038fbcc8a0a1d58bef9",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:44.710086+00:00",
+            "latency_ms": 548.74,
+            "usage": {
+              "input_tokens": 1035,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0,
+                  "current_song": 0.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 33,
+        "query_sha256": "1bb5dce027e734d4444ba12212ed4ebf5e1ede499608189508fe5c0f8dc56f42",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "把晴天插到下一首",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "把晴天插到下一首",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "ef4e3925916a1943bfc4a1fc07ab3986e8720ba7841374e3abc9fbd24f4efddd",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:45.266355+00:00",
+            "latency_ms": 528.76,
+            "usage": {
+              "input_tokens": 1034,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 1.0,
+                "probabilities": {
+                  "current_song": 1.0,
+                  "worldline": 0.0,
+                  "tool_calling": 0.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_entry_rules.py",
+        "line": 53,
+        "query_sha256": "83ea1f7dd8784258d17c1003df85bcb97070aabdfc12c539c66a9ecee9255c6d",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析当前这首歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析当前这首歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "5d1f6b8afe46cceb4efbf29f7743dbac33a007cdc1f4d07cd9211d65df654261",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:45.861337+00:00",
+            "latency_ms": 547.72,
+            "usage": {
+              "input_tokens": 1031,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "general_chat",
+                "confidence": 1.0,
+                "probabilities": {
+                  "general_chat": 1.0,
+                  "current_song": 0.0,
+                  "worldline": 0.0,
+                  "tool_calling": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 58,
+        "query_sha256": "6e161f30edab87907416b979d79da3b5b6f21ae17a612dbf8912639bb6c392e5",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "general_chat",
+              "陪我聊聊",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "general_chat",
+              "陪我聊聊",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "9ad36399a042df0301cd072a3ee19a4d4f48c12198221d44b37171da53454ff5",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:46.461894+00:00",
+            "latency_ms": 575.65,
+            "usage": {
+              "input_tokens": 1269,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.03,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.96,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.03,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.04,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "7445083a2c9155d173df76be18b1e528fc3e2c9e1bf33969b29c2f14f3afc033",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:46.872687+00:00",
+            "latency_ms": 977.26,
+            "usage": {
+              "input_tokens": 1817,
+              "output_tokens": 107
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_entry_rules.py",
+        "line": 27,
+        "query_sha256": "345267e682109f056d7fbe62875035ddeda5766482c6ba714e330725e3bc72be",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "先暂停播放",
+              []
+            ],
+            [
+              "tool_calling",
+              "恢复播放",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "先暂停播放",
+              []
+            ],
+            [
+              "tool_calling",
+              "恢复播放",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "653bb8db507a71dca8e6cd77d19a48634c8a840aa288163993ad3a75de079999",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:47.426212+00:00",
+            "latency_ms": 531.84,
+            "usage": {
+              "input_tokens": 1031,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 27,
+        "query_sha256": "dda48c4403f8322c7bca9b66dec1224d578d72f9e94a9d8d15e95d14037b5315",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "继续播放",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "继续播放",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "53fc6a8528c598f0fb7fd7ef42a245b34545c28ffdddd1bab04b89c5b326ed61",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:48.002597+00:00",
+            "latency_ms": 553.64,
+            "usage": {
+              "input_tokens": 1040,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 0.99,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "tool_calling": 0.99,
+                  "general_chat": 0.01,
+                  "current_song": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 148,
+        "query_sha256": "ea89542088685153e37cd7bc589d5894577a5404b8a3cdbf7c9d57e86e3b04db",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "帮我暂停",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "帮我暂停",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "ed2b580a3686a3f169c916a007de40c9a89f4de5ed0ffe1517ba745598e0336a",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:48.559121+00:00",
+            "latency_ms": 528.16,
+            "usage": {
+              "input_tokens": 1042,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "general_chat": 0.0,
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 35,
+        "query_sha256": "e8f4aaaf1a90c0606be7a1cb021d5b654195eee49862f56d7d7f5936b538b721",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "播放周杰伦的《范特西》这张专辑",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "播放周杰伦的《范特西》这张专辑",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "6f3ef073e599e06cf316d26b0ae73bd1b17d2d67c60ce8e34aeace5b94a6848d",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:49.172534+00:00",
+            "latency_ms": 584.19,
+            "usage": {
+              "input_tokens": 1036,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "worldline",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 0.0,
+                  "general_chat": 0.0,
+                  "worldline": 1.0,
+                  "current_song": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 50,
+        "query_sha256": "c60cd265e7fff0c934d8bb9b2b5f1de386c88f2f4eb71018e92efa3a8209bb79",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索周杰伦的世界线",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索周杰伦的世界线",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "d72780da29bd3f15457d1d1f79d71aa50d2e667b79813ba35fe15c7b6c68ed40",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:49.772107+00:00",
+            "latency_ms": 568.71,
+            "usage": {
+              "input_tokens": 1031,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 0.99,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 81,
+        "query_sha256": "dfbf6bdab23b01b67347d20ed073d902e67e0da7ed6d0a2c489d74112a9ea892",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "00cf69af2b546376a7a4ea6bd205c517fb4687cbd174db0e435d9af0013c2eae",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:50.383605+00:00",
+            "latency_ms": 579.88,
+            "usage": {
+              "input_tokens": 1276,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.04,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.76,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.87,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.09,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "24751f91e4bf231d867f7cf0470355ff8b7327f8765fc1252db7f1f5eb18606a",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:50.566037+00:00",
+            "latency_ms": 752.5,
+            "usage": {
+              "input_tokens": 1824,
+              "output_tokens": 107
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "worldline",
+                "confidence": 0.99,
+                "probabilities": {
+                  "tool_calling": 0.0,
+                  "general_chat": 0.0,
+                  "current_song": 0.0,
+                  "worldline": 1.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0,
+                  "current_song": 0.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_entry_rules.py",
+        "line": 26,
+        "query_sha256": "bd82ca8843f2a7dd70ebb33f4336a2f42f77ad92d13f0b83a0d560b0b8826bab",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "先探索周杰伦的音乐世界线",
+              []
+            ],
+            [
+              "tool_calling",
+              "暂停播放",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "先探索周杰伦的音乐世界线",
+              []
+            ],
+            [
+              "tool_calling",
+              "暂停播放",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "c431fc9b62a768352bb6be7e35e27bf723e729d4f594da797295e6aff732b287",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:51.142295+00:00",
+            "latency_ms": 553.02,
+            "usage": {
+              "input_tokens": 1036,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "general_chat": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 37,
+        "query_sha256": "36191a51404209fd806d672301d6f40d27bc3995c0a7016db825de90bce9f366",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "帮我搜索一下稻香",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "帮我搜索一下稻香",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 36,
+        "query_sha256": "f3692e1af168e56b9bdec3f10a0d43b786bd8cf4e4a037debcac95bf79f27916",
+        "comparable": false,
+        "agrees": null,
+        "attribution": "orchestration_failure",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "播放我的《私人收藏》歌单",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "播放我的《私人收藏》歌单",
+              []
+            ]
+          ]
+        ],
+        "router_source": "legacy_hybrid_fallback",
+        "fallback_reason": "orchestration_failure",
+        "response_model": null,
+        "api_calls": 0
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "d16fa65329ffa903dd6ddba2fbd6f533b36e46ec2e714944c4252c14e69a8b76",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:51.811208+00:00",
+            "latency_ms": 579.71,
+            "usage": {
+              "input_tokens": 1037,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "worldline",
+                "confidence": 0.93,
+                "probabilities": {
+                  "worldline": 0.95,
+                  "current_song": 0.04,
+                  "tool_calling": 0.0,
+                  "general_chat": 0.01
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 518,
+        "query_sha256": "42619c46ccce183c3f429e360744b116559e0dd98b44236c252175560a84e35c",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索这首歌的世界线",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "worldline",
+              "探索这首歌的世界线",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "76dc0e35634742aea61fbdc1360d1f0f78d208d0158276f1dcea4c481a8f0fa5",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:52.546537+00:00",
+            "latency_ms": 710.05,
+            "usage": {
+              "input_tokens": 1038,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 1.0,
+                "probabilities": {
+                  "current_song": 1.0,
+                  "worldline": 0.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 19,
+        "query_sha256": "d30ca6250f7a751201b32d0eed591973db0a604e73a4f2f50c938f55e480ee0f",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "帮我理解一下当前这首歌",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "帮我理解一下当前这首歌",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "2d4f7c706af463b856b927aa05dc4d54b74881efc05b8fe9aa1ec8fdc2cdb073",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:53.328088+00:00",
+            "latency_ms": 731.34,
+            "usage": {
+              "input_tokens": 1032,
+              "output_tokens": 52
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "general_chat",
+                "confidence": 1.0,
+                "probabilities": {
+                  "current_song": 0.0,
+                  "worldline": 0.0,
+                  "general_chat": 1.0,
+                  "tool_calling": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 807,
+        "query_sha256": "9a12896681549ea621faf8f48e6ac2fd499671ad9cdf1e43c4f182ac087847dd",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "general_chat",
+              "陪我聊聊",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "general_chat",
+              "陪我聊聊",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "2b4085ddac88ea7b2f66c10f05501e346c58aba1d369fe0dde21e30e6c8ccf75",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:53.950500+00:00",
+            "latency_ms": 569.25,
+            "usage": {
+              "input_tokens": 1032,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "general_chat": 0.0,
+                  "current_song": 0.0,
+                  "worldline": 0.0,
+                  "tool_calling": 1.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 344,
+        "query_sha256": "75ac8f9f03866cd867c2457ea9ab40346f61456dd11b9cb9bed05d27b79ea156",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "18334fa46ef45e4babaf5f847336cde3b21b4ec50d6483ee6a3783dfbe6023b3",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:54.583788+00:00",
+            "latency_ms": 600.2,
+            "usage": {
+              "input_tokens": 1275,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.05,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.91,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.03,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.05,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "9f18ea821dc836a719e6fa892ab169e7b9c452b52529d6a144bf5ae026a53e5e",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:54.605114+00:00",
+            "latency_ms": 613.2,
+            "usage": {
+              "input_tokens": 1817,
+              "output_tokens": 107
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 0.99,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "current_song": 0.0,
+                  "worldline": 0.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "current_song": 0.0,
+                  "general_chat": 0.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_rule_router.py",
+        "line": 236,
+        "query_sha256": "39b9b05f159c4f63263b774d313de9b1648aae55fd6fbf6e81650b5f921e74a0",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ],
+            [
+              "tool_calling",
+              "收藏这首歌",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ],
+            [
+              "tool_calling",
+              "收藏这首歌",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "5a6e37c71bd65241b840b88bda81674d005a040b5ad6c9d7c28fd1d8e9838b80",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:55.220794+00:00",
+            "latency_ms": 588.94,
+            "usage": {
+              "input_tokens": 1271,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.74,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.56,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.11,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.29,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "2290ded1eb53248074158229c58a86bda2c8a94277e2b183eaf135abecf2e63d",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:55.235452+00:00",
+            "latency_ms": 593.13,
+            "usage": {
+              "input_tokens": 1819,
+              "output_tokens": 106
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 0.99,
+                "probabilities": {
+                  "general_chat": 0.0,
+                  "current_song": 1.0,
+                  "tool_calling": 0.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "general_chat": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "worldline": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 101,
+        "query_sha256": "30af921300754892e81b3161fa9680238fac7d2864541fdc2596c71ff13affca",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下这首歌",
+              []
+            ],
+            [
+              "tool_calling",
+              "帮我收藏",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "current_song",
+              "分析一下这首歌",
+              []
+            ],
+            [
+              "tool_calling",
+              "帮我收藏",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "6b07f2be6e2cf3eaa60e6341aa1ea52846dfac3e63ed2dab97ed704c9b619409",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:55.806228+00:00",
+            "latency_ms": 543.68,
+            "usage": {
+              "input_tokens": 1033,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 26,
+        "query_sha256": "6c8335cb5f897c79930fce3f639faadf1c2a8d0fca5dd97895647a63329baadc",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "帮我暂停一下",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "帮我暂停一下",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "617caa578388f6f9772093dab289a32cb2fa3402ff98aa800f2c12ccd05db00f",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:56.400272+00:00",
+            "latency_ms": 570.5,
+            "usage": {
+              "input_tokens": 1276,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.9,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.47,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.04,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.13,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "1c69691d6e6484b613eca56168be63cfeb751051272b7ea93590f86e4f1b96c5",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:56.559819+00:00",
+            "latency_ms": 720.79,
+            "usage": {
+              "input_tokens": 1824,
+              "output_tokens": 106
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 0.99,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "tool_calling": 1.0,
+                  "general_chat": 0.0,
+                  "current_song": 0.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "current_song",
+                "confidence": 0.99,
+                "probabilities": {
+                  "worldline": 0.0,
+                  "tool_calling": 0.0,
+                  "general_chat": 0.0,
+                  "current_song": 1.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "data/intent/raw/manual_seeds.jsonl",
+        "line": 102,
+        "query_sha256": "9294e523dbb21af28de874d0f8c6c08dd0b9611623e079271cca7f99285033fe",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ],
+            [
+              "current_song",
+              "告诉我这首歌歌词什么意思",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "暂停一下",
+              []
+            ],
+            [
+              "current_song",
+              "告诉我这首歌歌词什么意思",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "fbc1b9783d0bb39ca2f0e387cfab42422f8f04badbf14d1696b4ce4a04ac1315",
+          "questions": [
+            "route"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:57.160950+00:00",
+            "latency_ms": 548.48,
+            "usage": {
+              "input_tokens": 1036,
+              "output_tokens": 53
+            },
+            "answers": {
+              "route": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 0.99,
+                "probabilities": {
+                  "current_song": 0.0,
+                  "worldline": 0.0,
+                  "general_chat": 0.0,
+                  "tool_calling": 1.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_network.py",
+        "line": 499,
+        "query_sha256": "d87fc494e3a61ee9e8ddf674c7e625770149f69301c89d5f53a2ca5316816a12",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "搜索晴天",
+              []
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "搜索晴天",
+              []
+            ]
+          ]
+        ],
+        "router_source": "jev_single",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 1
+      }
+    },
+    {
+      "calls": [
+        {
+          "state_sha256": "3450229e568aae15a7e5e033ff1f4a3ef68b9b824a8bcb8a703139b7d61e295f",
+          "questions": [
+            "current_song",
+            "general_chat",
+            "tool_calling",
+            "worldline"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:57.829390+00:00",
+            "latency_ms": 632.04,
+            "usage": {
+              "input_tokens": 1269,
+              "output_tokens": 74
+            },
+            "answers": {
+              "current_song": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.05,
+                "score": null
+              },
+              "tool_calling": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.92,
+                "score": null
+              },
+              "worldline": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.03,
+                "score": null
+              },
+              "general_chat": {
+                "kind": "noul",
+                "choice": null,
+                "confidence": null,
+                "probabilities": null,
+                "noul": 0.75,
+                "score": null
+              }
+            }
+          }
+        },
+        {
+          "state_sha256": "337118ca264352c534363cf4ad0b56d283083445a9065834ed8f579c467c1ea3",
+          "questions": [
+            "fragment_0",
+            "fragment_1"
+          ],
+          "response": {
+            "requested_model": "jev-latest",
+            "response_model": "jev-1.13.0",
+            "evaluation_timestamp": "2026-10-03T14:24:57.799844+00:00",
+            "latency_ms": 593.34,
+            "usage": {
+              "input_tokens": 1817,
+              "output_tokens": 106
+            },
+            "answers": {
+              "fragment_0": {
+                "kind": "choice",
+                "choice": "tool_calling",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 1.0,
+                  "worldline": 0.0,
+                  "general_chat": 0.0,
+                  "current_song": 0.0
+                },
+                "noul": null,
+                "score": null
+              },
+              "fragment_1": {
+                "kind": "choice",
+                "choice": "general_chat",
+                "confidence": 1.0,
+                "probabilities": {
+                  "tool_calling": 0.0,
+                  "worldline": 0.0,
+                  "current_song": 0.0,
+                  "general_chat": 1.0
+                },
+                "noul": null,
+                "score": null
+              }
+            }
+          }
+        }
+      ],
+      "comparison": {
+        "source": "tests/test_handoff_entry_rules.py",
+        "line": 25,
+        "query_sha256": "ee0722c027daf47cd3d99aefa5fac07e00515a87953ed3ede7cce42054bae499",
+        "comparable": true,
+        "agrees": true,
+        "attribution": "agreement",
+        "rule_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "先暂停播放",
+              []
+            ],
+            [
+              "general_chat",
+              "陪我聊聊",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "v5_signature": [
+          true,
+          [
+            [
+              "tool_calling",
+              "先暂停播放",
+              []
+            ],
+            [
+              "general_chat",
+              "陪我聊聊",
+              [
+                0
+              ]
+            ]
+          ]
+        ],
+        "router_source": "jev_multi",
+        "fallback_reason": null,
+        "response_model": "jev-1.13.0",
+        "api_calls": 2
+      }
+    }
+  ]
+}

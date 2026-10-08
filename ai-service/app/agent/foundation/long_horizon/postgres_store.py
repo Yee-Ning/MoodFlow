@@ -12,15 +12,20 @@ from psycopg_pool import ConnectionPool
 from .models import (
     ArtifactRecord,
     HandoffProjection,
+    HandoffProjectionV2,
     HistoryEvent,
     HistoryPointer,
     SessionRecord,
     TaskRecord,
+    same_event_content,
 )
+from .journal_contracts import archive_projection, resolve_projection
 
 
 class PostgresContinuityStore:
     """PostgreSQL adapter for durable long-horizon continuity."""
+
+    supports_atomic_rollover = True
 
     def __init__(self, database_url: str, *, max_pool_size: int = 10):
         if not database_url.strip():
@@ -245,6 +250,21 @@ class PostgresContinuityStore:
         ]
 
     def append_event(self, event: HistoryEvent) -> None:
+        self._append_event(event, idempotent=False)
+
+    def append_event_once(self, event: HistoryEvent) -> HistoryEvent:
+        if event.event_key is None:
+            raise ValueError("idempotent history requires event_key")
+        return self._append_event(event, idempotent=True)
+
+    def _append_event(self, event: HistoryEvent, *, idempotent: bool) -> HistoryEvent:
+        with self.transaction():
+            # Allocate sequence numbers in task commit order so a paginated
+            # reader cannot pass an earlier, still-uncommitted history row.
+            self._one("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0)) AS locked", (event.task_id,))
+            return self._append_locked_event(event, idempotent=idempotent)
+
+    def _append_locked_event(self, event: HistoryEvent, *, idempotent: bool) -> HistoryEvent:
         session = self.require_session(event.session_id)
         if session.task_id != event.task_id:
             raise ValueError("event task/session mismatch")
@@ -253,13 +273,15 @@ class PostgresContinuityStore:
             artifact = self.get_artifact(event.storage_ref)
             if artifact is None or artifact.task_id != event.task_id:
                 raise ValueError(f"unresolvable storage_ref:{event.storage_ref}")
-        self._execute(
+        row = self._one(
             """
             INSERT INTO agent_history_event(
                 event_id, task_id, session_id, event_type, event_timestamp,
-                node, source, body
-            ) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)
-            """,
+                node, source, body, event_key
+            ) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            + (" ON CONFLICT DO NOTHING" if idempotent else "")
+            + " RETURNING event_seq",
             (
                 event.event_id,
                 event.task_id,
@@ -269,14 +291,41 @@ class PostgresContinuityStore:
                 event.node,
                 event.source,
                 self._body(event),
+                event.event_key,
             ),
+            write=True,
         )
+        if row is not None:
+            return event.model_copy(update={"event_seq": row["event_seq"]})
+        existing_row = self._one(
+            "SELECT body, event_seq FROM agent_history_event WHERE event_key=%s",
+            (event.event_key,),
+        )
+        if existing_row is None:
+            raise ValueError("history event receipt unavailable")
+        existing = HistoryEvent.model_validate(existing_row["body"]).model_copy(
+            update={"event_seq": existing_row["event_seq"]}
+        )
+        if not same_event_content(existing, event):
+            raise ValueError("history event key conflict")
+        return existing
 
     def get_history_event(self, event_id: str) -> HistoryEvent | None:
         row = self._one(
-            "SELECT body FROM agent_history_event WHERE event_id=%s", (event_id,)
+            "SELECT body, event_seq FROM agent_history_event WHERE event_id=%s", (event_id,)
         )
-        return HistoryEvent.model_validate(row["body"]) if row else None
+        return HistoryEvent.model_validate(row["body"]).model_copy(
+            update={"event_seq": row["event_seq"]}
+        ) if row else None
+
+    def query_run_usage(self, task_id: str, run_id: str) -> list[HistoryEvent]:
+        rows = self._all(
+            "SELECT body, event_seq FROM agent_history_event "
+            "WHERE task_id=%s AND event_type='model_usage' AND body->'payload'->>'run_id'=%s "
+            "ORDER BY event_seq", (task_id, run_id),
+        )
+        return [HistoryEvent.model_validate(row["body"]).model_copy(
+            update={"event_seq": row["event_seq"]}) for row in rows]
 
     def query_task_history(
         self,
@@ -286,6 +335,8 @@ class PostgresContinuityStore:
         session_id: str | None = None,
         keyword: str | None = None,
         limit: int = 100,
+        after_seq: int | None = None,
+        descending: bool = False,
     ) -> list[HistoryEvent]:
         clauses = ["task_id=%s"]
         values: list[Any] = [task_id]
@@ -298,14 +349,20 @@ class PostgresContinuityStore:
         if keyword:
             clauses.append("body::text ILIKE %s")
             values.append(f"%{keyword}%")
+        if after_seq is not None:
+            clauses.append("event_seq > %s")
+            values.append(after_seq)
         values.append(limit)
+        order = "event_seq DESC, event_timestamp DESC, event_id DESC" if descending else "event_seq, event_timestamp, event_id"
         rows = self._all(
-            "SELECT body FROM agent_history_event WHERE "
+            "SELECT body, event_seq FROM agent_history_event WHERE "
             + " AND ".join(clauses)
-            + " ORDER BY event_timestamp LIMIT %s",
+            + f" ORDER BY {order} LIMIT %s",
             tuple(values),
         )
-        return [HistoryEvent.model_validate(row["body"]) for row in rows]
+        return [HistoryEvent.model_validate(row["body"]).model_copy(
+            update={"event_seq": row["event_seq"]}
+        ) for row in rows]
 
     def put_artifact(self, artifact: ArtifactRecord) -> None:
         session = self.require_session(artifact.session_id)
@@ -333,7 +390,7 @@ class PostgresContinuityStore:
         )
         return ArtifactRecord.model_validate(row["body"]) if row else None
 
-    def put_handoff(self, handoff: HandoffProjection) -> None:
+    def put_handoff(self, handoff: HandoffProjection | HandoffProjectionV2) -> None:
         session = self.require_session(handoff.session_id)
         if session.task_id != handoff.task_id:
             raise ValueError("handoff task/session mismatch")
@@ -364,15 +421,15 @@ class PostgresContinuityStore:
                 handoff.task_id,
                 handoff.session_id,
                 handoff.created_at,
-                self._body(handoff),
+                self._body(archive_projection(self, handoff)),
             ),
         )
 
-    def get_handoff(self, handoff_id: str) -> HandoffProjection | None:
+    def get_handoff(self, handoff_id: str) -> HandoffProjection | HandoffProjectionV2 | None:
         row = self._one(
             "SELECT body FROM agent_handoff WHERE handoff_id=%s", (handoff_id,)
         )
-        return HandoffProjection.model_validate(row["body"]) if row else None
+        return resolve_projection(self, row["body"]) if row else None
 
     def validate_pointers(
         self, pointers: Iterable[HistoryPointer], *, task_id: str

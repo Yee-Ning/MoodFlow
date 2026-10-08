@@ -13,6 +13,7 @@ from app.agent.foundation.adapters import create_subgraph_adapter
 from app.agent.foundation.models import GraphError, TaskStatus
 from app.agent.foundation.routing import RouteDecision, RouteKey, RouteTask, RoutingContext
 from app.agent.foundation.state.main import MainState
+from app.agent.foundation.entry_context import EntryContextEngine, build_lite_pack, triage_scope
 from app.agent.foundation.subgraphs import (
     create_current_song_subgraph,
     create_general_chat_subgraph,
@@ -61,12 +62,14 @@ def build_main_graph(
     tool_calling_subgraph: CompiledStateGraph | None = None,
     worldline_subgraph: CompiledStateGraph | None = None,
     general_chat_subgraph: CompiledStateGraph | None = None,
+    entry_context: EntryContextEngine | None = None,
 ) -> StateGraph:
     """Build dynamically routed MainGraph; explicit development routes bypass classification."""
     if development_routes is not None and intent_router is not None:
         raise ValueError("choose intent_router or development_routes, not both")
     routes = _validate_development_routes(development_routes) if development_routes is not None else None
     router = (intent_router if intent_router is not None else create_hybrid_router()) if routes is None else None
+    entry = entry_context or EntryContextEngine()
     subgraphs = {
         RouteKey.CURRENT_SONG: (
             current_song_subgraph or create_current_song_subgraph()
@@ -81,9 +84,18 @@ def build_main_graph(
         current_input = state["current_input"].strip()
         if not current_input:
             raise ValueError("current_input must not be blank")
-        return {"current_input": current_input, "final_response": None, "route_decision": None}
+        normalized = {**state, "current_input": current_input}
+        # Explicit router injection remains authoritative (replays/tests and
+        # alternative callers). An injected entry engine opts into preflight.
+        decision = entry.preflight(normalized) if routes is None and (intent_router is None or entry_context is not None) else None
+        return {"current_input": current_input, "final_response": None, "route_decision": None,
+                "entry_preflight": decision.model_dump(mode="json") if decision else None,
+                "entry_intent": None, "context_manifest": {}}
 
-    async def intent_route(state: MainState) -> dict[str, RouteDecision]:
+    from app.agent.handoff.observability import observe_foundation_routing
+
+    @observe_foundation_routing
+    async def classify_intent(state: MainState) -> dict[str, RouteDecision]:
         from app.config.settings import get_settings
         settings = get_settings() if (
             intent_router is None or jev_client is not None
@@ -160,6 +172,16 @@ def build_main_graph(
                 )
         return {"route_decision": decision}
 
+    async def intent_route(state: MainState) -> dict[str, Any]:
+        fast = state.get("entry_preflight")
+        lite = None if fast else build_lite_pack(state)
+        if fast:
+            decision = RouteDecision.model_validate(fast)
+        else:
+            with triage_scope(lite):
+                decision = (await classify_intent(state))["route_decision"]
+        return await entry.complete(state, decision, lite=lite)
+
     def select_next(state: MainState) -> str:
         decision = state["route_decision"]
         if not decision.is_complete or decision.needs_clarification or decision.needs_llm:
@@ -189,7 +211,7 @@ def build_main_graph(
             or "我还没能确定你希望我做什么，请补充或明确一下请求。"
         }
 
-    def development_route(state: MainState) -> dict[str, RouteDecision]:
+    async def development_route(state: MainState) -> dict[str, Any]:
         run_id = uuid4().hex
         tasks: list[RouteTask] = []
         for route in routes:
@@ -202,13 +224,12 @@ def build_main_graph(
                     depends_on=[tasks[-1].task_id] if tasks else [],
                 )
             )
-        return {
-            "route_decision": RouteDecision(
+        decision = RouteDecision(
                 is_complete=True,
                 coverage=1.0,
                 tasks=tasks,
             )
-        }
+        return await entry.complete(state, decision)
 
     def aggregate_results(state: MainState) -> dict[str, list[GraphError]]:
         decision = state.get("route_decision")

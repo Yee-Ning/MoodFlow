@@ -1,0 +1,42 @@
+{
+  "initial_local_head": "29173f5e9e6d18b549b444c9c6e64a5ad225599e",
+  "observability_commit": "7346cf972419a63ad82a665136f7fb76663c74e4",
+  "deployment_gate_commit": "6667b70ecc1ad27786559bacb389f6f65d42098b",
+  "junit": {
+    "directed": {
+      "tests": 102,
+      "failures": 9,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 25.82
+    },
+    "directed-pass": {
+      "tests": 125,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 21.88
+    },
+    "full-tests": {
+      "tests": 2481,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 45,
+      "seconds": 273.22
+    },
+    "full-final": {
+      "tests": 2484,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 45,
+      "seconds": 259.06
+    }
+  },
+  "final_pytest_main_passed": 2151,
+  "final_subtests_passed": 288,
+  "existing_external_skips": 45,
+  "ruff": "passed",
+  "compileall": "passed",
+  "unrelated_user_changes": "preserved",
+  "pushed": false
+}

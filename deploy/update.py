@@ -6,6 +6,7 @@ outside this command; a rollback restores application code and image IDs only.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -83,8 +84,20 @@ def read_env_paths() -> dict[str, str]:
     return paths
 
 
-def preflight() -> str:
-    if Path.cwd().resolve() != ROOT or Path(__file__).resolve().parents[1] != ROOT:
+def preflight(executor_target: str | None = None) -> str:
+    source_path = Path(__file__).resolve()
+    if source_path.parents[1] != ROOT:
+        # A no-push bundle may carry a newer updater. Only execute the exact
+        # reviewed Git blob, from the root-owned staging directory.
+        staging = LOG_ROOT / "staging"
+        if (not executor_target or not SHA.fullmatch(executor_target)
+                or not source_path.is_relative_to(staging.resolve())
+                or source_path.stat().st_mode & 0o077
+                or getattr(source_path.stat(), "st_uid", 0) != 0
+                or hashlib.sha256(source_path.read_bytes()).hexdigest()
+                != hashlib.sha256((command("git", "show", f"{executor_target}:deploy/update.py") + "\n").encode()).hexdigest()):
+            raise UpdateError("staged_updater_not_exact_reviewed_blob")
+    if Path.cwd().resolve() != ROOT:
         raise UpdateError("not_moodflow_production_root")
     if git("rev-parse", "--show-toplevel") != str(ROOT) or git("branch", "--show-current") != "main":
         raise UpdateError("production_branch_or_directory_mismatch")
@@ -109,6 +122,103 @@ def preflight() -> str:
     if not SHA.fullmatch(previous):
         raise UpdateError("invalid_previous_commit")
     return previous
+
+
+def bundle_target(bundle: Path, checksum: str, target: str) -> str:
+    """Import reviewed objects only; never change origin, its refs or history."""
+    if not SHA.fullmatch(target) or not re.fullmatch(r"[0-9a-f]{64}", checksum):
+        raise UpdateError("bundle_requires_full_target_and_sha256")
+    staging = (LOG_ROOT / "staging").resolve()
+    if (bundle.is_symlink() or not bundle.is_file() or not bundle.resolve().is_relative_to(staging)
+            or bundle.stat().st_mode & 0o077 or getattr(bundle.stat(), "st_uid", 0) != 0):
+        raise UpdateError("bundle_not_private_staged_file")
+    if hashlib.sha256(bundle.read_bytes()).hexdigest() != checksum:
+        raise UpdateError("bundle_checksum_mismatch")
+    command("git", "bundle", "verify", str(bundle))
+    heads = command("git", "bundle", "list-heads", str(bundle)).splitlines()
+    refs = [line.split()[1] for line in heads if line.split()[0] == target]
+    if len(refs) != 1:
+        raise UpdateError("bundle_target_not_unique")
+    command("git", "fetch", "--no-tags", "--recurse-submodules=no", str(bundle), refs[0])
+    if git("rev-parse", "FETCH_HEAD") != target:
+        raise UpdateError("bundle_fetched_target_mismatch")
+    return target
+
+
+P1_SQL = {
+    "ai-service/migrations/postgresql/003_context_loop_history.sql": "db21752bcb86affae039634342e5b6df8ec113053aa5ecb213f07c854acb67b3",
+    "ai-service/migrations/postgresql/004_continuity_execution.sql": "5622723c341f6782085039ad2d0872d35ed93303a6f1114d7878e96eb0a388d2",
+}
+
+
+def verified_applied_p1(paths: list[str], target: str) -> dict:
+    if set(paths) != set(P1_SQL):
+        raise UpdateError("p1_skip_requires_only_reviewed_003_004")
+    for path, expected in P1_SQL.items():
+        content = command("git", "show", f"{target}:{path}") + "\n"
+        if hashlib.sha256(content.encode()).hexdigest() != expected:
+            raise UpdateError("p1_migration_source_changed")
+    sql = """SELECT json_build_object(
+    'versions', (SELECT json_agg(version ORDER BY version) FROM agent_schema_migration),
+    'history_keys', (SELECT count(*) FROM information_schema.columns WHERE table_schema='public'
+      AND table_name='agent_history_event' AND column_name IN ('event_key','event_seq')),
+    'unique_indexes', (SELECT count(*) FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid
+      WHERE i.indrelid=to_regclass('public.agent_history_event') AND i.indisunique AND i.indisvalid
+      AND c.relname IN ('agent_history_event_key','agent_history_event_seq')),
+    'immutable_trigger', EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid=to_regclass('public.agent_history_event')
+      AND tgname='agent_history_event_immutable' AND tgenabled IN ('O','A')),
+    'execution_columns', (SELECT count(*) FROM information_schema.columns WHERE table_schema='public'
+      AND table_name='agent_execution' AND column_name IN ('execution_key','auth_scope','owner','fence','revision','expires_at'))
+    )::text"""
+    shell = 'exec psql -X -A -t -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "$1"'
+    evidence = json.loads(compose("exec", "-T", "postgres", "sh", "-c", shell, "sh", sql))
+    if (not {Path(path).name for path in paths}.issubset(evidence.get("versions", []))
+            or evidence.get("history_keys") != 2 or evidence.get("unique_indexes") != 2
+            or evidence.get("immutable_trigger") is not True or evidence.get("execution_columns") != 6):
+        raise UpdateError("p1_production_schema_not_verified")
+    return evidence
+
+
+def reviewed_services(previous: str, target: str, paths: list[str], services: list[str],
+                      approve_contract: bool) -> list[str]:
+    if services == ["ai-service"]:
+        # Explicit review for this observability release; existing deployment,
+        # backup, provenance and health gates still run without exemptions.
+        if not approve_contract:
+            raise UpdateError("ai_observability_release_requires_explicit_review")
+        if command("git", "show", f"{previous}:docker-compose.production.yml") != command(
+            "git", "show", f"{target}:docker-compose.production.yml"
+        ):
+            raise UpdateError("ai_observability_release_compose_must_be_unchanged")
+        allowed = {"ai-service/app/agent/handoff/observability.py", "ai-service/app/agent/handoff/routing.py",
+                   "ai-service/app/agent/handoff/guard.py", "ai-service/app/agent/handoff/trace.py",
+                   "ai-service/app/agent/foundation/main_graph.py", "ai-service/app/api/chat.py",
+                   "ai-service/app/agent/foundation/long_horizon/runner.py",
+                   "ai-service/app/agent/foundation/long_horizon/coordinator.py",
+                   "deploy/runtime.py", "deploy/handoff_observer.py", "deploy/moodflow-handoff-observer.service",
+                   "deploy/update.py"}
+        if any(path not in allowed and not path.startswith(("docs/reports/", "ai-service/tests/", "deploy/tests/"))
+               for path in paths):
+            raise UpdateError("ai_observability_release_contains_unreviewed_path")
+        if command("git", "rev-parse", f"{previous}:netease-music-api") != command(
+            "git", "rev-parse", f"{target}:netease-music-api"
+        ):
+            raise UpdateError("ai_observability_release_submodule_must_be_unchanged")
+        return services
+    if services != ["netease", "java", "ai-service"] or not approve_contract:
+        raise UpdateError("scoped_release_requires_reviewed_three_services_and_contract")
+    # This release permits exactly the previously reviewed closed switch.
+    old = command("git", "show", f"{previous}:docker-compose.production.yml")
+    new = command("git", "show", f"{target}:docker-compose.production.yml")
+    line = "    HANDOFF_CANARY_ENABLED: ${HANDOFF_CANARY_ENABLED:-false}\n"
+    if new != old.replace("    AI_AGENT_GRAPH_MODE: foundation\n", "    AI_AGENT_GRAPH_MODE: foundation\n" + line):
+        raise UpdateError("scoped_release_compose_delta_not_canary_only")
+    forbidden = {".dockerignore", ".env.example", "deploy/nginx-host.conf", "deploy/qdrant.Dockerfile",
+                 "deploy/qdrant-start.sh", "deploy/qdrant-health.sh", "deploy/frozen-artifacts.json",
+                 "deploy/model-cache-manifest.json"}
+    if forbidden.intersection(paths):
+        raise UpdateError("scoped_release_contains_unreviewed_infrastructure")
+    return services
 
 
 def changed_services(paths: list[str], *, approve_contract: bool = False) -> list[str]:
@@ -202,18 +312,25 @@ def safe_log_tail() -> None:
           "-f docker-compose.production.yml logs --tail=80 migrate postgres qdrant netease java ai-service frontend")
 
 
-def update(dry_run: bool, approve_migrations: bool, approve_contract: bool = False) -> None:
+def update(dry_run: bool, approve_migrations: bool, approve_contract: bool = False, *,
+           bundle: Path | None = None, bundle_sha256: str = "", target_commit: str = "",
+           services_only: list[str] | None = None, p1_already_applied: bool = False) -> None:
     phase = "preflight"
     record: dict[str, object] = {"started_at_utc": datetime.now(timezone.utc).isoformat(),
                                  "status": "running", "phase": phase, "migration": "not_started",
                                  "health": "not_started", "smoke": "not_started"}
     log_path: Path | None = None
     try:
-        previous = preflight()
+        target = bundle_target(bundle, bundle_sha256, target_commit) if bundle is not None else None
+        previous = preflight(executor_target=target) if target else preflight()
         record["previous_commit"] = previous
         phase = "fetch"
-        git("fetch", "--prune", "origin", "main")
-        target = git("rev-parse", "origin/main")
+        if target is None:
+            git("fetch", "--prune", "origin", "main")
+            target = git("rev-parse", "origin/main")
+        record["source"] = "verified_bundle" if bundle is not None else "origin/main"
+        if bundle is not None:
+            record["bundle_sha256"] = bundle_sha256
         if not SHA.fullmatch(target):
             raise UpdateError("invalid_remote_commit")
         record["new_commit"] = target
@@ -224,7 +341,15 @@ def update(dry_run: bool, approve_migrations: bool, approve_contract: bool = Fal
             raise UpdateError("main_diverged_from_origin_main")
         paths = git("diff", "--name-only", previous, target).splitlines()
         services = changed_services(paths, approve_contract=approve_contract)
+        if services_only is not None:
+            services = reviewed_services(previous, target, paths, services_only, approve_contract)
+            record["deferred_frontend_paths"] = [path for path in paths if path.startswith("soul-music-room/")]
         changed_migrations = migration_changes(paths)
+        if p1_already_applied:
+            if services_only is None:
+                raise UpdateError("p1_skip_requires_scoped_release")
+            record["already_applied_p1"] = verified_applied_p1(changed_migrations, target)
+            changed_migrations = []
         if changed_migrations and not approve_migrations:
             raise UpdateError("migration_review_required:rerun_with_--approve-migrations_after_review")
         record["build_services"] = services
@@ -245,9 +370,12 @@ def update(dry_run: bool, approve_migrations: bool, approve_contract: bool = Fal
         record["phase"] = phase
         write_log(log_path, record)
         phase = "git_update"
-        git("merge", "--ff-only", "origin/main")
+        git("merge", "--ff-only", target)
         git("submodule", "sync", "--recursive")
-        git("submodule", "update", "--init", "--recursive")
+        if bundle is not None:
+            git("submodule", "update", "--init", "--recursive", "--no-fetch")
+        else:
+            git("submodule", "update", "--init", "--recursive")
         status_clean()
         compose("config", "--quiet")
         phase = "backup"
@@ -273,12 +401,17 @@ def update(dry_run: bool, approve_migrations: bool, approve_contract: bool = Fal
             compose("build", service)
         record["new_image_ids"] = {service: command("docker", "image", "inspect", "--format", "{{.Id}}",
                                                      compose_images()[service]) for service in services}
+        record["release_tags"] = {}
+        for service in services:
+            tag = f"moodflow/{service}:release-{target[:12]}"
+            command("docker", "image", "tag", record["new_image_ids"][service], tag)
+            record["release_tags"][service] = tag
         if shutil.disk_usage(ROOT).free < MIN_FREE_BYTES:
             raise UpdateError("insufficient_disk_after_build_under_8_gib")
         record["phase"] = phase
         write_log(log_path, record)
         phase = "migration"
-        if "ai-service" in services or changed_migrations:
+        if changed_migrations or ("ai-service" in services and services_only is None):
             record["migration"] = "running"
             write_log(log_path, record)
             compose("up", "-d", "--no-build", "--no-deps", "--force-recreate", "migrate")
@@ -289,7 +422,11 @@ def update(dry_run: bool, approve_migrations: bool, approve_contract: bool = Fal
         record["phase"] = phase
         write_log(log_path, record)
         phase = "start"
-        compose("up", "-d", "--no-build")
+        if services_only is not None:
+            for service in services:
+                compose("up", "-d", "--no-build", "--no-deps", service)
+        else:
+            compose("up", "-d", "--no-build")
         phase = "health"
         record["health"] = {}
         for service in PERSISTENT:
@@ -324,10 +461,10 @@ def update(dry_run: bool, approve_migrations: bool, approve_contract: bool = Fal
         raise SystemExit(1) from None
 
 
-def rollback(run_id: str, acknowledge_schema_risk: bool) -> None:
+def rollback(run_id: str, acknowledge_schema_risk: bool, *, executor_target: str | None = None) -> None:
     if not RUN_ID.fullmatch(run_id) or not acknowledge_schema_risk:
         raise UpdateError("rollback_requires_valid_run_id_and_--acknowledge-schema-risk")
-    preflight()
+    preflight(executor_target=executor_target) if executor_target else preflight()
     log_path = LOG_ROOT / f"{run_id}.json"
     if not log_path.is_file():
         raise UpdateError("rollback_log_missing")
@@ -368,6 +505,11 @@ def main() -> None:
     parser.add_argument("--approve-migrations", action="store_true")
     parser.add_argument("--approve-contract", action="store_true")
     parser.add_argument("--acknowledge-schema-risk", action="store_true")
+    parser.add_argument("--bundle", type=Path)
+    parser.add_argument("--bundle-sha256", default="")
+    parser.add_argument("--target-commit", default="")
+    parser.add_argument("--services", nargs="+", choices=BUILDABLE)
+    parser.add_argument("--p1-already-applied", action="store_true")
     args = parser.parse_args()
     os.umask(0o077)
     if ROOT != Path.cwd().resolve():
@@ -382,11 +524,14 @@ def main() -> None:
             parser.error("another update is running")
         if args.action == "rollback":
             try:
-                rollback(args.run_id or "", args.acknowledge_schema_risk)
+                executor_target = bundle_target(args.bundle, args.bundle_sha256, args.target_commit) if args.bundle else None
+                rollback(args.run_id or "", args.acknowledge_schema_risk, executor_target=executor_target)
             except (UpdateError, OSError, ValueError, KeyError) as exc:
                 parser.error(str(exc))
         else:
-            update(args.dry_run, args.approve_migrations, args.approve_contract)
+            update(args.dry_run, args.approve_migrations, args.approve_contract,
+                   bundle=args.bundle, bundle_sha256=args.bundle_sha256, target_commit=args.target_commit,
+                   services_only=args.services, p1_already_applied=args.p1_already_applied)
 
 
 if __name__ == "__main__":

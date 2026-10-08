@@ -178,7 +178,16 @@ def create_subgraph_adapter(
                 prior_task_results=_prior_task_results(state, task),
             )
 
-        output = await subgraph.ainvoke(common_input, context=runtime.context)
+        # Stateless capability graphs explicitly disable their saver. LangGraph
+        # currently inherits the parent's sync durability even without a saver,
+        # then awaits a checkpoint future that cannot exist. Keep the parent
+        # Command/checkpoint boundary synchronous; these stateless children have
+        # no persistence boundary of their own.
+        invoke_options = {"durability": "async"} if getattr(subgraph, "checkpointer", None) is False else {}
+        from app.llm.runtime import agent_scope
+        from app.agent.handoff.registry import CAPABILITY_OWNERS
+        with agent_scope(CAPABILITY_OWNERS[route_key]):
+            output = await subgraph.ainvoke(common_input, context=runtime.context, **invoke_options)
         result = output.get("task_result")
         if not isinstance(result, TaskResult):
             result = TaskResult.model_validate(result)

@@ -1,0 +1,130 @@
+{
+  "ordered_gate_reports": [
+    {
+      "phase": "A",
+      "implementation_commit": "588fa6f776776e2d4662cdaf09e38e872745623a",
+      "baseline_ancestor": true,
+      "report_path": "docs/reports/write-path-unknown-20261003/report.md",
+      "report_commit": "f19aaef6cf6477b73c16a52c7312bb4b2437edee",
+      "report_sha256_lf": "9492ec5cdfffb5e88d0975071108152e7f321a7ee7e99eb5e1b6e818a90879bb",
+      "acceptance_status": "passed_with_reported_boundaries",
+      "report_exists_this_run": true,
+      "report_sha256_matches_this_run": true
+    },
+    {
+      "phase": "C",
+      "implementation_commit": "37ffdabb8e7c5a959027928b94b3de092b54be23",
+      "baseline_ancestor": true,
+      "report_path": "docs/reports/combo-robustness-20261003/report.md",
+      "report_commit": "744a914a34eeb615e429c27a908ebca24decd31c",
+      "report_sha256_lf": "b5165d73bda7e5900a72caa54119d0f0960cad2b3e16da5809968b8db738b2c0",
+      "acceptance_status": "core_passed_original_business_case_open",
+      "report_exists_this_run": true,
+      "report_sha256_matches_this_run": true
+    },
+    {
+      "phase": "R2",
+      "implementation_commit": "feea34747f98081f613467be71cef00614e73d9e",
+      "baseline_ancestor": true,
+      "report_path": "docs/reports/rule-layer-r2-20261003/report.md",
+      "report_commit": "d2be757879d7c1bbffd12250b94f2f0e7f6df29c",
+      "report_sha256_lf": "de77395fe19b99ca1ed7e9d43848baf74c705837a7957cd27e6da3704fe61730",
+      "acceptance_status": "entry_passed_real_traffic_sample_open",
+      "report_exists_this_run": true,
+      "report_sha256_matches_this_run": true
+    },
+    {
+      "phase": "D",
+      "implementation_commit": "a3cc649c643b3167805a2c6e36722b6344d8beef",
+      "baseline_ancestor": true,
+      "report_path": "docs/reports/recovery-selfhealing-20261003/report.md",
+      "report_commit": "4bb22856e48d346ced2043d1467f1e2af7f0163f",
+      "report_sha256_lf": "d6754d40fdaead4a4aec58f1c993682522a52ead25064d10fe301f625d34001f",
+      "acceptance_status": "passed_with_reported_boundaries",
+      "report_exists_this_run": true,
+      "report_sha256_matches_this_run": true
+    },
+    {
+      "phase": "T1T2_AI",
+      "implementation_commit": "b983411b0029b154b8d50c4fe23b579128c758f9",
+      "baseline_ancestor": true,
+      "report_path": "docs/reports/tools-t1t2-20261003/report.md",
+      "report_commit": "32087b39a1a12035976a82aafc8526be13afa21b",
+      "report_sha256_lf": "e2a991d40819f61599ab76be630b39f87561d9d6dfedcf5d94fef71aa68c3e0e",
+      "acceptance_status": "real_account_tool_chain_passed",
+      "report_exists_this_run": true,
+      "report_sha256_matches_this_run": true
+    },
+    {
+      "phase": "T1T2_Java",
+      "implementation_commit": "c4096608e92ac6ad3077b807beced04932d3f5c6",
+      "baseline_ancestor": true,
+      "report_path": "docs/reports/tools-t1t2-20261003/report.md",
+      "report_commit": "32087b39a1a12035976a82aafc8526be13afa21b",
+      "report_sha256_lf": "e2a991d40819f61599ab76be630b39f87561d9d6dfedcf5d94fef71aa68c3e0e",
+      "acceptance_status": "real_account_tool_chain_passed",
+      "report_exists_this_run": true,
+      "report_sha256_matches_this_run": true
+    }
+  ],
+  "production_ancestor_checks": {
+    "f97d5d2": {
+      "full_commit": "f97d5d259cfcf153185581905ca7abb0aca33b50",
+      "merge_base_exit": 0
+    },
+    "588fa6f": {
+      "full_commit": "588fa6f776776e2d4662cdaf09e38e872745623a",
+      "merge_base_exit": 0
+    },
+    "37ffdab": {
+      "full_commit": "37ffdabb8e7c5a959027928b94b3de092b54be23",
+      "merge_base_exit": 0
+    },
+    "feea347": {
+      "full_commit": "feea34747f98081f613467be71cef00614e73d9e",
+      "merge_base_exit": 0
+    },
+    "a3cc649": {
+      "full_commit": "a3cc649c643b3167805a2c6e36722b6344d8beef",
+      "merge_base_exit": 0
+    },
+    "b983411b": {
+      "full_commit": "b983411b0029b154b8d50c4fe23b579128c758f9",
+      "merge_base_exit": 0
+    },
+    "c4096608": {
+      "full_commit": "c4096608e92ac6ad3077b807beced04932d3f5c6",
+      "merge_base_exit": 0
+    },
+    "08d18c5": {
+      "full_commit": "08d18c517c98094aff1c5303b6031dffb6366178",
+      "merge_base_exit": 0
+    }
+  },
+  "test_runs": [
+    {
+      "junit_source": ".dev/v5-canary-open-20261004/directed-tests.xml",
+      "junit_sha256": "98fda30f8917e2e880ab1088f8a46b4a9bceb8be59ad2ed437dbc1d685238985",
+      "tests": "31",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "65.337"
+    },
+    {
+      "junit_source": ".dev/v5-canary-open-20261004/related-tests.xml",
+      "junit_sha256": "ca90ec8c4337f49d7d5bc2a3832a8342d3841883784baec005294b169e42e757",
+      "tests": "452",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "57.199"
+    }
+  ],
+  "healthy_to_rollback_started_seconds": 78.293652,
+  "initial_observation_completed": false,
+  "live_rule_samples": 0,
+  "strict_replay_samples": 0,
+  "replay_disagreement_rate": null,
+  "r2_live_sampling_closed": false
+}

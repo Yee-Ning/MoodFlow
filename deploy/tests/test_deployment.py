@@ -15,7 +15,7 @@ import yaml
 from deploy.artifacts import LOCK_PATH, digest, export, verify, within
 from deploy.audit_inventory import category, inventory
 from deploy.runtime import (configure, configure_shadow_telemetry_logging, load_secrets,
-                            validate_contract, validate_http, validate_schema, warm_models)
+                            index_dependencies, validate_contract, validate_http, validate_schema, warm_models)
 from deploy.model_cache import export_model_cache, verify_model_cache
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,17 +44,24 @@ def test_ai_image_requires_verified_local_cpu_torch():
 
 def test_production_shadow_telemetry_info_is_emitted_once():
     shadow_logger = logging.getLogger("app.agent.decision.jev.shadow_v5")
+    handoff_logger = logging.getLogger("app.agent.handoff.observability")
     original = (list(shadow_logger.handlers), shadow_logger.level, shadow_logger.propagate)
+    handoff_original = (list(handoff_logger.handlers), handoff_logger.level, handoff_logger.propagate)
     output = io.StringIO()
     try:
         shadow_logger.handlers = []
+        handoff_logger.handlers = []
         configure_shadow_telemetry_logging(output)
         configure_shadow_telemetry_logging(output)
         shadow_logger.info('jev.v5_shadow {"decision_type":"router_v5_shadow"}')
+        handoff_logger.info('jev.handoff_entry {"decision_class":"Single"}')
         assert len(shadow_logger.handlers) == 1
+        assert len(handoff_logger.handlers) == 1
         assert output.getvalue().count("jev.v5_shadow ") == 1
+        assert output.getvalue().count("jev.handoff_entry ") == 1
     finally:
         shadow_logger.handlers, shadow_logger.level, shadow_logger.propagate = original
+        handoff_logger.handlers, handoff_logger.level, handoff_logger.propagate = handoff_original
 
 
 def fixture_lock(root):
@@ -71,8 +78,7 @@ def test_current_frozen_artifacts_pass_without_mutation():
     assert lock["source_release_id"] == "knowledge-v2-daa965c10984eefa"
     assert lock["files"][lock["manifest_path"]] == "sha256:445b7263221ae5864015752a6689e5d8303c21409407375a6e0b33ac831f50f3"
     # Exercise frozen schema/release validators, with no online query or Eval.
-    from app.rag.retrieval import load_retrieval_config, load_retrieval_index_binding
-    from app.agent.foundation.subgraphs.worldline.runtime_entity_binding import VerifiedEndpointMaterializer
+    VerifiedEndpointMaterializer, load_retrieval_config, load_retrieval_index_binding, _ = index_dependencies()
     binding = load_retrieval_index_binding(ROOT / "ai-service", Path(lock["manifest_path"]), load_retrieval_config())
     materializer = VerifiedEndpointMaterializer.from_binding(ROOT / "ai-service", binding)
     assert len(materializer.payloads) == 41

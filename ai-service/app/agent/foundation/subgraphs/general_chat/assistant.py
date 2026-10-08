@@ -12,6 +12,7 @@ from app.agent.foundation.context_engineering import build_context_async
 from app.agent.foundation.models import TaskResult
 from app.agent.foundation.routing import RouteKey, RoutingContext
 from app.llm.client import get_base_chat_model
+from app.llm.runtime import instrument_continuity_model
 
 GeneralChatAssistant = Callable[
     [list[BaseMessage], str, RoutingContext, list[TaskResult]],
@@ -70,6 +71,12 @@ async def answer_general_chat(
     model: BaseChatModel | None = None,
     continuity_context: dict[str, Any] | None = None,
 ) -> AIMessage:
+    from app.agent.foundation.long_horizon.write_reconciliation import answer_write_status_query
+    from app.agent.foundation.long_horizon.recovery_receipts import answer_recovery_query
+
+    answer = await answer_recovery_query(current_input) or await answer_write_status_query(current_input)
+    if answer is not None:
+        return AIMessage(content=answer)
     history = select_recent_history(messages, current_input)
     player_context, prior_context = _trusted_context(routing_context, prior_task_results)
     pack = await build_context_async(
@@ -80,7 +87,7 @@ async def answer_general_chat(
         trace_context={key: continuity_context[key] for key in ("task_id", "session_id", "request_id")
                        if continuity_context and key in continuity_context},
     )
-    response = await (model or get_base_chat_model()).ainvoke(pack.messages)
+    response = await instrument_continuity_model(model or get_base_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("General-chat assistant returned a non-AI message")
     if response.tool_calls:

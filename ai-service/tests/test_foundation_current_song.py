@@ -299,8 +299,9 @@ class FoundationCurrentSongTests(unittest.IsolatedAsyncioTestCase):
         captured = {}
         model = SimpleNamespace()
 
-        async def ainvoke(messages):
+        async def ainvoke(messages, **kwargs):
             captured["messages"] = messages
+            captured["max_tokens"] = kwargs["max_tokens"]
             return AIMessage(content="从歌词来看，叙述者可能正在告别。")
 
         model.ainvoke = ainvoke
@@ -330,6 +331,8 @@ class FoundationCurrentSongTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertIn("可能", response.text)
+        from app.llm.budget import output_limit
+        self.assertEqual(captured["max_tokens"], output_limit())
         sent = captured["messages"]
         self.assertIsInstance(sent[0], SystemMessage)
         self.assertIn('<lyrics trusted="false">', sent[0].content)

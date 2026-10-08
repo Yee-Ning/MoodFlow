@@ -11,6 +11,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.agent.structured_output import StructuredOutputService
 from app.agent.structured_output.parser import model_output_from_response
+from app.agent.foundation.model_input import prepare_model_input
+from app.agent.foundation.routing import RouteKey
 from app.rag.knowledge.structured import strict_model_schema
 from app.rag.query_understanding.config import QueryUnderstandingConfig
 from app.rag.query_understanding.models import QueryType
@@ -39,26 +41,19 @@ class ExistingLLMQueryAnalysisRuntime:
     async def analyze(self, query: str) -> QueryTypeOutput:
         from app.llm.client import create_structured_response
 
-        payload = [
-            {
-                "role": "user",
-                "content": json.dumps(
-                    {"query": query},
-                    ensure_ascii=False,
-                    separators=(",", ":"),
-                ),
-            }
-        ]
-
         async def generate(attempt: int, feedback: str | None):
             instructions = QUERY_ANALYSIS_PROMPT_V1
             if feedback:
                 instructions += f"\n{feedback}"
+            schema = strict_model_schema(QueryTypeOutput)
+            model_input = await prepare_model_input(
+                RouteKey.WORLDLINE, system=instructions,
+                query=json.dumps({"query": query}, ensure_ascii=False, separators=(",", ":")),
+                schema=schema, schema_name="query_type_analysis_v1",
+            )
             response = await create_structured_response(
-                payload,
-                instructions,
-                strict_model_schema(QueryTypeOutput),
-                schema_name="query_type_analysis_v1",
+                model_input.input_items, model_input.instructions, schema,
+                schema_name="query_type_analysis_v1", request_budget=model_input.budget,
             )
             return model_output_from_response(response)
 

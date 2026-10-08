@@ -27,6 +27,7 @@ import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
 import cn.itcast.demo.musicbackend.dto.UserProfileData;
 import cn.itcast.demo.musicbackend.exception.BadRequestException;
 import cn.itcast.demo.musicbackend.exception.NotFoundException;
+import cn.itcast.demo.musicbackend.exception.NeteaseApiException;
 import cn.itcast.demo.musicbackend.exception.UnauthorizedException;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -709,6 +710,20 @@ class NeteaseMusicServiceTests {
                 loggedInRequest());
 
         assertEquals("duplicate", result.status());
+        server.verify();
+    }
+
+    @Test
+    void shouldRejectNestedMutationBodyWithoutRepeatingWrite() {
+        expectProfile();
+        expectEditablePlaylist(101, 42, 9002);
+        server.expect(request -> assertRequest(
+                        request.getURI(), "/playlist/tracks", "op=add", "pid=101", "tracks=9001"))
+                .andRespond(withSuccess("{\"status\":200,\"body\":{\"code\":200}}", APPLICATION_JSON));
+
+        NeteaseApiException error = assertThrows(NeteaseApiException.class,
+                () -> musicService.addSongToPlaylist(101, 9001, loggedInRequest()));
+        assertEquals("网易云 API 响应缺少有效字段: code", error.getMessage());
         server.verify();
     }
 

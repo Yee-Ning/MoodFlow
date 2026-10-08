@@ -82,6 +82,13 @@ class CreatePlaylistArgs(BaseModel):
     privacy: Literal[0, 10] = Field(default=0, description="0 公开，10 私密。")
 
 
+class DeletePlaylistArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    playlist_id: int = Field(gt=0, strict=True)
+    confirmed: bool = Field(default=False, strict=True)
+
+
 class SetSongLikedArgs(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -267,6 +274,28 @@ class SongLikeResult(BaseModel):
     message: NonBlankText
 
 
+class LikedSongsResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    song_ids: list[Annotated[int, Field(gt=0, strict=True)]]
+
+
+class DeletedPlaylistResult(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    playlist_id: int = Field(gt=0, validation_alias=AliasChoices("playlist_id", "playlistId"))
+    status: Literal["deleted"]
+    message: NonBlankText
+
+
+class SpringDeletedPlaylistResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: int
+    message: str
+    data: DeletedPlaylistResult
+
+
 class SpringCreatedPlaylistResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -283,12 +312,22 @@ class SpringSongLikeResponse(BaseModel):
     data: SongLikeResult
 
 
+class SpringLikedSongsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: int
+    message: str
+    data: list[Annotated[int, Field(gt=0, strict=True)]]
+
+
 class ToolFailure(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     success: Literal[False] = False
     error: str
     message: str
+    operation_id: str | None = None
+    write_state: Literal["failed", "unknown", "confirmed"] | None = None
 
 
 class SpringMusicSearchResponse(BaseModel):
@@ -324,6 +363,8 @@ class SpringPlaylist(BaseModel):
     track_count: int = Field(validation_alias="trackCount", ge=0)
     creator: NonBlankText
     subscribed: bool
+    creator_id: int | None = Field(default=None, gt=0, strict=True, validation_alias="creatorId")
+    special_type: int | None = Field(default=None, strict=True, validation_alias="specialType")
 
 
 class SpringUserPlaylistsResponse(BaseModel):
@@ -360,6 +401,9 @@ class PlaylistDetailResult(BaseModel):
     creator: NonBlankText
     track_count: int = Field(ge=0)
     songs: list[MusicTrack]
+    creator_id: int | None = Field(default=None, gt=0, strict=True)
+    special_type: int | None = Field(default=None, strict=True)
+    subscribed: bool | None = None
 
 
 class SpringAlbumDetail(BaseModel):

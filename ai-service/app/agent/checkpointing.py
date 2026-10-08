@@ -31,7 +31,8 @@ class SessionScopedSaverMixin:
         configurable = dict(config.get("configurable", {}))
         session_id = configurable.get("session_id")
         if session_id:
-            configurable["checkpoint_ns"] = str(session_id)
+            namespace = configurable.get("checkpoint_ns", "")
+            configurable["checkpoint_ns"] = str(session_id) + ("|" + namespace if namespace else "")
         return {**config, "configurable": configurable}
 
     @staticmethod
@@ -42,8 +43,9 @@ class SessionScopedSaverMixin:
         if config is None:
             return None
         configurable = dict(config.get("configurable", {}))
-        resolved_session = session_id or configurable.get("checkpoint_ns")
-        configurable["checkpoint_ns"] = ""
+        stored_namespace = str(configurable.get("checkpoint_ns", ""))
+        resolved_session = session_id or stored_namespace.split("|", 1)[0]
+        configurable["checkpoint_ns"] = stored_namespace.split("|", 1)[1] if "|" in stored_namespace else ""
         if resolved_session:
             configurable["session_id"] = str(resolved_session)
         return {**config, "configurable": configurable}

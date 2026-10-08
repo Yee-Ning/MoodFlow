@@ -405,20 +405,24 @@ class LongHorizonRuntimeIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 RolloverReason.EXPLICIT_CHECKPOINT,
             )
 
-            class Graph:
-                input = None
-                config = None
+            from langchain_core.messages import AIMessage
+            from app.agent.foundation.main_graph import build_main_graph
+            from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
+            from app.agent.foundation.long_horizon.coordinator import ContinuityCoordinator
 
-                async def astream(self, graph_input, config, **kwargs):
-                    self.input, self.config = graph_input, config
-                    yield {"type": "updates", "data": {
-                        "final_response": {"final_response": "继续处理。"}
-                    }}
-
-            graph = Graph()
+            async def answer(*args):
+                return AIMessage(content="继续处理。")
+            graph = build_main_graph(development_routes=[RouteKey.GENERAL_CHAT],
+                general_chat_subgraph=create_general_chat_subgraph(assistant=answer)).compile(checkpointer=create_memory_checkpointer())
+            original_stream = graph.astream
+            async def capture(graph_input, config, **kwargs):
+                graph.input, graph.config = graph_input, config
+                async for part in original_stream(graph_input, config, **kwargs):
+                    yield part
+            graph.astream = capture
             with patch(
-                "app.agent.foundation.streaming.get_long_horizon_service",
-                return_value=service,
+                "app.agent.foundation.long_horizon.coordinator.get_continuity_coordinator",
+                return_value=ContinuityCoordinator(service),
             ), patch(
                 "app.agent.foundation.streaming.get_foundation_graph",
                 return_value=graph,

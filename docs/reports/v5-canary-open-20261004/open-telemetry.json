@@ -1,0 +1,43 @@
+{
+  "at_utc": "2026-10-04T05:49:53.008775+00:00",
+  "since_utc": "2026-10-04T05:48:15.238451+00:00",
+  "container_id": "039a0ad071916efd805ad5ee1e65899b7139959e38bf89816ea3090b8c087dc7",
+  "log_line_count": 32,
+  "log_possibly_truncated": false,
+  "marker_counts": {
+    "jev.handoff_entry": 0,
+    "jev.handoff_entry_local": 0,
+    "jev.handoff_entry_failure": 0,
+    "jev.handoff_guard": 0,
+    "handoff.trace": 0,
+    "jev.request_failed": 0,
+    "jev.v5_shadow": 1,
+    "jev.v5_shadow_failure": 0
+  },
+  "allowlisted_events": [
+    {
+      "marker": "jev.v5_shadow",
+      "sample_kind": "acceptance",
+      "router_source": "jev_single",
+      "candidate_task_count": 1,
+      "api_calls": 1,
+      "fallback_reason": null
+    }
+  ],
+  "new_session_counts": {
+    "canary_acceptance_sessions": 2,
+    "canary_other_sessions": 0,
+    "foundation_acceptance_sessions": 0,
+    "all_new_sessions": 2
+  },
+  "acceptance_namespaces": [
+    {
+      "conversation_id": "handoff:v1:v5-canary-open-acceptance-single-20261004-0",
+      "checkpoint_count": 6
+    },
+    {
+      "conversation_id": "handoff:v1:v5-canary-open-acceptance-multi-20261004-10",
+      "checkpoint_count": 6
+    }
+  ]
+}

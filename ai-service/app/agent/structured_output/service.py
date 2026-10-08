@@ -96,6 +96,10 @@ class StructuredOutputService(Generic[T]):
             except ValidationFailure as exc:
                 last_failure = exc
                 final = attempt == self.max_attempts
+                from app.llm.runtime import active_ledger
+                ledger = active_ledger.get()
+                if ledger is not None and not final and not ledger.retry():
+                    final = True
                 self._log(
                     attempt,
                     repaired or exc.repair_applied,
@@ -105,6 +109,8 @@ class StructuredOutputService(Generic[T]):
                     last_failure_type=exc.failure_type if final else None,
                 )
                 feedback = retry_feedback(exc)
+                if final:
+                    break
                 continue
             except Exception as exc:
                 self._log(attempt, repaired, FailureType.MODEL_ERROR, "failed", started)
@@ -117,7 +123,7 @@ class StructuredOutputService(Generic[T]):
         raise StructuredOutputError(
             self.schema_name,
             FailureType.RETRY_EXHAUSTED,
-            attempts=self.max_attempts,
+            attempts=attempt,
             last_failure_type=last_failure.failure_type,
         ) from last_failure
 

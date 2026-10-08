@@ -1,5 +1,5 @@
 import operator
-from typing import Annotated, Any
+from typing import Annotated, Any, NotRequired
 
 from langchain_core.messages import AnyMessage
 
@@ -16,6 +16,9 @@ class MainState(BaseAgentState):
     task_results: Annotated[list[TaskResult], operator.add]
     final_response: str | None
     errors: Annotated[list[GraphError], operator.add]
+    entry_intent: NotRequired[dict[str, Any] | None]
+    context_manifest: NotRequired[dict[str, Any]]
+    entry_preflight: NotRequired[dict[str, Any] | None]
 
 
 def create_main_state(

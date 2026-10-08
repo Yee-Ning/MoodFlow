@@ -46,6 +46,7 @@ from app.agent.structured_output import (
     StructuredOutputService,
 )
 from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
+from app.agent.foundation.subgraphs.tool_calling.scope import is_simple_song_playback, SONG_PLAYBACK_TOOLS
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
     AlbumDetailResult,
@@ -59,6 +60,7 @@ from app.schemas.music import (
     UserPlaylistsResult,
 )
 from app.tools.music import handle_music_tool_error
+from app.agent.foundation.long_horizon.operations import journal_tool_call
 
 MAX_TOOL_CALLS = 5
 MAX_VISIBLE_RESPONSE_CHARACTERS = 2_000
@@ -66,7 +68,7 @@ TOOL_LIMIT_MESSAGE = (
     "这次任务需要的工具调用次数超过安全上限，我已停止继续操作。"
     "请缩小请求范围或分成两次完成。"
 )
-INVALID_TOOL_OUTPUT_MESSAGE = "工具选择或参数格式无效，本次没有执行工具。"
+INVALID_TOOL_OUTPUT_MESSAGE = "工具选择或参数格式无效，已停止后续工具执行。"
 
 # Tool output and conversation history can supply entity references, but only
 # the assigned user clause can authorize a player or library mutation.
@@ -91,6 +93,7 @@ _ACTION_REQUESTS = {
     "set_song_liked_tool": r"收藏|喜欢|点赞|点个喜欢|红心",
     "create_playlist_tool": r"(?:新建|创建).{0,40}歌单",
     "remove_song_from_playlist_tool": r"移除|删除",
+    "delete_playlist_tool": r"(?:确认|确定).{0,6}删除.{0,20}歌单",
     "open_lyrics": r"打开歌词|显示歌词|查看歌词|展开歌词",
     "add_song_to_playlist": r"加入.{0,8}歌单|添加到.{0,8}歌单|放进.{0,8}歌单|(?:新建|创建).{0,40}歌单.{0,40}(?:加入|添加|放进)",
 }
@@ -437,6 +440,14 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
     album_details, playlist_details = _known_collection_details(state)
     current_song_id = state["routing_context"].current_song_id
     known_song_ids = {*songs, *([current_song_id] if current_song_id else [])}
+    from app.schemas.music import LikedSongsResult
+    cloud_liked_ids = set()
+    for result in state.get("tool_results", []):
+        if result.get("name") == "get_liked_songs":
+            try:
+                cloud_liked_ids.update(LikedSongsResult.model_validate_json(result["content"]).song_ids)
+            except (ValueError, KeyError):
+                continue
     errors: dict[str, str] = {}
     for call in _latest_tool_calls(state):
         call_id = str(call.get("id", ""))
@@ -450,6 +461,7 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
             "get_playlist_detail_tool": ("playlist_id",), "play_album": ("album_id",),
             "play_playlist": ("playlist_id",), "add_song_to_playlist": ("song_id", "playlist_id"),
             "remove_song_from_playlist_tool": ("song_id", "playlist_id"),
+            "delete_playlist_tool": ("playlist_id",),
         }.get(name, ())
         # Grounding checks must see the same IDs as the executor, even if a schema
         # would otherwise coerce a numeric string or boolean into an integer.
@@ -458,7 +470,8 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
             continue
         if name in {"get_song_lyrics", "set_liked", "set_song_liked_tool"}:
             song_id = args.get("song_id")
-            if isinstance(song_id, int) and song_id not in known_song_ids:
+            permitted_ids = known_song_ids | cloud_liked_ids if name == "set_song_liked_tool" else known_song_ids
+            if isinstance(song_id, int) and song_id not in permitted_ids:
                 errors[call_id] = "歌曲 ID 没有可信来源；请先搜索歌曲或请用户明确选择。"
             if name == "set_liked":
                 synced = [
@@ -530,6 +543,13 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
                 errors[call_id] = "目标位置超出当前播放队列范围。"
             elif isinstance(song_id, int) and song_id not in known_song_ids:
                 errors[call_id] = "目标歌曲 ID 没有可信来源；请先搜索歌曲。"
+        elif name == "delete_playlist_tool":
+            from app.tools.music import has_delete_confirmation
+            playlist_id = args.get("playlist_id")
+            if not args.get("confirmed") or not has_delete_confirmation(state["current_input"], playlist_id):
+                errors[call_id] = "删除整张歌单需要用户确认准确歌单 ID；请先展示目标并请求二次确认。"
+            elif playlist_id not in playlists or not playlists[playlist_id].editable:
+                errors[call_id] = "删除前必须从当前用户歌单取得可信的可编辑目标。"
         elif name in {"add_song_to_playlist", "remove_song_from_playlist_tool"}:
             song_id = args.get("song_id")
             playlist_id = args.get("playlist_id")
@@ -598,6 +618,13 @@ def _final_task_result(
         if (payload := _read_json(result.get("content"))) is not None
         and payload.get("success") is False
     ]
+    execution_failures = [
+        payload for payload in failures
+        if payload.get("error") not in {
+            "duplicate_tool_call", "batch_rejected", "untrusted_entity_reference",
+            "invalid_tool_arguments", "invalid_tool_selection", "unknown_tool",
+        }
+    ]
     all_tools_failed = bool(state.get("tool_results")) and len(failures) == len(
         state.get("tool_results", [])
     )
@@ -607,6 +634,7 @@ def _final_task_result(
         if result.get("name") in {
             "add_song_to_playlist", "remove_song_from_playlist_tool",
             "create_playlist_tool", "set_song_liked_tool",
+            "delete_playlist_tool",
         }
         if (payload := _read_json(result.get("content"))) is not None
         and (payload.get("success") is False or payload.get("status") == "forbidden")
@@ -614,7 +642,7 @@ def _final_task_result(
     limit_reached = content == TOOL_LIMIT_MESSAGE
     status = (
         TaskStatus.FAILED
-        if all_tools_failed or write_failures or limit_reached
+        if all_tools_failed or write_failures or execution_failures or limit_reached
         else TaskStatus.SUCCESS
     )
     error = None
@@ -624,6 +652,8 @@ def _final_task_result(
         error = str(failures[0].get("message") or "工具调用失败，请稍后重试。")
     elif write_failures:
         error = str(write_failures[0].get("message") or "云端操作未完成，请稍后重试。")
+    elif execution_failures:
+        error = str(execution_failures[0].get("message") or "工具调用失败，请稍后重试。")
     actual_write_failures = [
         item for item in write_failures
         if item.get("error") not in {
@@ -635,6 +665,12 @@ def _final_task_result(
         # Persistence acknowledgements come from the service, even if the model
         # mistakenly describes a failed write as successful.
         content = "云端操作未完成：" + str(actual_write_failures[0].get("message") or "请稍后重试。")
+    elif execution_failures and not limit_reached:
+        content = "操作未全部完成：" + error
+    if (status is TaskStatus.SUCCESS and is_simple_song_playback(state["current_input"])
+        and not any(action.name is ClientActionName.PLAY_SONG for action in actions)):
+        status = TaskStatus.NEEDS_INPUT
+        content = "未找到可确认的指定歌曲版本，尚未发送播放指令。请明确要播放的版本。"
     return (
         content,
         TaskResult(
@@ -650,7 +686,9 @@ def _final_task_result(
                 "tool_calls": state.get("tool_call_count", 0),
                 "tool_call_details": [
                     {"name": str(item.get("name") or "unknown"),
-                     "status": str(item.get("status") or "unknown")}
+                     "status": str(item.get("status") or "unknown"),
+                     **({"error": payload.get("error"), "message": payload.get("message")}
+                        if (payload := _read_json(item.get("content"))) and payload.get("success") is False else {})}
                     for item in state.get("tool_results", [])
                 ],
             },
@@ -664,18 +702,16 @@ def _fail_invalid_tool_output(
     state: ToolCallingState,
     reason: str,
 ) -> dict[str, Any]:
+    _, result, actions = _final_task_result(state, AIMessage(content=INVALID_TOOL_OUTPUT_MESSAGE))
+    result = result.model_copy(update={
+        "status": TaskStatus.FAILED, "content": INVALID_TOOL_OUTPUT_MESSAGE,
+        "error": INVALID_TOOL_OUTPUT_MESSAGE, "data": {**result.data, "reason": reason},
+    })
     return {
         "messages": [AIMessage(content=INVALID_TOOL_OUTPUT_MESSAGE)],
         "answer": INVALID_TOOL_OUTPUT_MESSAGE,
-        "client_actions": [],
-        "task_result": TaskResult(
-            task_id=state["task_id"],
-            route_key=RouteKey.TOOL_CALLING,
-            status=TaskStatus.FAILED,
-            content=INVALID_TOOL_OUTPUT_MESSAGE,
-            data={"reason": reason, "client_actions": [], "tool_call_details": []},
-            error=INVALID_TOOL_OUTPUT_MESSAGE,
-        ),
+        "client_actions": actions,
+        "task_result": result,
     }
 
 
@@ -737,14 +773,33 @@ def build_tool_calling_subgraph(
                 state.get("prior_entities", []),
             )
         else:
-            result = await answer_tool_calling_task(
-                state["messages"],
-                state["current_input"],
-                state["routing_context"],
-                state.get("prior_entities", []),
-                model=bound_model,
-                continuity_context=state.get("continuity_context"),
-            )
+            from app.llm.runtime import RuntimeLimitError
+
+            try:
+                result = await answer_tool_calling_task(
+                    state["messages"],
+                    state["current_input"],
+                    state["routing_context"],
+                    state.get("prior_entities", []),
+                    model=bound_model,
+                    continuity_context=state.get("continuity_context"),
+                    search_only=bool(graph_tools) and all(
+                        item.name in {"search_music", "search_entities_tool"}
+                        for item in graph_tools
+                    ),
+                    song_playback={item.name for item in graph_tools} == SONG_PLAYBACK_TOOLS,
+                )
+            except RuntimeLimitError as exc:
+                # Preserve successful tools/actions when the next model request
+                # is refused. The parent still records its original stop reason.
+                message = "本轮操作达到资源上限，后续步骤未执行。"
+                answer, task_result, actions = _final_task_result(state, AIMessage(content=message))
+                task_result = task_result.model_copy(update={
+                    "status": TaskStatus.FAILED, "content": message, "error": message,
+                    "data": {**task_result.data, "reason": exc.reason},
+                })
+                return {"messages": [AIMessage(content=message)], "answer": message,
+                        "task_result": task_result, "client_actions": actions}
 
         if result.invalid_tool_calls or any(
             not isinstance(call.get("id"), str) or not call["id"].strip()
@@ -821,11 +876,13 @@ def build_tool_calling_subgraph(
         messages: list[ToolMessage] = []
         for call in _latest_tool_calls(state):
             call_id = str(call.get("id", ""))
-            if call_id in argument_errors:
-                error_code, message = argument_errors[call_id]
-            elif call_id in action_errors:
+            # A scoped-out write is still an unauthorized action. Preserve
+            # the authority diagnostic independently of the schema allowlist.
+            if call_id in action_errors:
                 error_code = "unauthorized_action"
                 message = action_errors[call_id]
+            elif call_id in argument_errors:
+                error_code, message = argument_errors[call_id]
             elif call_id in reference_errors:
                 error_code = "untrusted_entity_reference"
                 message = reference_errors[call_id]
@@ -866,7 +923,7 @@ def build_tool_calling_subgraph(
     builder.add_node("validate_tool_calls", lambda _: {})
     builder.add_node(
         "tools",
-        ToolNode(graph_tools, handle_tool_errors=handle_music_tool_error),
+        ToolNode(graph_tools, handle_tool_errors=handle_music_tool_error, awrap_tool_call=journal_tool_call),
     )
     builder.add_node("capture_tool_results", capture_tool_results)
     builder.add_node("reject_tool_calls", reject_invalid_tool_calls)

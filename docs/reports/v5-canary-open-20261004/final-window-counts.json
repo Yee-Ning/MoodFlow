@@ -1,0 +1,10 @@
+{
+  "at_utc": "2026-10-04T05:54:30.473851+00:00",
+  "from_utc": "2026-10-04T05:48:15.238451+00:00",
+  "through_utc": "2026-10-04T05:50:47.180339+00:00",
+  "source": "persisted_user_message_events_including_reused_sessions",
+  "handoff_acceptance_requests": 2,
+  "handoff_other_requests": 0,
+  "foundation_acceptance_requests": 1,
+  "foundation_other_requests": 0
+}

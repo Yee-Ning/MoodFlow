@@ -3,7 +3,7 @@ import { usePlayerStore } from '../store/playerStore'
 import type { SongSummary } from '../types/music'
 
 const MAX_REMEMBERED_ACTIONS = 500
-const executedActionIds = new Set<string>()
+const executedActions = new Map<string, { signature: string; result: Promise<void> }>()
 const executedActionOrder: string[] = []
 
 export class AiClientActionError extends Error {
@@ -11,17 +11,6 @@ export class AiClientActionError extends Error {
     super(message)
     this.name = 'AiClientActionError'
   }
-}
-
-function rememberAction(actionId: string) {
-  if (executedActionIds.has(actionId)) return false
-  executedActionIds.add(actionId)
-  executedActionOrder.push(actionId)
-  if (executedActionOrder.length > MAX_REMEMBERED_ACTIONS) {
-    const oldest = executedActionOrder.shift()
-    if (oldest) executedActionIds.delete(oldest)
-  }
-  return true
 }
 
 function requireCurrentSong() {
@@ -50,7 +39,23 @@ function toSongSummary(song: ClientTrack): SongSummary {
 }
 
 export async function executeClientAction(action: ClientAction): Promise<void> {
-  if (!rememberAction(action.action_id)) return
+  const signature = JSON.stringify(action)
+  const previous = executedActions.get(action.action_id)
+  if (previous) {
+    if (previous.signature !== signature) throw new AiClientActionError('动作标识与原操作不一致')
+    return previous.result
+  }
+  const result = applyClientAction(action)
+  executedActions.set(action.action_id, { signature, result })
+  executedActionOrder.push(action.action_id)
+  if (executedActionOrder.length > MAX_REMEMBERED_ACTIONS) {
+    const oldest = executedActionOrder.shift()
+    if (oldest) executedActions.delete(oldest)
+  }
+  return result
+}
+
+async function applyClientAction(action: ClientAction): Promise<void> {
 
   const player = usePlayerStore.getState()
   switch (action.name) {

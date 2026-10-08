@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import os
 from functools import lru_cache
@@ -60,6 +61,26 @@ class MemoryRuntime:
                     candidate=candidate,
                 )
             )
+        profiles = [result.memory for result in results if result.memory is not None
+                    and result.memory.memory_type.value == "profile" and result.action.value != "ignored"]
+        if profiles:
+            try:
+                from app.agent.foundation.user_profile import ProfileEntry, ProfileWriter, get_profile_store
+                from app.agent.foundation.context_sources import load_context_policy
+                store = get_profile_store()
+                categories = load_context_policy()["profile_categories"]
+                previous = await asyncio.to_thread(store.read, user_id)
+                entries = [ProfileEntry(
+                    key=(memory.memory_key if len(memory.memory_key) <= 80 else
+                         hashlib.sha256(memory.memory_key.encode()).hexdigest()), value=memory.content[:1000],
+                    source=memory.source_thread_id, updated_at=memory.updated_at,
+                    confidence=memory.confidence,
+                    intents=tuple(categories.get(memory.structured_content.get("category"), categories["default"])),
+                ) for memory in profiles]
+                await asyncio.to_thread(ProfileWriter(store).update, user_id, entries,
+                                        expected_version=previous.version if previous else 0)
+            except Exception as exc:
+                logger.warning("profile write unavailable error_type=%s", type(exc).__name__)
         return results
 
     def close(self) -> None:

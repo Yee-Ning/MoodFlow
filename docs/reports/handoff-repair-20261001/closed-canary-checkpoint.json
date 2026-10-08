@@ -1,0 +1,24 @@
+{
+  "checkpoint_rows": [
+    {
+      "case_id": "closed_canary_chat",
+      "thread_id": "phase6:closed:5",
+      "session_id": "session:fe652ac7e752453c9bf194382d82e73c",
+      "checkpoint_id": "1f1bda23-dace-6c2f-8005-d4fa9982a956",
+      "checkpoint_hash": "4dbc2d061db39eac9fde15537bb602b0f7343e585fdd8b9e1d3aacc91109b16d",
+      "run_id": null,
+      "run_status": null,
+      "stop_reason": null,
+      "handoff_chain": null,
+      "handoff_count": null,
+      "usage": null,
+      "trace": [],
+      "task_result_statuses": [],
+      "tool_call_ids": [],
+      "tool_reply_ids": [],
+      "all_calls_paired": true,
+      "history_count": 4
+    }
+  ],
+  "read_only": true
+}

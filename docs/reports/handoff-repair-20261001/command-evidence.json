@@ -1,0 +1,385 @@
+{
+  "private_log_text_omitted": true,
+  "logs": [
+    {
+      "name": "closed-canary.log",
+      "sha256": "1ec000cb17942172098432eab4d21ba9c2fc237319560527780c961417f582cc",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "combo-direct.log",
+      "sha256": "685d3d1372ca2f893bf49d054ab1f5b99aad6283d59bb82b4a0df4c831f2acaf",
+      "exit_code": "2",
+      "summary_lines": []
+    },
+    {
+      "name": "combo-final.log",
+      "sha256": "b218182f454d6bd003be5747f05110bcc83a21c5eeecd00ec93c69d28a14d2f6",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "combo-fixed.log",
+      "sha256": "2664f3e4e4f1e516ebe9b36269116b46643cb087fdcb9bc4cdc1b68fc8f56557",
+      "exit_code": "2",
+      "summary_lines": []
+    },
+    {
+      "name": "combo-initial.log",
+      "sha256": "b760306041e98fecd112c8910db127a51ba16a078a3f6ae25807b992b38c07c8",
+      "exit_code": "2",
+      "summary_lines": []
+    },
+    {
+      "name": "compileall.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "direct-tests.log",
+      "sha256": "d06798a98b2705330f109d51f509ae57b10fff8ee522a88c2a894f05c6114e3b",
+      "exit_code": "0",
+      "summary_lines": [
+        "48 passed in 11.47s"
+      ]
+    },
+    {
+      "name": "eval-tests.log",
+      "sha256": "aba094514e12ee34f74a78c9cd6682002af5e19c2e35e83f44414f19a2b3caa6",
+      "exit_code": "0",
+      "summary_lines": [
+        "194 passed in 39.48s"
+      ]
+    },
+    {
+      "name": "frontend-ai-layout.log",
+      "sha256": "feb5087a3ad27ed326f7038249f5121576677e4734f1a3cbccd7875ac12a8db7",
+      "exit_code": "0",
+      "summary_lines": [
+        "AI chat layout checks passed for D:\\code\\ProjectsAll\\MoodFlow\\soul-music-room\\."
+      ]
+    },
+    {
+      "name": "frontend-ai-stream.log",
+      "sha256": "970e420c00cfb3523659bfa5885c7490545e04e9cfec09f851f41e0b54b86f61",
+      "exit_code": "0",
+      "summary_lines": [
+        "AI chat streaming store checks passed."
+      ]
+    },
+    {
+      "name": "frontend-ai-trigger.log",
+      "sha256": "f1cd9b13da35f39ec05cea175fd8d94837f98a8e0b9737b4faba9ad78cb0bb05",
+      "exit_code": "0",
+      "summary_lines": [
+        "AI chat trigger position checks passed."
+      ]
+    },
+    {
+      "name": "frontend-build.log",
+      "sha256": "c0e06f7dcf669504b559b75209e9926fa51e4c65811c5c4181e1e0a0f4672a91",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "frontend-lint.log",
+      "sha256": "ddc2ddc5695dd0474dd4a2f35b28a51e4ba0b7029b79ae72a004f32a05054336",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "frontend-music-assets.log",
+      "sha256": "f1f46a65dd0ad787d7ff3e43a3ec712fb7395b96b05b8f8c1f9b9c5aef4f4b19",
+      "exit_code": "0",
+      "summary_lines": [
+        "Cloud music asset and direct player checks passed."
+      ]
+    },
+    {
+      "name": "frontend-search.log",
+      "sha256": "cb51a569a6eb0c55bf0e8dbb088226d91097965cc844175702dc33c8e108e730",
+      "exit_code": "0",
+      "summary_lines": [
+        "Music search API, categories, rendering, queue, validation, partial failures, retry and cancellation checks passed."
+      ]
+    },
+    {
+      "name": "frontend-worldline.log",
+      "sha256": "4c5dc69a82ca8fef09f811b805887d8cca30632d0512763600452affd7e93701",
+      "exit_code": "0",
+      "summary_lines": [
+        "worldline frontend flow passed",
+        "worldline frontend view passed"
+      ]
+    },
+    {
+      "name": "full-tests-delivery.log",
+      "sha256": "beabf66b3f3c50340c1c258b75fd55b5ef76977b26add06044adf639abf1263c",
+      "exit_code": "0",
+      "summary_lines": [
+        "SKIPPED [1] tests\\test_jev_live.py:18: set JEV_LIVE_TEST=1 to use the real TypeSafe API",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:69: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:77: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:122: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:256: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:78: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:164: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:245: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:147: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_rag_indexing.py:758: set QDRANT_INTEGRATION_URL to run against a real Qdrant server",
+        "SKIPPED [1] tests\\test_retrieval_fusion_qdrant.py:223: set QDRANT_INTEGRATION_URL to run against a real Qdrant server",
+        "SKIPPED [1] tests\\test_worldline_postgres_restart.py:18: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance",
+        "SKIPPED [1] tests\\test_worldline_postgres_restart.py:77: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance",
+        "SKIPPED [1] tests\\test_worldline_postgres_restart.py:52: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance",
+        "1671 passed, 14 skipped, 286 subtests passed in 143.30s (0:02:23)"
+      ]
+    },
+    {
+      "name": "full-tests-final.log",
+      "sha256": "14876fd5e7bd8b650c76c7b5f9c6bae8b72ebd84732ec1518e433ffcbb63637e",
+      "exit_code": "1",
+      "summary_lines": [
+        "SKIPPED [1] tests\\test_jev_live.py:18: set JEV_LIVE_TEST=1 to use the real TypeSafe API",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:69: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:77: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:122: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:256: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:78: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:164: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:245: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:147: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_rag_indexing.py:758: set QDRANT_INTEGRATION_URL to run against a real Qdrant server",
+        "SKIPPED [1] tests\\test_retrieval_fusion_qdrant.py:223: set QDRANT_INTEGRATION_URL to run against a real Qdrant server",
+        "SKIPPED [1] tests\\test_worldline_postgres_restart.py:18: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance",
+        "SKIPPED [1] tests\\test_worldline_postgres_restart.py:77: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance",
+        "SKIPPED [1] tests\\test_worldline_postgres_restart.py:52: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance",
+        "FAILED tests/test_foundation_e2e_acceptance.py::FoundationE2EAcceptanceTests::test_worldline_frozen_rag_stages_reach_main_response",
+        "FAILED tests/test_handoff_guard.py::test_existing_enable_and_shadow_settings_control_default_guard",
+        "FAILED tests/test_handoff_guard.py::test_guard_and_router_controls_are_independent",
+        "FAILED tests/test_handoff_runtime.py::test_curator_uses_existing_negation_authorization_before_tool_execution",
+        "FAILED tests/test_jev_settings.py::test_jev_fields_use_existing_settings_and_hide_key",
+        "5 failed, 1663 passed, 14 skipped, 286 subtests passed in 153.93s (0:02:33)"
+      ]
+    },
+    {
+      "name": "full-tests-verified.log",
+      "sha256": "20ebbde723e315dd032eba90e245a10cc3eeb130d64e75e5cb247f39cf3bd4b0",
+      "exit_code": "0",
+      "summary_lines": [
+        "SKIPPED [1] tests\\test_jev_live.py:18: set JEV_LIVE_TEST=1 to use the real TypeSafe API",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:69: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:77: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:122: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_live_postgres_smoke.py:256: set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:78: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:164: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:245: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_postgres_persistence.py:147: DATABASE_URL is required for PostgreSQL E2E",
+        "SKIPPED [1] tests\\test_rag_indexing.py:758: set QDRANT_INTEGRATION_URL to run against a real Qdrant server",
+        "SKIPPED [1] tests\\test_retrieval_fusion_qdrant.py:223: set QDRANT_INTEGRATION_URL to run against a real Qdrant server",
+        "SKIPPED [1] tests\\test_worldline_postgres_restart.py:18: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance",
+        "SKIPPED [1] tests\\test_worldline_postgres_restart.py:77: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance",
+        "SKIPPED [1] tests\\test_worldline_postgres_restart.py:52: set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance",
+        "1668 passed, 14 skipped, 286 subtests passed in 152.12s (0:02:32)"
+      ]
+    },
+    {
+      "name": "full-tests.log",
+      "sha256": "bec206d7a35b99a30277ec99416895062aa88a7d8da6d47560f44fa9c304b29a",
+      "exit_code": "-1",
+      "summary_lines": []
+    },
+    {
+      "name": "http-active-final.log",
+      "sha256": "9b262c3560e225a9b382ed636a004cd07332b22e5831d199adbcf5a8c236253c",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "http-shadow-final.log",
+      "sha256": "0a7a1ba4860ac784b74e59bba9dd1280ab06b81eac72485eda92f7c22ab9fda9",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "java.log",
+      "sha256": "12c2f1fe3d2d4ccbf46def3bc71409c0b9f07706fb97b20178c08a15e9a8cd42",
+      "exit_code": null,
+      "summary_lines": []
+    },
+    {
+      "name": "judge-tests.log",
+      "sha256": "e0fef6fb703abe94cd866051f171e4cdf98b588da643abe6b7de0046d07e4014",
+      "exit_code": "0",
+      "summary_lines": [
+        "4 passed in 0.23s"
+      ]
+    },
+    {
+      "name": "netease.log",
+      "sha256": "07f9af078571f556188fe1ff1f896415ba7a04c00b3c241371cf44bc73f67fff",
+      "exit_code": null,
+      "summary_lines": []
+    },
+    {
+      "name": "pip-check.log",
+      "sha256": "672aec65a45bed50e70229c70934a7eebf0462595c459b83023027645d57cccf",
+      "exit_code": "0",
+      "summary_lines": [
+        "No broken requirements found."
+      ]
+    },
+    {
+      "name": "regressions.log",
+      "sha256": "9b791fc84184a5da97f3f3f3447b2c3d908326016bbde3982e641d28d193f2b1",
+      "exit_code": "0",
+      "summary_lines": [
+        "137 passed in 25.61s"
+      ]
+    },
+    {
+      "name": "retrieval-fixed.log",
+      "sha256": "17be671144c44378a9940f12de8a04addd29f51814bdf04b931d210f3729c98a",
+      "exit_code": "0",
+      "summary_lines": [
+        "16 passed in 24.28s"
+      ]
+    },
+    {
+      "name": "retrieval-tests.log",
+      "sha256": "4af95bfba55c66f50f43202b74c663cd4311580b9a6d3b2951218ea962581484",
+      "exit_code": "1",
+      "summary_lines": [
+        "FAILED tests/test_worldline_retrieval_scope.py::test_root_filter_preserves_existing_constraints_and_changes_plan_identity",
+        "FAILED tests/test_worldline_retrieval_scope.py::test_unrelated_high_ranked_candidates_are_removed_before_rerank",
+        "FAILED tests/test_worldline_retrieval_adapter.py::WorldLineRetrievalAdapterTests::test_candidate_pool_stays_separate_from_context_adapter",
+        "FAILED tests/test_worldline_retrieval_adapter.py::WorldLineRetrievalAdapterTests::test_rerank_on_reduces_top_40_to_top_12_before_adapter_top_6",
+        "FAILED tests/test_worldline_retrieval_adapter.py::WorldLineRetrievalAdapterTests::test_rerank_shadow_observes_but_preserves_rrf_context_order",
+        "FAILED tests/test_worldline_retrieval_adapter.py::WorldLineRetrievalAdapterTests::test_unavailable_and_shadow_results_do_not_change_answer_context",
+        "6 failed, 10 passed in 36.33s"
+      ]
+    },
+    {
+      "name": "rollout-fixed.log",
+      "sha256": "0a4bf5d4499be62ae77d8cdca3454489c1d48cc4bebfc81aef6cd75fff47a53d",
+      "exit_code": "1",
+      "summary_lines": [
+        "FAILED tests/test_handoff_rollout.py::test_percentage_validation_rejects_invalid_configuration[-1]",
+        "FAILED tests/test_handoff_rollout.py::test_percentage_validation_rejects_invalid_configuration[101]",
+        "2 failed, 50 passed, 1 warning in 56.38s"
+      ]
+    },
+    {
+      "name": "rollout-tests.log",
+      "sha256": "89ce80de0a9867a5910070accd62a2d4b0fd22ecbdabea4d4de444f73cfa2554",
+      "exit_code": "1",
+      "summary_lines": [
+        "FAILED tests/test_handoff_rollout.py::test_percentage_validation_rejects_invalid_configuration[-1]",
+        "FAILED tests/test_handoff_rollout.py::test_percentage_validation_rejects_invalid_configuration[101]",
+        "2 failed, 28 passed, 1 warning in 59.74s"
+      ]
+    },
+    {
+      "name": "rollout-verified.log",
+      "sha256": "5f454380b6b62565e43e9ec9c8d7aa6a0363cdbc2222c5786703479135ff7f39",
+      "exit_code": "0",
+      "summary_lines": [
+        "10 passed in 22.71s"
+      ]
+    },
+    {
+      "name": "ruff-changed.log",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "exit_code": "0",
+      "summary_lines": [
+        "All checks passed!"
+      ]
+    },
+    {
+      "name": "ruff-format-new.log",
+      "sha256": "a69837e5076ef12241581591171de529fd26d5157fc32761175f83b0501cd41d",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "search-after-scope.log",
+      "sha256": "48582690d835eff559e8eb3170d9de5bec8c77bf5c12e8891985f6b6e509cc91",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "search-context-tests.log",
+      "sha256": "1aabf36247f4eb33e2002e118d9fc29ce691f7453ff90cdb53b8699cfad738ea",
+      "exit_code": "0",
+      "summary_lines": [
+        "106 passed in 17.42s"
+      ]
+    },
+    {
+      "name": "search-final.log",
+      "sha256": "4753c085da1b0ee391c312575b1966ea95182c2985a89061bdd18791fed30013",
+      "exit_code": "0",
+      "summary_lines": []
+    },
+    {
+      "name": "search-tests.log",
+      "sha256": "ff4e05410568a38876626bc3c997b19d221bec627946ec6ed3a82df0b3c0c6dd",
+      "exit_code": "0",
+      "summary_lines": [
+        "90 passed in 130.38s (0:02:10)"
+      ]
+    },
+    {
+      "name": "sequence-tests.log",
+      "sha256": "b916c25567503a55d579906e52196d57af6d0932b2e0168360a459cadc3990e2",
+      "exit_code": "0",
+      "summary_lines": [
+        "32 passed, 16 subtests passed in 50.18s"
+      ]
+    },
+    {
+      "name": "server-active.log",
+      "sha256": "7aacfaeb02435a6611e3642fcac743e8038d34112f8685b7b7eeb8f599468a49",
+      "exit_code": null,
+      "summary_lines": []
+    },
+    {
+      "name": "server-closed.log",
+      "sha256": "301190eeab39706d89d78892c909e6fc3198339aca5eee6e87543fcfc54770d4",
+      "exit_code": null,
+      "summary_lines": []
+    },
+    {
+      "name": "server-final.log",
+      "sha256": "83135882860d3bd55b11e4d026cd36d25de787ad16c83944607680fef4df4673",
+      "exit_code": null,
+      "summary_lines": []
+    },
+    {
+      "name": "server-fixed.log",
+      "sha256": "72c92a59e94ae08171980fbc2cbcd52bc2ec4ecd3b2923f1bd0024ce637252cb",
+      "exit_code": null,
+      "summary_lines": []
+    },
+    {
+      "name": "server-reloaded.log",
+      "sha256": "92aaf1f8603689732d4821e270cdd07ba39a1c5f5185ea0272badf7d2a558c94",
+      "exit_code": null,
+      "summary_lines": []
+    },
+    {
+      "name": "server-shadow.log",
+      "sha256": "2838d2aa5706a5cfffb93b8f6b20c4e6cff266005789f38f7b633cf7c5a9696a",
+      "exit_code": null,
+      "summary_lines": []
+    },
+    {
+      "name": "worldline-original.log",
+      "sha256": "3024f0b6575539e37b19e727480b96cfc7900de2ad1ac31e353e2398c30144f8",
+      "exit_code": "0",
+      "summary_lines": []
+    }
+  ]
+}

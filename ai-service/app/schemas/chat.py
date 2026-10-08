@@ -27,10 +27,37 @@ class ChatContext(BaseModel):
         return normalized or None
 
 
+class DecisionReferenceRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    kind: Literal["event", "artifact"]
+    target_id: str = Field(min_length=1, max_length=200)
+
+
+class UserDecisionRequest(BaseModel):
+    """Transport DTO; importing chat schemas must not construct agent graphs."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    schema_version: Literal[1] = 1
+    decision_id: str = Field(min_length=1, max_length=128)
+    text: str = Field(max_length=4000)
+    kind: Literal["decision", "constraint"] = "decision"
+    effect: Literal["add", "revoke", "supersede"] = "add"
+    supersedes: tuple[DecisionReferenceRequest, ...] = Field(default=(), max_length=16)
+
+    @model_validator(mode="after")
+    def replacement_has_reference(self):
+        if self.effect != "add" and not self.supersedes:
+            raise ValueError("constraint replacement requires explicit references")
+        return self
+
+
 class ChatRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    message: str = Field(min_length=1, max_length=4000)
+    message: str = Field(max_length=4000)
+    request_id: str | None = Field(default=None, min_length=1, max_length=128)
+    resume: bool = False
+    new_session: bool = False
+    decisions: tuple[UserDecisionRequest, ...] = Field(default=(), max_length=16)
     thread_id: str | None = Field(default=None, min_length=1, max_length=128)
     current_song_id: int | None = Field(default=None, gt=0)
     context: ChatContext | None = None
@@ -40,9 +67,23 @@ class ChatRequest(BaseModel):
     @classmethod
     def message_must_not_be_blank(cls, value: str) -> str:
         value = value.strip()
-        if not value:
-            raise ValueError("message must not be blank")
         return value
+
+    @model_validator(mode="after")
+    def valid_lifecycle(self):
+        if self.resume:
+            if self.message or self.new_session or self.decisions or not self.thread_id:
+                raise ValueError("resume requires an existing thread and empty input")
+        elif not self.message:
+            raise ValueError("message must not be blank")
+        return self
+
+    def continuity_options(self):
+        values = {key: getattr(self, key) for key in ("request_id", "resume", "new_session") if getattr(self, key)}
+        if self.decisions:
+            from app.agent.foundation.long_horizon.public_events import PublicDecision
+            values["decisions"] = tuple(PublicDecision.model_validate(item.model_dump(mode="json")) for item in self.decisions)
+        return values
 
     @field_validator("thread_id")
     @classmethod

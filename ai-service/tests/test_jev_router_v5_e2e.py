@@ -87,8 +87,10 @@ async def test_v5_two_tool_tasks_dispatch_once_each_in_order():
     assert len(tasks) == 2
     assert tasks[1].depends_on == [tasks[0].task_id]
     assert [item.status for item in result["task_results"]] == [
-        TaskStatus.SUCCESS, TaskStatus.SUCCESS,
+        TaskStatus.SUCCESS, TaskStatus.NEEDS_INPUT,
     ]
+    assert result["task_results"][1].data["client_actions"] == []
+    assert "尚未发送播放指令" in result["task_results"][1].content
 
 
 async def test_v5_ambiguous_entity_clarifies_before_worldline_dispatch():

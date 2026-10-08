@@ -1,0 +1,905 @@
+{
+  "at": "2026-10-01T11:51:34.279156+00:00",
+  "phase": 6,
+  "baseline_commit": "dbd591a",
+  "implementation_commits": [
+    "4484729",
+    "20ee3c3"
+  ],
+  "verdict": {
+    "acceptance_execution_complete": true,
+    "controlled_application_tests_passed": true,
+    "full_repository_lint_passed": false,
+    "unchanged_lint_baseline": true,
+    "all_real_business_acceptance_passed": false,
+    "phase7_cutover_ready": false,
+    "production_config_changed": false
+  },
+  "scope": [
+    "opt-in HTTP acceptance",
+    "opt-in PostgreSQL interrupted-run resume",
+    "controlled test environment isolation",
+    "real dependency/browser/frontend/backend evidence"
+  ],
+  "tests": {
+    "application": {
+      "command": ".venv/Scripts/python.exe -m pytest tests -q -ra --tb=short --junitxml=<new-output>/application.xml",
+      "cwd": "ai-service",
+      "exit": 0,
+      "junit": {
+        "tests": 1922,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 14
+      },
+      "summary": "1622 passed, 14 skipped, 1 warning, 286 subtests passed in 682.93s (0:11:22)",
+      "failed_cases": [],
+      "skipped_cases": [
+        {
+          "case": "tests.test_jev_live::test_live_system_one_choice",
+          "reason": "set JEV_LIVE_TEST=1 to use the real TypeSafe API"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_business_store_persists_all_continuity_records",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_pgvector_memory_persists_and_isolates_users",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_restart_recovers_checkpoint_and_context_in_new_process",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_store_transaction_rolls_back_partial_writes",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_rag_indexing.QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "case": "tests.test_retrieval_fusion_qdrant.QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        }
+      ],
+      "junit_sha256": "26283d1f353080d3b91c48f2399c05ad6a4ac727fba50775d69abb69ec2974b1",
+      "log_sha256": "40b16faf52ba8fa95f93f356178eaee9aff7247fd84155ecda426a845a5dcbe3"
+    },
+    "related_subset": {
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_handoff_acceptance.py tests/test_handoff_checkpoint_acceptance.py tests/test_handoff_network.py tests/test_jev_settings.py tests/test_mineru_cloud.py tests/test_worldline_retrieval_adapter.py -q -ra --tb=short --junitxml=<new-output>/related.xml",
+      "cwd": "ai-service",
+      "exit": 0,
+      "junit": {
+        "tests": 95,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "summary": "95 passed in 68.84s (0:01:08)",
+      "failed_cases": [],
+      "skipped_cases": [],
+      "junit_sha256": "87622254329c5f745a24b41a703325b70b4d031d7620ba8b1f997e3798a17f7c",
+      "log_sha256": "14ccdfd958fc60bf6ff1cdf46ee2e801af2e8c56cde25134fb608f6ba925102c"
+    },
+    "evals": {
+      "command": ".venv/Scripts/python.exe -m pytest <all evals/tests/test_*.py except test_judges.py> -q -ra --tb=short --junitxml=<new-output>/evals.xml",
+      "cwd": "ai-service",
+      "exit": 0,
+      "junit": {
+        "tests": 194,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "summary": "194 passed in 122.39s (0:02:02)",
+      "failed_cases": [],
+      "skipped_cases": [],
+      "junit_sha256": "c38b579b979945068a2d0ef3e741a68ec1c929e4be809f251b51759866898d65",
+      "log_sha256": "e49606861b0adc9f6be8d44c500b0462c15094b5cc8fde6ed0767706d8d66955"
+    },
+    "judges": {
+      "command": ".venv-eval/Scripts/python.exe -m pytest evals/tests/test_judges.py -q -ra --tb=short --junitxml=<new-output>/judges.xml",
+      "cwd": "ai-service",
+      "exit": 0,
+      "junit": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "summary": "4 passed in 1.65s",
+      "failed_cases": [],
+      "skipped_cases": [],
+      "junit_sha256": "765c5e707665c03c7a15b6057821441395cad2e8c6fc0e6627cb25ef1b508d40",
+      "log_sha256": "a287fc53b0cd013463cfb7a51bfd6dbc52ee7dd9380e4a6ab2d9680dc9085d35"
+    },
+    "java": {
+      "command": "mvn --batch-mode --no-transfer-progress -o verify",
+      "cwd": "music-backend",
+      "jdk": 21,
+      "exit": 0,
+      "totals": {
+        "tests": 75,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "name": "cn.itcast.demo.musicbackend.config.WebConfigTests",
+          "tests": "6",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "cn.itcast.demo.musicbackend.controller.AuthControllerTests",
+          "tests": "18",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "cn.itcast.demo.musicbackend.controller.MusicAssetControllerTests",
+          "tests": "10",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "cn.itcast.demo.musicbackend.controller.UserMusicControllerTests",
+          "tests": "4",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "cn.itcast.demo.musicbackend.MusicBackendApplicationTests",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "cn.itcast.demo.musicbackend.service.AuthServiceTests",
+          "tests": "5",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "cn.itcast.demo.musicbackend.service.MusicSearchMetadataTests",
+          "tests": "6",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "cn.itcast.demo.musicbackend.service.NeteaseMusicServiceTests",
+          "tests": "25",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        }
+      ],
+      "log_sha256": "ccfe418e251104cccc6196739f1bd319332fba04315bc61202a1d498adb9f559"
+    },
+    "frontend": [
+      {
+        "command": "npm run test:ai-layout",
+        "exit": 0
+      },
+      {
+        "command": "npm run test:ai-stream",
+        "exit": 0
+      },
+      {
+        "command": "npm run test:music-assets",
+        "exit": 0
+      },
+      {
+        "command": "npm run test:search",
+        "exit": 0
+      },
+      {
+        "command": "npm run test:ai-trigger",
+        "exit": 0
+      },
+      {
+        "command": "npm run test:worldline",
+        "exit": 0
+      },
+      {
+        "command": "npm run lint",
+        "exit": 0
+      },
+      {
+        "command": "npm run build",
+        "exit": 0
+      }
+    ],
+    "live_postgres_and_initial_qdrant": {
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_postgres_persistence.py tests/test_live_postgres_smoke.py tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs -q -ra --tb=short --junitxml=<new-output>/live.xml",
+      "cwd": "ai-service",
+      "exit": 1,
+      "junit": {
+        "tests": 10,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0
+      },
+      "summary": "2 failed, 8 passed, 1 warning in 166.21s (0:02:46)",
+      "failed_cases": [
+        "tests.test_rag_indexing.QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+        "tests.test_retrieval_fusion_qdrant.QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs"
+      ],
+      "skipped_cases": [],
+      "junit_sha256": "c16956052f1beb1afa332fa6a1f3a4d7e59e95ac8d5efce202feb3fc7216aee5",
+      "log_sha256": "8cce9f226ff464146d13c4bf3424f493c65696b82ca1c98bba1c337d064b7165"
+    },
+    "qdrant_reverified": {
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs -q -ra --tb=short --junitxml=<new-output>/qdrant.xml",
+      "cwd": "ai-service",
+      "exit": 0,
+      "junit": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "summary": "2 passed in 23.33s",
+      "failed_cases": [],
+      "skipped_cases": [],
+      "junit_sha256": "7f9f6cebf6353b7b4df92a9b5a953180e3c486ccdd75e81736fb241c0dfde90e",
+      "log_sha256": "f5fe6afd00fb3f140292846fb36a5e3105357b28e8992257678bb80504e7d8d1"
+    },
+    "static": [
+      {
+        "command": ".venv/Scripts/python.exe -m ruff check scripts/handoff_acceptance.py scripts/handoff_checkpoint_acceptance.py tests/test_handoff_acceptance.py tests/test_handoff_checkpoint_acceptance.py tests/test_handoff_network.py",
+        "exit": 0,
+        "summary": "All checks passed!"
+      },
+      {
+        "command": ".venv/Scripts/python.exe -m ruff format --check scripts/handoff_acceptance.py scripts/handoff_checkpoint_acceptance.py tests/test_handoff_acceptance.py tests/test_handoff_checkpoint_acceptance.py tests/test_handoff_network.py",
+        "exit": 0,
+        "summary": "5 files already formatted"
+      },
+      {
+        "command": ".venv/Scripts/python.exe -m compileall -q app tests evals scripts",
+        "exit": 0,
+        "summary": ""
+      },
+      {
+        "command": ".venv/Scripts/python.exe -m pip check",
+        "exit": 0,
+        "summary": "No broken requirements found."
+      },
+      {
+        "command": ".venv/Scripts/python.exe -m ruff check . --output-format json",
+        "exit": 1,
+        "findings": 45,
+        "identical_to_phase0": true
+      }
+    ]
+  },
+  "validation_history": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit": 1,
+      "junit": {
+        "tests": 1907,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 14
+      },
+      "summary": "1 failed, 1606 passed, 14 skipped, 1 warning, 286 subtests passed in 439.60s (0:07:19)",
+      "failed_cases": [
+        "tests.test_handoff_network::test_explorer_keeps_existing_era_scene_influence_evidence[scene-\\u6b4c\\u624b\\u5468\\u6770\\u4f26\\u7684\\u97f3\\u4e50\\u573a\\u666f-SceneDocsRetriever]"
+      ],
+      "skipped_cases": [
+        {
+          "case": "tests.test_jev_live::test_live_system_one_choice",
+          "reason": "set JEV_LIVE_TEST=1 to use the real TypeSafe API"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_business_store_persists_all_continuity_records",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_pgvector_memory_persists_and_isolates_users",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_restart_recovers_checkpoint_and_context_in_new_process",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_store_transaction_rolls_back_partial_writes",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_rag_indexing.QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "case": "tests.test_retrieval_fusion_qdrant.QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        }
+      ],
+      "junit_sha256": "09889ed42318ad26928b500206a2756022c1ee99de38bfdf7319dfc7a9846c72",
+      "log_sha256": "c4fe4c4a39ca5e95b663cdd5e4e476f73a50ecb096ee5ac9eeaa7b0fb7cbc078",
+      "diagnostic_content_published": false,
+      "note": "Only case names, summary and file hashes published; assertion and captured-log text omitted."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit": 0,
+      "junit": {
+        "tests": 1917,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 14
+      },
+      "summary": "1617 passed, 14 skipped, 1 warning, 286 subtests passed in 399.64s (0:06:39)",
+      "failed_cases": [],
+      "skipped_cases": [
+        {
+          "case": "tests.test_jev_live::test_live_system_one_choice",
+          "reason": "set JEV_LIVE_TEST=1 to use the real TypeSafe API"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_business_store_persists_all_continuity_records",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_pgvector_memory_persists_and_isolates_users",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_restart_recovers_checkpoint_and_context_in_new_process",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_store_transaction_rolls_back_partial_writes",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_rag_indexing.QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "case": "tests.test_retrieval_fusion_qdrant.QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        }
+      ],
+      "junit_sha256": "185841324afab45c4a9d764b828cb23413b902bbf01132f487f4a5e365a1dfc0",
+      "log_sha256": "db76ecaced2259688592c45fadd4fac1bdc7382d7a9099b208be38ed70870b14",
+      "diagnostic_content_published": false,
+      "note": "Only case names, summary and file hashes published; assertion and captured-log text omitted."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests -q -ra --tb=short",
+      "cwd": "ai-service",
+      "exit": 1,
+      "junit": {
+        "tests": 1922,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 14
+      },
+      "summary": null,
+      "failed_cases": [
+        "tests.test_jev_settings::test_jev_fields_use_existing_settings_and_hide_key",
+        "tests.test_mineru_cloud.MinerUCloudConfigTests::test_env_file_loads_cloud_settings_without_exposing_secret",
+        "tests.test_worldline_retrieval_adapter.WorldLineRetrievalAdapterTests::test_hybrid_runtime_requires_manifest"
+      ],
+      "skipped_cases": [
+        {
+          "case": "tests.test_jev_live::test_live_system_one_choice",
+          "reason": "set JEV_LIVE_TEST=1 to use the real TypeSafe API"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_live_postgres_smoke.LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+          "reason": "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_business_store_persists_all_continuity_records",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_pgvector_memory_persists_and_isolates_users",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_restart_recovers_checkpoint_and_context_in_new_process",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_postgres_persistence.PostgresPersistenceTests::test_store_transaction_rolls_back_partial_writes",
+          "reason": "DATABASE_URL is required for PostgreSQL E2E"
+        },
+        {
+          "case": "tests.test_rag_indexing.QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "case": "tests.test_retrieval_fusion_qdrant.QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+          "reason": "set QDRANT_INTEGRATION_URL to run against a real Qdrant server"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        },
+        {
+          "case": "tests.test_worldline_postgres_restart.WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes",
+          "reason": "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance"
+        }
+      ],
+      "junit_sha256": "e98f490be5e60c8fe069e34ba00649f0cec582d5d38330dd591ddc70e053e932",
+      "log_sha256": "1ab150c4950714179c075fc0964694edd48793623c4de5fb2d201e66998fa1c7",
+      "diagnostic_content_published": false,
+      "note": "Only case names, summary and file hashes published; assertion and captured-log text omitted."
+    }
+  ],
+  "http_runs": [
+    {
+      "artifact": "http-initial.json",
+      "check_count": 12,
+      "passed_checks": 8,
+      "failed_case_ids": [
+        "song_read_only",
+        "search_read_only",
+        "multi_agent_sse",
+        "worldline_grounding"
+      ],
+      "exit": 2
+    },
+    {
+      "artifact": "http-current-shadow.json",
+      "check_count": 12,
+      "passed_checks": 7,
+      "failed_case_ids": [
+        "song_read_only",
+        "search_read_only",
+        "pause_sse",
+        "multi_agent_sse",
+        "worldline_grounding"
+      ],
+      "exit": 2
+    },
+    {
+      "artifact": "http-shadow-final.json",
+      "check_count": 12,
+      "passed_checks": 11,
+      "failed_case_ids": [
+        "multi_agent_sse"
+      ],
+      "exit": 2
+    },
+    {
+      "artifact": "http-active.json",
+      "check_count": 12,
+      "passed_checks": 10,
+      "failed_case_ids": [
+        "missing_song",
+        "search_read_only"
+      ],
+      "exit": 2
+    },
+    {
+      "artifact": "http-active-final.json",
+      "check_count": 12,
+      "passed_checks": 11,
+      "failed_case_ids": [
+        "search_read_only"
+      ],
+      "exit": 2
+    },
+    {
+      "artifact": "http-extras.json",
+      "check_count": 3,
+      "passed_checks": 2,
+      "failed_case_ids": [
+        "explorer_to_curator"
+      ],
+      "exit": null
+    }
+  ],
+  "earlier_startup_failure": {
+    "artifact_published": false,
+    "log_sha256": "85e49d50fbe9a82ea74187332e3983774ae4a57250a3193f7cb00644d03231ed",
+    "exit": 1,
+    "cause": "ASGI startup race; final harness records a failed health preflight without exception detail."
+  },
+  "runtime_observations": {
+    "scope": "Multiple isolated acceptance runs, not a quality-labelled production sample",
+    "service_or_result_overrides": false,
+    "synthetic_http_player_snapshots": true,
+    "checkpoint_interrupt_before_curator": true,
+    "entry_shadow_and_active_separate_processes": true,
+    "guard_shadow": true,
+    "guard_thresholds": {
+      "task_fidelity": 0.8,
+      "authority_override": 0.2
+    },
+    "models": [
+      "jev-1.13.0"
+    ],
+    "event_counts": {
+      "handoff.trace": 271,
+      "jev.handoff_entry": 33,
+      "jev.handoff_guard": 31
+    },
+    "trace_codes": {
+      "model_call": 162,
+      "all_tasks_done": 20,
+      "guard_shadow": 31,
+      "accepted": 31,
+      "clarification": 7,
+      "task_failed": 7,
+      "token_limit": 9,
+      "invalid_transfer": 2,
+      "retry": 2
+    },
+    "accepted_edges": [
+      {
+        "source": "general_chat",
+        "target": "curator",
+        "count": 23
+      },
+      {
+        "source": "curator",
+        "target": "explorer",
+        "count": 6
+      },
+      {
+        "source": "curator",
+        "target": "general_chat",
+        "count": 2
+      }
+    ],
+    "guard_would_allow_counts": {
+      "True": 26,
+      "False": 5
+    },
+    "total_model_cost_usd": null
+  },
+  "persistence": {
+    "mode_isolation": {
+      "same_external_thread_id": true,
+      "handoff_checkpoint_unchanged": true,
+      "different_session_ids": true,
+      "disjoint_tasks": true,
+      "read_only": true,
+      "passed": true
+    },
+    "checkpoint_restart_comparison": {
+      "passed": true,
+      "checkpoint_count": 8,
+      "read_only": true
+    },
+    "interrupted_run_resume_passed": true
+  },
+  "browser": {
+    "real_http": true,
+    "music_search_results": 32,
+    "read_only_search_queue_size_after": 0,
+    "worldline": {
+      "initial_revision": 1,
+      "initial_nodes": 9,
+      "initial_edges": 8,
+      "continued_revision": 2,
+      "continued_nodes": 12,
+      "continued_edges": 11,
+      "depth": 1,
+      "visited": 2,
+      "branch": "屋顶",
+      "same_session_after_reload": true
+    },
+    "responsive_width_checks": [
+      {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      {
+        "clientWidth": 1280,
+        "scrollWidth": 1280
+      }
+    ],
+    "semantic_rag_relevance_passed": false,
+    "finding": "周杰伦 request retrieved Kurt Cobain/Nirvana knowledge; answer acknowledged irrelevance and used catalogue fallback.",
+    "authenticated_playback_executed": false,
+    "cloud_account_writes_executed": false
+  },
+  "unresolved": [
+    "Original 晴天 read-only search hits token_limit in active JEV entry mode twice",
+    "Hybrid clarifies an explicit pause-then-chat request",
+    "周杰伦 WorldLine semantic knowledge retrieval is irrelevant",
+    "Explorer → Curator compound request clarified before business execution"
+  ],
+  "unverified": [
+    "Authenticated audio playback and cloud writes",
+    "Actual client ACK and resume replay deduplication",
+    "All four business edges with real dependencies",
+    "JEV guard active blocking and production false positives",
+    "Full WorldLine PostgreSQL restart suite",
+    "Concurrency, SLA, production deployment and actual cutover/rollback"
+  ],
+  "cleanup": {
+    "existing_services_modified": false,
+    "owned_ports_released": true,
+    "isolated_database_removed": false,
+    "stopped_services": [
+      {
+        "stopped_owned_pid": 42512,
+        "port": 8001
+      },
+      {
+        "stopped_owned_pid": 18296,
+        "port": 8080
+      },
+      {
+        "stopped_owned_pid": 18884,
+        "port": 13006
+      },
+      {
+        "stopped_owned_pid": 15296,
+        "port": 5173
+      }
+    ],
+    "browser_tab_closed": true,
+    "isolated_database_stopped": true
+  },
+  "protected_user_status_unchanged": true,
+  "artifacts": [
+    {
+      "path": "docs/reports/handoff-phase6-20261001/browser-mobile-chat.jpg",
+      "bytes": 54537,
+      "sha256": "b64b0a1b8b2f6f32cc0d742b1880413b77c817877509a58205e55cc08f4158a7"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/browser-mobile-worldline.jpg",
+      "bytes": 68447,
+      "sha256": "9eac3ab96dcdb526a9875c95d81b7ed89d0fd3d690ea9803c838b44335299024"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/browser-search-chat.jpg",
+      "bytes": 63615,
+      "sha256": "67132a62fd4e0cbf2210e8d61490cbe96be020ba37aab10d9c6bc3e9b723cef2"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/browser-worldline-recovered.jpg",
+      "bytes": 75736,
+      "sha256": "cc2cd041838189fcc7d3c3fccf75f115b764704a31535e14a48315e194bf2c0b"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/checkpoint-active-after.json",
+      "bytes": 40078,
+      "sha256": "1717c665b89a534287bf387bcde890003da74cbcfa87b43c22e67b0f0c94f7ee"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/checkpoint-active-before.json",
+      "bytes": 40078,
+      "sha256": "1717c665b89a534287bf387bcde890003da74cbcfa87b43c22e67b0f0c94f7ee"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/checkpoint-extras.json",
+      "bytes": 12940,
+      "sha256": "d41022d558fa27a6462582d4c6350c8afca48ba74bae9b9378992346a4bd0256"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/checkpoint-restart-comparison.json",
+      "bytes": 67,
+      "sha256": "c6ea224d7e6069f0ca5d04f56a38bb502b36096e18509d474e44eddf231c0f80"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/checkpoint-shadow.json",
+      "bytes": 33496,
+      "sha256": "64c352916bc8ec7eb14cb3613093d7b53f1c9095a3b1dc6972180c28c814be53"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/cleanup.json",
+      "bytes": 472,
+      "sha256": "51f45572cf1360c225774871daff364756ad76712b800e8d43bbf0044e361eb2"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/http-active-final.json",
+      "bytes": 4576,
+      "sha256": "7ed5c650666a7c593bad4898fbef1c10ab67189e708302fd941e4d045489e0a4"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/http-active.json",
+      "bytes": 4754,
+      "sha256": "51bed7440bf61345132015cfc26e694f09d6ddb2eb3b1b37f85d3210e5eced93"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/http-current-shadow.json",
+      "bytes": 5761,
+      "sha256": "e83c85097fd644abe94c102041aeaf41d7eee2e7a3efd95758bf4119c840ae07"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/http-extras.json",
+      "bytes": 1050,
+      "sha256": "67d7cbf7f6d9d09252bb692aa5e090a42bfbb77b2202578a33a9479fe914ca45"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/http-initial.json",
+      "bytes": 7061,
+      "sha256": "cb665c71d6a59916533d38d224db8a89778e9873e442b8fbd989613f269229ed"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/http-shadow-final.json",
+      "bytes": 3942,
+      "sha256": "c27202178ba35e5bbac59b110506a9707ac1fcf51d89c206b1c63dfb865d6230"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/mode-isolation.json",
+      "bytes": 176,
+      "sha256": "fce6ea58a1ba50957aade27a307189ab5a7a5576c979375d3a43541ec6de0d37"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/restart-created.json",
+      "bytes": 1084,
+      "sha256": "8864b40054c16a418ade1ae09ee03e1f5e3d6cc0703b026be2003a5da4b38c36"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/restart-proof.json",
+      "bytes": 3771,
+      "sha256": "be4fc197f52a30303aab0b9d89899af63f2406e81a16ec0fa798d95fd5fa1ef7"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/restart-resumed.json",
+      "bytes": 2231,
+      "sha256": "d8a8125471a0604cb5da57511b363499796bb06fb0f9dd16c55bd07fe19c9e02"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/runtime-events.jsonl",
+      "bytes": 120827,
+      "sha256": "01202639ca28488e98468d5cbd484f9ccf3b3c88b66e92f35cb65bf0337b644a"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/static-results.json",
+      "bytes": 1018,
+      "sha256": "6916c78c57788d4ea5db38db87562dbc7362baa73a39ca17d3eba6f6d8be9f0f"
+    },
+    {
+      "path": "docs/reports/handoff-phase6-20261001/validation.md",
+      "bytes": 13674,
+      "sha256": "4a513d1f1380fad2ecde6a9f11812dbc0a4a6214ea8aef6b041269e591ef563a"
+    }
+  ],
+  "implementation_files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "95bdcff7e954dd073899f27b599faf0d1a64b5fb7f29601351fcfcb8e1d52994"
+    },
+    {
+      "path": "ai-service/scripts/handoff_acceptance.py",
+      "sha256": "e1f4da4736d84b81c32542f49bb6f8f1effac94c28aa7838a919e56d71553b26"
+    },
+    {
+      "path": "ai-service/scripts/handoff_checkpoint_acceptance.py",
+      "sha256": "024547117583fc57f62905b4a5ceae8f29dc0a42f857602d0977a6bfba59b88e"
+    },
+    {
+      "path": "ai-service/tests/test_handoff_acceptance.py",
+      "sha256": "699ee7470eaf21385b839491488709fca396e9bdba0e8e90b9f464f436742a41"
+    },
+    {
+      "path": "ai-service/tests/test_handoff_checkpoint_acceptance.py",
+      "sha256": "e52bd1ebd9fb4a10e24f17baf25ebedcfe5d60a0669be654e66a8c3a35276661"
+    },
+    {
+      "path": "ai-service/tests/test_handoff_network.py",
+      "sha256": "ee5adc481e70b4d76f48ee414724a3f2bc91942769a479c8b7c74efd2dcd5b30"
+    },
+    {
+      "path": "docs/architecture/handoff-runtime-phase6.md",
+      "sha256": "b5fc4df6a950a484ca8f9a67fa1234252a7c23849e57b6c9202ce9f6667d4c75"
+    }
+  ]
+}

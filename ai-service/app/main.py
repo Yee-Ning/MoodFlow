@@ -12,6 +12,7 @@ from app.agent.foundation.long_horizon.runtime import (
     persistence_backend,
 )
 from app.agent.memory.runtime import close_memory_runtime, get_memory_runtime, memory_backend
+from app.agent.foundation.user_profile import close_profile_store
 from app.api.chat import router as chat_router
 from app.api.worldline import router as worldline_router
 from app.agent.foundation.subgraphs.worldline.session import get_worldline_session_service
@@ -29,9 +30,17 @@ async def lifespan(_app: FastAPI):
     try:
         yield
     finally:
+        from app.agent.foundation.long_horizon.runner import drain_workers
+        from app.agent.foundation.long_horizon.coordinator import get_continuity_coordinator
+        from app.agent.foundation.streaming import get_foundation_graph, get_handoff_graph
+        await drain_workers()
+        get_continuity_coordinator.cache_clear()
+        get_foundation_graph.cache_clear()
+        get_handoff_graph.cache_clear()
         get_worldline_session_service.cache_clear()
         close_long_horizon_service()
         close_memory_runtime()
+        close_profile_store()
         await close_runtime_checkpointer()
 
 

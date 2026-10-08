@@ -1,0 +1,160 @@
+[
+  {
+    "kind": "hybrid_plan",
+    "complete": true,
+    "intents": [
+      {
+        "start": 0,
+        "end": 8,
+        "order": 0,
+        "route": "tool_calling"
+      },
+      {
+        "start": 9,
+        "end": 19,
+        "order": 1,
+        "route": "worldline"
+      }
+    ],
+    "tasks": [
+      {
+        "route": "tool_calling",
+        "intent_orders": [
+          0
+        ],
+        "input_length": 8
+      },
+      {
+        "route": "worldline",
+        "intent_orders": [
+          1
+        ],
+        "input_length": 10
+      }
+    ]
+  },
+  {
+    "kind": "budget",
+    "agent": "general_chat",
+    "requested_tokens": 1488,
+    "remaining_tokens": 16000,
+    "reserved_tokens": 0
+  },
+  {
+    "kind": "http",
+    "host": "api.deepseek.com",
+    "path": "/chat/completions",
+    "status": 200
+  },
+  {
+    "kind": "budget",
+    "agent": "general_chat",
+    "requested_tokens": 1049,
+    "remaining_tokens": 15229,
+    "reserved_tokens": 0
+  },
+  {
+    "kind": "budget",
+    "agent": "curator",
+    "requested_tokens": 3015,
+    "remaining_tokens": 16000,
+    "reserved_tokens": 0
+  },
+  {
+    "kind": "http",
+    "host": "api.deepseek.com",
+    "path": "/chat/completions",
+    "status": 200
+  },
+  {
+    "kind": "http",
+    "host": "127.0.0.1",
+    "path": "/api/music/search",
+    "status": 200
+  },
+  {
+    "kind": "budget",
+    "agent": "curator",
+    "requested_tokens": 400,
+    "remaining_tokens": 14354,
+    "reserved_tokens": 0
+  },
+  {
+    "kind": "budget",
+    "agent": "curator",
+    "requested_tokens": 4200,
+    "remaining_tokens": 13968,
+    "reserved_tokens": 0
+  },
+  {
+    "kind": "http",
+    "host": "api.deepseek.com",
+    "path": "/chat/completions",
+    "status": 200
+  },
+  {
+    "kind": "http",
+    "host": "127.0.0.1",
+    "path": "/api/music/search",
+    "status": 200
+  },
+  {
+    "kind": "budget",
+    "agent": "curator",
+    "requested_tokens": 400,
+    "remaining_tokens": 11365,
+    "reserved_tokens": 0
+  },
+  {
+    "kind": "budget",
+    "agent": "curator",
+    "requested_tokens": 5437,
+    "remaining_tokens": 10979,
+    "reserved_tokens": 0
+  },
+  {
+    "kind": "http",
+    "host": "api.deepseek.com",
+    "path": "/chat/completions",
+    "status": 200
+  },
+  {
+    "kind": "task_result",
+    "route_key": "tool_calling",
+    "status": "needs_input",
+    "reason": null,
+    "tool_details": [
+      {
+        "name": "search_music",
+        "status": "success"
+      },
+      {
+        "name": "search_music",
+        "status": "success"
+      }
+    ],
+    "actions": []
+  },
+  {
+    "kind": "run",
+    "run_id": "6d5875a930584769966480f80b3c2d56",
+    "status": "needs_input",
+    "stop_reason": "clarification",
+    "tasks": [
+      {
+        "task_id": "050dbc7d922e449fb732a7a83fa0a218:tool_calling:0",
+        "route_key": "tool_calling",
+        "status": "needs_input"
+      },
+      {
+        "task_id": "050dbc7d922e449fb732a7a83fa0a218:worldline:1",
+        "route_key": "worldline",
+        "status": "pending"
+      }
+    ],
+    "chain": [
+      "general_chat",
+      "curator"
+    ]
+  }
+]

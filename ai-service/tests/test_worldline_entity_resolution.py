@@ -1,11 +1,14 @@
 import asyncio
 import unittest
+import pytest
 from unittest.mock import AsyncMock
 
 from app.agent.foundation.subgraphs.worldline.entity_resolver import (
     parse_entity_query,
     resolve_music_entity,
 )
+
+
 from app.agent.foundation.subgraphs.worldline.models import (
     EntityResolutionStatus,
     EntityType,
@@ -15,6 +18,16 @@ from app.agent.foundation.subgraphs.worldline.music_service import (
     JavaMusicEntityService,
 )
 from app.schemas.music import MusicEntity, MusicEntityReference
+
+
+@pytest.mark.parametrize("prefix", ["先探索", "然后探索", "请先探索", "麻烦帮我再探索"])
+def test_sequential_request_prefix_is_not_part_of_the_catalog_name(prefix):
+    assert parse_entity_query(prefix + "周杰伦的音乐世界线").query == "周杰伦"
+
+
+@pytest.mark.parametrize("name", ["先知", "然后", "分析师"])
+def test_sequential_words_in_quoted_titles_are_preserved(name):
+    assert parse_entity_query("探索歌曲《" + name + "》的世界线").query == name
 
 
 def resolved(

@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-02",
+  "starting_commit": "ee89c2e",
+  "code_commit": "8e65f90ac15c5b8ab0c422e8eb2aaf6576324e05",
+  "junit_count_note": "backend JUnit tests include pytest subtests; main passed count is 1773",
+  "checks": [
+    {
+      "name": "backend",
+      "command": "validate.py -m pytest -q tests",
+      "exit_code": 0,
+      "junit_counts": {
+        "tests": 2088,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 29
+      },
+      "junit_duration_seconds": 965.18,
+      "pytest_counts": {
+        "passed": 1773,
+        "skipped": 29,
+        "subtests_passed": 286
+      },
+      "pytest_duration_seconds": 971.79,
+      "code_version_note": "final code",
+      "sha256": {
+        "backend.xml": "5c7746da0b9cf221a8eac9cd41f6eb36644ccf8377a305c35b961ce06c7b4825",
+        "backend.log": "cd6f8a8d95de5b8a201ef3ea1633dfe69d1fc2d93e94247b61b2d7cc96aa70f4"
+      }
+    },
+    {
+      "name": "postgres",
+      "command": "validate.py --postgres -m pytest -q tests/test_context_loop_postgres_recovery.py tests/test_postgres_persistence.py",
+      "exit_code": 0,
+      "junit_counts": {
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "junit_duration_seconds": 558.89,
+      "pytest_counts": {
+        "passed": 19
+      },
+      "pytest_duration_seconds": 559.39,
+      "code_version_note": "before final optional-checkpointer attribute compatibility fix; real compiled graph branch unchanged",
+      "sha256": {
+        "postgres.xml": "4c18316191a62426bc7ea0dd96f164c54019cea2b12f0903607e1b3ed241cf36",
+        "postgres.log": "8487e962a82f8ad398a14e0529e5a148f17594cc4836650ceeec7f5ccabd5e6c"
+      }
+    },
+    {
+      "name": "evals",
+      "command": "validate.py ../.dev/context-loop-p0-20261002/eval.py -q evals/tests",
+      "exit_code": 0,
+      "junit_counts": {
+        "tests": 198,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "junit_duration_seconds": 140.29,
+      "pytest_counts": {
+        "passed": 198
+      },
+      "pytest_duration_seconds": 146.94,
+      "code_version_note": "before final optional-checkpointer attribute compatibility fix; real compiled graph branch unchanged",
+      "sha256": {
+        "evals.xml": "b46051ead923ce248f0919c60ed0d3144e302949593af625abcd8d0c87558d13",
+        "evals.log": "e8650625d1a84c08cfd74f16630717b211b0701bcf9f04a74d2359deebb693a8"
+      }
+    }
+  ],
+  "static_check": {
+    "command": "ruff check . --output-format json",
+    "exit_code": 1,
+    "baseline_count": 45,
+    "current_count": 45,
+    "added": [],
+    "removed": []
+  },
+  "compileall": {
+    "exit_code": 0
+  },
+  "frontend": {
+    "commands": [
+      "npm run build",
+      "npm run lint",
+      "npm run test:ai-layout",
+      "npm run test:ai-stream",
+      "npm run test:music-assets",
+      "npm run test:search",
+      "npm run test:ai-trigger",
+      "npm run test:worldline"
+    ],
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "evidence_location": "tool outputs; raw frontend logs not exported",
+    "warning": "existing large chunk warning"
+  },
+  "dependency_conditions": {
+    "ordinary_tests": "SQLite/memory/disabled-memory; controlled models",
+    "postgres": "temporary loopback PostgreSQL pgvector:pg16 on port 15447; unique test databases"
+  },
+  "not_verified": [
+    "live music-account writes",
+    "real browser/player ACK",
+    "live LLM/JEV/RAG/Java integration",
+    "provider billing",
+    "production-scale load",
+    "production migrations"
+  ],
+  "temporary_postgres_container_removed": true,
+  "production_env_modified": false,
+  "default_graph_switched": false,
+  "canary_enabled": false,
+  "deployed": false,
+  "pushed": false
+}

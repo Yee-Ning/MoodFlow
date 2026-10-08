@@ -1,0 +1,25 @@
+{
+  "existing_services_modified": false,
+  "owned_ports_released": true,
+  "isolated_database_removed": false,
+  "stopped_services": [
+    {
+      "stopped_owned_pid": 42512,
+      "port": 8001
+    },
+    {
+      "stopped_owned_pid": 18296,
+      "port": 8080
+    },
+    {
+      "stopped_owned_pid": 18884,
+      "port": 13006
+    },
+    {
+      "stopped_owned_pid": 15296,
+      "port": 5173
+    }
+  ],
+  "browser_tab_closed": true,
+  "isolated_database_stopped": true
+}

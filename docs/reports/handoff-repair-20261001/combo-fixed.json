@@ -1,0 +1,11 @@
+{
+  "input": "先探索周杰伦的音乐世界线，然后暂停播放",
+  "thread_id": "phase6:repair:3f30c7ee3258",
+  "endpoint": "handoff",
+  "http_status": 200,
+  "passed": false,
+  "validation": {
+    "error_type": "ValueError",
+    "failure_code": "unexpected_response_status"
+  }
+}

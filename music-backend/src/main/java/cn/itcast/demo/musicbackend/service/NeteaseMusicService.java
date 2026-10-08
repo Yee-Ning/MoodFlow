@@ -19,12 +19,15 @@ import cn.itcast.demo.musicbackend.dto.PlaylistData;
 import cn.itcast.demo.musicbackend.dto.PlaylistDetailData;
 import cn.itcast.demo.musicbackend.dto.PlaylistMutationData;
 import cn.itcast.demo.musicbackend.dto.CreatedPlaylistData;
+import cn.itcast.demo.musicbackend.dto.DeletedPlaylistData;
 import cn.itcast.demo.musicbackend.dto.SongLikeData;
 import cn.itcast.demo.musicbackend.dto.SongData;
 import cn.itcast.demo.musicbackend.dto.SongLyricsData;
 import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
 import cn.itcast.demo.musicbackend.dto.UserProfileData;
 import cn.itcast.demo.musicbackend.exception.BadRequestException;
+import cn.itcast.demo.musicbackend.exception.ForbiddenException;
+import cn.itcast.demo.musicbackend.exception.UnprocessableRequestException;
 import cn.itcast.demo.musicbackend.exception.NeteaseApiException;
 import cn.itcast.demo.musicbackend.exception.NeteaseApiTimeoutException;
 import cn.itcast.demo.musicbackend.exception.NotFoundException;
@@ -62,16 +65,23 @@ public class NeteaseMusicService {
     public List<PlaylistData> getCurrentUserPlaylists(HttpServletRequest request) {
         String cookie = requireCookie(request);
         UserProfileData profile = getProfile(cookie);
+        return getUserPlaylists(cookie, profile.userId());
+    }
+
+    private List<PlaylistData> getUserPlaylists(String cookie, long userId) {
         List<PlaylistData> playlists = new ArrayList<>();
         int offset = 0;
         boolean hasMore;
 
         do {
             Map<String, Object> response = get("/user/playlist", Map.of(
-                    "uid", profile.userId(),
+                    "uid", userId,
                     "limit", PLAYLIST_LIMIT,
                     "offset", offset), cookie);
             List<Map<String, Object>> page = requiredList(response, "playlist");
+            if (Boolean.TRUE.equals(response.get("more")) && page.isEmpty()) {
+                throw new NeteaseApiException("网易云歌单分页不完整，无法确认完整自有歌单列表");
+            }
             page.stream().map(this::toPlaylist).forEach(playlists::add);
             hasMore = Boolean.TRUE.equals(response.get("more")) && !page.isEmpty();
             offset += page.size();
@@ -439,6 +449,50 @@ public class NeteaseMusicService {
         return new PlaylistMutationData("removed", "已从歌单移除歌曲");
     }
 
+    public DeletedPlaylistData deletePlaylist(long playlistId, boolean confirmed, HttpServletRequest request) {
+        if (playlistId <= 0) {
+            throw new BadRequestException("歌单 id 必须大于 0");
+        }
+        if (!confirmed) {
+            throw new UnprocessableRequestException("删除整张歌单需要用户确认准确歌单 ID");
+        }
+        String cookie = requireCookie(request);
+        UserProfileData profile = getProfile(cookie);
+        Map<String, Object> response = get("/playlist/detail", Map.of("id", playlistId), cookie);
+        Object raw = response.get("playlist");
+        if (!(raw instanceof Map<?, ?> playlist)
+                || !(playlist.get("id") instanceof Number id) || id.longValue() != playlistId
+                || id.doubleValue() != id.longValue()
+                || !(playlist.get("creator") instanceof Map<?, ?> creator)
+                || !(creator.get("userId") instanceof Number owner) || owner.longValue() <= 0
+                || owner.doubleValue() != owner.longValue()
+                || !(playlist.get("subscribed") instanceof Boolean)
+                || !(playlist.get("specialType") instanceof Number specialType)) {
+            throw new UnprocessableRequestException("歌单身份、创建者或自建类型不明，拒绝删除");
+        }
+        if (owner.longValue() != profile.userId() || Boolean.TRUE.equals(playlist.get("subscribed"))) {
+            throw new ForbiddenException("仅允许删除当前账号自建歌单");
+        }
+        if (specialType.doubleValue() != 0) {
+            throw new ForbiddenException("系统歌单（含我喜欢的音乐）不可删除");
+        }
+        // Dispatch once. Any exception after this point is an uncertain effect;
+        // the AI operation journal must reconcile with reads, never repeat it.
+        post("/playlist/delete", Map.of("id", playlistId), cookie);
+        try {
+            if (getProfile(cookie).userId() != profile.userId()) {
+                throw new NeteaseApiException("删除后读回账号身份不一致；效果未知");
+            }
+            if (getUserPlaylists(cookie, profile.userId()).stream().anyMatch(row -> row.id() == playlistId)) {
+                throw new NeteaseApiException("删除请求已提交，但自有歌单读回仍包含目标；效果未知，禁止重复删除");
+            }
+        } catch (UnauthorizedException exception) {
+            // A post-dispatch read rejection cannot prove that the write failed.
+            throw new NeteaseApiException("删除请求已提交，但读回身份失效；效果未知：" + exception.getMessage(), exception);
+        }
+        return new DeletedPlaylistData(playlistId, "deleted", "自有歌单列表读回已确认目标歌单消失");
+    }
+
     private SongPlaybackData unavailablePlayback(long songId) {
         return new SongPlaybackData(
                 songId,
@@ -507,7 +561,9 @@ public class NeteaseMusicService {
                 optionalString(source, "coverImgUrl"),
                 optionalInt(source, "trackCount"),
                 requiredString(creator, "nickname"),
-                Boolean.TRUE.equals(source.get("subscribed")));
+                Boolean.TRUE.equals(source.get("subscribed")),
+                creator.get("userId") instanceof Number id && id.longValue() > 0 ? id.longValue() : null,
+                source.get("specialType") instanceof Number type ? type.intValue() : null);
     }
 
     private SongData toSong(Map<String, Object> source) {

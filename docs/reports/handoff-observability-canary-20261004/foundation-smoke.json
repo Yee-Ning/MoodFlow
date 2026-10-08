@@ -1,0 +1,44 @@
+{
+  "at_utc": "2026-10-04T06:49:03.576343+00:00",
+  "sample_kind": "acceptance",
+  "search": {
+    "http_status": 200,
+    "code": 200,
+    "songs_count": 3
+  },
+  "playlist_auth_boundary": {
+    "http_status": 401,
+    "status": "expected_login_required",
+    "authenticated_read_verified_this_round": false
+  },
+  "foundation_search": {
+    "http_status": 200,
+    "status": "success",
+    "events": [
+      "update",
+      "update",
+      "update",
+      "message",
+      "update",
+      "update",
+      "final",
+      "done"
+    ],
+    "nodes": [
+      "prepare_context",
+      "intent_router",
+      "tool_calling_subgraph",
+      "aggregate_results",
+      "final_response"
+    ],
+    "results": [
+      {
+        "subgraph": "tool_calling",
+        "status": "success",
+        "tool_call_count": 1
+      }
+    ],
+    "seconds": 4.599
+  },
+  "passed": true
+}

@@ -1,0 +1,201 @@
+{
+  "rows": [
+    {
+      "event": "on_chat_model_end",
+      "node": "general_chat_agent",
+      "usage": {
+        "input_tokens": 489,
+        "output_tokens": 150,
+        "total_tokens": 639,
+        "input_token_details": {
+          "cache_read": 256
+        },
+        "output_token_details": {
+          "reasoning": 18
+        }
+      },
+      "tool_calls": [
+        {
+          "name": "transfer_to_curator_agent",
+          "args": {}
+        }
+      ],
+      "text_chars": 0
+    },
+    {
+      "event": "on_tool_start",
+      "name": "transfer_to_curator_agent",
+      "args": {}
+    },
+    {
+      "event": "on_tool_end",
+      "name": "transfer_to_curator_agent",
+      "song_count": 0,
+      "song_names": [],
+      "error_code": null,
+      "content_chars": 3221
+    },
+    {
+      "event": "on_chat_model_end",
+      "node": "agent",
+      "usage": {
+        "input_tokens": 1559,
+        "output_tokens": 76,
+        "total_tokens": 1635,
+        "input_token_details": {
+          "cache_read": 512
+        },
+        "output_token_details": {
+          "reasoning": 17
+        }
+      },
+      "tool_calls": [
+        {
+          "name": "search_music",
+          "args": {
+            "keyword": "周杰伦 晴天",
+            "limit": 10
+          }
+        }
+      ],
+      "text_chars": 0
+    },
+    {
+      "event": "on_tool_start",
+      "name": "search_music",
+      "args": {
+        "keyword": "周杰伦 晴天",
+        "limit": 10
+      }
+    },
+    {
+      "event": "on_tool_end",
+      "name": "search_music",
+      "song_count": 10,
+      "song_names": [
+        "晴天 (原唱 周杰伦)",
+        "晴天",
+        "晴天(深情版)",
+        "晴天",
+        "晴天 (钢琴版) [原唱: 周杰伦]",
+        "周杰伦“晴天”PopxTrap Beat",
+        "晴天 (女声版))",
+        "晴天(DJ版)",
+        "晴天 (钢琴版)",
+        "晴天 (R&B版)"
+      ],
+      "error_code": null,
+      "content_chars": 1901
+    },
+    {
+      "event": "on_chat_model_end",
+      "node": "agent",
+      "usage": {
+        "input_tokens": 2418,
+        "output_tokens": 222,
+        "total_tokens": 2640,
+        "input_token_details": {
+          "cache_read": 1536
+        },
+        "output_token_details": {
+          "reasoning": 163
+        }
+      },
+      "tool_calls": [
+        {
+          "name": "search_music",
+          "args": {
+            "keyword": "晴天 周杰伦",
+            "limit": 20
+          }
+        }
+      ],
+      "text_chars": 0
+    },
+    {
+      "event": "on_tool_start",
+      "name": "search_music",
+      "args": {
+        "keyword": "晴天 周杰伦",
+        "limit": 20
+      }
+    },
+    {
+      "event": "on_tool_end",
+      "name": "search_music",
+      "song_count": 20,
+      "song_names": [
+        "晴天(深情版)",
+        "晴天",
+        "晴天 (原唱 周杰伦)",
+        "晴天 (女声版))",
+        "晴天 (钢琴版) [原唱: 周杰伦]",
+        "周杰伦“晴天”PopxTrap Beat",
+        "晴天",
+        "晴天周杰伦(从前从前有个人爱你很久)",
+        "晴天 (吉他版) (原唱：周杰伦)",
+        "晴天 (R&B版)",
+        "晴天",
+        "刀马旦",
+        "晴天 (钢琴版)",
+        "江南",
+        "晴天(钢琴曲)(原唱：周杰伦)",
+        "周杰伦-晴天 (DJ苏天伦版)",
+        "晴天(DJ版)",
+        "十年",
+        "晴天",
+        "晴天"
+      ],
+      "error_code": null,
+      "content_chars": 3745
+    },
+    {
+      "event": "on_chat_model_end",
+      "node": "agent",
+      "usage": {
+        "input_tokens": 3317,
+        "output_tokens": 357,
+        "total_tokens": 3674,
+        "input_token_details": {
+          "cache_read": 2304
+        },
+        "output_token_details": {
+          "reasoning": 38
+        }
+      },
+      "tool_calls": [],
+      "text_chars": 499
+    }
+  ],
+  "run_status": "completed",
+  "stop_reason": "all_tasks_done",
+  "usage": [
+    {
+      "agent": "general_chat",
+      "tokens": 2835,
+      "retries": 0,
+      "reported_tokens": 2835,
+      "estimated_tokens": 0,
+      "model_calls": 3
+    },
+    {
+      "agent": "curator",
+      "tokens": 7949,
+      "retries": 0,
+      "reported_tokens": 7949,
+      "estimated_tokens": 0,
+      "model_calls": 3
+    },
+    {
+      "agent": "explorer",
+      "tokens": 0,
+      "retries": 0,
+      "reported_tokens": 0,
+      "estimated_tokens": 0,
+      "model_calls": 0
+    }
+  ],
+  "task_routes": [
+    "tool_calling"
+  ]
+}

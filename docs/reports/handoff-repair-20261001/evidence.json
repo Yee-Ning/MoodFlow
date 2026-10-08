@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "390dfcb",
+  "code_commits": [
+    "0251b16",
+    "e6918e8",
+    "0b22d6a",
+    "59333f1",
+    "8022187"
+  ],
+  "gate": {
+    "original_search_passed": true,
+    "worldline_unrelated_knowledge_removed": true,
+    "jay_chou_knowledge_coverage_passed": false,
+    "real_explorer_to_curator_passed": true,
+    "active_http_checks": {
+      "passed": 13,
+      "total": 13
+    },
+    "shadow_http_checks": {
+      "passed": 13,
+      "total": 13
+    },
+    "application_tests": {
+      "passed": 1671,
+      "skipped": 14,
+      "subtests_passed": 286
+    },
+    "eval_framework_tests_passed": 198,
+    "changed_file_lint_passed": true,
+    "repository_lint_passed": false,
+    "unchanged_lint_baseline": true,
+    "canary_prepared_percentage": 10,
+    "canary_enabled": false,
+    "production_rollout_allowed": false
+  },
+  "remaining": [
+    "jay_chou_knowledge_corpus_coverage",
+    "enforced_handoff_guard_validation",
+    "authenticated_browser_actions_ack_and_replay",
+    "load_and_production_rollback"
+  ],
+  "artifacts": {
+    "checkpoint-evidence.json": "7ff666c2639b80b3ed1be75a300a91d2ec5e4d37896ca2ad92f22eca7ce6f64b",
+    "cleanup.json": "5754e8b7c02313e0421a249369b937bdde076d6bfbc231aaf54e43a70c080f69",
+    "closed-canary-checkpoint.json": "0267abf9906e2f47b06dc96e11bc2fd851d718f87a380269b5c821621624b56b",
+    "closed-canary.json": "e4553fdc742a79209ba872ffafc33a270b23649337a8362f187de999931ef12b",
+    "combo-direct.json": "0195184522f4ffb849916cadc9175eec7f09ba62dbb6e4b43237a4a42f78e974",
+    "combo-final.json": "3ac935b3169dba362001f3fb516d975e1a62b54f87f4834cc21d620032cc0d02",
+    "combo-fixed.json": "9f951a80662f2c909b87bcee0b53bb228a7e9fb88aee718930f5a7bbdbdb97bb",
+    "combo-initial.json": "0cfbe4efc2df348ff14c3441bcf83d9474bc6487e115d17c7e1703e24ebe65b9",
+    "command-evidence.json": "132cf2a7616ef6d4f54ebb2d17baeb99ea3fab2a750134b780f747fc82cb4d4a",
+    "configuration-state.json": "1f447f562e696033133246ba1b3dbe586d84c64c6f805057cfb534c17c5bbaa9",
+    "http-active-final.json": "48914805f9b143c59abcb1f164009279023873ff3809f6261bda8b9cdb2f5265",
+    "http-shadow-final.json": "ea8cf80631e4f0518937095aa2266762a4437b4d898b3df2830a54324473604d",
+    "index-audit.json": "53e1b5fe3967feda973c197534545e5142a5e51317c133ef697ded809c863bb1",
+    "protected-workspace.json": "aa000791ca220692dbb4ec9008fd71527366e7e7c668d5398c6a0af1b6edb633",
+    "ruff-baseline-comparison.json": "968f0c2d6bb4da1b4f721bf063506dbc8ad614d074f52d216bd7d5bf61e13269",
+    "runtime-events.jsonl": "a5d79cc8c331a928bd7384b171ddec4023fb4eec098da9111d0764afd0a963a4",
+    "search-after-scope.json": "a084e252393b6dfb834524bc159c3b5467ef57292995e21ebbe39a04302752fe",
+    "search-before.json": "b21e5be1fe95666ed1877e65febdbe38c217f542c3655a2bb7defef984ab34f4",
+    "search-final.json": "cb23d01bd72812f7b4f2d759c83956cb59797397a6f14a46d694f474447e11b5",
+    "validation.md": "159451caed8df1f23b301999d49b0e3b6dc111d5fac2ebe1e230a2fc95addf06",
+    "worldline-original.json": "b503906760b2bfd34f17c62af386c3c735c81ccea1d861c341fbe4720c5a396a"
+  }
+}

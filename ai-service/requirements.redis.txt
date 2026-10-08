@@ -1,0 +1,3 @@
+# Optional hot-budget backend; the default installation/production config is unchanged.
+-r requirements.txt
+redis==5.2.1

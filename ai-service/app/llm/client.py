@@ -11,6 +11,7 @@ from openai.types.responses import Response
 from app.config.settings import get_settings
 from app.schemas.chat import STRUCTURED_OUTPUT_ADAPTER
 from app.tools.definitions import MUSIC_TOOLS
+from app.llm.runtime import ProviderBudget, accounted_call, active_ledger
 
 logger = logging.getLogger(__name__)
 
@@ -75,22 +76,26 @@ async def _create_response(
     output_format: dict[str, Any] | None = None,
     model: str | None = None,
     max_output_tokens: int | None = None,
+    request_budget: ProviderBudget | None = None,
 ) -> Response:
     settings = get_settings()
+    from app.llm.budget import output_limit
+    selected_model = model or settings.model
+    selected_output = min(max_output_tokens or settings.max_output_tokens, output_limit(selected_model))
 
     try:
         async with AsyncOpenAI(
             api_key=settings.api_key.get_secret_value(),
             base_url=str(settings.base_url),
             timeout=settings.timeout_seconds,
-            max_retries=0 if output_format is not None else 2,
+            max_retries=0 if output_format is not None or active_ledger.get() is not None else 2,
         ) as client:
             request: dict[str, Any] = {
-                "model": model or settings.model,
+                "model": selected_model,
                 "instructions": instructions,
                 "input": input_items,
                 "reasoning": {"effort": "none"},
-                "max_output_tokens": max_output_tokens or settings.max_output_tokens,
+                "max_output_tokens": selected_output,
                 "text": {"format": output_format or OUTPUT_FORMAT},
             }
             if output_format is not None:
@@ -99,9 +104,20 @@ async def _create_response(
                 request["tools"] = MUSIC_TOOLS
                 request["tool_choice"] = "auto"
 
-            return await client.responses.create(**request)
-    except OpenAIError:
-        logger.exception("DeepSeek Responses API request failed")
+            if request_budget is not None:
+                request_budget.validate(request, output_tokens=request["max_output_tokens"])
+
+            return await accounted_call(
+                lambda: client.responses.create(**request),
+                {key: value for key, value in request.items() if key != "model"},
+                output_tokens=request["max_output_tokens"],
+                model=selected_model,
+            )
+    except OpenAIError as exc:
+        if active_ledger.get() is not None:
+            logger.warning("LLM request failed error_type=%s", type(exc).__name__)
+        else:
+            logger.exception("DeepSeek Responses API request failed")
         raise
 
 
@@ -130,6 +146,7 @@ async def create_routing_response(
     input_items: list[dict[str, Any]],
     instructions: str,
     schema: dict[str, Any],
+    *, request_budget: ProviderBudget | None = None,
 ) -> Response:
     """Reuse provider settings with an independent tool-free routing schema."""
     return await create_structured_response(
@@ -137,6 +154,7 @@ async def create_routing_response(
         instructions,
         schema,
         schema_name="intent_routing",
+        request_budget=request_budget,
     )
 
 
@@ -148,6 +166,7 @@ async def create_structured_response(
     schema_name: str,
     model: str | None = None,
     max_output_tokens: int | None = None,
+    request_budget: ProviderBudget | None = None,
 ) -> Response:
     """Run a strict, tool-free JSON Schema request with shared provider settings."""
     return await _create_response(
@@ -159,6 +178,7 @@ async def create_structured_response(
             "schema": _provider_compatible_schema(schema), "strict": True,
         },
         model=model,
+        request_budget=request_budget,
         **({"max_output_tokens": max_output_tokens} if max_output_tokens is not None else {}),
     )
 
@@ -169,6 +189,7 @@ async def create_generation_response(
     schema: dict[str, Any],
     *,
     schema_name: str,
+    request_budget: ProviderBudget | None = None,
 ) -> Response:
     """Run answer generation with its independently configurable model."""
     return await create_structured_response(
@@ -177,6 +198,7 @@ async def create_generation_response(
         schema,
         schema_name=schema_name,
         model=get_settings().generation_model,
+        request_budget=request_budget,
     )
 
 

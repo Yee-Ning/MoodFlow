@@ -1,0 +1,166 @@
+[
+  {
+    "kind": "configuration",
+    "entry": "default",
+    "case": "explore_pause",
+    "default_graph": "foundation",
+    "canary": false,
+    "persistence": "isolated_process_no_journal",
+    "mock": false
+  },
+  {
+    "kind": "budget",
+    "agent": "general_chat",
+    "requested_tokens": 1492,
+    "remaining_tokens": 16000
+  },
+  {
+    "kind": "http",
+    "host": "api.deepseek.com",
+    "path": "/chat/completions",
+    "status": 200
+  },
+  {
+    "kind": "budget",
+    "agent": "general_chat",
+    "requested_tokens": 1022,
+    "remaining_tokens": 15316
+  },
+  {
+    "kind": "budget",
+    "agent": "curator",
+    "requested_tokens": 1655,
+    "remaining_tokens": 16000
+  },
+  {
+    "kind": "http",
+    "host": "api.deepseek.com",
+    "path": "/chat/completions",
+    "status": 200
+  },
+  {
+    "kind": "budget",
+    "agent": "curator",
+    "requested_tokens": 1083,
+    "remaining_tokens": 15126
+  },
+  {
+    "kind": "qdrant_http",
+    "path": "/",
+    "status": 200
+  },
+  {
+    "kind": "http",
+    "host": "127.0.0.1",
+    "path": "/api/music/entities/search",
+    "status": 200
+  },
+  {
+    "kind": "http",
+    "host": "127.0.0.1",
+    "path": "/api/music/entities/artist/2116",
+    "status": 200
+  },
+  {
+    "kind": "http",
+    "host": "localhost",
+    "path": "/",
+    "status": 200
+  },
+  {
+    "kind": "http",
+    "host": "localhost",
+    "path": "/collections/worldline_knowledge_v4_daa965c10984eefa_v1_v2_v4",
+    "status": 200
+  },
+  {
+    "kind": "http",
+    "host": "localhost",
+    "path": "/collections/worldline_knowledge_v4_daa965c10984eefa_v1_v2_v4/points/query/batch",
+    "status": 200
+  },
+  {
+    "kind": "budget",
+    "agent": "explorer",
+    "requested_tokens": 5993,
+    "remaining_tokens": 16000
+  },
+  {
+    "kind": "http",
+    "host": "api.deepseek.com",
+    "path": "/responses",
+    "status": 200
+  },
+  {
+    "kind": "budget",
+    "agent": "explorer",
+    "requested_tokens": 4671,
+    "remaining_tokens": 12558
+  },
+  {
+    "kind": "http",
+    "host": "api.deepseek.com",
+    "path": "/responses",
+    "status": 200
+  },
+  {
+    "kind": "task_result",
+    "route_key": "worldline",
+    "status": "success",
+    "reason": null,
+    "steps": [],
+    "actions": []
+  },
+  {
+    "kind": "budget",
+    "agent": "explorer",
+    "requested_tokens": 2203,
+    "remaining_tokens": 10273
+  },
+  {
+    "kind": "http",
+    "host": "api.deepseek.com",
+    "path": "/chat/completions",
+    "status": 200
+  },
+  {
+    "kind": "budget",
+    "agent": "explorer",
+    "requested_tokens": 1181,
+    "remaining_tokens": 8912
+  },
+  {
+    "kind": "task_result",
+    "route_key": "tool_calling",
+    "status": "success",
+    "reason": null,
+    "steps": [],
+    "actions": [
+      "pause_player"
+    ]
+  },
+  {
+    "kind": "run",
+    "run_id": "b0bcc0b4f18241fdb800309084af4e15",
+    "status": "completed",
+    "stop_reason": "all_tasks_done",
+    "tasks": [
+      {
+        "task_id": "bf62a6d9e43c4c508f8f39f252c85712:worldline:0",
+        "route_key": "worldline",
+        "status": "success"
+      },
+      {
+        "task_id": "bf62a6d9e43c4c508f8f39f252c85712:tool_calling:1",
+        "route_key": "tool_calling",
+        "status": "success"
+      }
+    ],
+    "chain": [
+      "general_chat",
+      "curator",
+      "explorer",
+      "curator"
+    ]
+  }
+]

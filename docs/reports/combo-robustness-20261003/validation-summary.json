@@ -1,0 +1,53 @@
+{
+  "related_tests": {
+    "passed": 499,
+    "failed": 0,
+    "subtests_passed": 4,
+    "warnings": 145,
+    "seconds": 86.26,
+    "files": [
+      "test_action_ack_namespace.py",
+      "test_context_adapter_tuning.py",
+      "test_context_engineering.py",
+      "test_foundation_current_song.py",
+      "test_foundation_e2e_acceptance.py",
+      "test_foundation_response.py",
+      "test_foundation_streaming.py",
+      "test_general_chat_subgraph.py",
+      "test_handoff_acceptance.py",
+      "test_handoff_budget.py",
+      "test_handoff_checkpoint_acceptance.py",
+      "test_handoff_combo_robustness.py",
+      "test_handoff_contracts.py",
+      "test_handoff_direct_actions.py",
+      "test_handoff_entry_rules.py",
+      "test_handoff_guard.py",
+      "test_handoff_jev_routing.py",
+      "test_handoff_network.py",
+      "test_handoff_rollout.py",
+      "test_handoff_runtime.py",
+      "test_handoff_safeguards.py",
+      "test_handoff_search_scope.py",
+      "test_handoff_sequence_routing.py",
+      "test_long_horizon_context.py",
+      "test_tool_calling_contracts.py",
+      "test_tool_calling_subgraph.py"
+    ]
+  },
+  "direct_tests": {
+    "passed": 46,
+    "failed": 0
+  },
+  "new_tests": 16,
+  "ruff": "passed",
+  "compileall": "passed",
+  "git_diff_check": "passed",
+  "original_default_entry": "needs_input",
+  "original_isolated_execution": "needs_input",
+  "live_combinations_completed": [
+    "play_explore",
+    "explore_pause"
+  ],
+  "real_cloud_favorite": "not_verified",
+  "browser_audio_and_ack": "not_verified"
+}

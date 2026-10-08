@@ -1,0 +1,21 @@
+[Unit]
+Description=MoodFlow allowlisted handoff telemetry and fallback alert receiver
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/moodflow
+ExecStart=/usr/bin/python3 /opt/moodflow-runtime/handoff-observability-20261004/observer.py --directory /opt/moodflow-runtime/handoff-observability-20261004 --follow
+Restart=always
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/moodflow-runtime/handoff-observability-20261004
+StandardOutput=null
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

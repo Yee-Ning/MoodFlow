@@ -1,0 +1,13 @@
+3.1_LEDGER
+003_context_loop_history.sql
+004_continuity_execution.sql
+3.2_EXECUTION_TABLE
+agent_execution
+3.3_MISSING_SEQUENCE
+0
+3.4_DUPLICATE_EVENT_KEY
+3.5_DUPLICATE_EVENT_SEQ
+3.6_IMMUTABLE_TRIGGER
+agent_history_event_immutable|O
+ADDITIONAL_PERMISSION_AND_INTEGRITY_CHECKS
+{"missing_sequence" : 0, "duplicate_key_groups" : 0, "duplicate_sequence_groups" : 0, "immutable_trigger_enabled" : true, "sequence_usage" : true, "execution_select" : true, "execution_insert" : true, "execution_update" : true}
