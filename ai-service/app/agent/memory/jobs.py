@@ -223,6 +223,10 @@ class MemoryJobWorker:
             if observed.usage_known and observed.observed_dispatches == observed.dispatches:
                 await self._settle(observed, tokens=observed.reported_tokens)
             await asyncio.to_thread(self.store.finish_job, job.job_id, owner, status)
+            if status != "pending":
+                # Unknown usage keeps the original reservation charged. A
+                # terminal job needs no live ledger object for another retry.
+                self.volatile_ledgers.pop(job.budget.get("volatile_id"), None)
             from .telemetry import record_memory_event
             record_memory_event("extract_job", outcome=status)
 

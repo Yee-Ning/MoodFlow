@@ -123,3 +123,40 @@ def test_offline_policy_eval_and_telemetry_do_not_expose_user_data(caplog):
     with caplog.at_level(logging.INFO, logger="moodflow.memory"):
         record_memory_event("correct", outcome="superseded", latency_ms=12, count=1)
     assert "user_id" not in caplog.text and "周杰伦" not in caplog.text and "latency_ms" in caplog.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("retry", [False, True])
+async def test_unknown_usage_retains_budget_but_releases_terminal_ledger(tmp_path, retry):
+    from app.agent.handoff.registry import AgentKey
+    from app.llm.runtime import RequestLedger, request_scope
+    from tests.context_loop_helpers import harness
+
+    h = harness(tmp_path / "history.db")
+    ledger = RequestLedger(h.run.usage, AgentKey.GENERAL_CHAT, h.run.limits,
+                           deadline=120, run_id=h.run.run_id)
+    provider = (AsyncMock(return_value=response(tokens=None)) if retry
+                else AsyncMock(side_effect=RuntimeError("unreported")))
+    worker, runtime, store, _ = worker_setup(provider)
+    remember = runtime.service.remember
+    if retry:
+        runtime.service.remember = lambda **_: (_ for _ in ()).throw(ConnectionError("offline"))
+    with request_scope(ledger):
+        assert await worker.enqueue(user_id="u", source_thread_id="t",
+                                    source_message_id="m", user_message="我喜欢周杰伦")
+    reserved = ledger.reserved
+    assert reserved > 0 and len(worker.volatile_ledgers) == 1
+    assert await worker.process_one()
+    job = next(iter(store._jobs.values()))
+    if retry:
+        assert job.status == "pending" and len(worker.volatile_ledgers) == 1
+        runtime.service.remember = remember
+        assert await worker.process_one()
+        job = store.get_job("u", job.job_id)
+        assert job.status == "completed" and len(store.all_records()) == 1
+    else:
+        assert job.status == "rejected" and store.all_records() == []
+    assert not job.usage_known or job.observed_dispatches < job.dispatches
+    assert worker.volatile_ledgers == {} and ledger.reserved == reserved
+    assert provider.await_count == 1
+    assert not await worker.process_one()
