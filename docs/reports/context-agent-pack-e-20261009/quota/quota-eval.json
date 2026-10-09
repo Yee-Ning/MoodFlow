@@ -3,10 +3,10 @@
   "mode": "offline_frozen_replay",
   "production_policy_sha256": "fc856d3be97c4a5d9d5b7ec7e92a7d451d58759856893652a41e7b242d11624e",
   "asset_sha256": {
-    "datasets/context_gold_audit_v3.jsonl": "61559245b8157ca36ff9184b124b174a98fb6433ae08d85800c6d719856ab1a8",
-    "datasets/memory_eval_v2.jsonl": "1a9e5092f5ded1f79b2a955b0a9f4ff5422c7f70dff4bcd267be476e6097bf45",
-    "datasets/synthetic_memories_v2.jsonl": "c6edaefb8f5f5f0fbd46494b81a96d1610dac99029863423960b855f2ab7f3b8",
-    "datasets/rag_eval_gold_v4.frozen.jsonl": "2114e3c1c57a57d7123192ac1a534bebb4cbcfb00f539e2abe9150a0dfdd5ede",
+    "datasets/context_gold_audit_v3.jsonl": "c396c67fa74f5f19aa21725b43f528777bb829f1a8155403cbaecb958d0b4379",
+    "datasets/memory_eval_v2.jsonl": "d726d29310068d6837950527198cce403bbf3365531488953e25a1c1f6f0b543",
+    "datasets/synthetic_memories_v2.jsonl": "9f6ffa949b60c080aac0ba47afd0799c72fa08088da846ea587df1f25afe155a",
+    "datasets/rag_eval_gold_v4.frozen.jsonl": "1ca311c731b83c0fd0f3ab95dcf31d06a95565e54e631e174e09dd890b81ad4e",
     "reports/gold_v4_hybrid_shadow_retrieval_50_20260917.jsonl.gz": "dc83c9f6fa13b42dfb0205866d672c473bf21baed00e46d931f1a9dfb7e10736",
     "reports/gold_v4_hybrid_shadow_trace_50_20260917.rerank_diagnostics.jsonl.gz": "4f0cc452cad0e2b3ab1d48ad1c9e736c7b739eb0afb42e741d3ecae4a071a2c0"
   },
