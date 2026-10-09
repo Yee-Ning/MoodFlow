@@ -172,9 +172,9 @@ async def test_persistent_live_rejection_reaches_music_routes_through_profile_so
     from app.agent.foundation.routing import RouteKey
     candidate = profile(category="format", subject="live_version", preference="avoid", value="avoid",
                         content="以后不要推荐现场版", quote="以后不要推荐现场版")
-    runtime, _, document = setup_runtime(candidate)
+    runtime, store, document = setup_runtime(candidate)
     await runtime.extract_and_store(user_id="u", source_thread_id="t", user_message="以后不要推荐现场版")
-    items = UserProfileSource().collect(SourceRequest("推荐适合通勤的歌", {"user_id": "u"}, profile_store=document), limit=16)
+    items = UserProfileSource().collect(SourceRequest("推荐适合通勤的歌", {"user_id": "u"}, profile_store=document, memory_store=store), limit=16)
     assert len(items) == 1
     for route in (RouteKey.CURRENT_SONG, RouteKey.TOOL_CALLING, RouteKey.WORLDLINE):
         selected = ContextSelector().build(items, POLICIES[route], intent={"routes": [route.value]})
@@ -194,7 +194,7 @@ def test_global_and_scene_preferences_coexist_without_cross_scene_recall():
     assert len(store.list_active_profiles("u", scene="sleep")) == 2
     document = SQLiteProfileStore(":memory:")
     synchronize_profile(store, document, "u")
-    items = UserProfileSource().collect(SourceRequest("帮我准备健身音乐", {"user_id": "u"}, profile_store=document), limit=16)
+    items = UserProfileSource().collect(SourceRequest("帮我准备健身音乐", {"user_id": "u"}, profile_store=document, memory_store=store), limit=16)
     assert len(items) == 2 and all("sleep" not in row.content for row in items)
 
 
@@ -244,7 +244,7 @@ def test_subject_match_is_not_lost_before_ranking_and_same_fact_is_deduplicated_
     result = runtime.retriever.retrieve(MemoryRetrievalRequest(user_id="u", query="推荐目标歌手", top_k=1))
     assert result.items[0].memory_id == target.memory_id
     synchronize_profile(store, document, "u")
-    registered = UserProfileSource().collect(SourceRequest("推荐目标歌手", {"user_id": "u"}, profile_store=document), limit=16)
+    registered = UserProfileSource().collect(SourceRequest("推荐目标歌手", {"user_id": "u"}, profile_store=document, memory_store=store), limit=16)
     pack = build_context(RouteKey.TOOL_CALLING, system="rules", query="推荐目标歌手",
         long_term_memory=result.context_items(), registered_items=registered,
         intent={"routes": ["tool_calling"]})

@@ -121,3 +121,32 @@ def test_checkpoint_cached_memory_is_not_reused_after_forget_or_pause():
     runtime.service.set_enabled("u", True)
     runtime.service.forget("u", record.memory_id)
     assert current_memory_items(cached, "u", store=store) == []
+
+
+@pytest.mark.parametrize("change", ["forget", "pause", "supersede", "unavailable"])
+def test_stale_profile_projection_cannot_restore_invalid_memory(monkeypatch, change):
+    from app.agent.memory import runtime as runtime_module
+    from app.agent.memory.projection import synchronize_profile
+
+    runtime, store, documents = setup_runtime()
+    old = runtime.service.remember(user_id="u", source_thread_id="t", candidate=artist()).memory
+    assert synchronize_profile(store, documents, "u")
+    monkeypatch.setattr(runtime_module, "get_memory_runtime", lambda: runtime)
+    request = SourceRequest("推荐周杰伦", {"user_id": "u"}, profile_store=documents)
+    source = UserProfileSource()
+    assert len(source.collect(request, limit=16)) == 1
+    original_version = documents.read("u").version
+    if change == "forget":
+        runtime.service.forget("u", old.memory_id)
+    elif change == "pause":
+        runtime.service.set_enabled("u", False)
+    elif change == "supersede":
+        changed = artist().model_copy(update={"preference": "dislike", "value": "disliked",
+            "content": "用户不喜欢周杰伦", "evidence_quote": "我不喜欢周杰伦"})
+        assert runtime.service.remember(user_id="u", source_thread_id="t", candidate=changed).action.value == "superseded"
+    else:
+        monkeypatch.setattr(store, "get_record", lambda *_: (_ for _ in ()).throw(ConnectionError("offline")))
+    # The projection stays readable but stale, as during a profile-store outage.
+    assert documents.read("u").version == original_version
+    assert documents.read("u").entries and documents.read("u").memory_enabled
+    assert source.collect(request, limit=16) == []

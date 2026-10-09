@@ -27,6 +27,7 @@ class SourceRequest:
     profile_store: ProfileStore | None = None
     history_store: Any = None
     allow_new_sources: bool = True
+    memory_store: Any = None
 
 
 class ContextSource(Protocol):
@@ -78,10 +79,12 @@ class UserProfileSource:
             raise ValueError("profile user scope mismatch")
         if not document.memory_enabled:
             return []
+        from app.agent.memory.context import current_memory_items
+        entries = current_memory_items(document.entries, user_id, store=request.memory_store)
         # Bounded candidates; relevance and intent filtering happen in Select.
         from app.agent.memory.scopes import infer_scene, is_current, matches_scene
         scene = request.continuity.get("memory_scene") or infer_scene(request.query)
-        ranked = sorted((entry for entry in document.entries
+        ranked = sorted((entry for entry in entries
                          if is_current(entry.valid_until) and matches_scene(entry.scene, scene)),
                         key=lambda entry: (excerpt(entry.value, request.query, 120)[1],
                                            entry.updated_at, entry.confidence), reverse=True)
