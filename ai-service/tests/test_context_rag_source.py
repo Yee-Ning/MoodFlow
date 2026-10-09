@@ -68,7 +68,7 @@ def test_default_registry_and_existing_policy_unchanged():
     assert config["sources"]["rag"] == {"type": "rag_evidence", "priority": 85, "tokens": 5000, "candidate_limit": 24}
     assert config["sources"]["history_memory"]["tokens"] == 600
     assert config["sources"]["user_profile"]["tokens"] == 240
-    assert (config["budget"]["l2_tokens"], config["budget"]["l3_tokens"]) == (16000, 32000)
+    assert (config["budget"]["l2_tokens"], config["budget"]["l3_tokens"]) == (64000, 128000)
 
 
 def test_retrieval_rerank_code_select_dedup_budget_assemble_and_audit():

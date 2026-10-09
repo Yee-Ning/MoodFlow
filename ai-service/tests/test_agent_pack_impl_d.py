@@ -238,7 +238,10 @@ async def test_reselect_preserves_static_and_rag_audit_without_recollecting(labe
         system = next(item.content for item in pack.items if item.type == "system")
         return [{"role": "user", "content": json.dumps([
             {"excerpt": item.content, "label": "栏" * label_tokens} for item in selected], ensure_ascii=False)}], system
-    policy = POLICIES[RouteKey.WORLDLINE].model_copy(update={"total_input_budget": 4000})
+    default = POLICIES[RouteKey.WORLDLINE]
+    # Preserve the original 1244-token input pressure with the merged output cap.
+    policy = default.model_copy(update={
+        "total_input_budget": default.reserved_output_tokens + default.safety_margin + 1244})
     trace_context = {"task_id": "fixture:task", "session_id": "fixture:session", "request_id": "fixture:request"}
     result = await stage_pack.prepare_explorer_input("narrative", query="探索", instructions=NARRATIVE_SYSTEM_PROMPT,
         schema={}, schema_name="test", renderer=expensive_render, policy=policy, registry=SourceRegistry([rag]),
