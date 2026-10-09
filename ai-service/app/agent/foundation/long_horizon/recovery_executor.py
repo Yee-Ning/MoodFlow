@@ -1,11 +1,15 @@
 """Execute only the plan's permitted reads, then revalidate before execution."""
 
+from types import SimpleNamespace
+
+from .models import ContinuityIdentity
 from .models import LiveSnapshot
 from .public_events import PublicRevalidation
 from .models import HistoryEventType
 from .recovery import RecoveryPlanner
 from .revalidation import RealityRevalidator
 from .history_writer import digest
+from .recovery_checkpoint import RecoveryCheckpoint
 
 
 class RecoveryExecutor:
@@ -16,6 +20,8 @@ class RecoveryExecutor:
         self.planner = RecoveryPlanner()
 
     async def execute(self, projection, live, snapshot, *, operations=None, receipt_gaps=()):
+        if isinstance(snapshot, RecoveryCheckpoint):
+            return await self._execute_recovery(projection, live, snapshot, receipt_gaps)
         def verify(current_live):
             report = self.validator.revalidate(projection, current_live, snapshot)
             report = report.model_copy(update={"receipt_gaps": receipt_gaps})
@@ -67,4 +73,44 @@ class RecoveryExecutor:
         self.writer.append_public_event(snapshot.identity,
             "revalidation-final:" + digest([snapshot.identity.request_id, final.model_dump(mode="json")])[7:],
             HistoryEventType.REALITY_REVALIDATION, final)
+        return plan, report, live
+
+    async def _execute_recovery(self, projection, live, checkpoint, receipt_gaps):
+        report = self.validator.revalidate(projection, live, checkpoint)
+        report = report.model_copy(update={"receipt_gaps": receipt_gaps})
+        plan = self.planner.decide(report, checkpoint)
+        # Failed ownership validation must never call providers or write an
+        # audit into a different task. This path never dispatches operations.
+        if report.checkpoint_integrity == "conflict":
+            return plan, report, live
+        session = self.writer.store.require_session(checkpoint.session_id)
+        identity = ContinuityIdentity(
+            conversation_id=checkpoint.conversation_id, continuity_task_id=session.task_id,
+            session_id=checkpoint.session_id, request_id="rebuild:" + digest(checkpoint.model_dump(mode="json"))[7:],
+            graph_mode="handoff", run_id=checkpoint.run_id,
+        )
+        # Keep the existing provider contract: a snapshot context with identity.
+        # No synthetic run, executable checkpoint ref or ledger is supplied.
+        context = SimpleNamespace(identity=identity, recovery_checkpoint=checkpoint)
+        for _ in range(3):
+            if plan.action != "refresh_facts" or self.read_facts is None:
+                break
+            previous = report.field_results
+            try:
+                live = LiveSnapshot.model_validate(await self.read_facts(plan.required_reads, context, live))
+            except (LookupError, ValueError, TypeError, OSError):
+                break
+            report = self.validator.revalidate(projection, live, checkpoint)
+            report = report.model_copy(update={"receipt_gaps": receipt_gaps})
+            plan = self.planner.decide(report, checkpoint)
+            if report.field_results == previous:
+                break
+        if plan.action == "refresh_facts":
+            plan = plan.model_copy(update={"action": "needs_input", "blocked_reason": "recovery_facts_unavailable"})
+        body = PublicRevalidation(run_id=checkpoint.run_id or "", field_results=report.field_results,
+            transfer_integrity=report.transfer_integrity, action=plan.action, reason=plan.blocked_reason,
+            receipt_gaps=receipt_gaps, revalidation_reasons=report.reasons)
+        self.writer.append_public_event(identity,
+            "rebuild-revalidation:" + digest([checkpoint.model_dump(mode="json"), body.model_dump(mode="json")])[7:],
+            HistoryEventType.REALITY_REVALIDATION, body)
         return plan, report, live

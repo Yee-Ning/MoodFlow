@@ -12,6 +12,7 @@ from app.agent.handoff.state import HandoffRun
 
 from .history_writer import HistoryWriter
 from .models import HistoryEventType, HistoryPointer, LiveSnapshot, PublicTaskResult, RevalidationReport
+from .recovery_checkpoint import RecoveryCheckpoint
 
 STATE_SOURCES = {
     "current_song_id": {"client_player"}, "player_state": {"client_player"},
@@ -63,6 +64,8 @@ class RealityRevalidator:
 
     def revalidate(self, projection, live_snapshot: LiveSnapshot, checkpoint_snapshot, refs=()):
         snapshot = checkpoint_snapshot
+        if isinstance(snapshot, RecoveryCheckpoint):
+            return self._revalidate_recovery(projection, live_snapshot, snapshot)
         if snapshot is None:
             return RevalidationReport(reasons=("checkpoint_missing",))
         identity = snapshot.identity
@@ -257,3 +260,47 @@ class RealityRevalidator:
             run_status=run.status.value, write_status=write_status,
             required_drilldown=tuple([*pointers, *journal_refs][:64]) if integrity in {"conflict", "missing_receipt"} else (),
         )
+
+    def _revalidate_recovery(self, projection, live, checkpoint):
+        base = dict(run_id=checkpoint.run_id, current_agent=checkpoint.last_agent,
+                    run_status=checkpoint.run_status or "unknown")
+        try:
+            RecoveryCheckpoint.model_validate(checkpoint.model_dump(mode="json"))
+            session = self.store.require_session(checkpoint.session_id)
+            projected_session = self.store.require_session(projection.session_id)
+            if (session.conversation_id != checkpoint.conversation_id
+                    or projection.task_id != session.task_id
+                    or (projected_session.task_id, projected_session.conversation_id) != (session.task_id, session.conversation_id)
+                    or (checkpoint.budget_ref and checkpoint.budget_ref.continuity_task_id != session.task_id)):
+                raise ValueError("recovery scope mismatch")
+            self.store.validate_pointers(checkpoint.model_usage_refs, task_id=session.task_id)
+            for ref in checkpoint.model_usage_refs:
+                event = self.store.get_history_event(ref.target_id)
+                if (event.event_type is not HistoryEventType.MODEL_USAGE
+                        or event.payload.get("run_id") != checkpoint.run_id
+                        or event.event_seq > checkpoint.rebuilt_from.journal_head_event_seq):
+                    raise ValueError("recovery usage reference mismatch")
+        except (ValueError, TypeError, KeyError):
+            return RevalidationReport(checkpoint_integrity="conflict", ref_integrity="conflict",
+                                      reasons=("recovery_checkpoint_integrity_conflict",), **base)
+        fields = self.check_fields(projection, live, checkpoint.conversation_id)
+        observations = {item.field: item for item in live.observations}
+        for item in checkpoint.missing:
+            observation = observations.get(item.field)
+            # These proof gaps need the original payload/full saved snapshot,
+            # not a live observation claiming that a digest or state is valid.
+            if item.field in {"execution_checkpoint", "payload_digest", "journal", "handoff_chain"}:
+                fields[item.field] = "unknown"
+            elif (observation is None or observation.source != "server_execution"
+                    or not self._fresh(observation, checkpoint.conversation_id) or observation.value is None):
+                fields[item.field] = "unknown"
+            else:
+                fields[item.field] = observation.status
+        reasons = ["recovery_checkpoint_requires_execution_state"]
+        if any(field in fields and fields[field] == "changed" and observations[field].value is False
+               for field in ("logged_in", "write_permission")):
+            reasons.append("current_authority_lost")
+        if fields.get("user_id") == "changed":
+            reasons.append("current_authority_scope_changed")
+        return RevalidationReport(field_results=fields, ref_integrity="valid", reasons=tuple(reasons),
+                                  required_drilldown=checkpoint.model_usage_refs, **base)

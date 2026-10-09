@@ -1,10 +1,13 @@
 """Deterministic recovery plans; never dispatch tools or rewrite execution state."""
 
 from .models import RecoveryPlan, RevalidationReport
+from .recovery_checkpoint import RecoveryCheckpoint
 
 
 class RecoveryPlanner:
     def decide(self, report: RevalidationReport, checkpoint=None, *, limits=None) -> RecoveryPlan:
+        if isinstance(checkpoint, RecoveryCheckpoint):
+            return self._from_recovery_checkpoint(report, checkpoint)
         base = dict(
             run_id=report.run_id, remaining_deadline=report.remaining_deadline,
             evidence_refs=report.required_drilldown,
@@ -43,3 +46,29 @@ class RecoveryPlanner:
             action="resume_source" if report.transfer_integrity == "uncommitted" or not checkpoint.run.hops else "resume_target",
             resume_checkpoint_ref=checkpoint.ref, resume_agent=report.current_agent, **base,
         )
+
+    @staticmethod
+    def _from_recovery_checkpoint(report, checkpoint):
+        base = dict(run_id=checkpoint.run_id, evidence_refs=report.required_drilldown)
+        if (report.run_id != checkpoint.run_id or report.current_agent != checkpoint.last_agent
+                or "conflict" in {report.checkpoint_integrity, report.ref_integrity, report.transfer_integrity}):
+            return RecoveryPlan(action="needs_input", blocked_reason="integrity_unproven", **base)
+        if report.budget_state == "exhausted":
+            return RecoveryPlan(action="stop", blocked_reason="original_run_limit_exhausted", **base)
+        if checkpoint.run_status in {"completed", "failed"}:
+            return RecoveryPlan(action="stop", blocked_reason="run_terminal", **base)
+        if checkpoint.run_status == "needs_input":
+            return RecoveryPlan(action="needs_input", blocked_reason="original_run_needs_input", **base)
+        if (any(reason in report.reasons for reason in ("current_authority_lost", "current_authority_scope_changed"))
+                or any(status == "changed" for status in report.field_results.values())):
+            return RecoveryPlan(action="needs_input", blocked_reason="fresh_facts_require_authorization", **base)
+        fields = tuple(dict.fromkeys([
+            *(item.field for item in checkpoint.missing if report.field_results.get(item.field) != "valid"),
+            *(field for field, status in report.field_results.items() if status == "unknown"),
+            *report.invalidated_dependencies,
+        ]))
+        if fields:
+            return RecoveryPlan(action="refresh_facts", required_reads=fields, **base)
+        # Fresh facts are not a saver-confirmed, payload-validated HandoffRun.
+        # Never supply a resume ref/agent for an evidence-only checkpoint.
+        return RecoveryPlan(action="needs_input", blocked_reason="execution_checkpoint_required", **base)
