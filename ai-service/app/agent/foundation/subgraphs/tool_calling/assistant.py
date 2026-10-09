@@ -11,7 +11,6 @@ from langchain_core.tools import BaseTool
 
 from app.agent.foundation.routing import RoutingContext
 from app.agent.foundation.routing import RouteKey
-from app.agent.foundation.context_engineering import build_context_async
 from app.agent.foundation.subgraphs.tool_calling.client_tools import CLIENT_ACTION_TOOLS
 from app.agent.foundation.subgraphs.tool_calling.models import ReferencedEntities
 from app.llm.client import get_base_chat_model
@@ -93,24 +92,30 @@ async def answer_tool_calling_task(
     continuity_context: dict[str, Any] | None = None,
     search_only: bool = False,
     song_playback: bool = False,
+    route_task_id: str | None = None,
+    invocation_run_id: str | None = None,
 ) -> AIMessage:
     history = list(messages)
     if history and isinstance(history[-1], HumanMessage):
         history.pop()
     player_context, entity_context = _trusted_context(routing_context, prior_entities)
-    pack = await build_context_async(
-        RouteKey.TOOL_CALLING, query=current_input,
-        system=TOOL_CALLING_SYSTEM_PROMPT
-        + ("\n" + SEARCH_ONLY_PROMPT if search_only else "")
-        + ("\n" + SONG_PLAYBACK_PROMPT if song_playback else ""), messages=history,
-        business_state=player_context, structured_output=entity_context,
-        continuity_context=continuity_context,
-        trace_context={key: continuity_context[key] for key in ("task_id", "session_id", "request_id")
-                       if continuity_context and key in continuity_context},
-    )
+    from app.agent.foundation.agent_pack import AgentPackInputs
+    from app.agent.foundation.agent_history_source import AgentHistorySource, bind_produced_message
+    from app.agent.foundation.business_pack import business_invocation, build_business_pack
+
+    refs = ("curator-tools-base/v1",) + (("search-only/v1",) if search_only else ()) + (("song-playback/v1",) if song_playback else ())
+    invocation = business_invocation(RouteKey.TOOL_CALLING, current_input, phase="tool_step", prompt_refs=refs,
+        route_task_id=route_task_id, invocation_run_id=invocation_run_id,
+        inputs=AgentPackInputs(messages=history, business_state=player_context,
+            structured_output=entity_context, continuity_context=continuity_context))
+    history = AgentHistorySource(invocation).collect(history)
+    phase = "tool_observation" if any(message.type == "tool" for message in history) else "tool_step"
+    invocation = invocation.model_copy(update={"phase": phase,
+        "inputs": invocation.inputs.model_copy(update={"messages": history})})
+    pack = build_business_pack(invocation)
     response = await instrument_continuity_model(model or get_tool_calling_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("Tool-calling assistant returned a non-AI message")
     if not response.tool_calls and not response.invalid_tool_calls and not str(response.text).strip():
         raise RuntimeError("Tool-calling assistant returned an empty response")
-    return response
+    return bind_produced_message(response, invocation)

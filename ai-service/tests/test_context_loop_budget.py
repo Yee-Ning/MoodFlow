@@ -116,7 +116,8 @@ async def test_remaining_ledger_cannot_be_reset_to_fit_schema(tmp_path):
 
 @pytest.mark.asyncio
 async def test_rendering_overhead_reselects_pack_without_resurrecting_dropped_sources():
-    policy = POLICIES[RouteKey.WORLDLINE].model_copy(update={"total_input_budget": 3300})
+    default = POLICIES[RouteKey.WORLDLINE]
+    policy = default.model_copy(update={"total_input_budget": default.reserved_output_tokens + 800})
     seen = []
     def render(pack):
         kept = [item for item in pack.items if item.type == "rag_evidence"]

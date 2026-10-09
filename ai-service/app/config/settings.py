@@ -15,6 +15,11 @@ def load_runtime_environment() -> None:
     load_dotenv(ENV_FILE, override=False)
 
 
+def memory_backend() -> str:
+    """Read the backend without importing retrieval or constructing agent graphs."""
+    return os.getenv("MEMORY_BACKEND", "memory").strip().lower()
+
+
 def jev_requested() -> bool:
     """Cheap gate before full Settings validation; never mutates process environment."""
     raw = os.environ.get("JEV_ENABLED")
@@ -36,7 +41,7 @@ class Settings(BaseSettings):
     model: str = Field(min_length=1)
     generation_model: str = Field(default="deepseek-flash", min_length=1)
     timeout_seconds: float = Field(gt=0, le=300)
-    max_output_tokens: int = Field(default=1024, ge=128, le=8192)
+    max_output_tokens: int = Field(default=4096, ge=128, le=8192)
     spring_boot_base_url: AnyHttpUrl = Field(
         validation_alias="SPRING_BOOT_BASE_URL"
     )

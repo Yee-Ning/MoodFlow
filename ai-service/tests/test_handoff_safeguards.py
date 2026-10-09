@@ -120,11 +120,12 @@ async def test_budget_preflight_blocks_first_transfer_model_and_action():
 
 @pytest.mark.asyncio
 async def test_actual_transfer_overshoot_cannot_dispatch_next_agent():
+    total = RunLimits().agent_token_budget + 2
     response = call()
     response.usage_metadata = {
-        "input_tokens": 16001,
+        "input_tokens": total - 1,
         "output_tokens": 1,
-        "total_tokens": 16002,
+        "total_tokens": total,
     }
     out = (
         await build_handoff_graph(
@@ -136,15 +137,16 @@ async def test_actual_transfer_overshoot_cannot_dispatch_next_agent():
     )
     run = HandoffRun.model_validate(out["handoff_run"])
     assert run.stop_reason is StopReason.TOKEN_LIMIT and run.handoff_count == 0
-    assert run.total_tokens == 16002 and run.results == ()
+    assert run.total_tokens == total and run.results == ()
 
 
 @pytest.mark.asyncio
 async def test_guard_usage_overshoot_cannot_commit_preview_hop():
+    guard_tokens = RunLimits().run_token_budget + 8000
     class ExpensiveGuard:
         async def review(self, envelope):
             await accounted_call(
-                AsyncMock(return_value=answer(40000)), "guard", output_tokens=100
+                AsyncMock(return_value=answer(guard_tokens)), "guard", output_tokens=100
             )
 
     out = (
@@ -158,17 +160,18 @@ async def test_guard_usage_overshoot_cannot_commit_preview_hop():
     )
     run = HandoffRun.model_validate(out["handoff_run"])
     assert run.stop_reason is StopReason.TOKEN_LIMIT and run.handoff_count == 0
-    assert run.total_tokens == 40100 and run.results == ()
+    assert run.total_tokens == guard_tokens + 100 and run.results == ()
     observations = [item for item in out["messages"] if isinstance(item, ToolMessage)]
     assert len(observations) == 1 and observations[0].tool_call_id == "handoff-call"
 
 
 @pytest.mark.asyncio
 async def test_router_usage_is_retained_and_can_block_business_calls():
+    total = RunLimits().agent_token_budget + 2
     class ExpensiveRouter(Router):
         async def route(self, *args):
             await accounted_call(
-                AsyncMock(return_value=answer(16002)), "route", output_tokens=100
+                AsyncMock(return_value=answer(total)), "route", output_tokens=100
             )
             return await super().route(*args)
 
@@ -181,7 +184,7 @@ async def test_router_usage_is_retained_and_can_block_business_calls():
         .ainvoke(input_state())
     )
     assert out["handoff_failed"] and model.calls == 0
-    assert out["routing_usage"][0]["reported_tokens"] == 16002
+    assert out["routing_usage"][0]["reported_tokens"] == total
     assert "token_limit" in {row["code"] for row in out["handoff_trace"]}
 
 

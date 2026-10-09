@@ -5,10 +5,9 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage
+from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
 
 from app.agent.foundation.history import select_recent_history
-from app.agent.foundation.context_engineering import build_context_async
 from app.agent.foundation.models import TaskResult
 from app.agent.foundation.routing import RouteKey, RoutingContext
 from app.llm.client import get_base_chat_model
@@ -70,6 +69,7 @@ async def answer_general_chat(
     *,
     model: BaseChatModel | None = None,
     continuity_context: dict[str, Any] | None = None,
+    route_task_id: str | None = None,
 ) -> AIMessage:
     from app.agent.foundation.long_horizon.write_reconciliation import answer_write_status_query
     from app.agent.foundation.long_horizon.recovery_receipts import answer_recovery_query
@@ -77,16 +77,22 @@ async def answer_general_chat(
     answer = await answer_recovery_query(current_input) or await answer_write_status_query(current_input)
     if answer is not None:
         return AIMessage(content=answer)
-    history = select_recent_history(messages, current_input)
+    from app.agent.foundation.agent_pack import AgentPackInputs
+    from app.agent.foundation.agent_history_source import AgentHistorySource
+    from app.agent.foundation.business_pack import business_invocation, build_business_pack
+
     player_context, prior_context = _trusted_context(routing_context, prior_task_results)
-    pack = await build_context_async(
-        RouteKey.GENERAL_CHAT, query=current_input,
-        system=GENERAL_CHAT_SYSTEM_PROMPT, messages=history,
-        business_state=player_context, structured_output=prior_context,
-        continuity_context=continuity_context,
-        trace_context={key: continuity_context[key] for key in ("task_id", "session_id", "request_id")
-                       if continuity_context and key in continuity_context},
-    )
+    invocation = business_invocation(RouteKey.GENERAL_CHAT, current_input, phase="answer",
+        prompt_refs=("general-chat-base/v1",), route_task_id=route_task_id,
+        inputs=AgentPackInputs(messages=messages, business_state=player_context,
+            structured_output=prior_context, continuity_context=continuity_context))
+    safe = AgentHistorySource(invocation).collect(messages)
+    protocol = [message for message in safe if isinstance(message, ToolMessage)
+                or isinstance(message, AIMessage) and message.tool_calls]
+    recent = select_recent_history([message for message in safe if message not in protocol], current_input)
+    history = [message for message in safe if message in protocol or message in recent]
+    invocation = invocation.model_copy(update={"inputs": invocation.inputs.model_copy(update={"messages": history})})
+    pack = build_business_pack(invocation)
     response = await instrument_continuity_model(model or get_base_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("General-chat assistant returned a non-AI message")

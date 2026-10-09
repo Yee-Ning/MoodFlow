@@ -56,8 +56,8 @@ class RunLimits(ContractModel):
     max_retries_per_agent: int = Field(default=1, ge=0, le=1, strict=True)
     agent_timeout_seconds: int = Field(default=45, gt=0, strict=True)
     run_timeout_seconds: int = Field(default=120, gt=0, strict=True)
-    agent_token_budget: int = Field(default=16_000, gt=0, strict=True)
-    run_token_budget: int = Field(default=32_000, gt=0, strict=True)
+    agent_token_budget: int = Field(default=64_000, gt=0, strict=True)
+    run_token_budget: int = Field(default=128_000, gt=0, strict=True)
 
     @model_validator(mode="after")
     def limits_are_consistent(self) -> "RunLimits":

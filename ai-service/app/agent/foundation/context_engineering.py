@@ -72,8 +72,8 @@ class ContextPolicy(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     node: RouteKey
-    total_input_budget: int = Field(default=8192, gt=0)
-    reserved_output_tokens: int = Field(default=2048, ge=0)
+    total_input_budget: int = Field(default=12288, gt=0)
+    reserved_output_tokens: int = Field(default=4096, ge=0)
     safety_margin: int = Field(default=256, ge=0)
     source_budgets: dict[str, int] = Field(default_factory=dict)
     allowed_types: frozenset[ContextType]
@@ -116,8 +116,7 @@ POLICIES: dict[RouteKey, ContextPolicy] = {
     ),
     RouteKey.TOOL_CALLING: ContextPolicy(
         node=RouteKey.TOOL_CALLING,
-        total_input_budget=12288,
-        reserved_output_tokens=2048,
+        total_input_budget=16384,
         allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "structured_output", "tool_result", "route_decision", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory", "user_profile"}),
         source_budgets={"conversation": 2200, "tool_result": 4500, "long_term_memory": 900},
         priorities={"structured_output": 90, "long_term_memory": 80, "tool_result": 75, "conversation": 40},
@@ -130,8 +129,7 @@ POLICIES: dict[RouteKey, ContextPolicy] = {
     ),
     RouteKey.WORLDLINE: ContextPolicy(
         node=RouteKey.WORLDLINE,
-        total_input_budget=12288,
-        reserved_output_tokens=2500,
+        total_input_budget=16384,
         allowed_types=frozenset({"system", "user_query", "conversation", "business_state", "route_decision", "structured_output", "search_plan", "tool_result", "rag_evidence", "handoff_projection", "history_drilldown", "artifact_projection", "memory_source", "long_term_memory", "user_profile"}),
         source_budgets={"conversation": 800, "rag_evidence": 5000, "tool_result": 1800, "long_term_memory": 600},
         priorities={"search_plan": 90, "rag_evidence": 85, "long_term_memory": 68, "tool_result": 65, "conversation": 30},

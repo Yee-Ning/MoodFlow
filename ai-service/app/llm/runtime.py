@@ -283,13 +283,14 @@ def retryable(exc):
     )
 
 
-async def accounted_call(operation, payload, *, output_tokens=1024, retry=True, model="unknown", billing_agent=None):
+async def accounted_call(operation, payload, *, output_tokens=None, retry=True, model="unknown", billing_agent=None):
     ledger = active_ledger.get()
     from app.llm.budget import output_limit
     from app.agent.foundation.context_engineering import POLICIES
     from app.agent.foundation.routing import RouteKey
     from uuid import uuid4
-    output_tokens = min(output_tokens, output_limit(model))
+    configured_output = output_limit(model)
+    output_tokens = configured_output if output_tokens is None else min(output_tokens, configured_output)
     l1 = POLICIES[RouteKey.GENERAL_CHAT]
     # Final provider framing is checked even outside a cumulative execution scope.
     if estimate_tokens(payload) + output_tokens + l1.safety_margin > max(row.total_input_budget for row in POLICIES.values()):
@@ -378,7 +379,7 @@ class AccountedChatModel:
             output_tokens
             or getattr(source, "max_tokens", None)
             or getattr(source, "max_completion_tokens", None)
-            or 1024
+            or output_limit(self.model_name)
         ))
 
     def bind_tools(self, tools, **kwargs):

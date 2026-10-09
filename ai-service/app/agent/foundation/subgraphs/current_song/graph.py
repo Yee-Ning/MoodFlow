@@ -190,6 +190,7 @@ def build_current_song_subgraph(
                 state["routing_context"],
                 model=model,
                 continuity_context=state.get("continuity_context"),
+                route_task_id=state["task_id"],
             )
         if not isinstance(response, AIMessage):
             raise RuntimeError("Current-song assistant returned a non-AI message")

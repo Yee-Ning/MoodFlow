@@ -114,7 +114,7 @@ class LivePostgresSmokeTests(unittest.TestCase):
             ["router:initial", "retrieval:initial", "router:continued", "retrieval:continued"],
         )
         self.assertTrue(
-            {"route_decision", "retrieval", "handoff"}.issubset(
+            {"route_decision", "retrieval", "session_handoff"}.issubset(
                 recovered["history_types"]
             )
         )

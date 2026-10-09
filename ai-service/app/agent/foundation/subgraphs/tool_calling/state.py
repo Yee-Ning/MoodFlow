@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, NotRequired
 
 from app.agent.foundation.models import TaskResult
 from app.agent.foundation.routing import RoutingContext
@@ -22,3 +22,4 @@ class ToolCallingState(BaseAgentState):
     direct_complete: bool
     answer: str | None
     task_result: TaskResult | None
+    pack_run_id: NotRequired[str]

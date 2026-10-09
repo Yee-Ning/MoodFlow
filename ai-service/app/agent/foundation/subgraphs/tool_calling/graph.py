@@ -61,6 +61,7 @@ from app.schemas.music import (
 )
 from app.tools.music import handle_music_tool_error
 from app.agent.foundation.long_horizon.operations import journal_tool_call
+from app.agent.foundation.agent_history_source import bind_tool_result
 
 MAX_TOOL_CALLS = 5
 MAX_VISIBLE_RESPONSE_CHARACTERS = 2_000
@@ -788,6 +789,8 @@ def build_tool_calling_subgraph(
                         for item in graph_tools
                     ),
                     song_playback={item.name for item in graph_tools} == SONG_PLAYBACK_TOOLS,
+                    route_task_id=state["task_id"],
+                    invocation_run_id=state.get("pack_run_id"),
                 )
             except RuntimeLimitError as exc:
                 # Preserve successful tools/actions when the next model request
@@ -893,7 +896,7 @@ def build_tool_calling_subgraph(
                 error_code = "batch_rejected"
                 message = "同一批工具调用含有重复或无效请求，本次未执行；请调整后重试。"
             messages.append(
-                ToolMessage(
+                bind_tool_result(ToolMessage(
                     content=ToolFailure(
                         error=error_code,
                         message=message,
@@ -901,7 +904,7 @@ def build_tool_calling_subgraph(
                     tool_call_id=call_id,
                     name=str(call.get("name") or "unknown"),
                     status="error",
-                )
+                ), state["messages"][-1])
             )
         return {"messages": messages}
 
@@ -913,17 +916,26 @@ def build_tool_calling_subgraph(
             else "tools"
         )
 
+    async def scoped_tool_call(request, execute):
+        output = await journal_tool_call(request, execute)
+        return bind_tool_result(output, request.state["messages"][-1])
+
+    async def direct_actions(state: ToolCallingState, runtime):
+        from uuid import uuid4
+        output = await resolve_direct_actions(state, runtime)
+        return {**output, "pack_run_id": f"call:{uuid4()}"}
+
     builder = StateGraph(
         ToolCallingState,
         context_schema=MusicAgentContext,
         output_schema=SubGraphOutput,
     )
-    builder.add_node("direct_actions", resolve_direct_actions)
+    builder.add_node("direct_actions", direct_actions)
     builder.add_node("agent", agent)
     builder.add_node("validate_tool_calls", lambda _: {})
     builder.add_node(
         "tools",
-        ToolNode(graph_tools, handle_tool_errors=handle_music_tool_error, awrap_tool_call=journal_tool_call),
+        ToolNode(graph_tools, handle_tool_errors=handle_music_tool_error, awrap_tool_call=scoped_tool_call),
     )
     builder.add_node("capture_tool_results", capture_tool_results)
     builder.add_node("reject_tool_calls", reject_invalid_tool_calls)

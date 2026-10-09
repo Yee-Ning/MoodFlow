@@ -8,7 +8,6 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage
 
 from app.agent.foundation.history import select_recent_history
-from app.agent.foundation.context_engineering import build_context_async
 from app.agent.foundation.routing import RouteKey, RoutingContext
 from app.agent.song_assistant import format_song_context
 from app.llm.client import get_base_chat_model
@@ -53,20 +52,24 @@ async def answer_current_song_task(
     *,
     model: BaseChatModel | None = None,
     continuity_context: dict[str, Any] | None = None,
+    route_task_id: str | None = None,
 ) -> AIMessage:
-    history = select_recent_history(messages, current_input)
-    pack = await build_context_async(
-        RouteKey.CURRENT_SONG, query=current_input, system=CURRENT_SONG_SYSTEM_PROMPT,
-        messages=history, current_song=format_song_context(song_context),
+    from app.agent.foundation.agent_pack import AgentPackInputs
+    from app.agent.foundation.agent_history_source import AgentHistorySource
+    from app.agent.foundation.business_pack import business_invocation, build_business_pack
+
+    invocation = business_invocation(RouteKey.CURRENT_SONG, current_input, phase="song_analysis",
+        prompt_refs=("curator-current-song/v1",), route_task_id=route_task_id,
+        inputs=AgentPackInputs(messages=messages, current_song=format_song_context(song_context),
         business_state=(
             '<player_context trusted="true">'
             + json.dumps(routing_context.model_dump(mode="json"), ensure_ascii=False, separators=(",", ":"))
             + '</player_context>'
         ),
-        continuity_context=continuity_context,
-        trace_context={key: continuity_context[key] for key in ("task_id", "session_id", "request_id")
-                       if continuity_context and key in continuity_context},
-    )
+        continuity_context=continuity_context))
+    history = select_recent_history(AgentHistorySource(invocation).collect(messages), current_input)
+    invocation = invocation.model_copy(update={"inputs": invocation.inputs.model_copy(update={"messages": history})})
+    pack = build_business_pack(invocation)
     response = await instrument_continuity_model(model or get_base_chat_model()).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("Current-song assistant returned a non-AI message")
