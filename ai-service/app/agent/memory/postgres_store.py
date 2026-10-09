@@ -225,7 +225,7 @@ class PostgresMemoryStore:
         )
 
     def list_active_profiles(
-        self, user_id: str, *, scene: str | None = None, limit: int = 50
+        self, user_id: str, *, scene: str | None = None, limit: int = 50, query: str = ""
     ) -> list[MemoryRecord]:
         clauses = ["user_id=%s", "memory_type='profile'", "status='active'"]
         clauses.append("(valid_until IS NULL OR valid_until>NOW())")
@@ -237,12 +237,16 @@ class PostgresMemoryStore:
             values.append(scene)
         else:
             clauses.append("structured_content->>'scene' IS NULL")
-        values.append(limit)
+        import re
+        normalized = re.sub(r"\W+", "", query.casefold())
+        values.extend([normalized, limit])
+        subject = "regexp_replace(lower(COALESCE(structured_content->>'subject','')), '[^[:alnum:]_]', '', 'g')"
         rows = self._all(
             f"""
             SELECT {self._columns()} FROM agent_long_term_memory
             WHERE {' AND '.join(clauses)}
-            ORDER BY importance DESC, updated_at DESC LIMIT %s
+            ORDER BY (LENGTH({subject}) >= 2 AND POSITION({subject} IN %s)>0) DESC,
+                     importance DESC, updated_at DESC LIMIT %s
             """,
             tuple(values),
         )

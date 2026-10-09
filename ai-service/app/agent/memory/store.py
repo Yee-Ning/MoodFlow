@@ -24,7 +24,7 @@ class MemoryStore(Protocol):
     def replace(self, memory: MemoryRecord) -> None: ...
 
     def list_active_profiles(
-        self, user_id: str, *, scene: str | None = None, limit: int = 50
+        self, user_id: str, *, scene: str | None = None, limit: int = 50, query: str = ""
     ) -> list[MemoryRecord]: ...
 
     def has_active_episodes(self, user_id: str) -> bool: ...
@@ -103,7 +103,7 @@ class InMemoryMemoryStore:
             self._records[memory.memory_id] = memory.model_copy(deep=True)
 
     def list_active_profiles(
-        self, user_id: str, *, scene: str | None = None, limit: int = 50
+        self, user_id: str, *, scene: str | None = None, limit: int = 50, query: str = ""
     ) -> list[MemoryRecord]:
         with self._lock:
             rows = [
@@ -117,7 +117,11 @@ class InMemoryMemoryStore:
                     and is_current(record.valid_until)
                 )
             ]
-        rows.sort(key=lambda item: (item.importance, item.updated_at), reverse=True)
+        query = "".join(char for char in query.casefold() if char.isalnum())
+        def rank(item):
+            subject = "".join(char for char in str(item.structured_content.get("subject", "")).casefold() if char.isalnum())
+            return (len(subject) >= 2 and subject in query, item.importance, item.updated_at)
+        rows.sort(key=rank, reverse=True)
         return rows[:limit]
 
     def has_active_episodes(self, user_id: str) -> bool:

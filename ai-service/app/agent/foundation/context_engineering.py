@@ -272,7 +272,7 @@ class ContextCollector:
                 f"long_term_memory:{memory_id}",
                 "long_term_memory",
                 safe_content,
-                metadata={"memory_id": memory_id},
+                metadata={"memory_id": memory_id, "memory_key": get("memory_key")},
                 relevance=float(get("relevance", 1.0) or 0.0),
                 priority=min(100, max(0, int(float(get("importance", 0.5) or 0.0) * 100))),
             )
@@ -310,6 +310,8 @@ class ContextCollector:
 def _dedup_keys(item: ContextItem) -> set[str]:
     normalized = " ".join(item.content.casefold().split())
     keys = {"content:" + hashlib.sha256(normalized.encode("utf-8")).hexdigest()}
+    if item.type in {"long_term_memory", "user_profile"} and item.metadata.get("memory_key"):
+        keys.add("memory_fact:" + str(item.metadata["memory_key"]))
     if item.type == "rag_evidence" and item.metadata.get("evidence_id"):
         keys.add("evidence:" + str(item.metadata["evidence_id"]))
     return keys

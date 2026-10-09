@@ -24,6 +24,8 @@ class ProfileEntry(BaseModel):
     intents: tuple[RouteKey, ...] = Field(min_length=1, max_length=4)
     scene: str | None = Field(default=None, max_length=120)
     valid_until: AwareDatetime | None = None
+    memory_id: str | None = Field(default=None, max_length=160)
+    memory_key: str | None = Field(default=None, max_length=400)
 
     @field_validator("key", "value", "source")
     @classmethod

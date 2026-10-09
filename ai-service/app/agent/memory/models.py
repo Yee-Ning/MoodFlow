@@ -165,6 +165,7 @@ class MemoryRetrievalRequest(BaseModel):
     scene: str | None = Field(default=None, max_length=120)
     memory_type: MemoryType | None = None
     top_k: int = Field(default=8, ge=1, le=50)
+    min_relevance: float = Field(default=0.4, ge=0, le=1)
 
 
 class RetrievedMemory(BaseModel):
@@ -178,6 +179,7 @@ class RetrievedMemory(BaseModel):
     importance: float = Field(ge=0, le=1)
     relevance: float = Field(ge=0, le=1)
     updated_at: datetime
+    memory_key: str | None = None
 
 
 class MemoryRetrievalResult(BaseModel):
@@ -190,6 +192,7 @@ class MemoryRetrievalResult(BaseModel):
         return [
             {
                 "memory_id": item.memory_id,
+                "memory_key": item.memory_key,
                 "memory_type": item.memory_type.value,
                 "content": item.content,
                 "structured_content": item.structured_content,

@@ -76,7 +76,8 @@ class UserProfileSource:
         scene = request.continuity.get("memory_scene") or infer_scene(request.query)
         ranked = sorted((entry for entry in document.entries
                          if is_current(entry.valid_until) and matches_scene(entry.scene, scene)),
-                        key=lambda entry: (entry.updated_at, entry.confidence), reverse=True)
+                        key=lambda entry: (excerpt(entry.value, request.query, 120)[1],
+                                           entry.updated_at, entry.confidence), reverse=True)
         result = []
         for entry in ranked[:limit]:
             content = entry.model_dump(mode="json")
@@ -84,6 +85,7 @@ class UserProfileSource:
             item = source_item(f"profile:{entry.key}", "user_profile", {**content, "value": projected},
                 source=self.name, intents=entry.intents,
                 metadata={"version": document.version, "confidence": entry.confidence,
+                          "memory_key": entry.memory_key, "memory_id": entry.memory_id,
                           "updated_at": entry.updated_at.isoformat(), "provenance": entry.source})
             original = source_item(item.id, item.type, content, source=self.name, intents=entry.intents)
             result.append(item.model_copy(update={"relevance": relevance,

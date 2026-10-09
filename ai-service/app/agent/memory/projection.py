@@ -36,6 +36,7 @@ def synchronize_profile(memory_store, profile_store, user_id, *, attempts=3):
                     source=memory.source_thread_id, updated_at=memory.updated_at, confidence=memory.confidence,
                     intents=tuple(categories.get(memory.structured_content.get("category"), categories["default"])),
                     scene=memory.structured_content.get("scene"), valid_until=memory.valid_until,
+                    memory_id=memory.memory_id, memory_key=memory.memory_key,
                 )
                 try:
                     validate_public_document(ProfileDocument, ProfileDocument(

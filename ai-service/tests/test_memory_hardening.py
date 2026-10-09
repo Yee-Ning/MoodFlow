@@ -219,3 +219,44 @@ def test_scene_inference_is_conservative_and_expiry_does_not_get_extended_implic
     service.remember(user_id="u", source_thread_id="t", candidate=artist().model_copy(update={"valid_until": until}))
     confirmed = service.remember(user_id="u", source_thread_id="t", candidate=artist()).memory
     assert confirmed.valid_until == until
+
+
+def test_retrieval_excludes_unrelated_facts_and_vector_failure_keeps_profiles():
+    runtime, store, _ = setup_runtime()
+    runtime.service.remember(user_id="u", source_thread_id="t", candidate=artist())
+    assert runtime.retriever.retrieve(MemoryRetrievalRequest(user_id="u", query="天气如何")).items == []
+    runtime.service.remember(user_id="u", source_thread_id="t", candidate=episode("健身跳过慢歌"))
+    runtime.retriever.embedder = SimpleNamespace(embed_query=lambda _: (_ for _ in ()).throw(ConnectionError("offline")))
+    result = runtime.retriever.retrieve(MemoryRetrievalRequest(user_id="u", query="推荐健身音乐"))
+    assert len(result.items) == 1 and result.items[0].memory_type.value == "profile"
+    assert store.get_record("u", result.items[0].memory_id).user_id == "u"
+
+
+def test_subject_match_is_not_lost_before_ranking_and_same_fact_is_deduplicated_in_pack():
+    from app.agent.foundation.context_sources import SourceRequest, UserProfileSource
+    from app.agent.foundation.context_engineering import build_context
+    from app.agent.foundation.routing import RouteKey
+    runtime, store, document = setup_runtime()
+    target = runtime.service.remember(user_id="u", source_thread_id="t",
+        candidate=artist("目标歌手").model_copy(update={"importance": .1})).memory
+    for index in range(40):
+        runtime.service.remember(user_id="u", source_thread_id="t", candidate=artist(f"其他{index}"))
+    result = runtime.retriever.retrieve(MemoryRetrievalRequest(user_id="u", query="推荐目标歌手", top_k=1))
+    assert result.items[0].memory_id == target.memory_id
+    synchronize_profile(store, document, "u")
+    registered = UserProfileSource().collect(SourceRequest("推荐目标歌手", {"user_id": "u"}, profile_store=document), limit=16)
+    pack = build_context(RouteKey.TOOL_CALLING, system="rules", query="推荐目标歌手",
+        long_term_memory=result.context_items(), registered_items=registered,
+        intent={"routes": ["tool_calling"]})
+    matching = [row for row in pack.items if row.metadata.get("memory_key") == target.memory_key]
+    assert len(matching) == 1
+
+
+def test_profile_query_failure_does_not_disable_episodic_recall_and_zero_similarity_is_rejected():
+    runtime, store, _ = setup_runtime()
+    runtime.service.remember(user_id="u", source_thread_id="t", candidate=episode("健身跳过慢歌"))
+    store.list_active_profiles = lambda *args, **kwargs: (_ for _ in ()).throw(ConnectionError("offline"))
+    result = runtime.retriever.retrieve(MemoryRetrievalRequest(user_id="u", query="健身时的音乐"))
+    assert len(result.items) == 1 and result.items[0].memory_type.value == "episodic"
+    runtime.retriever.embedder = SimpleNamespace(embed_query=lambda _: [0, 0, 1])
+    assert runtime.retriever.retrieve(MemoryRetrievalRequest(user_id="u", query="之前天气")).items == []
