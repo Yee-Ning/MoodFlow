@@ -9,7 +9,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from psycopg_pool import ConnectionPool
 
-from .models import MemoryEvidence, MemoryPreferences, MemoryRecord, MemoryType
+from .models import MemoryEvidence, MemoryJob, MemoryPreferences, MemoryRecord, MemoryType
 
 
 def _vector_text(values: list[float] | None) -> str | None:
@@ -145,6 +145,89 @@ class PostgresMemoryStore:
     def profile_revocations(self, user_id):
         return {row["key_digest"]: row["revoked_at"] for row in self._all(
             "SELECT key_digest,revoked_at FROM agent_memory_profile_revocation WHERE user_id=%s", (user_id,))}
+
+    def enqueue_job(self, job):
+        with self.transaction(job.user_id, "job:" + job.job_id):
+            previous = self._one("SELECT source_digest FROM agent_memory_job WHERE job_id=%s", (job.job_id,))
+            if previous:
+                if previous["source_digest"] != job.source_digest:
+                    raise ValueError("memory job idempotency conflict")
+                return False
+            self._execute("INSERT INTO agent_memory_job(job_id,user_id,source_digest,payload) VALUES(%s,%s,%s,%s)",
+                          (job.job_id, job.user_id, job.source_digest, Jsonb(job.model_dump(mode="json"))))
+            return True
+
+    def get_job(self, user_id, job_id):
+        return self._job(self._one("SELECT * FROM agent_memory_job WHERE job_id=%s AND user_id=%s",
+                                   (job_id, user_id)))
+
+    def _job(self, row):
+        if row is None:
+            return None
+        payload = dict(row["payload"])
+        payload.update({key: row[key] for key in ("status", "owner", "lease_until", "attempts")})
+        return MemoryJob.model_validate(payload)
+
+    def claim_job(self, owner):
+        with self._pool.connection() as connection, connection.transaction():
+            row = connection.execute(
+                """SELECT job_id FROM agent_memory_job WHERE status='pending'
+                   OR (status='running' AND lease_until<=NOW()) ORDER BY created_at
+                   LIMIT 1 FOR UPDATE SKIP LOCKED""").fetchone()
+            if row is None:
+                return None
+            claimed = connection.execute(
+                """UPDATE agent_memory_job SET status='running',owner=%s,lease_until=NOW()+INTERVAL '120 seconds',
+                   attempts=attempts+1 WHERE job_id=%s RETURNING *""", (owner, row["job_id"])).fetchone()
+        return self._job(claimed)
+
+    def _owned_job(self, connection, job_id, owner):
+        row = connection.execute(
+            """SELECT * FROM agent_memory_job WHERE job_id=%s AND owner=%s
+               AND status='running' AND lease_until>NOW() FOR UPDATE""", (job_id, owner)).fetchone()
+        if row is None:
+            raise ValueError("memory job lease lost")
+        return self._job(row)
+
+    def dispatch_job(self, job_id, owner):
+        with self._pool.connection() as connection, connection.transaction():
+            job = self._owned_job(connection, job_id, owner)
+            if job.dispatches >= 2:
+                return False
+            job = job.model_copy(update={"dispatches": job.dispatches + 1})
+            connection.execute("UPDATE agent_memory_job SET payload=%s WHERE job_id=%s",
+                               (Jsonb(job.model_dump(mode="json")), job_id))
+            return True
+
+    def observe_job(self, job_id, owner, tokens):
+        with self._pool.connection() as connection, connection.transaction():
+            job = self._owned_job(connection, job_id, owner)
+            job = job.model_copy(update={"reported_tokens": job.reported_tokens + (tokens or 0),
+                                        "observed_dispatches": job.observed_dispatches + 1,
+                                        "usage_known": job.usage_known and tokens is not None})
+            connection.execute("UPDATE agent_memory_job SET payload=%s WHERE job_id=%s",
+                               (Jsonb(job.model_dump(mode="json")), job_id))
+
+    def finish_job(self, job_id, owner, status):
+        with self._pool.connection() as connection, connection.transaction():
+            row = self._owned_job(connection, job_id, owner)
+            job = row.model_copy(update={"status": status, "user_message": row.user_message if status == "pending" else "",
+                "extraction": row.extraction if status == "pending" else None, "owner": None, "lease_until": None})
+            connection.execute(
+                "UPDATE agent_memory_job SET status=%s,owner=NULL,lease_until=NULL,payload=%s WHERE job_id=%s",
+                (status, Jsonb(job.model_dump(mode="json")), job_id))
+
+    def prepare_job(self, job_id, owner, extraction):
+        with self._pool.connection() as connection, connection.transaction():
+            job = self._owned_job(connection, job_id, owner).model_copy(update={"extraction": extraction})
+            connection.execute("UPDATE agent_memory_job SET payload=%s WHERE job_id=%s",
+                               (Jsonb(job.model_dump(mode="json")), job_id))
+
+    def cancel_pending_jobs(self, user_id):
+        self._execute(
+            """UPDATE agent_memory_job SET payload=payload || %s::jsonb
+               WHERE user_id=%s AND status='pending'""",
+            (Jsonb({"cancelled": True, "user_message": "", "extraction": None}), user_id))
 
     @contextmanager
     def transaction(self, user_id: str, memory_key: str) -> Iterator[None]:

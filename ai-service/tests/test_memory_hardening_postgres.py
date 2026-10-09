@@ -104,3 +104,43 @@ def test_postgres_forget_hides_old_profile_versions_and_preferences_survive_rest
     finally:
         store.close()
         documents.close()
+
+
+@pytest.mark.asyncio
+async def test_postgres_job_restart_claim_fencing_and_durable_dispatch_limit(database):
+    from app.agent.memory.jobs import MemoryJobWorker
+    from app.agent.memory.models import MemoryJob
+    from app.agent.memory.runtime import MemoryRuntime
+    from types import SimpleNamespace
+    from datetime import UTC, datetime, timedelta
+    from unittest.mock import AsyncMock
+    from tests.test_memory_jobs import response
+    run_business_migrations(database, include_memory=True)
+    store, documents = PostgresMemoryStore(database), PostgresProfileStore(database)
+    try:
+        runtime = MemoryRuntime(MemoryService(store), SimpleNamespace(), profile_store=documents)
+        worker = MemoryJobWorker(runtime, provider=AsyncMock(return_value=response()))
+        worker.start = lambda: None
+        await worker.enqueue(user_id="u", source_thread_id="t", source_message_id="m", user_message="我喜欢周杰伦")
+        store.close()
+        store = PostgresMemoryStore(database)
+        runtime = MemoryRuntime(MemoryService(store), SimpleNamespace(), profile_store=documents)
+        worker = MemoryJobWorker(runtime, provider=AsyncMock(return_value=response()))
+        assert await worker.process_one()
+        assert store.profile_records("u")
+        job = MemoryJob(job_id="fencing", user_id="u", source_thread_id="t", source_message_id="f",
+            user_message="我喜欢周杰伦", source_digest="fixture", generation=0,
+            budget={}, created_at=datetime.now(UTC))
+        store.enqueue_job(job)
+        claimed = store.claim_job("one")
+        assert claimed.job_id == "fencing" and store.claim_job("two") is None
+        with pytest.raises(ValueError, match="lease lost"):
+            store.dispatch_job("fencing", "two")
+        assert store.dispatch_job("fencing", "one") and store.dispatch_job("fencing", "one")
+        assert not store.dispatch_job("fencing", "one")
+        store._execute("UPDATE agent_memory_job SET lease_until=%s WHERE job_id=%s",
+                       (datetime.now(UTC) - timedelta(seconds=1), "fencing"))
+        assert store.claim_job("two").dispatches == 2
+    finally:
+        store.close()
+        documents.close()

@@ -10,6 +10,7 @@ from app.context.identity import UserIdentityProvider
 from app.agent.memory.runtime import get_memory_runtime
 from app.agent.memory.policy import MemoryAdmissionError, safe_user_message, validate_candidate
 from app.agent.structured_output import StructuredOutputError
+from app.agent.memory.telemetry import record_memory_event
 
 router = APIRouter(prefix="/api/ai/memory", tags=["memory"])
 
@@ -46,6 +47,7 @@ async def update_preferences(payload: PreferenceUpdate, request: Request):
     user, runtime = await _owner(request)
     result = await asyncio.to_thread(runtime.service.set_enabled, user, payload.enabled)
     synced = await runtime.sync_profile(user)
+    record_memory_event("preferences", outcome="enabled" if payload.enabled else "paused")
     return {**result.model_dump(), "projection_pending": not synced}
 
 
@@ -68,6 +70,7 @@ async def forget(memory_id: str, request: Request):
     except KeyError:
         raise HTTPException(404, "记忆不存在") from None
     synced = await runtime.sync_profile(user)
+    record_memory_event("forget", outcome="completed")
     return {"forgotten": True, "projection_pending": not synced,
             "history_policy": "原对话和历史画像按既有保留规则保留；撤销条目不再参与记忆召回。"}
 
@@ -104,5 +107,6 @@ async def correct(memory_id: str, payload: MemoryCorrection, request: Request):
     except ValueError:
         raise HTTPException(409, "更正请求发生冲突，请刷新后重试") from None
     synced = await runtime.sync_profile(user)
+    record_memory_event("correct", outcome=result.action.value)
     return {"action": result.action, "memory": result.memory.model_dump(mode="json", exclude={"embedding", "user_id"})
             if result.memory else None, "projection_pending": not synced}

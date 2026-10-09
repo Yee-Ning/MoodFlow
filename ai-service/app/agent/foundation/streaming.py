@@ -162,7 +162,9 @@ async def _extract_memories(
     if user_id is None or (not enabled and memory_runtime is None):
         return
     try:
-        await (memory_runtime or get_memory_runtime()).extract_and_store(
+        runtime = memory_runtime or get_memory_runtime()
+        operation = runtime.extract_and_store if memory_runtime is not None else runtime.enqueue
+        await operation(
             user_id=user_id,
             source_thread_id=thread_id,
             user_message=user_message,

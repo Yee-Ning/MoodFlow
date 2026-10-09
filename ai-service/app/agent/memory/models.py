@@ -210,3 +210,26 @@ class MemoryPreferences(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     enabled: bool = True
     generation: int = Field(default=0, ge=0)
+
+
+class MemoryJob(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    job_id: str
+    user_id: str
+    source_thread_id: str
+    source_message_id: str
+    user_message: str = Field(max_length=4000)
+    source_digest: str
+    generation: int
+    budget: dict[str, Any]
+    status: str = "pending"
+    owner: str | None = None
+    lease_until: AwareDatetime | None = None
+    attempts: int = 0
+    dispatches: int = 0
+    reported_tokens: int = 0
+    observed_dispatches: int = 0
+    usage_known: bool = True
+    created_at: AwareDatetime
+    extraction: dict[str, Any] | None = None
+    cancelled: bool = False

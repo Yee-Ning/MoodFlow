@@ -6,7 +6,7 @@ from copy import deepcopy
 from threading import RLock
 from typing import ContextManager, Protocol
 
-from .models import MemoryEvidence, MemoryPreferences, MemoryRecord, MemoryStatus, MemoryType
+from .models import MemoryEvidence, MemoryJob, MemoryPreferences, MemoryRecord, MemoryStatus, MemoryType
 from .scopes import is_current, matches_scene
 
 
@@ -43,6 +43,14 @@ class MemoryStore(Protocol):
     def list_records(self, user_id: str, *, after_id: str = "", limit: int = 50) -> list[MemoryRecord]: ...
     def forget_fact(self, user_id: str, memory_key: str) -> None: ...
     def profile_revocations(self, user_id: str) -> dict: ...
+    def enqueue_job(self, job: MemoryJob) -> bool: ...
+    def get_job(self, user_id: str, job_id: str) -> MemoryJob | None: ...
+    def claim_job(self, owner: str) -> MemoryJob | None: ...
+    def dispatch_job(self, job_id: str, owner: str) -> bool: ...
+    def observe_job(self, job_id: str, owner: str, tokens: int | None) -> None: ...
+    def prepare_job(self, job_id: str, owner: str, extraction: dict) -> None: ...
+    def finish_job(self, job_id: str, owner: str, status: str) -> None: ...
+    def cancel_pending_jobs(self, user_id: str) -> None: ...
 
     def search_active_episodes(
         self,
@@ -66,6 +74,7 @@ class InMemoryMemoryStore:
         self._messages: dict[tuple[str, str], tuple[str, bool]] = {}
         self._preferences: dict[str, MemoryPreferences] = {}
         self._revocations: dict[tuple[str, str], object] = {}
+        self._jobs: dict[str, MemoryJob] = {}
 
     @contextmanager
     def transaction(self, user_id: str, memory_key: str) -> Iterator[None]:
@@ -73,12 +82,12 @@ class InMemoryMemoryStore:
         with self._lock:
             snapshot = (self._records.copy(), self._profile_pending.copy(),
                         self._profile_omitted.copy(), self._evidence.copy(), self._messages.copy(),
-                        self._preferences.copy(), self._revocations.copy())
+                        self._preferences.copy(), self._revocations.copy(), self._jobs.copy())
             try:
                 yield
             except BaseException:
                 (self._records, self._profile_pending, self._profile_omitted, self._evidence,
-                 self._messages, self._preferences, self._revocations) = snapshot
+                 self._messages, self._preferences, self._revocations, self._jobs) = snapshot
                 raise
 
     def get_active(
@@ -270,3 +279,72 @@ class InMemoryMemoryStore:
     def profile_revocations(self, user_id):
         with self._lock:
             return {key: time for (owner, key), time in self._revocations.items() if owner == user_id}
+
+    def enqueue_job(self, job):
+        with self._lock:
+            existing = self._jobs.get(job.job_id)
+            if existing:
+                if existing.source_digest != job.source_digest:
+                    raise ValueError("memory job idempotency conflict")
+                return False
+            self._jobs[job.job_id] = job
+            return True
+
+    def get_job(self, user_id, job_id):
+        with self._lock:
+            row = self._jobs.get(job_id)
+            return row.model_copy(deep=True) if row and row.user_id == user_id else None
+
+    def claim_job(self, owner):
+        from datetime import UTC, datetime, timedelta
+        now = datetime.now(UTC)
+        with self._lock:
+            for row in sorted(self._jobs.values(), key=lambda row: row.created_at):
+                if row.status == "pending" or row.status == "running" and row.lease_until <= now:
+                    claimed = row.model_copy(update={"status": "running", "owner": owner,
+                        "lease_until": now + timedelta(seconds=120), "attempts": row.attempts + 1})
+                    self._jobs[row.job_id] = claimed
+                    return claimed
+            return None
+
+    def _job_owner(self, job_id, owner):
+        from datetime import UTC, datetime
+        row = self._jobs[job_id]
+        if row.owner != owner or row.status != "running" or row.lease_until <= datetime.now(UTC):
+            raise ValueError("memory job lease lost")
+        return row
+
+    def dispatch_job(self, job_id, owner):
+        with self._lock:
+            row = self._job_owner(job_id, owner)
+            if row.dispatches >= 2:
+                return False
+            self._jobs[job_id] = row.model_copy(update={"dispatches": row.dispatches + 1})
+            return True
+
+    def observe_job(self, job_id, owner, tokens):
+        with self._lock:
+            row = self._job_owner(job_id, owner)
+            self._jobs[job_id] = row.model_copy(update={
+                "reported_tokens": row.reported_tokens + (tokens or 0),
+                "observed_dispatches": row.observed_dispatches + 1,
+                "usage_known": row.usage_known and tokens is not None})
+
+    def finish_job(self, job_id, owner, status):
+        with self._lock:
+            row = self._job_owner(job_id, owner)
+            self._jobs[job_id] = row.model_copy(update={"status": status,
+                "user_message": row.user_message if status == "pending" else "",
+                "extraction": row.extraction if status == "pending" else None,
+                "owner": None, "lease_until": None})
+
+    def prepare_job(self, job_id, owner, extraction):
+        with self._lock:
+            row = self._job_owner(job_id, owner)
+            self._jobs[job_id] = row.model_copy(update={"extraction": extraction})
+
+    def cancel_pending_jobs(self, user_id):
+        with self._lock:
+            for key, job in self._jobs.copy().items():
+                if job.user_id == user_id and job.status == "pending":
+                    self._jobs[key] = job.model_copy(update={"cancelled": True, "user_message": "", "extraction": None})

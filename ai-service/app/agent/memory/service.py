@@ -83,6 +83,8 @@ class MemoryService:
     def set_enabled(self, user_id, enabled):
         with self.store.transaction(user_id, "user_memory"):
             result = self.store.set_enabled(user_id, enabled)
+            if not enabled:
+                self.store.cancel_pending_jobs(user_id)
             self.store.mark_profile_dirty(user_id, uuid4().hex)
             return result
 
@@ -92,6 +94,7 @@ class MemoryService:
             if record is None:
                 raise KeyError("memory not found")
             self.store.forget_fact(user_id, record.memory_key)
+            self.store.cancel_pending_jobs(user_id)
             self.store.mark_profile_dirty(user_id, uuid4().hex)
 
     def _remember(

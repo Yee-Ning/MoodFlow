@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from time import perf_counter
 from functools import lru_cache
 from typing import Protocol
 
@@ -38,15 +39,34 @@ class MemoryRuntime:
         self.retriever = retriever
         self.extractor = extractor or MemoryExtractor()
         self.profile_store = profile_store
+        self.job_worker = None
+
+    def worker(self):
+        if self.job_worker is None:
+            from .jobs import MemoryJobWorker
+            self.job_worker = MemoryJobWorker(self)
+        return self.job_worker
+
+    async def enqueue(self, **kwargs):
+        return await self.worker().enqueue(**kwargs)
+
+    async def stop_worker(self):
+        if self.job_worker is not None:
+            await self.job_worker.stop()
 
     async def retrieve(
         self, request: MemoryRetrievalRequest
     ) -> MemoryRetrievalResult:
+        started = perf_counter()
         preferences = await asyncio.to_thread(self.service.store.preferences, request.user_id)
         if not preferences.enabled:
             return MemoryRetrievalResult(user_id=request.user_id)
         await self.sync_profile(request.user_id)
-        return await asyncio.to_thread(self.retriever.retrieve, request)
+        result = await asyncio.to_thread(self.retriever.retrieve, request)
+        from .telemetry import record_memory_event
+        record_memory_event("retrieve", outcome="completed", count=len(result.items),
+                            latency_ms=(perf_counter() - started) * 1000)
+        return result
 
     async def sync_profile(self, user_id):
         from .projection import synchronize_profile

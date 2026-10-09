@@ -27,7 +27,7 @@ async def lifespan(_app: FastAPI):
     if persistence_backend() == "postgres":
         get_long_horizon_service()
     if memory_backend() != "disabled":
-        get_memory_runtime()
+        get_memory_runtime().worker().start()
     try:
         yield
     finally:
@@ -35,6 +35,8 @@ async def lifespan(_app: FastAPI):
         from app.agent.foundation.long_horizon.coordinator import get_continuity_coordinator
         from app.agent.foundation.streaming import get_foundation_graph, get_handoff_graph
         await drain_workers()
+        if memory_backend() != "disabled":
+            await get_memory_runtime().stop_worker()
         get_continuity_coordinator.cache_clear()
         get_foundation_graph.cache_clear()
         get_handoff_graph.cache_clear()
