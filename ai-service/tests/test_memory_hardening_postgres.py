@@ -1,0 +1,49 @@
+import pytest
+
+from app.agent.foundation.user_profile import PostgresProfileStore
+from app.agent.memory.postgres_store import PostgresMemoryStore
+from app.agent.memory.projection import synchronize_profile
+from app.agent.memory.service import MemoryService
+from app.agent.postgres_migrations import run_business_migrations
+from tests.test_context_loop_postgres_recovery import BASE, database
+from tests.test_memory_hardening import artist
+
+__all__ = ["database"]
+pytestmark = pytest.mark.skipif(not BASE, reason="isolated PostgreSQL acceptance requires DATABASE_URL")
+
+
+def test_profile_outbox_survives_restart_and_rebuilds_document(database):
+    run_business_migrations(database, include_memory=True)
+    store = PostgresMemoryStore(database)
+    document = PostgresProfileStore(database)
+    try:
+        service = MemoryService(store)
+        service.remember(user_id="u", source_thread_id="t", candidate=artist())
+        pending = store.pending_profile_revision("u")
+        assert pending and document.read("u") is None
+        store.close()
+        store = PostgresMemoryStore(database)
+        assert store.pending_profile_revision("u") == pending
+        assert synchronize_profile(store, document, "u")
+        assert document.read("u").entries[0].value == "用户喜欢周杰伦"
+        assert store.pending_profile_revision("u") is None
+        assert document.read("other") is None
+    finally:
+        store.close()
+        document.close()
+
+
+def test_memory_fact_and_profile_outbox_rollback_together(database):
+    run_business_migrations(database, include_memory=True)
+    store = PostgresMemoryStore(database)
+    try:
+        original = store.mark_profile_dirty
+        def unavailable(*args):
+            original(*args)
+            raise RuntimeError("interrupted")
+        store.mark_profile_dirty = unavailable
+        with pytest.raises(RuntimeError):
+            MemoryService(store).remember(user_id="u", source_thread_id="t", candidate=artist())
+        assert store.profile_records("u") == [] and store.pending_profile_revision("u") is None
+    finally:
+        store.close()

@@ -121,6 +121,20 @@ class ProfileWriter:
         validate_public_document(ProfileDocument, document)
         return self.store.write(document, expected_version=expected_version)
 
+    def project(self, user_id, entries, *, managed_keys, expected_version):
+        """Replace only Memory-owned entries, preserving independently authored facts."""
+        previous = self.store.read(user_id)
+        if (previous.version if previous else 0) != expected_version:
+            raise ValueError("profile version conflict")
+        retained = tuple(entry for entry in previous.entries if entry.key not in managed_keys) if previous else ()
+        values = (*retained, *entries)
+        if previous is not None and previous.entries == values:
+            return previous
+        document = ProfileDocument(user_id=user_id, version=expected_version + 1,
+                                   updated_at=self.now(), entries=values)
+        validate_public_document(ProfileDocument, document)
+        return self.store.write(document, expected_version=expected_version)
+
 
 class PostgresProfileStore:
     """Uses the existing persistence backend; migration is applied by operators."""

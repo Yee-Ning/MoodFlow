@@ -76,6 +76,7 @@ class MemoryService:
                     embedding=embedding,
                 )
                 self.store.insert(created)
+                self._profile_changed(created)
                 return MemoryWriteResult(
                     action=MemoryWriteAction.CREATED, memory=created
                 )
@@ -98,6 +99,7 @@ class MemoryService:
                     }
                 )
                 self.store.replace(confirmed)
+                self._profile_changed(confirmed)
                 return MemoryWriteResult(
                     action=MemoryWriteAction.CONFIRMED, memory=confirmed
                 )
@@ -135,11 +137,16 @@ class MemoryService:
             )
             self.store.replace(superseded)
             self.store.insert(replacement)
+            self._profile_changed(replacement)
             return MemoryWriteResult(
                 action=MemoryWriteAction.SUPERSEDED,
                 memory=replacement,
                 previous_memory_id=existing.memory_id,
             )
+
+    def _profile_changed(self, memory):
+        if memory.memory_type.value == "profile":
+            self.store.mark_profile_dirty(memory.user_id, uuid4().hex)
 
     @staticmethod
     def _new_record(

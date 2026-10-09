@@ -28,6 +28,11 @@ class MemoryStore(Protocol):
 
     def has_active_episodes(self, user_id: str) -> bool: ...
 
+    def mark_profile_dirty(self, user_id: str, revision: str) -> None: ...
+    def pending_profile_revision(self, user_id: str) -> str | None: ...
+    def profile_records(self, user_id: str) -> list[MemoryRecord]: ...
+    def complete_profile_revision(self, user_id: str, revision: str, omitted_count: int) -> bool: ...
+
     def search_active_episodes(
         self,
         user_id: str,
@@ -44,6 +49,8 @@ class InMemoryMemoryStore:
     def __init__(self) -> None:
         self._records: dict[str, MemoryRecord] = {}
         self._lock = RLock()
+        self._profile_pending: dict[str, str] = {}
+        self._profile_omitted: dict[str, int] = {}
 
     @contextmanager
     def transaction(self, user_id: str, memory_key: str) -> Iterator[None]:
@@ -150,3 +157,24 @@ class InMemoryMemoryStore:
     def all_records(self) -> list[MemoryRecord]:
         with self._lock:
             return deepcopy(list(self._records.values()))
+
+    def mark_profile_dirty(self, user_id, revision):
+        with self._lock:
+            self._profile_pending[user_id] = revision
+
+    def pending_profile_revision(self, user_id):
+        with self._lock:
+            return self._profile_pending.get(user_id)
+
+    def profile_records(self, user_id):
+        with self._lock:
+            return [record.model_copy(deep=True) for record in self._records.values()
+                    if record.user_id == user_id and record.memory_type is MemoryType.PROFILE]
+
+    def complete_profile_revision(self, user_id, revision, omitted_count):
+        with self._lock:
+            if self._profile_pending.get(user_id) != revision:
+                return False
+            del self._profile_pending[user_id]
+            self._profile_omitted[user_id] = omitted_count
+            return True

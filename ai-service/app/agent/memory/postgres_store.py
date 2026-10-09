@@ -59,6 +59,30 @@ class PostgresMemoryStore:
     def close(self) -> None:
         self._pool.close()
 
+    def mark_profile_dirty(self, user_id, revision):
+        self._execute(
+            """INSERT INTO agent_memory_profile_projection(user_id,pending_revision)
+               VALUES(%s,%s) ON CONFLICT(user_id) DO UPDATE SET
+               pending_revision=EXCLUDED.pending_revision, updated_at=NOW()""", (user_id, revision))
+
+    def pending_profile_revision(self, user_id):
+        row = self._one(
+            "SELECT pending_revision FROM agent_memory_profile_projection WHERE user_id=%s FOR UPDATE", (user_id,))
+        return row["pending_revision"] if row else None
+
+    def profile_records(self, user_id):
+        rows = self._all(
+            f"SELECT {self._columns()} FROM agent_long_term_memory WHERE user_id=%s AND memory_type='profile'",
+            (user_id,))
+        return [record for row in rows if (record := self._record(row)) is not None]
+
+    def complete_profile_revision(self, user_id, revision, omitted_count):
+        row = self._one(
+            """UPDATE agent_memory_profile_projection SET pending_revision=NULL, projected_revision=%s,
+               omitted_count=%s, updated_at=NOW() WHERE user_id=%s AND pending_revision=%s
+               RETURNING user_id""", (revision, omitted_count, user_id, revision))
+        return row is not None
+
     @contextmanager
     def transaction(self, user_id: str, memory_key: str) -> Iterator[None]:
         if self._transaction_connection.get() is not None:

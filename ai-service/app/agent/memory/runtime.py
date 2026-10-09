@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import logging
 import os
 from functools import lru_cache
@@ -31,15 +30,30 @@ class MemoryRuntime:
         retriever: MemoryRetriever,
         *,
         extractor: MemoryExtractor | None = None,
+        profile_store=None,
     ) -> None:
         self.service = service
         self.retriever = retriever
         self.extractor = extractor or MemoryExtractor()
+        self.profile_store = profile_store
 
     async def retrieve(
         self, request: MemoryRetrievalRequest
     ) -> MemoryRetrievalResult:
+        await self.sync_profile(request.user_id)
         return await asyncio.to_thread(self.retriever.retrieve, request)
+
+    async def sync_profile(self, user_id):
+        from .projection import synchronize_profile
+        from app.agent.foundation.user_profile import get_profile_store
+        try:
+            if await asyncio.to_thread(self.service.store.pending_profile_revision, user_id) is None:
+                return True
+            return await asyncio.to_thread(synchronize_profile, self.service.store,
+                                          self.profile_store or get_profile_store(), user_id)
+        except Exception as exc:
+            logger.warning("profile projection pending error_type=%s", type(exc).__name__)
+            return False
 
     async def extract_and_store(
         self, *, user_id: str, source_thread_id: str, user_message: str
@@ -53,35 +67,14 @@ class MemoryRuntime:
             )
             return []
         results: list[MemoryWriteResult] = []
-        for candidate in extraction.memories:
-            results.append(
-                await asyncio.to_thread(
-                    self.service.remember,
-                    user_id=user_id,
-                    source_thread_id=source_thread_id,
-                    candidate=candidate,
-                )
-            )
-        profiles = [result.memory for result in results if result.memory is not None
-                    and result.memory.memory_type.value == "profile" and result.action.value != "ignored"]
-        if profiles:
-            try:
-                from app.agent.foundation.user_profile import ProfileEntry, ProfileWriter, get_profile_store
-                from app.agent.foundation.context_sources import load_context_policy
-                store = get_profile_store()
-                categories = load_context_policy()["profile_categories"]
-                previous = await asyncio.to_thread(store.read, user_id)
-                entries = [ProfileEntry(
-                    key=(memory.memory_key if len(memory.memory_key) <= 80 else
-                         hashlib.sha256(memory.memory_key.encode()).hexdigest()), value=memory.content[:1000],
-                    source=memory.source_thread_id, updated_at=memory.updated_at,
-                    confidence=memory.confidence,
-                    intents=tuple(categories.get(memory.structured_content.get("category"), categories["default"])),
-                ) for memory in profiles]
-                await asyncio.to_thread(ProfileWriter(store).update, user_id, entries,
-                                        expected_version=previous.version if previous else 0)
-            except Exception as exc:
-                logger.warning("profile write unavailable error_type=%s", type(exc).__name__)
+        try:
+            for candidate in extraction.memories:
+                results.append(await asyncio.to_thread(self.service.remember, user_id=user_id,
+                    source_thread_id=source_thread_id, candidate=candidate))
+        finally:
+            # Earlier candidates may have committed even if a later embedding
+            # failed. Their projection repair must still be attempted.
+            await self.sync_profile(user_id)
         return results
 
     def close(self) -> None:
