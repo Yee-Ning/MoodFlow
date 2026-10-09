@@ -163,3 +163,19 @@ def test_service_gate_blocks_sensitive_and_low_confidence_candidates_without_run
         with pytest.raises(ValueError):
             service.remember(user_id="u", source_thread_id="t", candidate=artist().model_copy(update=updates))
     assert service.store.all_records() == []
+
+
+@pytest.mark.asyncio
+async def test_persistent_live_rejection_reaches_music_routes_through_profile_source():
+    from app.agent.foundation.context_sources import SourceRequest, UserProfileSource
+    from app.agent.foundation.context_engineering import POLICIES, ContextSelector
+    from app.agent.foundation.routing import RouteKey
+    candidate = profile(category="format", subject="live_version", preference="avoid", value="avoid",
+                        content="以后不要推荐现场版", quote="以后不要推荐现场版")
+    runtime, _, document = setup_runtime(candidate)
+    await runtime.extract_and_store(user_id="u", source_thread_id="t", user_message="以后不要推荐现场版")
+    items = UserProfileSource().collect(SourceRequest("推荐适合通勤的歌", {"user_id": "u"}, profile_store=document), limit=16)
+    assert len(items) == 1
+    for route in (RouteKey.CURRENT_SONG, RouteKey.TOOL_CALLING, RouteKey.WORLDLINE):
+        selected = ContextSelector().build(items, POLICIES[route], intent={"routes": [route.value]})
+        assert selected.items and "现场版" in selected.items[0].content
