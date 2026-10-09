@@ -200,7 +200,7 @@
     display: block;
   }
   .mobile-nav__surface { height: 100%; padding: 2px; overflow: hidden; }
-  .mobile-nav__items { height: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+  .mobile-nav__items { height: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; }
   .mobile-nav__item { min-width: 0; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: rgba(217, 234, 242, 0.45); font-size: 0.56rem; text-decoration: none; }
   .mobile-nav__item.is-active { color: #f4fbff; background: rgba(220, 243, 253, 0.07); }
   .topbar { min-height: 48px; padding: 0 10px; }

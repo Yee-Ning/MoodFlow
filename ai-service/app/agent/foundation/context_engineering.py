@@ -255,6 +255,9 @@ class ContextCollector:
         for index, artifact in enumerate(artifact_projections or []):
             add(f"artifact:{index}", "artifact_projection", artifact)
         add("memory_source", "memory_source", memory_source)
+        if continuity_context and continuity_context.get("user_id"):
+            from app.agent.memory.context import current_memory_items
+            long_term_memory = current_memory_items(long_term_memory or [], continuity_context["user_id"])
         for index, memory in enumerate(long_term_memory or []):
             get = memory.get if isinstance(memory, dict) else lambda key, default=None: getattr(memory, key, default)
             memory_id = str(get("memory_id", index))

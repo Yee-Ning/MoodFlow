@@ -4,7 +4,7 @@ import hashlib
 from datetime import UTC, datetime
 
 from app.agent.foundation.context_sources import load_context_policy
-from app.agent.foundation.long_horizon.history_writer import validate_public_document
+from app.agent.foundation.long_horizon.history_writer import digest, validate_public_document
 from app.agent.foundation.user_profile import ProfileDocument, ProfileEntry, ProfileWriter
 
 from .models import MemoryStatus
@@ -16,19 +16,25 @@ def profile_key(memory_key):
 
 
 def synchronize_profile(memory_store, profile_store, user_id, *, attempts=3):
-    with memory_store.transaction(user_id, "profile_projection"):
+    with memory_store.transaction(user_id, "user_memory"):
         revision = memory_store.pending_profile_revision(user_id)
         if revision is None:
             return True
         records = memory_store.profile_records(user_id)
         owned = {profile_key(record.memory_key) for record in records}
-        active = sorted((row for row in records if row.status is MemoryStatus.ACTIVE and is_current(row.valid_until)),
+        revocations = memory_store.profile_revocations(user_id)
+        if revocations:
+            profile_store.revoke(user_id, revocations)
+        enabled = memory_store.preferences(user_id).enabled
+        active = sorted((row for row in records if enabled and row.status is MemoryStatus.ACTIVE and is_current(row.valid_until)),
                         key=lambda row: (row.structured_content.get("preference") in {"avoid", "dislike"},
                                          row.confidence, row.importance, row.updated_at, row.memory_id), reverse=True)
         categories = load_context_policy()["profile_categories"]
         for attempt in range(attempts):
             previous = profile_store.read(user_id)
-            retained = tuple(entry for entry in previous.entries if entry.key not in owned) if previous else ()
+            retained = tuple(entry for entry in previous.entries
+                             if entry.key not in owned and digest(entry.key) not in revocations) if previous else ()
+            managed = owned | ({entry.key for entry in previous.entries if digest(entry.key) in revocations} if previous else set())
             entries = []
             for memory in active:
                 entry = ProfileEntry(
@@ -46,8 +52,8 @@ def synchronize_profile(memory_store, profile_store, user_id, *, attempts=3):
                     continue  # A bounded view may omit facts; the main store keeps them.
                 entries.append(entry)
             try:
-                ProfileWriter(profile_store).project(user_id, entries, managed_keys=owned,
-                    expected_version=previous.version if previous else 0)
+                ProfileWriter(profile_store).project(user_id, entries, managed_keys=managed,
+                    expected_version=previous.version if previous else 0, enabled=enabled)
             except ValueError as exc:
                 if str(exc) == "profile version conflict" and attempt < attempts - 1:
                     continue

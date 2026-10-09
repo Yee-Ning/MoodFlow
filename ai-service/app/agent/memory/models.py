@@ -130,6 +130,7 @@ class MemoryWriteAction(StrEnum):
     SUPERSEDED = "superseded"
     IGNORED = "ignored"
     REPLAYED = "replayed"
+    DISABLED = "disabled"
 
 
 class MemoryEvidence(BaseModel):
@@ -203,3 +204,9 @@ class MemoryRetrievalResult(BaseModel):
             }
             for item in self.items
         ]
+
+
+class MemoryPreferences(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    enabled: bool = True
+    generation: int = Field(default=0, ge=0)

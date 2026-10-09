@@ -42,6 +42,9 @@ class MemoryRuntime:
     async def retrieve(
         self, request: MemoryRetrievalRequest
     ) -> MemoryRetrievalResult:
+        preferences = await asyncio.to_thread(self.service.store.preferences, request.user_id)
+        if not preferences.enabled:
+            return MemoryRetrievalResult(user_id=request.user_id)
         await self.sync_profile(request.user_id)
         return await asyncio.to_thread(self.retriever.retrieve, request)
 
@@ -60,6 +63,9 @@ class MemoryRuntime:
     async def extract_and_store(
         self, *, user_id: str, source_thread_id: str, user_message: str, source_message_id=None,
     ) -> list[MemoryWriteResult]:
+        preferences = await asyncio.to_thread(self.service.store.preferences, user_id)
+        if not preferences.enabled:
+            return []
         if not safe_user_message(user_message):
             return []
         if source_message_id:
@@ -82,7 +88,7 @@ class MemoryRuntime:
             for candidate in extraction.memories:
                 results.append(await asyncio.to_thread(self.service.remember, user_id=user_id,
                     source_thread_id=source_thread_id, candidate=candidate, source_message_id=source_message_id,
-                    user_message=user_message))
+                    user_message=user_message, expected_generation=preferences.generation))
             if source_message_id:
                 await asyncio.to_thread(self.service.store.complete_message, user_id, source_message_id)
         finally:

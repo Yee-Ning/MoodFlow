@@ -9,7 +9,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from psycopg_pool import ConnectionPool
 
-from .models import MemoryEvidence, MemoryRecord, MemoryType
+from .models import MemoryEvidence, MemoryPreferences, MemoryRecord, MemoryType
 
 
 def _vector_text(values: list[float] | None) -> str | None:
@@ -114,6 +114,37 @@ class PostgresMemoryStore:
     def complete_message(self, user_id, message_id):
         self._execute("UPDATE agent_memory_source_message SET completed=TRUE WHERE user_id=%s AND message_id=%s",
                       (user_id, message_id))
+
+    def preferences(self, user_id):
+        row = self._one("SELECT enabled,generation FROM agent_memory_preferences WHERE user_id=%s", (user_id,))
+        return MemoryPreferences.model_validate(row) if row else MemoryPreferences()
+
+    def set_enabled(self, user_id, enabled):
+        row = self._one(
+            """INSERT INTO agent_memory_preferences(user_id,enabled,generation) VALUES(%s,%s,1)
+               ON CONFLICT(user_id) DO UPDATE SET enabled=EXCLUDED.enabled,
+               generation=agent_memory_preferences.generation+1 RETURNING enabled,generation""", (user_id, enabled))
+        return MemoryPreferences.model_validate(row)
+
+    def list_records(self, user_id, *, after_id="", limit=50):
+        rows = self._all(f"SELECT {self._columns()} FROM agent_long_term_memory "
+                         "WHERE user_id=%s AND memory_id>%s ORDER BY memory_id LIMIT %s", (user_id, after_id, limit))
+        return [self._record(row) for row in rows]
+
+    def forget_fact(self, user_id, memory_key):
+        from .projection import profile_key
+        from app.agent.foundation.long_horizon.history_writer import digest
+        self._execute("DELETE FROM agent_memory_evidence WHERE user_id=%s AND memory_key=%s", (user_id, memory_key))
+        self._execute("DELETE FROM agent_long_term_memory WHERE user_id=%s AND memory_key=%s", (user_id, memory_key))
+        self._execute(
+            """INSERT INTO agent_memory_profile_revocation(user_id,key_digest,revoked_at) VALUES(%s,%s,NOW())
+               ON CONFLICT(user_id,key_digest) DO UPDATE SET revoked_at=EXCLUDED.revoked_at""",
+            (user_id, digest(profile_key(memory_key))))
+        self.set_enabled(user_id, self.preferences(user_id).enabled)
+
+    def profile_revocations(self, user_id):
+        return {row["key_digest"]: row["revoked_at"] for row in self._all(
+            "SELECT key_digest,revoked_at FROM agent_memory_profile_revocation WHERE user_id=%s", (user_id,))}
 
     @contextmanager
     def transaction(self, user_id: str, memory_key: str) -> Iterator[None]:

@@ -6,7 +6,7 @@ from copy import deepcopy
 from threading import RLock
 from typing import ContextManager, Protocol
 
-from .models import MemoryEvidence, MemoryRecord, MemoryStatus, MemoryType
+from .models import MemoryEvidence, MemoryPreferences, MemoryRecord, MemoryStatus, MemoryType
 from .scopes import is_current, matches_scene
 
 
@@ -38,6 +38,11 @@ class MemoryStore(Protocol):
     def add_evidence(self, evidence: MemoryEvidence) -> None: ...
     def prepare_message(self, user_id: str, message_id: str, message_digest: str) -> bool: ...
     def complete_message(self, user_id: str, message_id: str) -> None: ...
+    def preferences(self, user_id: str) -> MemoryPreferences: ...
+    def set_enabled(self, user_id: str, enabled: bool) -> MemoryPreferences: ...
+    def list_records(self, user_id: str, *, after_id: str = "", limit: int = 50) -> list[MemoryRecord]: ...
+    def forget_fact(self, user_id: str, memory_key: str) -> None: ...
+    def profile_revocations(self, user_id: str) -> dict: ...
 
     def search_active_episodes(
         self,
@@ -59,17 +64,21 @@ class InMemoryMemoryStore:
         self._profile_omitted: dict[str, int] = {}
         self._evidence: dict[str, MemoryEvidence] = {}
         self._messages: dict[tuple[str, str], tuple[str, bool]] = {}
+        self._preferences: dict[str, MemoryPreferences] = {}
+        self._revocations: dict[tuple[str, str], object] = {}
 
     @contextmanager
     def transaction(self, user_id: str, memory_key: str) -> Iterator[None]:
         del user_id, memory_key
         with self._lock:
             snapshot = (self._records.copy(), self._profile_pending.copy(),
-                        self._profile_omitted.copy(), self._evidence.copy(), self._messages.copy())
+                        self._profile_omitted.copy(), self._evidence.copy(), self._messages.copy(),
+                        self._preferences.copy(), self._revocations.copy())
             try:
                 yield
             except BaseException:
-                self._records, self._profile_pending, self._profile_omitted, self._evidence, self._messages = snapshot
+                (self._records, self._profile_pending, self._profile_omitted, self._evidence,
+                 self._messages, self._preferences, self._revocations) = snapshot
                 raise
 
     def get_active(
@@ -226,3 +235,38 @@ class InMemoryMemoryStore:
         with self._lock:
             previous = self._messages[(user_id, message_id)]
             self._messages[(user_id, message_id)] = (previous[0], True)
+
+    def preferences(self, user_id):
+        with self._lock:
+            return self._preferences.get(user_id, MemoryPreferences())
+
+    def set_enabled(self, user_id, enabled):
+        with self._lock:
+            previous = self.preferences(user_id)
+            value = MemoryPreferences(enabled=enabled, generation=previous.generation + 1)
+            self._preferences[user_id] = value
+            return value
+
+    def list_records(self, user_id, *, after_id="", limit=50):
+        with self._lock:
+            rows = sorted((row for row in self._records.values() if row.user_id == user_id
+                           and row.memory_id > after_id), key=lambda row: row.memory_id)
+            return [row.model_copy(deep=True) for row in rows[:limit]]
+
+    def forget_fact(self, user_id, memory_key):
+        from datetime import UTC, datetime
+        from .projection import profile_key
+        from app.agent.foundation.long_horizon.history_writer import digest
+        with self._lock:
+            ids = [row.memory_id for row in self._records.values()
+                   if row.user_id == user_id and row.memory_key == memory_key]
+            for memory_id in ids:
+                del self._records[memory_id]
+            self._evidence = {key: row for key, row in self._evidence.items()
+                              if not (row.user_id == user_id and row.memory_key == memory_key)}
+            self._revocations[(user_id, digest(profile_key(memory_key)))] = datetime.now(UTC)
+            self.set_enabled(user_id, self.preferences(user_id).enabled)
+
+    def profile_revocations(self, user_id):
+        with self._lock:
+            return {key: time for (owner, key), time in self._revocations.items() if owner == user_id}

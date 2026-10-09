@@ -1,0 +1,26 @@
+.memory-page { width: min(100%, 900px); margin: 0 auto; padding: 32px 24px 80px; color: var(--text-primary, #f6f5f2); }
+.memory-page__heading { display: flex; gap: 16px; align-items: center; margin-bottom: 28px; }
+.memory-page h1 { font-size: clamp(24px, 4vw, 36px); margin: 0 0 8px; }
+.memory-page h2 { font-size: 18px; margin: 0 0 8px; }
+.memory-page p { line-height: 1.65; overflow-wrap: anywhere; }
+.memory-page__heading p { margin: 0; opacity: .75; }
+.memory-page__card { border: 1px solid rgba(255,255,255,.14); border-radius: 20px; padding: 24px; background: rgba(20,26,34,.64); }
+.memory-page__controls { display: flex; gap: 24px; align-items: center; justify-content: space-between; }
+.memory-page__controls label { display: flex; gap: 10px; align-items: center; white-space: nowrap; }
+.memory-page__controls input { width: 20px; height: 20px; accent-color: #95dfcb; }
+.memory-page__policy { font-size: 13px; opacity: .75; margin: 18px 0 24px; }
+.memory-page__list { display: grid; gap: 16px; margin: 20px 0; }
+.memory-page__meta, .memory-page__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.memory-page__meta { font-size: 12px; opacity: .7; }
+.memory-page__content { font-size: 18px; margin: 16px 0; }
+.memory-page blockquote { margin: 12px 0; padding-left: 16px; border-left: 2px solid #95dfcb; overflow-wrap: anywhere; }
+.memory-page button { background: rgba(255,255,255,.09); color: inherit; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; padding: 10px 16px; cursor: pointer; min-height: 44px; }
+.memory-page button:disabled { opacity: .45; cursor: default; }
+.memory-page button:focus-visible, .memory-page textarea:focus-visible { outline: 2px solid #95dfcb; outline-offset: 3px; }
+.memory-page__actions { margin-top: 20px; }
+.memory-page__edit { display: grid; gap: 12px; margin-top: 20px; }
+.memory-page textarea { min-height: 100px; resize: vertical; color: inherit; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.2); border-radius: 10px; padding: 12px; font: inherit; }
+.memory-page__confirm { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.15); }
+.memory-page__confirm button { margin-right: 12px; }
+.memory-page__error { padding: 14px; border-radius: 12px; background: rgba(135,50,50,.4); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+@media (max-width: 640px) { .memory-page { padding: 20px 14px 100px; } .memory-page__card { padding: 18px; } .memory-page__controls { align-items: flex-start; flex-direction: column; gap: 12px; } }

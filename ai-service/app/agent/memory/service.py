@@ -48,6 +48,7 @@ class MemoryService:
 
     def remember(
         self, *, user_id, source_thread_id, candidate, source_message_id=None, user_message=None,
+        expected_generation=None,
     ):
         user_id, source_thread_id = user_id.strip(), source_thread_id.strip()
         validate_candidate(candidate, user_message=user_message)
@@ -58,7 +59,10 @@ class MemoryService:
         candidate_hash = digest([source_thread_id, candidate.model_dump(mode="json")])
         evidence_id = ("evidence:" + digest([user_id, source_message_id, candidate.memory_type.value,
                                             candidate.memory_key])[7:]) if source_message_id else None
-        with self.store.transaction(user_id, candidate.memory_key):
+        with self.store.transaction(user_id, "user_memory"):
+            preferences = self.store.preferences(user_id)
+            if not preferences.enabled or (expected_generation is not None and preferences.generation != expected_generation):
+                return MemoryWriteResult(action=MemoryWriteAction.DISABLED)
             previous = self.store.get_evidence(evidence_id) if evidence_id else None
             if previous:
                 if previous.candidate_digest != candidate_hash:
@@ -75,6 +79,20 @@ class MemoryService:
                     memory_id=result.memory.memory_id if result.memory else None, action=result.action,
                     evidence_quote=candidate.evidence_quote, observed_at=datetime.now(UTC)))
             return result
+
+    def set_enabled(self, user_id, enabled):
+        with self.store.transaction(user_id, "user_memory"):
+            result = self.store.set_enabled(user_id, enabled)
+            self.store.mark_profile_dirty(user_id, uuid4().hex)
+            return result
+
+    def forget(self, user_id, memory_id):
+        with self.store.transaction(user_id, "user_memory"):
+            record = self.store.get_record(user_id, memory_id)
+            if record is None:
+                raise KeyError("memory not found")
+            self.store.forget_fact(user_id, record.memory_key)
+            self.store.mark_profile_dirty(user_id, uuid4().hex)
 
     def _remember(
         self,

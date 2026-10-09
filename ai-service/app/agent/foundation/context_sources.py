@@ -63,6 +63,11 @@ class UserProfileSource:
         if not user_id:
             return []
         raw = request.continuity.get("user_profile")
+        if request.profile_store is None and raw is not None:
+            from app.agent.foundation.user_profile import get_profile_store
+            current = get_profile_store().read(user_id)
+            if current is not None:
+                raw = current
         if raw is None:
             from app.agent.foundation.user_profile import get_profile_store
             raw = (request.profile_store or get_profile_store()).read(user_id)
@@ -71,6 +76,8 @@ class UserProfileSource:
         document = ProfileDocument.model_validate(validate_public_document(ProfileDocument, raw))
         if document.user_id != user_id:
             raise ValueError("profile user scope mismatch")
+        if not document.memory_enabled:
+            return []
         # Bounded candidates; relevance and intent filtering happen in Select.
         from app.agent.memory.scopes import infer_scene, is_current, matches_scene
         scene = request.continuity.get("memory_scene") or infer_scene(request.query)

@@ -1,4 +1,4 @@
-import { Clock3, Library, Search, Waves } from 'lucide-react'
+import { Brain, Clock3, Library, Search, Waves } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import LiquidGlassSurface from '../liquid-glass/LiquidGlassSurface'
 import './layout.css'
@@ -6,6 +6,7 @@ import './layout.css'
 const navItems = [
   { label: 'Search', path: '/search', icon: Search },
   { label: 'Library', path: '/library', icon: Library },
+  { label: '记忆', path: '/memory', icon: Brain },
 ] as const
 
 interface SidebarProps {

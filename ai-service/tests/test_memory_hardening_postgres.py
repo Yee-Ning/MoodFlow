@@ -83,3 +83,24 @@ def test_postgres_profile_scene_and_expiry_filters_match_local_store(database):
         assert len(store.list_active_profiles("u", scene="workout")) == 1
     finally:
         store.close()
+
+
+def test_postgres_forget_hides_old_profile_versions_and_preferences_survive_restart(database):
+    run_business_migrations(database, include_memory=True)
+    store, documents = PostgresMemoryStore(database), PostgresProfileStore(database)
+    try:
+        service = MemoryService(store)
+        record = service.remember(user_id="u", source_thread_id="t", source_message_id="m", candidate=artist()).memory
+        synchronize_profile(store, documents, "u")
+        version = documents.read("u").version
+        service.forget("u", record.memory_id)
+        synchronize_profile(store, documents, "u")
+        assert store.profile_records("u") == [] and documents.read("u", version=version).entries == ()
+        service.set_enabled("u", False)
+        store.close()
+        store = PostgresMemoryStore(database)
+        assert not store.preferences("u").enabled
+        assert store.preferences("other").enabled
+    finally:
+        store.close()
+        documents.close()
