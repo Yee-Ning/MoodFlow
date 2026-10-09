@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from uuid import uuid4
+import math
 
 from app.agent.foundation.long_horizon.history_writer import digest
 
@@ -96,6 +97,10 @@ class MemoryService:
             if len(vectors) != 1:
                 raise ValueError("memory embedding count mismatch")
             embedding = vectors[0]
+            if (len(embedding) != self.embedder.dimension
+                    or any(not math.isfinite(value) for value in embedding)
+                    or not any(embedding)):
+                raise ValueError("invalid memory embedding")
 
         now = datetime.now(UTC)
         with self.store.transaction(normalized_user_id, candidate.memory_key):
@@ -134,6 +139,10 @@ class MemoryService:
                             else existing.evidence_strength
                         ),
                         "confirmations": existing.confirmations + 1,
+                        "content": candidate.content,
+                        "structured_content": {**candidate.structured_content,
+                            "valid_until": (candidate.valid_until or existing.valid_until).isoformat()
+                            if candidate.valid_until or existing.valid_until else None},
                         "valid_until": candidate.valid_until or existing.valid_until,
                         "updated_at": now,
                         "source_thread_id": normalized_thread_id,

@@ -260,3 +260,25 @@ def test_profile_query_failure_does_not_disable_episodic_recall_and_zero_similar
     assert len(result.items) == 1 and result.items[0].memory_type.value == "episodic"
     runtime.retriever.embedder = SimpleNamespace(embed_query=lambda _: [0, 0, 1])
     assert runtime.retriever.retrieve(MemoryRetrievalRequest(user_id="u", query="之前天气")).items == []
+
+
+def test_confirmed_episode_vector_always_matches_saved_text_and_profile_summary_refreshes():
+    runtime, store, _ = setup_runtime()
+    runtime.service.remember(user_id="u", source_thread_id="t", candidate=episode("健身跳过慢歌"))
+    revised = episode("健身时我经常跳过慢歌和现场版")
+    result = runtime.service.remember(user_id="u", source_thread_id="t", candidate=revised)
+    assert result.action.value == "confirmed" and result.memory.content == revised.content
+    assert result.memory.embedding == FakeEmbedder().embed_documents([result.memory.content])[0]
+    assert len(store.all_records()) == 1
+    runtime.service.remember(user_id="u", source_thread_id="t", candidate=artist())
+    refreshed = artist().model_copy(update={"content": "用户明确偏好周杰伦"})
+    assert runtime.service.remember(user_id="u", source_thread_id="t", candidate=refreshed).memory.content == refreshed.content
+
+
+@pytest.mark.parametrize("vector", [[1], [0, 0, 0], [float("nan"), 0, 1], [float("inf"), 0, 1]])
+def test_invalid_vectors_are_rejected_before_persistence(vector):
+    runtime, store, _ = setup_runtime()
+    runtime.service.embedder = SimpleNamespace(dimension=3, embed_documents=lambda _: [vector])
+    with pytest.raises(ValueError, match="invalid memory embedding"):
+        runtime.service.remember(user_id="u", source_thread_id="t", candidate=episode("健身跳过慢歌"))
+    assert store.all_records() == []
