@@ -91,3 +91,39 @@ async def test_partial_candidate_failure_still_projects_committed_profile():
         await runtime.extract_and_store(user_id="u", source_thread_id="t", user_message="我喜欢周杰伦，健身跳过慢歌")
     assert len(store.all_records()) == 1 and document.read("u") is not None
     assert store.pending_profile_revision("u") is None
+
+
+def test_message_replay_is_not_a_new_confirmation_and_conflict_is_sanitized():
+    store = InMemoryMemoryStore()
+    service = MemoryService(store)
+    candidate = artist()
+    first = service.remember(user_id="u", source_thread_id="t", source_message_id="m1", candidate=candidate)
+    repeat = service.remember(user_id="u", source_thread_id="t", source_message_id="m1", candidate=candidate)
+    assert repeat.action.value == "replayed" and repeat.memory.memory_id == first.memory.memory_id
+    assert repeat.memory.confirmations == 1
+    distinct = service.remember(user_id="u", source_thread_id="t", source_message_id="m2", candidate=candidate)
+    assert distinct.memory.confirmations == 2 and len(store._evidence) == 2
+    altered = candidate.model_copy(update={"value": "disliked"})
+    with pytest.raises(ValueError, match="memory message idempotency conflict"):
+        service.remember(user_id="u", source_thread_id="t", source_message_id="m1", candidate=altered)
+    assert len(store._evidence) == 2 and store.get_record("other", first.memory.memory_id) is None
+    assert distinct.memory.evidence_quote == candidate.evidence_quote and distinct.memory.source_message_id == "m2"
+
+
+@pytest.mark.asyncio
+async def test_completed_message_does_not_call_extractor_again_and_different_body_is_rejected():
+    runtime, store, _ = setup_runtime(artist())
+    await runtime.extract_and_store(user_id="u", source_thread_id="t", source_message_id="m", user_message="我喜欢周杰伦")
+    await runtime.extract_and_store(user_id="u", source_thread_id="t", source_message_id="m", user_message="我喜欢周杰伦")
+    assert runtime.extractor.extract.await_count == 1 and store.all_records()[0].confirmations == 1
+    with pytest.raises(ValueError, match="idempotency conflict"):
+        await runtime.extract_and_store(user_id="u", source_thread_id="t", source_message_id="m", user_message="换了原文")
+    assert runtime.extractor.extract.await_count == 1
+
+
+def test_evidence_failure_rolls_back_fact_and_projection_marker():
+    store = InMemoryMemoryStore()
+    store.add_evidence = lambda _: (_ for _ in ()).throw(ConnectionError("offline"))
+    with pytest.raises(ConnectionError):
+        MemoryService(store).remember(user_id="u", source_thread_id="t", source_message_id="m", candidate=artist())
+    assert store.all_records() == [] and store.pending_profile_revision("u") is None

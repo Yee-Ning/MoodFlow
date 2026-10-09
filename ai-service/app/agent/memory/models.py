@@ -108,6 +108,8 @@ class MemoryRecord(BaseModel):
     version: int = Field(default=1, ge=1)
     superseded_by: str | None = Field(default=None, max_length=160)
     embedding: list[float] | None = None
+    source_message_id: str | None = Field(default=None, min_length=1, max_length=160)
+    evidence_quote: str | None = Field(default=None, min_length=1, max_length=500)
 
 
 class MemoryWriteAction(StrEnum):
@@ -115,6 +117,23 @@ class MemoryWriteAction(StrEnum):
     CONFIRMED = "confirmed"
     SUPERSEDED = "superseded"
     IGNORED = "ignored"
+    REPLAYED = "replayed"
+
+
+class MemoryEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    evidence_id: str
+    user_id: str
+    source_message_id: str
+    source_thread_id: str
+    memory_type: MemoryType
+    memory_key: str
+    candidate_digest: str
+    memory_id: str | None
+    action: MemoryWriteAction
+    evidence_quote: str
+    observed_at: datetime
 
 
 class MemoryWriteResult(BaseModel):

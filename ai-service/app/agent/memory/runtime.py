@@ -8,6 +8,7 @@ from typing import Protocol
 
 from app.agent.structured_output import StructuredOutputError
 from app.config.settings import memory_backend
+from app.agent.foundation.long_horizon.history_writer import digest
 
 from .embeddings import QwenMemoryEmbedder
 from .extraction import MemoryExtractor
@@ -56,8 +57,14 @@ class MemoryRuntime:
             return False
 
     async def extract_and_store(
-        self, *, user_id: str, source_thread_id: str, user_message: str
+        self, *, user_id: str, source_thread_id: str, user_message: str, source_message_id=None,
     ) -> list[MemoryWriteResult]:
+        if source_message_id:
+            completed = await asyncio.to_thread(self.service.store.prepare_message, user_id,
+                source_message_id, digest([source_thread_id, user_message]))
+            if completed:
+                await self.sync_profile(user_id)
+                return []
         try:
             extraction = await self.extractor.extract(user_message)
         except StructuredOutputError:
@@ -70,7 +77,9 @@ class MemoryRuntime:
         try:
             for candidate in extraction.memories:
                 results.append(await asyncio.to_thread(self.service.remember, user_id=user_id,
-                    source_thread_id=source_thread_id, candidate=candidate))
+                    source_thread_id=source_thread_id, candidate=candidate, source_message_id=source_message_id))
+            if source_message_id:
+                await asyncio.to_thread(self.service.store.complete_message, user_id, source_message_id)
         finally:
             # Earlier candidates may have committed even if a later embedding
             # failed. Their projection repair must still be attempted.

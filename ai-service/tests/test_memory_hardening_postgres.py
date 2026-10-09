@@ -47,3 +47,22 @@ def test_memory_fact_and_profile_outbox_rollback_together(database):
         assert store.profile_records("u") == [] and store.pending_profile_revision("u") is None
     finally:
         store.close()
+
+
+def test_message_receipt_is_durable_and_confirmations_count_distinct_messages(database):
+    run_business_migrations(database, include_memory=True)
+    store = PostgresMemoryStore(database)
+    try:
+        service = MemoryService(store)
+        first = service.remember(user_id="u", source_thread_id="t", source_message_id="m", candidate=artist())
+        store.close()
+        store = PostgresMemoryStore(database)
+        repeated = MemoryService(store).remember(user_id="u", source_thread_id="t", source_message_id="m", candidate=artist())
+        assert repeated.action.value == "replayed" and repeated.memory.confirmations == 1
+        assert repeated.memory.memory_id == first.memory.memory_id
+        store.add_evidence = lambda _: (_ for _ in ()).throw(RuntimeError("interrupted"))
+        with pytest.raises(RuntimeError):
+            MemoryService(store).remember(user_id="u", source_thread_id="t", source_message_id="m2", candidate=artist())
+        assert store.get_record("u", first.memory.memory_id).confirmations == 1
+    finally:
+        store.close()

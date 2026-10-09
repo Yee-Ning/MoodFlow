@@ -54,7 +54,8 @@ def run_business_migrations(
                 ).fetchall()
             }
             for path in sorted(MIGRATION_ROOT.glob("*.sql")):
-                if path.name in {"002_long_term_memory.sql", "008_memory_profile_projection.sql"} and not include_memory:
+                if path.name in {"002_long_term_memory.sql", "008_memory_profile_projection.sql",
+                                 "009_memory_evidence.sql"} and not include_memory:
                     continue
                 if path.name in applied:
                     continue

@@ -3,11 +3,14 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from app.agent.foundation.long_horizon.history_writer import digest
+
 from .embeddings import MemoryEmbedder
 from .models import (
     EvidenceStrength,
     ExtractedMemory,
     MemoryRecord,
+    MemoryEvidence,
     MemoryStatus,
     MemoryWriteAction,
     MemoryWriteResult,
@@ -42,11 +45,41 @@ class MemoryService:
         self.embedder = embedder
 
     def remember(
+        self, *, user_id, source_thread_id, candidate, source_message_id=None,
+    ):
+        user_id, source_thread_id = user_id.strip(), source_thread_id.strip()
+        if not user_id.strip() or not source_thread_id.strip():
+            raise ValueError("user_id and source_thread_id are required")
+        if source_message_id is not None and (not source_message_id.strip() or len(source_message_id) > 160):
+            raise ValueError("invalid source message identity")
+        candidate_hash = digest([source_thread_id, candidate.model_dump(mode="json")])
+        evidence_id = ("evidence:" + digest([user_id, source_message_id, candidate.memory_type.value,
+                                            candidate.memory_key])[7:]) if source_message_id else None
+        with self.store.transaction(user_id, candidate.memory_key):
+            previous = self.store.get_evidence(evidence_id) if evidence_id else None
+            if previous:
+                if previous.candidate_digest != candidate_hash:
+                    raise ValueError("memory message idempotency conflict")
+                return MemoryWriteResult(action=MemoryWriteAction.REPLAYED,
+                    memory=self.store.get_record(user_id, previous.memory_id) if previous.memory_id else None)
+            result = self._remember(user_id=user_id, source_thread_id=source_thread_id, candidate=candidate,
+                                    source_message_id=source_message_id)
+            if evidence_id:
+                self.store.add_evidence(MemoryEvidence(
+                    evidence_id=evidence_id, user_id=user_id, source_message_id=source_message_id,
+                    source_thread_id=source_thread_id, memory_type=candidate.memory_type,
+                    memory_key=candidate.memory_key, candidate_digest=candidate_hash,
+                    memory_id=result.memory.memory_id if result.memory else None, action=result.action,
+                    evidence_quote=candidate.evidence_quote, observed_at=datetime.now(UTC)))
+            return result
+
+    def _remember(
         self,
         *,
         user_id: str,
         source_thread_id: str,
         candidate: ExtractedMemory,
+        source_message_id=None,
     ) -> MemoryWriteResult:
         normalized_user_id = user_id.strip()
         normalized_thread_id = source_thread_id.strip()
@@ -74,6 +107,7 @@ class MemoryService:
                     candidate=candidate,
                     now=now,
                     embedding=embedding,
+                    source_message_id=source_message_id,
                 )
                 self.store.insert(created)
                 self._profile_changed(created)
@@ -96,6 +130,8 @@ class MemoryService:
                         "updated_at": now,
                         "source_thread_id": normalized_thread_id,
                         "embedding": embedding or existing.embedding,
+                        "source_message_id": source_message_id,
+                        "evidence_quote": candidate.evidence_quote,
                     }
                 )
                 self.store.replace(confirmed)
@@ -127,6 +163,7 @@ class MemoryService:
                 now=now,
                 embedding=embedding,
                 version=existing.version + 1,
+                source_message_id=source_message_id,
             )
             superseded = existing.model_copy(
                 update={
@@ -157,6 +194,7 @@ class MemoryService:
         now: datetime,
         embedding: list[float] | None,
         version: int = 1,
+        source_message_id=None,
     ) -> MemoryRecord:
         return MemoryRecord(
             memory_id=f"memory:{uuid4().hex}",
@@ -173,4 +211,6 @@ class MemoryService:
             updated_at=now,
             version=version,
             embedding=embedding,
+            source_message_id=source_message_id,
+            evidence_quote=candidate.evidence_quote,
         )

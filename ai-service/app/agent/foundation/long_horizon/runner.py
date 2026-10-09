@@ -159,7 +159,8 @@ async def produce(*, message, thread_id, routing_context, graph_mode="foundation
         output = (await graph.aget_state(latest_config)).values
         if not _budget_refused(call, output):
             await _extract_memories(user_id=user_id, thread_id=thread_id, user_message=message,
-                                   enabled=bool(message), memory_runtime=memory_runtime)
+                                   enabled=bool(message), memory_runtime=memory_runtime,
+                                   request_id=call.identity.request_id)
         response = await _final(call, output, emit)
         coordinator.history.archive(call.identity)
         return response

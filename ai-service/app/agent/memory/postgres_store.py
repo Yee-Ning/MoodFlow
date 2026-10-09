@@ -9,7 +9,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from psycopg_pool import ConnectionPool
 
-from .models import MemoryRecord, MemoryType
+from .models import MemoryEvidence, MemoryRecord, MemoryType
 
 
 def _vector_text(values: list[float] | None) -> str | None:
@@ -83,6 +83,38 @@ class PostgresMemoryStore:
                RETURNING user_id""", (revision, omitted_count, user_id, revision))
         return row is not None
 
+    def get_record(self, user_id, memory_id):
+        return self._record(self._one(
+            f"SELECT {self._columns()} FROM agent_long_term_memory WHERE user_id=%s AND memory_id=%s",
+            (user_id, memory_id)))
+
+    def get_evidence(self, evidence_id):
+        row = self._one("SELECT body FROM agent_memory_evidence WHERE evidence_id=%s", (evidence_id,))
+        return MemoryEvidence.model_validate(row["body"]) if row else None
+
+    def add_evidence(self, evidence):
+        self._execute(
+            """INSERT INTO agent_memory_evidence(evidence_id,user_id,source_message_id,memory_type,memory_key,body)
+               VALUES(%s,%s,%s,%s,%s,%s)""",
+            (evidence.evidence_id, evidence.user_id, evidence.source_message_id, evidence.memory_type.value,
+             evidence.memory_key, Jsonb(evidence.model_dump(mode="json"))))
+
+    def prepare_message(self, user_id, message_id, message_digest):
+        with self.transaction(user_id, "message:" + message_id):
+            self._execute(
+                """INSERT INTO agent_memory_source_message(user_id,message_id,message_digest)
+                   VALUES(%s,%s,%s) ON CONFLICT DO NOTHING""", (user_id, message_id, message_digest))
+            row = self._one(
+                "SELECT message_digest,completed FROM agent_memory_source_message WHERE user_id=%s AND message_id=%s",
+                (user_id, message_id))
+            if row["message_digest"] != message_digest:
+                raise ValueError("memory message idempotency conflict")
+            return row["completed"]
+
+    def complete_message(self, user_id, message_id):
+        self._execute("UPDATE agent_memory_source_message SET completed=TRUE WHERE user_id=%s AND message_id=%s",
+                      (user_id, message_id))
+
     @contextmanager
     def transaction(self, user_id: str, memory_key: str) -> Iterator[None]:
         if self._transaction_connection.get() is not None:
@@ -115,7 +147,7 @@ class PostgresMemoryStore:
             memory_id, user_id, memory_type, memory_key, content,
             structured_content, source_thread_id, confidence, importance,
             evidence_strength, confirmations, created_at, updated_at, status,
-            version, superseded_by, embedding::text AS embedding
+            version, superseded_by, embedding::text AS embedding, source_message_id, evidence_quote
         """
         if include_similarity:
             columns += ", 1 - (embedding <=> %s::vector) AS similarity"
@@ -143,10 +175,10 @@ class PostgresMemoryStore:
                 memory_id, user_id, memory_type, memory_key, content,
                 structured_content, source_thread_id, confidence, importance,
                 evidence_strength, confirmations, created_at, updated_at, status,
-                version, superseded_by, embedding
+                version, superseded_by, embedding, source_message_id, evidence_quote
             ) VALUES(
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s::vector
+                %s, %s, %s::vector, %s, %s
             )
             """,
             self._values(memory),
@@ -161,7 +193,7 @@ class PostgresMemoryStore:
                 structured_content=%s, source_thread_id=%s, confidence=%s,
                 importance=%s, evidence_strength=%s, confirmations=%s,
                 created_at=%s, updated_at=%s, status=%s, version=%s,
-                superseded_by=%s, embedding=%s::vector
+                superseded_by=%s, embedding=%s::vector, source_message_id=%s, evidence_quote=%s
             WHERE memory_id=%s
             """,
             (*values[1:], values[0]),
@@ -187,6 +219,8 @@ class PostgresMemoryStore:
             memory.version,
             memory.superseded_by,
             _vector_text(memory.embedding),
+            memory.source_message_id,
+            memory.evidence_quote,
         )
 
     def list_active_profiles(

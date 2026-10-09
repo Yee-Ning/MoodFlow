@@ -6,7 +6,7 @@ from copy import deepcopy
 from threading import RLock
 from typing import ContextManager, Protocol
 
-from .models import MemoryRecord, MemoryStatus, MemoryType
+from .models import MemoryEvidence, MemoryRecord, MemoryStatus, MemoryType
 
 
 class MemoryStore(Protocol):
@@ -32,6 +32,11 @@ class MemoryStore(Protocol):
     def pending_profile_revision(self, user_id: str) -> str | None: ...
     def profile_records(self, user_id: str) -> list[MemoryRecord]: ...
     def complete_profile_revision(self, user_id: str, revision: str, omitted_count: int) -> bool: ...
+    def get_record(self, user_id: str, memory_id: str) -> MemoryRecord | None: ...
+    def get_evidence(self, evidence_id: str) -> MemoryEvidence | None: ...
+    def add_evidence(self, evidence: MemoryEvidence) -> None: ...
+    def prepare_message(self, user_id: str, message_id: str, message_digest: str) -> bool: ...
+    def complete_message(self, user_id: str, message_id: str) -> None: ...
 
     def search_active_episodes(
         self,
@@ -51,12 +56,20 @@ class InMemoryMemoryStore:
         self._lock = RLock()
         self._profile_pending: dict[str, str] = {}
         self._profile_omitted: dict[str, int] = {}
+        self._evidence: dict[str, MemoryEvidence] = {}
+        self._messages: dict[tuple[str, str], tuple[str, bool]] = {}
 
     @contextmanager
     def transaction(self, user_id: str, memory_key: str) -> Iterator[None]:
         del user_id, memory_key
         with self._lock:
-            yield
+            snapshot = (self._records.copy(), self._profile_pending.copy(),
+                        self._profile_omitted.copy(), self._evidence.copy(), self._messages.copy())
+            try:
+                yield
+            except BaseException:
+                self._records, self._profile_pending, self._profile_omitted, self._evidence, self._messages = snapshot
+                raise
 
     def get_active(
         self, user_id: str, memory_type: MemoryType, memory_key: str
@@ -178,3 +191,33 @@ class InMemoryMemoryStore:
             del self._profile_pending[user_id]
             self._profile_omitted[user_id] = omitted_count
             return True
+
+    def get_record(self, user_id, memory_id):
+        with self._lock:
+            row = self._records.get(memory_id)
+            return row.model_copy(deep=True) if row is not None and row.user_id == user_id else None
+
+    def get_evidence(self, evidence_id):
+        with self._lock:
+            row = self._evidence.get(evidence_id)
+            return row.model_copy(deep=True) if row else None
+
+    def add_evidence(self, evidence):
+        with self._lock:
+            if evidence.evidence_id in self._evidence:
+                raise ValueError("memory evidence already exists")
+            self._evidence[evidence.evidence_id] = evidence.model_copy(deep=True)
+
+    def prepare_message(self, user_id, message_id, message_digest):
+        with self._lock:
+            previous = self._messages.get((user_id, message_id))
+            if previous is not None and previous[0] != message_digest:
+                raise ValueError("memory message idempotency conflict")
+            if previous is None:
+                self._messages[(user_id, message_id)] = (message_digest, False)
+            return previous is not None and previous[1]
+
+    def complete_message(self, user_id, message_id):
+        with self._lock:
+            previous = self._messages[(user_id, message_id)]
+            self._messages[(user_id, message_id)] = (previous[0], True)
