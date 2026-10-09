@@ -5,9 +5,11 @@ import json
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from app.agent.foundation.adapters import create_subgraph_adapter
-from app.agent.foundation.context_engineering import build_context_async
+from app.agent.foundation.agent_pack import AgentPackBuilder, AgentPackInputs, AgentPackInvocation
+from app.agent.foundation.hop_sources import build_hop_pack
 from app.agent.foundation.models import TaskResult, TaskStatus
 from app.agent.foundation.routing import RouteKey
+from app.agent.foundation.source_errors import SourceIntegrityError
 from app.agent.foundation.subgraphs.current_song.assistant import (
     answer_current_song_task,
 )
@@ -20,12 +22,10 @@ from app.agent.foundation.subgraphs.tool_calling.scope import scoped_playback_to
 from app.agent.handoff.context import exploration_projection
 from app.agent.handoff.explorer import execute_exploration, get_worldline_subgraph
 from app.agent.handoff.state import HandoffRun
+from app.agent.handoff.hop_context import active_hop
+from app.agent.handoff.registry import next_agent_for_task
 from app.agent.handoff.progress import create_combination_status_tool, latest_combination_progress
 from app.agent.handoff.tools import create_transfer_tools
-from app.agent.handoff.prompts import (
-    HANDOFF_TRANSFER_PROMPT,
-    TRANSFER_RETRY_PROMPT,
-)
 from app.llm.client import get_base_chat_model
 from app.llm.runtime import instrument_chat_model
 
@@ -66,40 +66,53 @@ def task_view(state: dict, run: HandoffRun) -> dict:
     }
 
 
+class _RelayCollector:
+    """Keep budget preprocessing from importing ambient business continuity."""
+
+    def __init__(self, delegate):
+        self.delegate = delegate
+
+    def collect(self, **sources):
+        return self.delegate.collect(
+            query=sources["query"], system=sources["system"],
+            business_state=sources.get("business_state"),
+            registered_items=sources.get("registered_items"),
+        )
+
+
 async def choose_transfer(
     state: dict, run: HandoffRun, *, model=None, feedback=None
 ) -> AIMessage:
     tools = create_transfer_tools(run.current_agent, run)
     task = run.pending_tasks[0]
-    summaries = [
-        {
-            "task_id": item.task_id,
-            "status": item.status.value,
-            "content": (item.content or "")[:800],
-        }
-        for item in run.results
-    ]
-    pack = await build_context_async(
-        task.route_key,
-        query=task.input_text,
-        system=HANDOFF_TRANSFER_PROMPT
-        + (
-            TRANSFER_RETRY_PROMPT
-            if feedback
-            else ""
-        ),
-        messages=[],
-        business_state=json.dumps(
-            {
-                "source": run.current_agent.value,
-                "next_capability": task.route_key.value,
-                "original_input": run.original_input,
-            },
-            ensure_ascii=False,
-        ),
-        structured_output=json.dumps(summaries, ensure_ascii=False),
-        continuity_context=state.get("continuity_context"),
+    invocation = AgentPackInvocation(
+        owner_agent=run.current_agent.value, run_id=run.run_id, task=task,
+        recipe_id="handoff", recipe_version="v1", phase="relay",
+        prompt_refs=("handoff-transfer/v1",) + (("transfer-retry/v1",) if feedback else ()),
     )
+    hop = active_hop.get()
+    if hop is not None:
+        hop.require_current()
+        if (hop.run_id, hop.owner_agent, hop.task_json) != (
+            run.run_id, run.current_agent.value, task.model_dump_json()
+        ):
+            raise SourceIntegrityError()
+    builder = AgentPackBuilder()
+    builder.collector = _RelayCollector(builder.collector)
+    if hop is not None and (hop.committed or hop.envelope_json is None):
+        # B selects only route_path. A missing incoming Envelope remains empty.
+        pack = build_hop_pack(invocation, builder=builder).pack
+    else:
+        # An incoming Envelope without a Journal is not a formal Source.
+        # Preserve A's runtime-only path without inventing a commit observation.
+        if hop is not None and (hop.store is not None or hop.identity is not None or hop.envelope_audit is not None):
+            raise SourceIntegrityError()
+        target = next_agent_for_task(run.current_agent, task.route_key)
+        invocation = invocation.model_copy(update={"inputs": AgentPackInputs(business_state={
+            "task_id": task.task_id, "route_key": task.route_key.value,
+            "current_agent": run.current_agent.value, "next_agent": target.value if target is not None else None,
+        })})
+        pack = builder.build(invocation, intent={"routes": [task.route_key.value]})
     response = (
         await instrument_chat_model(model or get_base_chat_model())
         .bind_tools(tools)

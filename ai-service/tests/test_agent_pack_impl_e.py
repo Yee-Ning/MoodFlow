@@ -144,7 +144,21 @@ async def test_three_agent_four_edge_network_uses_actual_packs_and_replays_witho
     assert len(transfer.seen_messages) == 4
     assert all(all(name.startswith("transfer_to_") for name in names) for names in transfer.bound_names)
     calls = manifests(caplog)
-    business = [row for row in calls if row.agent_context is not None]
+    business = [row for row in calls if row.agent_context is not None and row.agent_context.phase != "relay"]
+    relay = [row for row in calls if row.agent_context is not None and row.agent_context.phase == "relay"]
+    assert len(relay) == len(transfer.seen_messages) == 4
+    assert [(row.agent_context.owner_agent, row.agent_context.route_key) for row in relay] == [
+        ("general_chat", "tool_calling"), ("curator", "worldline"),
+        ("explorer", "general_chat"), ("curator", "general_chat")]
+    for row in relay:
+        audit = row.agent_context
+        assert (audit.recipe_id, audit.recipe_version) == ("handoff", "v1")
+        assert {item.source for item in audit.source_selection} <= {"system", "user_query", "received_envelope"}
+        assert [prompt.prompt_id for prompt in audit.prompts] == ["handoff-transfer"]
+        if audit.envelope is not None:
+            assert audit.envelope.selected_fields == ("route_path",)
+            assert row.sources["received_envelope"].final_tokens <= 256
+        assert all(prompt.content_digest.startswith("sha256:") for prompt in audit.prompts)
     assert [(row.agent_context.owner_agent, row.agent_context.phase) for row in business] == [
         ("general_chat", "answer"), ("curator", "tool_step"), ("curator", "tool_observation"),
         ("explorer", "query_analysis"), ("explorer", "narrative"), ("explorer", "branches"),
