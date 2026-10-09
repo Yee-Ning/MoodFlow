@@ -13,7 +13,7 @@ import httpx
 from openai import APIStatusError, OpenAIError
 
 from app.agent.decision.jev.client import JevClient
-from app.agent.foundation.context_engineering import build_context_async
+from app.agent.foundation.context_engineering import POLICIES, build_context_async
 from app.agent.foundation.routing import RouteKey
 from app.agent.handoff.registry import AgentKey
 from app.agent.handoff.state import AgentUsage, RunLimits
@@ -307,7 +307,9 @@ async def test_required_context_budget_failure_is_sticky_and_optional_history_sh
     monkeypatch,
 ):
     monkeypatch.setenv("JEV_ENABLED", "false")
-    book = ledger(budget=3000)
+    policy = POLICIES[RouteKey.GENERAL_CHAT]
+    # Keep the original 696-token input pressure as output headroom grows.
+    book = ledger(budget=policy.reserved_output_tokens + policy.safety_margin + 696)
     with request_scope(book):
         pack = await build_context_async(
             RouteKey.GENERAL_CHAT,

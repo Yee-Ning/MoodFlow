@@ -206,8 +206,9 @@ async def test_auxiliary_overshoot_is_refused_before_final_and_replay_keeps_refu
             return MemoryRetrievalResult(user_id=request.user_id, items=[])
         async def extract_and_store(self, **kwargs):
             extracts.append(kwargs)
+            total = RunLimits().run_token_budget + 3000
             await accounted_call(AsyncMock(return_value=AIMessage(content="提取", usage_metadata={
-                "input_tokens": 34999, "output_tokens": 1, "total_tokens": 35000})), "memory-extraction",
+                "input_tokens": total - 1, "output_tokens": 1, "total_tokens": total})), "memory-extraction",
                 output_tokens=50, model="deepseek-chat")
     graph = build_main_graph(development_routes=[RouteKey.GENERAL_CHAT],
         general_chat_subgraph=create_general_chat_subgraph(model=ToolModel(responses=[AIMessage(content="本轮已完成结果")]))).compile()

@@ -8,11 +8,11 @@
   },
   "budget": {
     "defaults_status": "initial defaults; tune with eval before production rollout",
-    "l2_tokens": 16000,
-    "l3_tokens": 32000,
+    "l2_tokens": 64000,
+    "l3_tokens": 128000,
     "history_messages": 4,
     "summary_tokens": 256,
-    "max_output_tokens": {"default": 1024, "jev-latest": 256},
+    "max_output_tokens": {"default": 4096, "jev-latest": 256},
     "currency": "USD",
     "prices": {}
   },

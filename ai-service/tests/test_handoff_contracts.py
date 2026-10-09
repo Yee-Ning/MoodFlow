@@ -406,17 +406,17 @@ def test_fifth_hop_is_allowed_and_sixth_requires_bounded_final_response():
 
 
 @pytest.mark.parametrize(
-    "tokens,code",
+    "offset,code",
     [
-        (15_999, HandoffCode.ACCEPTED),
-        (16_000, HandoffCode.TOKEN_LIMIT),
-        (16_001, HandoffCode.TOKEN_LIMIT),
+        (-1, HandoffCode.ACCEPTED),
+        (0, HandoffCode.TOKEN_LIMIT),
+        (1, HandoffCode.TOKEN_LIMIT),
     ],
 )
-def test_agent_budget_uses_observed_usage_including_overshoot(tokens, code):
+def test_agent_budget_uses_observed_usage_including_overshoot(offset, code):
     run = make_run(RouteKey.TOOL_CALLING, entry=AgentKey.GENERAL_CHAT)
     payload = run.model_dump()
-    payload["usage"][0]["tokens"] = tokens
+    payload["usage"][0]["tokens"] = run.limits.agent_token_budget + offset
     run = HandoffRun.model_validate(payload)
     _, outcome = transfer(run, AgentKey.CURATOR)
     assert outcome.code is code
@@ -818,7 +818,7 @@ def test_trace_rejects_private_payload_and_invalid_metrics(update):
         {"max_handoffs": 6},
         {"max_retries_per_agent": 2},
         {"agent_timeout_seconds": 121},
-        {"agent_token_budget": 32_001},
+        {"agent_token_budget": RunLimits().run_token_budget + 1},
         {"run_token_budget": 0},
         {"max_handoffs": True},
     ],
