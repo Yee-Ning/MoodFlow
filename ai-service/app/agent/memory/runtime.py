@@ -16,6 +16,7 @@ from .models import MemoryRetrievalRequest, MemoryRetrievalResult, MemoryWriteRe
 from .retriever import MemoryRetriever
 from .service import MemoryService
 from .store import InMemoryMemoryStore, MemoryStore
+from .policy import MemoryAdmissionError, safe_user_message, validate_candidate
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,8 @@ class MemoryRuntime:
     async def extract_and_store(
         self, *, user_id: str, source_thread_id: str, user_message: str, source_message_id=None,
     ) -> list[MemoryWriteResult]:
+        if not safe_user_message(user_message):
+            return []
         if source_message_id:
             completed = await asyncio.to_thread(self.service.store.prepare_message, user_id,
                 source_message_id, digest([source_thread_id, user_message]))
@@ -67,17 +70,19 @@ class MemoryRuntime:
                 return []
         try:
             extraction = await self.extractor.extract(user_message)
-        except StructuredOutputError:
+            for candidate in extraction.memories:
+                validate_candidate(candidate, user_message=user_message)
+        except (StructuredOutputError, MemoryAdmissionError):
             logger.warning(
                 "memory extraction rejected; no memory was persisted",
-                exc_info=True,
             )
             return []
         results: list[MemoryWriteResult] = []
         try:
             for candidate in extraction.memories:
                 results.append(await asyncio.to_thread(self.service.remember, user_id=user_id,
-                    source_thread_id=source_thread_id, candidate=candidate, source_message_id=source_message_id))
+                    source_thread_id=source_thread_id, candidate=candidate, source_message_id=source_message_id,
+                    user_message=user_message))
             if source_message_id:
                 await asyncio.to_thread(self.service.store.complete_message, user_id, source_message_id)
         finally:

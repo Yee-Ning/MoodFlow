@@ -42,13 +42,20 @@ class ExtractedMemory(BaseModel):
     importance: float = Field(ge=0, le=1)
     scene: str | None = Field(default=None, max_length=120)
 
-    @field_validator("category", "subject", "value", "content", "evidence_quote")
+    @field_validator("category", "subject", "value", "content")
     @classmethod
     def normalize_required_text(cls, value: str) -> str:
         normalized = " ".join(value.split())
         if not normalized:
             raise ValueError("text must not be blank")
         return normalized
+
+    @field_validator("evidence_quote")
+    @classmethod
+    def preserve_verbatim_quote(cls, value):
+        if not value.strip():
+            raise ValueError("evidence quote must not be blank")
+        return value
 
     @field_validator("preference", "scene")
     @classmethod

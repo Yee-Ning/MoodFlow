@@ -11,6 +11,7 @@ from app.agent.structured_output.parser import model_output_from_response
 from app.llm.client import create_structured_response
 
 from .models import MemoryExtractionOutput
+from .policy import MemoryAdmissionError, safe_user_message, validate_candidate
 
 ExtractionGenerator = Callable[[int, str | None], Awaitable[str | ModelOutput]]
 
@@ -59,13 +60,15 @@ class MemoryExtractor:
         *,
         generator: ExtractionGenerator | None = None,
     ) -> MemoryExtractionOutput:
-        if is_transient_only(user_message):
+        if is_transient_only(user_message) or not safe_user_message(user_message):
             return MemoryExtractionOutput()
 
         def grounded(output: MemoryExtractionOutput) -> None:
             for memory in output.memories:
-                if memory.evidence_quote not in user_message:
-                    raise SemanticValidationError("memory_evidence_not_in_user_message")
+                try:
+                    validate_candidate(memory, user_message=user_message)
+                except MemoryAdmissionError as exc:
+                    raise SemanticValidationError(str(exc)) from None
             if is_transient_only(user_message) and output.memories:
                 raise SemanticValidationError("transient_action_is_not_long_term_memory")
 

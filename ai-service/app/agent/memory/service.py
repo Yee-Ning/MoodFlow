@@ -16,6 +16,7 @@ from .models import (
     MemoryWriteResult,
 )
 from .store import MemoryStore
+from .policy import validate_candidate
 
 _STRENGTH = {
     EvidenceStrength.INFERRED: 1,
@@ -45,9 +46,10 @@ class MemoryService:
         self.embedder = embedder
 
     def remember(
-        self, *, user_id, source_thread_id, candidate, source_message_id=None,
+        self, *, user_id, source_thread_id, candidate, source_message_id=None, user_message=None,
     ):
         user_id, source_thread_id = user_id.strip(), source_thread_id.strip()
+        validate_candidate(candidate, user_message=user_message)
         if not user_id.strip() or not source_thread_id.strip():
             raise ValueError("user_id and source_thread_id are required")
         if source_message_id is not None and (not source_message_id.strip() or len(source_message_id) > 160):
