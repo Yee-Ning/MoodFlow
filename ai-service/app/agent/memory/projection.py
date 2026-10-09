@@ -8,6 +8,7 @@ from app.agent.foundation.long_horizon.history_writer import validate_public_doc
 from app.agent.foundation.user_profile import ProfileDocument, ProfileEntry, ProfileWriter
 
 from .models import MemoryStatus
+from .scopes import is_current
 
 
 def profile_key(memory_key):
@@ -21,7 +22,7 @@ def synchronize_profile(memory_store, profile_store, user_id, *, attempts=3):
             return True
         records = memory_store.profile_records(user_id)
         owned = {profile_key(record.memory_key) for record in records}
-        active = sorted((row for row in records if row.status is MemoryStatus.ACTIVE),
+        active = sorted((row for row in records if row.status is MemoryStatus.ACTIVE and is_current(row.valid_until)),
                         key=lambda row: (row.structured_content.get("preference") in {"avoid", "dislike"},
                                          row.confidence, row.importance, row.updated_at, row.memory_id), reverse=True)
         categories = load_context_policy()["profile_categories"]
@@ -34,6 +35,7 @@ def synchronize_profile(memory_store, profile_store, user_id, *, attempts=3):
                     key=profile_key(memory.memory_key), value=memory.content[:1000],
                     source=memory.source_thread_id, updated_at=memory.updated_at, confidence=memory.confidence,
                     intents=tuple(categories.get(memory.structured_content.get("category"), categories["default"])),
+                    scene=memory.structured_content.get("scene"), valid_until=memory.valid_until,
                 )
                 try:
                     validate_public_document(ProfileDocument, ProfileDocument(

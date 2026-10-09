@@ -179,3 +179,43 @@ async def test_persistent_live_rejection_reaches_music_routes_through_profile_so
     for route in (RouteKey.CURRENT_SONG, RouteKey.TOOL_CALLING, RouteKey.WORLDLINE):
         selected = ContextSelector().build(items, POLICIES[route], intent={"routes": [route.value]})
         assert selected.items and "现场版" in selected.items[0].content
+
+
+def test_global_and_scene_preferences_coexist_without_cross_scene_recall():
+    from app.agent.foundation.context_sources import SourceRequest, UserProfileSource
+    service = MemoryService(InMemoryMemoryStore())
+    for scene, preference, value in ((None, "like", "liked"), ("workout", "like", "liked"),
+                                      ("sleep", "avoid", "avoid")):
+        candidate = artist().model_copy(update={"scene": scene, "preference": preference, "value": value})
+        service.remember(user_id="u", source_thread_id="t", candidate=candidate)
+    store = service.store
+    assert len(store.all_records()) == 3 and len(store.list_active_profiles("u")) == 1
+    assert len(store.list_active_profiles("u", scene="workout")) == 2
+    assert len(store.list_active_profiles("u", scene="sleep")) == 2
+    document = SQLiteProfileStore(":memory:")
+    synchronize_profile(store, document, "u")
+    items = UserProfileSource().collect(SourceRequest("帮我准备健身音乐", {"user_id": "u"}, profile_store=document), limit=16)
+    assert len(items) == 2 and all("sleep" not in row.content for row in items)
+
+
+def test_expired_memory_is_excluded_without_changing_history():
+    from datetime import UTC, datetime, timedelta
+    from app.agent.foundation.context_sources import SourceRequest, UserProfileSource
+    runtime, store, document = setup_runtime()
+    expired = artist().model_copy(update={"valid_until": datetime.now(UTC) - timedelta(seconds=1)})
+    record = runtime.service.remember(user_id="u", source_thread_id="t", candidate=expired).memory
+    assert store.list_active_profiles("u") == []
+    synchronize_profile(store, document, "u")
+    assert UserProfileSource().collect(SourceRequest("周杰伦", {"user_id": "u"}, profile_store=document), limit=16) == []
+    assert store.get_record("u", record.memory_id) is not None
+
+
+def test_scene_inference_is_conservative_and_expiry_does_not_get_extended_implicitly():
+    from datetime import UTC, datetime, timedelta
+    from app.agent.memory.scopes import infer_scene
+    assert infer_scene("健身时听什么") == "workout" and infer_scene("健身和睡眠的歌") is None
+    service = MemoryService(InMemoryMemoryStore())
+    until = datetime.now(UTC) + timedelta(days=1)
+    service.remember(user_id="u", source_thread_id="t", candidate=artist().model_copy(update={"valid_until": until}))
+    confirmed = service.remember(user_id="u", source_thread_id="t", candidate=artist()).memory
+    assert confirmed.valid_until == until

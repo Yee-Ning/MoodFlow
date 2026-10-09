@@ -147,7 +147,7 @@ class PostgresMemoryStore:
             memory_id, user_id, memory_type, memory_key, content,
             structured_content, source_thread_id, confidence, importance,
             evidence_strength, confirmations, created_at, updated_at, status,
-            version, superseded_by, embedding::text AS embedding, source_message_id, evidence_quote
+            version, superseded_by, embedding::text AS embedding, source_message_id, evidence_quote, valid_until
         """
         if include_similarity:
             columns += ", 1 - (embedding <=> %s::vector) AS similarity"
@@ -175,10 +175,10 @@ class PostgresMemoryStore:
                 memory_id, user_id, memory_type, memory_key, content,
                 structured_content, source_thread_id, confidence, importance,
                 evidence_strength, confirmations, created_at, updated_at, status,
-                version, superseded_by, embedding, source_message_id, evidence_quote
+                version, superseded_by, embedding, source_message_id, evidence_quote, valid_until
             ) VALUES(
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s::vector, %s, %s
+                %s, %s, %s::vector, %s, %s, %s
             )
             """,
             self._values(memory),
@@ -193,7 +193,7 @@ class PostgresMemoryStore:
                 structured_content=%s, source_thread_id=%s, confidence=%s,
                 importance=%s, evidence_strength=%s, confirmations=%s,
                 created_at=%s, updated_at=%s, status=%s, version=%s,
-                superseded_by=%s, embedding=%s::vector, source_message_id=%s, evidence_quote=%s
+                superseded_by=%s, embedding=%s::vector, source_message_id=%s, evidence_quote=%s, valid_until=%s
             WHERE memory_id=%s
             """,
             (*values[1:], values[0]),
@@ -221,18 +221,22 @@ class PostgresMemoryStore:
             _vector_text(memory.embedding),
             memory.source_message_id,
             memory.evidence_quote,
+            memory.valid_until,
         )
 
     def list_active_profiles(
         self, user_id: str, *, scene: str | None = None, limit: int = 50
     ) -> list[MemoryRecord]:
         clauses = ["user_id=%s", "memory_type='profile'", "status='active'"]
+        clauses.append("(valid_until IS NULL OR valid_until>NOW())")
         values: list[Any] = [user_id]
         if scene is not None:
             clauses.append(
                 "(structured_content->>'scene' IS NULL OR structured_content->>'scene'=%s)"
             )
             values.append(scene)
+        else:
+            clauses.append("structured_content->>'scene' IS NULL")
         values.append(limit)
         rows = self._all(
             f"""
@@ -257,6 +261,7 @@ class PostgresMemoryStore:
             "memory_type='episodic'",
             "status='active'",
             "embedding IS NOT NULL",
+            "(valid_until IS NULL OR valid_until>NOW())",
         ]
         vector = _vector_text(embedding)
         values: list[Any] = [vector, user_id]
@@ -265,6 +270,8 @@ class PostgresMemoryStore:
                 "(structured_content->>'scene' IS NULL OR structured_content->>'scene'=%s)"
             )
             values.append(scene)
+        else:
+            clauses.append("structured_content->>'scene' IS NULL")
         values.extend([vector, limit])
         rows = self._all(
             f"""

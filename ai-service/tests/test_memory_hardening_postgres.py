@@ -66,3 +66,20 @@ def test_message_receipt_is_durable_and_confirmations_count_distinct_messages(da
         assert store.get_record("u", first.memory.memory_id).confirmations == 1
     finally:
         store.close()
+
+
+def test_postgres_profile_scene_and_expiry_filters_match_local_store(database):
+    from datetime import UTC, datetime, timedelta
+    run_business_migrations(database, include_memory=True)
+    store = PostgresMemoryStore(database)
+    try:
+        service = MemoryService(store)
+        service.remember(user_id="u", source_thread_id="t", candidate=artist())
+        service.remember(user_id="u", source_thread_id="t", candidate=artist().model_copy(update={"scene": "sleep"}))
+        service.remember(user_id="u", source_thread_id="t", candidate=artist("expired").model_copy(
+            update={"valid_until": datetime.now(UTC) - timedelta(days=1)}))
+        assert len(store.list_active_profiles("u")) == 1
+        assert len(store.list_active_profiles("u", scene="sleep")) == 2
+        assert len(store.list_active_profiles("u", scene="workout")) == 1
+    finally:
+        store.close()

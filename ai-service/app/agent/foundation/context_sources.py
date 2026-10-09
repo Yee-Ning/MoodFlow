@@ -72,7 +72,11 @@ class UserProfileSource:
         if document.user_id != user_id:
             raise ValueError("profile user scope mismatch")
         # Bounded candidates; relevance and intent filtering happen in Select.
-        ranked = sorted(document.entries, key=lambda entry: (entry.updated_at, entry.confidence), reverse=True)
+        from app.agent.memory.scopes import infer_scene, is_current, matches_scene
+        scene = request.continuity.get("memory_scene") or infer_scene(request.query)
+        ranked = sorted((entry for entry in document.entries
+                         if is_current(entry.valid_until) and matches_scene(entry.scene, scene)),
+                        key=lambda entry: (entry.updated_at, entry.confidence), reverse=True)
         result = []
         for entry in ranked[:limit]:
             content = entry.model_dump(mode="json")

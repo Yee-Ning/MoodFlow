@@ -48,6 +48,12 @@ def validate_candidate(candidate: ExtractedMemory, *, user_message=None):
     if candidate.evidence_quote not in user_message:
         raise MemoryAdmissionError("memory_evidence_not_in_user_message")
     quote = candidate.evidence_quote
+    if (candidate.memory_type.value == "profile" and candidate.valid_until is None
+            and re.search(r"这次|这一次|今天|这周|暂时", quote)
+            and not re.search(r"以后|今后|长期|一直", quote)):
+        raise MemoryAdmissionError("memory_temporary_preference_needs_expiry")
+    if candidate.valid_until is not None and not re.search(r"\d{4}[-年/]\d{1,2}", user_message):
+        raise MemoryAdmissionError("memory_expiry_not_explicit")
     position = user_message.index(quote)
     clause_start = max((user_message.rfind(mark, 0, position) for mark in "。!?！？；;\n"), default=-1) + 1
     framing = user_message[clause_start:position + len(quote)]

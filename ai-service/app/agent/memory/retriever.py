@@ -13,6 +13,7 @@ from .models import (
     RetrievedMemory,
 )
 from .store import MemoryStore
+from .scopes import infer_scene
 
 
 class MemoryRetriever:
@@ -25,6 +26,8 @@ class MemoryRetriever:
         self.embedder = embedder
 
     def retrieve(self, request: MemoryRetrievalRequest) -> MemoryRetrievalResult:
+        if request.scene is None:
+            request = request.model_copy(update={"scene": infer_scene(request.query)})
         candidates: list[tuple[MemoryRecord, float]] = []
         if request.memory_type in {None, MemoryType.PROFILE}:
             profiles = self.store.list_active_profiles(

@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 
 
 class MemoryType(StrEnum):
@@ -41,6 +41,7 @@ class ExtractedMemory(BaseModel):
     confidence: float = Field(ge=0, le=1)
     importance: float = Field(ge=0, le=1)
     scene: str | None = Field(default=None, max_length=120)
+    valid_until: AwareDatetime | None = None
 
     @field_validator("category", "subject", "value", "content")
     @classmethod
@@ -72,6 +73,8 @@ class ExtractedMemory(BaseModel):
         parts = [category, subject]
         if self.memory_type is MemoryType.EPISODIC:
             parts.append(self.value.casefold().strip())
+        if self.scene:
+            parts.extend(("scene", self.scene.casefold()))
         key = ":".join(parts)
         if len(key) <= 400:
             return key
@@ -86,6 +89,7 @@ class ExtractedMemory(BaseModel):
             "preference": self.preference,
             "value": self.value,
             "scene": self.scene,
+            "valid_until": self.valid_until.isoformat() if self.valid_until else None,
         }
 
 
@@ -117,6 +121,7 @@ class MemoryRecord(BaseModel):
     embedding: list[float] | None = None
     source_message_id: str | None = Field(default=None, min_length=1, max_length=160)
     evidence_quote: str | None = Field(default=None, min_length=1, max_length=500)
+    valid_until: AwareDatetime | None = None
 
 
 class MemoryWriteAction(StrEnum):

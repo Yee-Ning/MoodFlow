@@ -22,6 +22,8 @@ class ProfileEntry(BaseModel):
     updated_at: AwareDatetime
     confidence: float = Field(ge=0, le=1)
     intents: tuple[RouteKey, ...] = Field(min_length=1, max_length=4)
+    scene: str | None = Field(default=None, max_length=120)
+    valid_until: AwareDatetime | None = None
 
     @field_validator("key", "value", "source")
     @classmethod

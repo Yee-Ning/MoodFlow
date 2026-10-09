@@ -7,6 +7,7 @@ from threading import RLock
 from typing import ContextManager, Protocol
 
 from .models import MemoryEvidence, MemoryRecord, MemoryStatus, MemoryType
+from .scopes import is_current, matches_scene
 
 
 class MemoryStore(Protocol):
@@ -112,8 +113,8 @@ class InMemoryMemoryStore:
                 and record.memory_type is MemoryType.PROFILE
                 and record.status is MemoryStatus.ACTIVE
                 and (
-                    scene is None
-                    or record.structured_content.get("scene") in {None, scene}
+                    matches_scene(record.structured_content.get("scene"), scene)
+                    and is_current(record.valid_until)
                 )
             ]
         rows.sort(key=lambda item: (item.importance, item.updated_at), reverse=True)
@@ -146,8 +147,8 @@ class InMemoryMemoryStore:
                 and record.status is MemoryStatus.ACTIVE
                 and record.embedding is not None
                 and (
-                    scene is None
-                    or record.structured_content.get("scene") in {None, scene}
+                    matches_scene(record.structured_content.get("scene"), scene)
+                    and is_current(record.valid_until)
                 )
             ]
 

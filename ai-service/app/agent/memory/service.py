@@ -102,6 +102,11 @@ class MemoryService:
             existing = self.store.get_active(
                 normalized_user_id, candidate.memory_type, candidate.memory_key
             )
+            if existing is None and candidate.scene:
+                legacy = candidate.model_copy(update={"scene": None}).memory_key
+                old = self.store.get_active(normalized_user_id, candidate.memory_type, legacy)
+                if old is not None and old.structured_content.get("scene") == candidate.scene:
+                    existing = old
             if existing is None:
                 created = self._new_record(
                     user_id=normalized_user_id,
@@ -129,6 +134,7 @@ class MemoryService:
                             else existing.evidence_strength
                         ),
                         "confirmations": existing.confirmations + 1,
+                        "valid_until": candidate.valid_until or existing.valid_until,
                         "updated_at": now,
                         "source_thread_id": normalized_thread_id,
                         "embedding": embedding or existing.embedding,
@@ -215,4 +221,5 @@ class MemoryService:
             embedding=embedding,
             source_message_id=source_message_id,
             evidence_quote=candidate.evidence_quote,
+            valid_until=candidate.valid_until,
         )
