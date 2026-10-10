@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.agent.redis_reuse import RedisReuseConfig
+from app.llm.runtime import active_ledger
 from app.tools.music import MusicServiceClient, MusicServiceError
 from app.tools.popularity import (
     POPULARITY_TTL_SECONDS, PopularityReadLimiter, RedisPopularityCache,
@@ -96,6 +97,26 @@ async def test_429_stops_new_api_reads_and_retains_already_known_cache_results(c
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("with_deadline", [True, False])
+async def test_single_song_timeout_keeps_other_results_without_expiring_batch(cache, with_deadline):
+    import time
+
+    async def read(song_id):
+        if song_id == 1:
+            raise TimeoutError("one song failed")
+        return 200
+
+    client = SimpleNamespace(get_song_comment_count=AsyncMock(side_effect=read))
+    token = active_ledger.set(SimpleNamespace(deadline=time.monotonic() + 30) if with_deadline else None)
+    try:
+        assert await get_song_popularity([1, 2], client=client, cache=cache,
+                                         limiter=PopularityReadLimiter(0)) == {2: 200}
+    finally:
+        active_ledger.reset(token)
+    assert client.get_song_comment_count.await_count == 2
+
+
+@pytest.mark.asyncio
 async def test_empty_and_invalid_batches_do_not_dispatch(cache):
     client = SimpleNamespace(get_song_comment_count=AsyncMock())
     assert await get_song_popularity([], client=client, cache=cache) == {}
@@ -157,3 +178,21 @@ def test_corrupt_cache_is_rejected_and_real_redis_ttl_is_seven_days(cache, redis
     assert live.load(185809) == 68320
     assert POPULARITY_TTL_SECONDS - 2 <= redis_server.ttl(live.key(185809)) <= POPULARITY_TTL_SECONDS
     assert live.key(185809) != live.key(186016)
+
+
+@pytest.mark.asyncio
+async def test_existing_request_deadline_bounds_new_reads_without_changing_budget(cache):
+    import time
+
+    async def slow_read(song_id):
+        await asyncio.sleep(1)
+        return 100
+
+    client = SimpleNamespace(get_song_comment_count=AsyncMock(side_effect=slow_read))
+    token = active_ledger.set(SimpleNamespace(deadline=time.monotonic() + 0.01))
+    try:
+        assert await get_song_popularity([1, 2], client=client, cache=cache,
+                                         limiter=PopularityReadLimiter(0)) == {}
+    finally:
+        active_ledger.reset(token)
+    client.get_song_comment_count.assert_awaited_once_with(1)

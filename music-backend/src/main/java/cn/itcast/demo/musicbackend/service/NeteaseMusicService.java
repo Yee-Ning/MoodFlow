@@ -27,6 +27,7 @@ import cn.itcast.demo.musicbackend.dto.SongLyricsData;
 import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
 import cn.itcast.demo.musicbackend.dto.UserProfileData;
 import cn.itcast.demo.musicbackend.exception.BadRequestException;
+import cn.itcast.demo.musicbackend.exception.ReadQuotaExceededException;
 import cn.itcast.demo.musicbackend.exception.ForbiddenException;
 import cn.itcast.demo.musicbackend.exception.UnprocessableRequestException;
 import cn.itcast.demo.musicbackend.exception.NeteaseApiException;
@@ -96,8 +97,20 @@ public class NeteaseMusicService {
             throw new BadRequestException("歌曲 ID 必须为正整数");
         }
         // Gate 0 verified the actual top-level total. Never infer from page size.
-        Map<String, Object> response = get("/comment/music", Map.of(
-                "id", songId, "limit", 1, "offset", 0, "before", 0));
+        Map<String, Object> response;
+        try {
+            response = get("/comment/music", Map.of(
+                    "id", songId, "limit", 1, "offset", 0, "before", 0));
+        } catch (NeteaseApiException error) {
+            // Only this new read retains HTTP 429; existing wrapper behavior stays.
+            for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+                if (cause instanceof RestClientResponseException httpError
+                        && httpError.getStatusCode().value() == 429) {
+                    throw new ReadQuotaExceededException();
+                }
+            }
+            throw error;
+        }
         Object total = response.get("total");
         if (!(total instanceof Integer || total instanceof Long)
                 || ((Number) total).longValue() < 0) {

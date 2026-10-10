@@ -11,6 +11,7 @@ from weakref import WeakKeyDictionary
 
 from app.agent.foundation.derived_cache import RedisDerivedCache, _hash
 from app.agent.redis_reuse import RedisReuseConfig
+from app.llm.runtime import active_ledger
 from app.tools.music import MusicServiceClient, MusicServiceError
 
 logger = logging.getLogger(__name__)
@@ -115,8 +116,17 @@ async def get_song_popularity(song_ids, *, client=None, cache=None, limiter=None
         else:
             result[identity] = cached
     for identity in missing:
+        timeout_scope = None
         try:
-            count = await limiter.read(client, identity)
+            deadline = getattr(active_ledger.get(), "deadline", None)
+            if deadline is not None:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                async with asyncio.timeout(remaining) as timeout_scope:
+                    count = await limiter.read(client, identity)
+            else:
+                count = await limiter.read(client, identity)
             if type(count) is not int or count < 0:
                 raise ValueError("invalid comment total")
         except MusicServiceError as error:
@@ -124,7 +134,12 @@ async def get_song_popularity(song_ids, *, client=None, cache=None, limiter=None
             if error.code == "http_429":
                 break  # A quota rejection must not cause another upstream burst.
             continue
-        except (ValueError, TimeoutError, OSError):
+        except TimeoutError:
+            logger.warning("Comment total unknown for song %s", identity)
+            if timeout_scope is not None and timeout_scope.expired():
+                break  # The entire request expired; never dispatch the next song.
+            continue
+        except (ValueError, OSError):
             logger.warning("Comment total unknown for song %s", identity)
             continue
         result[identity] = count

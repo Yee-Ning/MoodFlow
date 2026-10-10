@@ -2,6 +2,7 @@
 
 import re
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -35,6 +36,16 @@ from tests.test_worldline_era_expansion import document
 from tests.test_worldline_semantic_expansion import knowledge_document
 
 journal = write_helpers.journal
+
+
+@pytest.fixture(autouse=True)
+def controlled_comment_totals(monkeypatch):
+    # Extend this controlled catalog fixture with the new read dependency. A
+    # real zero/unknown is tested separately; do not issue live HTTP in regressions.
+    async def read(song_ids, **kwargs):
+        return {identity: 500 for identity in song_ids}
+
+    monkeypatch.setattr(curator, "get_song_popularity", AsyncMock(side_effect=read))
 
 
 def registry_for(songs, *, extra=()):
@@ -170,7 +181,7 @@ async def test_scene_discovery_changes_playlist_and_intro_only_mentions_actual_t
         "雨天夜跑歌单，冷门一点",
         catalog,
         journal,
-        model=responses(catalog, ids=[song.song_id for song in catalog.songs]),
+        model=responses(catalog, ids=[song.song_id for song in catalog.extra]),
     )
     assert result.status is TaskStatus.SUCCESS, result.content
     data = result.data["curation"]
@@ -191,10 +202,13 @@ async def test_scene_discovery_changes_playlist_and_intro_only_mentions_actual_t
     names = {song["name"] for song in data["selected_songs"]}
     assert set(re.findall(r"《(.*?)》", data["introduction"])) <= names
     assert set(data["introduction_song_ids"]) <= set(catalog.members)
-    assert "未核实平台热度" in data["introduction"]
-    # Liked precedence remains, with the two discovery paths then interleaved.
+    assert "评论数不等于播放量" in data["introduction"]
+    assert set(catalog.members) == {song.song_id for song in catalog.extra}
+    assert all(row["comment_count"] == 500 and row["association_path"]
+               for row in data["niche"]["recommendations"])
+    # Equal comment totals preserve the existing preference order.
     assert catalog.members[0] == catalog.songs[-1].song_id
-    assert catalog.members[1] not in pure_search and catalog.members[2] in pure_search
+    assert not set(catalog.members) & pure_search
 
 
 @pytest.mark.asyncio
@@ -506,7 +520,7 @@ async def test_semantic_peer_hints_become_only_real_search_song_ids(
         "生成Hip-Hop夜跑歌单，小众",
         catalog,
         journal,
-        model=responses(catalog, ids=[song.song_id for song in catalog.songs]),
+        model=responses(catalog, ids=[song.song_id for song in catalog.extra]),
     )
     assert result.status is TaskStatus.SUCCESS, result.content
     assert result.data["curation"]["selected_discovery_ids"] == [
@@ -538,9 +552,10 @@ async def test_knowledge_failure_keeps_v1_scene_and_honest_warnings(
     monkeypatch.setattr(curator, "get_curator_knowledge_service", lambda: service)
     result = await curate("雨天夜跑歌单，冷门一点", catalog, journal)
     assert result.status is TaskStatus.SUCCESS, result.content
-    assert len(catalog.members) == 15
+    assert len(catalog.members) == 0 and journal.write_events() == []
     assert result.data["curation"]["knowledge_sources"] == {}
-    assert "未找到初轮搜索之外" in result.content
+    assert any("未找到初轮搜索之外" in warning for warning in result.data["curation"]["warnings"])
+    assert result.data["reason"] == "no_niche_candidates"
     assert "已确认：" not in result.content
 
 

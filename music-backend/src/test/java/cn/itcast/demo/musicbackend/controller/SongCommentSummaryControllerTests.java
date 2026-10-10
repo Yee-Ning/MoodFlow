@@ -8,6 +8,7 @@ import cn.itcast.demo.musicbackend.dto.SongCommentSummaryData;
 import cn.itcast.demo.musicbackend.exception.BadRequestException;
 import cn.itcast.demo.musicbackend.exception.GlobalExceptionHandler;
 import cn.itcast.demo.musicbackend.exception.NeteaseApiException;
+import cn.itcast.demo.musicbackend.exception.ReadQuotaExceededException;
 import cn.itcast.demo.musicbackend.service.NeteaseMusicService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,5 +44,12 @@ class SongCommentSummaryControllerTests {
         mvc.perform(get("/api/songs/not-an-id/comment-summary")).andExpect(status().isBadRequest());
         mvc.perform(get("/api/songs/185809/comment-summary"))
                 .andExpect(status().isBadGateway()).andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void shouldExposeQuotaWithoutInventedTotal() throws Exception {
+        when(service.getSongCommentSummary(185809)).thenThrow(new ReadQuotaExceededException());
+        mvc.perform(get("/api/songs/185809/comment-summary"))
+                .andExpect(status().isTooManyRequests()).andExpect(jsonPath("$.data").doesNotExist());
     }
 }

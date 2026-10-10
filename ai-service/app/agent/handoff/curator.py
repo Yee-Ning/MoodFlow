@@ -29,6 +29,7 @@ from app.agent.foundation.subgraphs.tool_calling.models import (
 from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
 from app.agent.handoff.curator_context import prepare_curation_pack
 from app.agent.handoff.curator_prompts import PLAN_PROMPT, SELECTION_PROMPT
+from app.agent.handoff.niche import get_niche_config, rank_niche
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
     AddSongToPlaylistResult,
@@ -37,6 +38,8 @@ from app.schemas.music import (
     MusicSearchResult,
 )
 from app.tools.music import handle_music_tool_error
+from app.tools.music import MusicServiceClient
+from app.tools.popularity import get_song_popularity
 from app.agent.handoff.curator_knowledge import Discovery, get_curator_knowledge_service
 
 
@@ -243,8 +246,12 @@ def _operation_fact(operations, name, args):
     return view, fact
 
 
-def introduction(request, selected, liked, discovery_ids=()):
+def introduction(request, selected, liked, discovery_ids=(), niche_evidence=None):
     """Only actual selections enter the draft reserved for future GeneralChat polish."""
+    if request.obscure and niche_evidence:
+        details = "；".join(f"《{song.name}》：{niche_evidence[song.song_id]['explanation']}"
+                           for song in selected)
+        return f"围绕“{request.scene}”，推荐{len(selected)}首知识关联曲目。{details}。评论数不等于播放量，冷门是相对概念，值得听属于策展判断。"
     names = "、".join(f"《{song.name}》" for song in selected[:3])
     preference = (
         "适配候选中优先安排了你的红心曲目"
@@ -273,11 +280,13 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
     liked, playlist, plan = set(), None, None
     knowledge_sources, discovery_ids, initial_ids = {}, set(), set()
     discovery = Discovery()
+    niche_evidence, popularity_counts, popularity_unknown = {}, {}, []
+    niche_config = get_niche_config() if request.obscure else None
     operations = active_operations.get()
 
     def finish(message, status=TaskStatus.SUCCESS, reason=None):
         draft = (
-            introduction(request, accepted, liked, discovery_ids) if accepted else None
+            introduction(request, accepted, liked, discovery_ids, niche_evidence) if accepted else None
         )
         if draft:
             message += "\n" + draft
@@ -343,6 +352,11 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
                     if draft
                     else None,
                     "warnings": warnings,
+                    **({"niche": {"metric": "comment_count", "config": asdict(niche_config),
+                                  "unknown_song_ids": popularity_unknown,
+                                  "recommendations": [{"song_id": song.song_id, **niche_evidence[song.song_id]}
+                                                      for song in selected if song.song_id in niche_evidence]}}
+                       if request.obscure else {}),
                 },
                 "entities": entities.model_dump(mode="json"),
                 "client_actions": [],
@@ -503,6 +517,7 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
                         "start_year": hint.start_year,
                         "end_year": hint.end_year,
                         "sources": list(hint.sources),
+                        "association_path": list(hint.association_path),
                     }
                 )
         # Era membership must be song-specific, not an artist's career, title,
@@ -543,6 +558,34 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
                 ),
             ),
         )[:60]
+        if request.obscure:
+            # Only graph-backed, catalog-verified candidates can be called niche.
+            # Missing heat data and empty intervals never fall back to seed songs.
+            linked = []
+            for song in ordered:
+                path = [edge for item in knowledge_sources.get(str(song.song_id), [])
+                        for edge in item.get("association_path", [])]
+                if path:
+                    linked.append({"song_id": song.song_id, "association_path": path})
+            popularity_counts = await get_song_popularity(
+                [row["song_id"] for row in linked],
+                client=MusicServiceClient(session_cookie=runtime.context.session_cookie),
+            )
+            popularity_unknown = [row["song_id"] for row in linked if row["song_id"] not in popularity_counts]
+            for row in linked:
+                row["comment_count"] = popularity_counts.get(row["song_id"])
+            ranked = rank_niche(linked, request.count, config=niche_config)
+            for row in ranked:
+                path_text = "；".join(f"{edge['source_name']} → {edge['relation']} → {edge['target_name']}"
+                                      for edge in row["association_path"])
+                niche_evidence[row["song_id"]] = {
+                    "comment_count": row["comment_count"], "association_path": row["association_path"],
+                    "explanation": f"评论数{row['comment_count']}在{niche_config.min_comments}–{niche_config.max_comments}区间；知识关联为{path_text}",
+                }
+            ordered = [candidates[row["song_id"]] for row in ranked]
+            if not ordered:
+                return finish("只找到 0 首符合评论数区间且有知识关联证据的冷门候选，尚未创建歌单；不放宽阈值或凑数。",
+                              reason="no_niche_candidates")
         selection = await _structured(
             model,
             task.input_text,
@@ -562,6 +605,7 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
                             str(song.song_id), []
                         ),
                         "discovered": song.song_id in discovery_ids,
+                        **({"popularity_evidence": niche_evidence[song.song_id]} if request.obscure else {}),
                     }
                     for song in ordered
                 ],
@@ -579,7 +623,10 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
             [candidates[song_id] for song_id in selection.song_ids],
             key=lambda song: song.song_id not in liked,
         )
-        if selected:
+        if request.obscure:
+            rank = {song.song_id: position for position, song in enumerate(ordered)}
+            selected.sort(key=lambda song: rank[song.song_id])
+        elif selected:
             # Preserve liked precedence, then alternate the two discovery paths.
             liked_selected = [song for song in selected if song.song_id in liked]
             novel = [

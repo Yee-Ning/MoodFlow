@@ -27,6 +27,8 @@ def candidate_projection(candidate):
                for key in ("claim_id", "parent_id", "chunk_id")},
         } for source in value.get("sources", [])],
     } for value in candidate.get("knowledge_sources", [])]
+    if "popularity_evidence" in candidate:
+        row["popularity_evidence"] = candidate["popularity_evidence"]
     return row
 
 

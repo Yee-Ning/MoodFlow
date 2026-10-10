@@ -4,13 +4,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import cn.itcast.demo.musicbackend.exception.BadRequestException;
 import cn.itcast.demo.musicbackend.exception.NeteaseApiException;
+import cn.itcast.demo.musicbackend.exception.ReadQuotaExceededException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.HttpStatus;
 
 class SongCommentSummaryServiceTests {
     private MockRestServiceServer server;
@@ -67,6 +70,13 @@ class SongCommentSummaryServiceTests {
         server.expect(request -> {}).andRespond(withServerError());
         assertThrows(NeteaseApiException.class, () -> service.getSongCommentSummary(185809));
         assertThrows(NeteaseApiException.class, () -> service.getSongCommentSummary(185809));
+        server.verify();
+    }
+
+    @Test
+    void shouldPreserveUpstreamQuotaForNewReadOnly() {
+        server.expect(request -> {}).andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
+        assertThrows(ReadQuotaExceededException.class, () -> service.getSongCommentSummary(185809));
         server.verify();
     }
 }

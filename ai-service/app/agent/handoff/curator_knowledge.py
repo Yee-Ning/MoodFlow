@@ -63,6 +63,7 @@ class DiscoveryHint:
     sources: tuple[dict, ...]
     start_year: int | None = None
     end_year: int | None = None
+    association_path: tuple[dict, ...] = ()
 
     def matches(self, song, songs):
         """Exact registry names only; ambiguous recordings never inherit dates."""
@@ -139,6 +140,18 @@ def _evidence(result, relation):
     )
 
 
+def _edge(relation):
+    """Project an already validated edge; do not generate relationship facts."""
+    source = relation.source_entity
+    target = relation.target_entity or getattr(relation, "era", None) or getattr(relation, "scene", None)
+    return {"source_id": source.knowledge_entity_id or source.node_id,
+            "source_name": source.canonical_name,
+            "relation": relation.relation_type.value,
+            "target_id": getattr(target, "knowledge_entity_id", None) or target.node_id,
+            "target_name": target.canonical_name,
+            "claim_ids": [item.claim_id for item in relation.evidence]}
+
+
 def _clean(relation):
     return not any(
         value
@@ -204,7 +217,7 @@ class CuratorKnowledgeService:
         seeds = {normalize_alias(artist) for song in catalog for artist in song.artists}
         hints = {}
 
-        def add(identity, kind, sources, start=None, end=None):
+        def add(identity, kind, sources, start=None, end=None, *, association_path=()):
             entity = registry.get(identity) if identity else None
             if (
                 not entity
@@ -236,6 +249,7 @@ class CuratorKnowledgeService:
                 sources,
                 start,
                 end,
+                association_path,
             )
 
         for ids in groups[:80]:
@@ -283,13 +297,15 @@ class CuratorKnowledgeService:
                                 evidence,
                                 relation.start_year,
                                 relation.end_year,
+                                association_path=(_edge(relation),),
                             )
                     elif kind == "scene" and _fits(
                         relation.scene_name, request.scene, tags
                     ):
                         for entity in (source, target):
                             if entity:
-                                add(entity.knowledge_entity_id, kind, evidence)
+                                add(entity.knowledge_entity_id, kind, evidence,
+                                    association_path=(_edge(relation),))
                     elif (
                         kind == "influence"
                         and target
@@ -300,7 +316,8 @@ class CuratorKnowledgeService:
                     ):
                         for entity in (source, target):
                             if normalize_alias(entity.canonical_name) not in seeds:
-                                add(entity.knowledge_entity_id, kind, evidence)
+                                add(entity.knowledge_entity_id, kind, evidence,
+                                    association_path=(_edge(relation),))
 
         # Semantic expansion needs a genuine catalog artist binding, not a fabricated ID.
         artist_reads = 0
@@ -416,7 +433,13 @@ class CuratorKnowledgeService:
                             for source in (*expanded.sources, *peer_result.sources)
                             if source.excerpt
                         )
-                        add(peer, "semantic", evidence)
+                        path = tuple({"source_id": edge.source_id,
+                                      "source_name": owner.canonical_name,
+                                      "relation": edge.relation.value,
+                                      "target_id": edge.target_id, "target_name": edge.target_name,
+                                      "claim_ids": [item.claim_id for item in edge.evidence]}
+                                     for edge, owner in ((relation, artist), (peer_relation, entity)))
+                        add(peer, "semantic", evidence, association_path=path)
         result.hints = sorted(
             hints.values(),
             key=lambda h: (h.kind != "era", h.entity_type != "song", h.knowledge_id),

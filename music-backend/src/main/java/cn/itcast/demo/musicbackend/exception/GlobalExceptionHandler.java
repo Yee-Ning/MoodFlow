@@ -47,6 +47,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, "缺少请求参数: " + exception.getParameterName());
     }
 
+    @ExceptionHandler(ReadQuotaExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleReadQuota(ReadQuotaExceededException exception) {
+        return error(HttpStatus.TOO_MANY_REQUESTS, exception.getMessage());
+    }
+
     @ExceptionHandler(NeteaseApiTimeoutException.class)
     public ResponseEntity<ApiResponse<Void>> handleGatewayTimeout(NeteaseApiTimeoutException exception) {
         log.warn("网易云 API 请求超时: {}", exception.getMessage());
