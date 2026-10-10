@@ -127,12 +127,19 @@ class PublicUsage(ContinuityContract):
     budget_level: Literal["l2", "l3"] | None = None
     budget_stage: Literal["truncate_history", "summarize_history", "stop_sources", "honest_degradation",
                           "task_degradation", "refuse"] | None = None
+    redis_snapshot: dict[Literal["general_chat", "curator", "explorer"], int] | None = None
 
     @model_validator(mode="after")
     def split_matches_total(self):
         if self.input_tokens is not None and self.output_tokens is not None:
             if self.input_tokens + self.output_tokens != self.tokens:
                 raise ValueError("usage split must equal token total")
+        if self.redis_snapshot is not None:
+            if (self.phase != "settled" or not self.call_id.startswith("redis-flush-")
+                or set(self.redis_snapshot) != {"general_chat", "curator", "explorer"}
+                or any(value < 0 for value in self.redis_snapshot.values())
+                or sum(self.redis_snapshot.values()) != self.tokens):
+                raise ValueError("invalid Redis budget settlement snapshot")
         return self
 
 

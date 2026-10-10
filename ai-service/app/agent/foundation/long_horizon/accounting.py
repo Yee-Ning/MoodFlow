@@ -12,13 +12,32 @@ active_accounting = ContextVar("continuity_accounting", default=None)
 class DurableAccounting:
     def __init__(self, writer, identity, lease):
         self.writer, self.identity, self.lease = writer, identity, lease
+        self._budget_adapter = None
 
     @property
     def budget_ledger(self):
-        from app.llm.budget import HistoryBudgetLedger, PostgresBudgetLedger
-        from .postgres_store import PostgresContinuityStore
-        adapter = PostgresBudgetLedger if isinstance(self.writer.store, PostgresContinuityStore) else HistoryBudgetLedger
-        return adapter(self)
+        from app.llm.redis_budget import select_budget_ledger
+        if self._budget_adapter is None:
+            self._budget_adapter = select_budget_ledger(self)
+        return self._budget_adapter
+
+    def flush_budget(self):
+        from app.llm.redis_budget import RedisBudgetLedger, RedisBudgetUnavailable
+        if isinstance(self._budget_adapter, RedisBudgetLedger):
+            import logging
+            from sqlite3 import Error as SQLiteError
+            from psycopg import Error as PostgresError
+            from .execution import ContinuityConflict
+            try:
+                return self._budget_adapter.flush(self.identity.run_id)
+            except RedisBudgetUnavailable:
+                # Per-call cold receipts already exist; next bind can rebuild.
+                return None
+            except (PostgresError, SQLiteError, ContinuityConflict):
+                # Secondary snapshots must not mask the original call result or
+                # interrupt lease/context cleanup. Primary usage writes still fail.
+                logging.getLogger(__name__).warning("Budget snapshot flush unavailable; per-call receipts retained")
+                return None
 
     def write_usage(self, body):
         self.lease.check()
@@ -81,7 +100,7 @@ class DurableAccounting:
 
     def reserve(self, ledger, amount, *, input_tokens=None, output_tokens=None, model="unknown", billing_agent=None):
         self.lease.check()
-        call_id = uuid4().hex
+        call_id = ledger.claim_reservation() or uuid4().hex
         self.write_usage(PublicUsage(run_id=self.identity.run_id, agent=ledger.current_agent, call_id=call_id,
             phase="reserved", tokens=amount, input_tokens=input_tokens, output_tokens=output_tokens,
             model=model, billing_agent=billing_agent, max_output_tokens=output_tokens))

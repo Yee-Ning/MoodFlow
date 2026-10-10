@@ -43,11 +43,19 @@ def get_long_horizon_service() -> LongHorizonContextService:
                 "DATABASE_URL is required for PostgreSQL continuity persistence"
             )
         from .postgres_store import PostgresContinuityStore
+        from app.agent.session_cache import configured_session_cache
+
+        cache = configured_session_cache()
+        store_type, options = PostgresContinuityStore, {}
+        if cache is not None:
+            from .cached_postgres_store import CachedPostgresContinuityStore
+            store_type, options = CachedPostgresContinuityStore, {"session_cache": cache}
 
         return LongHorizonContextService(
-            PostgresContinuityStore(
+            store_type(
                 database_url,
                 max_pool_size=int(os.getenv("PERSISTENCE_POOL_MAX_SIZE", "10")),
+                **options,
             )
         )
     if mode != "sqlite":

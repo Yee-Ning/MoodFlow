@@ -1,0 +1,80 @@
+{
+  "phase": "redis-session-cache",
+  "date": "2026-10-07",
+  "baseline": "5744ce6f9bbae9af8e1f1b1bfba545367e78804b",
+  "exit_code": 0,
+  "elapsed_seconds": 312.01,
+  "counts": {
+    "passed": 2390,
+    "subtests_passed": 288,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 12,
+    "warnings": 185
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [
+    "tests/test_jev_live.py::test_live_system_one_choice",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+    "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]",
+    "tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+    "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+    "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+    "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes"
+  ],
+  "original_skips_unchanged": true,
+  "baseline_counts": {
+    "passed": 2355,
+    "subtests_passed": 288,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 12,
+    "warnings": 185
+  },
+  "scope": [
+    "tests",
+    "evals/tests"
+  ],
+  "execution": "pytest-xdist: four workers, loadfile",
+  "redis": "isolated-loopback-real-server",
+  "database": "isolated-loopback-postgres-15469",
+  "source_hashes": {
+    "app/agent/session_cache.py": "1cd66a65c057ebb61b51ae22e3d1adca56374823baadae69144140f669ff80d6",
+    "app/agent/cached_checkpointing.py": "f650649336c0752597262de72f75a71775af902e128ea6d381e2723baa7a47d7",
+    "app/agent/checkpointing.py": "8708fdac2c5f6178307d22c0959ea669e8133fda81f2d372a994db2674c821ac",
+    "app/agent/foundation/long_horizon/cached_postgres_store.py": "6abc22469401edef8ea406b56ae5bdfa423e9fad5ff4e4389539fa489064f188",
+    "app/agent/foundation/long_horizon/runtime.py": "a215569d4452775004d4d82f82b52889ed46b8523f9f5b1026fe3ec3644d00db",
+    "app/agent/foundation/long_horizon/service.py": "b7bde01c0e5b2e6097e1aa0ffe15f9209dc8da9cec5640813f4d4fac87fd2b3b",
+    "app/agent/foundation/long_horizon/coordinator.py": "88b1ea0f0ae9f21e4a5141d1bc9b11ef752d9cac657a70448c01aa6ea0b72a19",
+    "app/agent/handoff/continuity.py": "c8238a82d9c0122868e9e67fb8e7c8497ef73f948d37b6f5ec0eed1dedadf56b",
+    "tests/test_redis_session_cache.py": "92c133fcf0d39230b035aa67719f785d8b401048a3f29cc1371988f2d63dcdfb",
+    "tests/test_redis_session_postgres.py": "ace940909d036bd341792fa84656023e3316516eec2dc85a98e88a0a67b9fd55"
+  },
+  "source_unchanged_during_full_run": true,
+  "implementation_commit": "112d52aea46fd155a7639138b5f0f19028ebac10",
+  "pytest_final_summary": "2390 passed, 12 skipped, 185 warnings, 288 subtests passed in 311.84s",
+  "pytest_elapsed_seconds": 311.84,
+  "targeted": {
+    "passed": 147,
+    "warnings": 19,
+    "elapsed_seconds": 88.4,
+    "exit_code": 0
+  },
+  "cache_suite": {
+    "passed": 35,
+    "elapsed_seconds": 19.4,
+    "exit_code": 0
+  },
+  "static_checks": {
+    "ruff": "passed",
+    "compileall": "passed",
+    "git_diff_cached_check": "passed"
+  },
+  "critical_execution_reads": "PostgreSQL; cache-aside only for ordinary hot reads",
+  "new_test_cases": 35
+}
