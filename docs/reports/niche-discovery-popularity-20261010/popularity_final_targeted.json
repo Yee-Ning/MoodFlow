@@ -1,0 +1,28 @@
+{
+  "phase": "popularity_final_targeted",
+  "exit_code": 2,
+  "elapsed_seconds": 59.38,
+  "counts": {
+    "": 346,
+    "passed": 172,
+    "failed": 1,
+    "warnings": 132
+  },
+  "failed_nodeids": [
+    "tests/test_popularity_data.py::test_existing_request_deadline_bounds_new_reads_without_changing_budget"
+  ],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests/test_curator_popularity.py",
+    "tests/test_curator_curation_v1.py",
+    "tests/test_curator_curation_v2.py",
+    "tests/test_curator_context_budget.py",
+    "tests/test_curator_direct_request_routing.py",
+    "tests/test_context_atomic_candidates.py",
+    "tests/test_popularity_data.py",
+    "tests/test_niche_ranking.py",
+    "tests/test_redis_p2_cache_lock.py",
+    "tests/test_redis_p2_postgres.py"
+  ]
+}

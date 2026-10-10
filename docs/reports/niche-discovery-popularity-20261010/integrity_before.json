@@ -1,0 +1,37 @@
+{
+  "phase": "before",
+  "source_hashes": {
+    "ai-service/app/agent/handoff/curator.py": "e3c85dc7fe4272106cc55427950cb429dbc11f52c1a07f0292158667c0a22b66",
+    "ai-service/app/agent/handoff/curator_context.py": "9470b3af8d9f6a1401aaf69f37ef5a3b5736c459778a66c24f4144661b69fc37",
+    "ai-service/app/agent/handoff/curator_knowledge.py": "411626e467ec37aba09253c2d06a107e39fc0baf06601f0c2d33cec39fc19619",
+    "ai-service/app/agent/handoff/niche.py": "65ec119db16846b71836531c0b98fdfa3628b084b4d6793cc9c093b696a270a6",
+    "ai-service/app/schemas/popularity.py": "f39d6c72ec8059e4aad600e595415aec9fb00a487e544e386d15553e79c41fae",
+    "ai-service/app/tools/music.py": "6d0651075d321e0ad7a9e7bc80cde1fd94b9f658685012a584bb97b4c9f5b435",
+    "ai-service/app/tools/popularity.py": "51c77313f2168c22e30bd7c263fea708f13a4c699b98035ed9911efc93fbf435",
+    "ai-service/tests/test_curator_curation_v2.py": "bce802f39f1dff9a78d7a9eec09672596f23ce1e19658a28d9f1aba2ed0f4164",
+    "ai-service/tests/test_curator_popularity.py": "c5f27aad9985f0db7837e71e6853298e37c53e8acfe3fb0622be4bf52424b246",
+    "ai-service/tests/test_niche_ranking.py": "93d279faa530dea2f54bd90ccd592ce48c8797e8f790d02f77d391467d642208",
+    "ai-service/tests/test_popularity_data.py": "7e695c24458172cc76997de8935d2f4a32cfb9db6b52f665b1627f6805a2d97a",
+    "music-backend/src/main/java/cn/itcast/demo/musicbackend/controller/UserMusicController.java": "e6621104eed061c364ad16d9a737e4c57449525c9c1a9ea0f98ef94f1b8395e5",
+    "music-backend/src/main/java/cn/itcast/demo/musicbackend/dto/SongCommentSummaryData.java": "a510683a5e676bfd143373d96b928b3e232f7f94f73013960664e34391b2e1e6",
+    "music-backend/src/main/java/cn/itcast/demo/musicbackend/exception/GlobalExceptionHandler.java": "1454b32b25bbc3794271e0de38445666e018dbd1b8f2e50c51a8757e0cba530f",
+    "music-backend/src/main/java/cn/itcast/demo/musicbackend/service/NeteaseMusicService.java": "67e739d7907951507249506a557867a2fab9a88532e1f26d3fc4b84e4763305e",
+    "music-backend/src/test/java/cn/itcast/demo/musicbackend/controller/SongCommentSummaryControllerTests.java": "0ddaf6ea3b7cb755db633928a68e7dc5b05d7c15bec7db8b4f89ababb21ec40b",
+    "music-backend/src/test/java/cn/itcast/demo/musicbackend/service/SongCommentSummaryServiceTests.java": "e48b027bb45400d0f5d17bcb57fedc4b8a606baeaa59b6e25fdb623c06bbf0d5"
+  },
+  "frozen_count": 373,
+  "frozen_mismatches": [],
+  "contracts": {
+    "frozen_prompts_budget_selector_and_original_boundary_tests_unchanged": true,
+    "provider_budget_unchanged": true,
+    "existing_music_client_methods_unchanged": true
+  },
+  "new_python_files_lf": [
+    "ai-service/app/agent/handoff/niche.py",
+    "ai-service/app/schemas/popularity.py",
+    "ai-service/app/tools/popularity.py",
+    "ai-service/tests/test_niche_ranking.py",
+    "ai-service/tests/test_popularity_data.py",
+    "ai-service/tests/test_curator_popularity.py"
+  ]
+}

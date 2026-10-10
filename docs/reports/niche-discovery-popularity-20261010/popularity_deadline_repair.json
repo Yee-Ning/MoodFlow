@@ -1,0 +1,23 @@
+{
+  "phase": "popularity_deadline_repair",
+  "exit_code": 0,
+  "elapsed_seconds": 53.41,
+  "counts": {
+    "": 338,
+    "passed": 169,
+    "warnings": 140
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests/test_popularity_data.py",
+    "tests/test_curator_popularity.py",
+    "tests/test_curator_curation_v1.py",
+    "tests/test_curator_curation_v2.py",
+    "tests/test_curator_context_budget.py",
+    "tests/test_context_atomic_candidates.py",
+    "tests/test_redis_p2_cache_lock.py",
+    "tests/test_redis_p2_postgres.py"
+  ]
+}

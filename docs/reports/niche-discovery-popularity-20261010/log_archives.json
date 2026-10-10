@@ -1,0 +1,22 @@
+{
+  "popularity_full.log": {
+    "raw_sha256": "1d2fe3f695901c721cc2151f1e5162dd9c152595b7bc9242648bbe1e44abf270",
+    "gzip": "popularity_full.log.gz",
+    "readable_copy": "only line-ending/trailing-whitespace normalization"
+  },
+  "popularity_final_targeted.log": {
+    "raw_sha256": "e05c73698e85629139cd39327088b60951155bf90b38e3f5487cb3576029bf44",
+    "gzip": "popularity_final_targeted.log.gz",
+    "readable_copy": "only line-ending/trailing-whitespace normalization"
+  },
+  "popularity_deadline_repair.log": {
+    "raw_sha256": "7f9100de4f194126c90f8e11d4465711a21fcf55441f26b871c1a9f7c9109c0b",
+    "gzip": "popularity_deadline_repair.log.gz",
+    "readable_copy": "only line-ending/trailing-whitespace normalization"
+  },
+  "backend_final_verify.log": {
+    "raw_sha256": "24117bab6f9bddf43a730b23ecc5ee89d4f1ca59d62c18e2d676e90efca2b81b",
+    "gzip": "backend_final_verify.log.gz",
+    "readable_copy": "only line-ending/trailing-whitespace normalization"
+  }
+}
