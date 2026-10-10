@@ -1,0 +1,25 @@
+{
+  "checks": {
+    "imports": [
+      "app.agent.handoff.curator",
+      "app.agent.handoff.curator_knowledge",
+      "app.agent.handoff.curator_context",
+      "app.agent.redis_reuse",
+      "app.agent.foundation.derived_cache",
+      "app.agent.cached_checkpointing",
+      "app.agent.foundation.long_horizon.cached_postgres_store"
+    ],
+    "derived_key": "contextpack:derived:smoke-user:35ff2ba1546377b028c409239bad7e5b72685e03b6c6b2c46e2f9c06b2a2c5c0:unicode-v1-derived-v1",
+    "optional_backends_unchanged": true,
+    "frozen_general_chat_base": "sha256:4626a71fee1d1d7adaa979cd27837dbed5c93da9b4e5ab2a28da5b11dc6e38e9",
+    "direct_and_curation_routing": true,
+    "atomic_drop_and_custom_counter_bypass": {
+      "visible_song_ids": [
+        2
+      ],
+      "model_calls": 1
+    },
+    "catalog_identity_validation": true
+  },
+  "exit_code": 0
+}

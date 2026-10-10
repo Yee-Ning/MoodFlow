@@ -1,0 +1,6 @@
+{
+  "container_identity_verified": "f40efa4952093ebc233899a8529db9590550ae6e1a0bfb857a598936c24a01ac|/moodflow-coldchain-p2-test-20261010",
+  "stopped_and_removed": true,
+  "other_containers_touched": false,
+  "removal_verified_by_docker_ps": true
+}

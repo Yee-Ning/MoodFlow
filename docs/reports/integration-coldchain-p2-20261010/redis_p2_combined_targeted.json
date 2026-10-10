@@ -1,0 +1,38 @@
+{
+  "phase": "redis_p2_combined_targeted",
+  "exit_code": 0,
+  "elapsed_seconds": 193.91,
+  "counts": {
+    "": 746,
+    "passed": 371,
+    "warnings": 133,
+    "skipped": 2
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]"
+  ],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests/test_redis_p2_cache_lock.py",
+    "tests/test_redis_p2_postgres.py",
+    "tests/test_curator_direct_request_routing.py",
+    "tests/test_curator_curation_v1.py",
+    "tests/test_curator_curation_v2.py",
+    "tests/test_curator_context_budget.py",
+    "tests/test_recovery_selfhealing_process.py",
+    "tests/test_context_atomic_candidates.py",
+    "tests/test_context_engineering.py",
+    "tests/test_agent_pack_impl_a.py",
+    "tests/test_agent_pack_impl_b.py",
+    "tests/test_agent_pack_impl_c.py",
+    "tests/test_budget_defaults.py",
+    "tests/test_journal_checkpoint_recovery.py",
+    "tests/test_journal_checkpoint_recovery_postgres.py",
+    "tests/test_context_budget_phase2.py",
+    "tests/test_context_budget_postgres.py",
+    "tests/test_context_contracts_phase3.py",
+    "tests/test_context_contracts_postgres.py"
+  ]
+}

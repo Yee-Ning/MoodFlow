@@ -1,0 +1,74 @@
+{
+  "phase": "before",
+  "source_hashes": {
+    "ai-service/app/agent/cached_checkpointing.py": "4c7a639b46efce18d5380831d1284ff991c5747fba5f8db42afbef578b531edc",
+    "ai-service/app/agent/checkpointing.py": "cfd346c236a6200233ac64847274476bda2e65b71de1462f4fe060509d7c4c86",
+    "ai-service/app/agent/dedup_locks.py": "d4bf8c18cb44ffd7a87415c59ccd3e3098921d486413d49ab58b569bcb7c815a",
+    "ai-service/app/agent/foundation/context_engineering.py": "07fb75a5e9302a86291199849e1020625c7e49e72eb6b40ef790589278e6f351",
+    "ai-service/app/agent/foundation/derived_cache.py": "b2c2f3fb6e5ed855d8aef0d42fe446be132db1afd8739d8e86485305f55244c5",
+    "ai-service/app/agent/foundation/long_horizon/accounting.py": "7a33b24733191092aadc15d7ced3ba0189e88067205ed99cc2fa6542fc8122f4",
+    "ai-service/app/agent/foundation/long_horizon/cached_postgres_store.py": "c7d356255dea9660fdafc70a8e524bef9d4c297ef0755b2a9edcdbd018eb36b9",
+    "ai-service/app/agent/foundation/long_horizon/coordinator.py": "9300b3cdf97eb177bd52439dfb9df51fec45acdc862b9800842aa4268d5a858e",
+    "ai-service/app/agent/foundation/long_horizon/public_events.py": "2d471186ad704ed4a2acecfb0e44bb31759b088880a45894663ecc33f1942443",
+    "ai-service/app/agent/foundation/long_horizon/runtime.py": "34f771a0003ad5ea08ce903943590baff8bea19036729aa1ef1b77a99dd7dc08",
+    "ai-service/app/agent/foundation/long_horizon/service.py": "dd4ea4a6cec111c8069725f4734e2ac7bf381db6ebe6636f5533578658d77b01",
+    "ai-service/app/agent/foundation/profile_cache.py": "5590f7ff4c1070c73858e5398925fb7fc8623da02a0d305354c554d40914c632",
+    "ai-service/app/agent/foundation/prompt_bindings.py": "f494e7645c5bffc084fd2b42aecde0dad94f34632baa5f0b983bea0e065d42c4",
+    "ai-service/app/agent/foundation/user_profile.py": "7cd02c608cbf5fd83161b16fe8716c3697a0d48a9df06e05b855a022d1b66209",
+    "ai-service/app/agent/handoff/continuity.py": "c0c9b43266702c5f6be2632a21869483741d03771cd06b184656d92d05af0ca5",
+    "ai-service/app/agent/handoff/curator.py": "3efbff0d107329b1390e9e557d8b844ad63517821ee774d6d8a23b083abb3d03",
+    "ai-service/app/agent/handoff/curator_context.py": "22fd586449591ff1b25b25e645ce0076b193fbb6398e9434b3ddb999e41ce765",
+    "ai-service/app/agent/handoff/curator_knowledge.py": "00446d26eaeed02e5c2bcea2b601b1f9f4078c4bb9f783fd949eef7dc96c8f3b",
+    "ai-service/app/agent/handoff/curator_prompts.py": "ed88e4c92972e3c53f18e41d9c8e0ee2c9307b1a21da3209e1b17c64d51f3b9c",
+    "ai-service/app/agent/redis_reuse.py": "39217af81d8b3c22e0c549aac4c68c56ce608db630c7bbe4566c08497c81edc4",
+    "ai-service/app/agent/session_cache.py": "4ffbe633ebafb23cf657a5625d86e98b8ab525d2de7485ef33c9101c0f6c1132",
+    "ai-service/app/llm/redis_budget.py": "463babd13483e00769eefd39fce66679979dddf076f8342ed1e93d5ba3bcddd6",
+    "ai-service/app/llm/runtime.py": "c7b6da16b29034205ce7f355e204fd7df464b8e96315d41554337e3dede90b60",
+    "ai-service/scripts/reconcile_redis_budget.py": "3bdfdddbb7c335103106c6671b57f674fae686881243d23f77cdab367041ef67",
+    "ai-service/tests/test_agent_pack_impl_a.py": "6bf16bdb818acfcc64b496577d3ac4c8488bff95904e040d8949b850bc908d89",
+    "ai-service/tests/test_context_atomic_candidates.py": "71f401f5c1b31598afd01542f93f570734bf5b1c2fe5858fe6b4387a5252e296",
+    "ai-service/tests/test_curator_context_budget.py": "6f22b59ad0477136704740458e93c3547233900c6b25e81663966afae90afac6",
+    "ai-service/tests/test_curator_direct_request_routing.py": "8a8194cbc81e9805244cd01f88f9eef52c78e70c16c28936fa3e58eff5298223",
+    "ai-service/tests/test_redis_budget.py": "3d8f0ba1cb4318ee9e8cda8d23b5c098681e6257171f2bfaece61c29332d9da8",
+    "ai-service/tests/test_redis_budget_postgres.py": "3bcb1c47b494b958cac698899390134101d1024c0b92f1924ab24029bc84debd",
+    "ai-service/tests/test_redis_p2_cache_lock.py": "7b162d1ee7685eb34a75956df9cfb32c7a05ec724da2785880567dcfff9f86fe",
+    "ai-service/tests/test_redis_p2_postgres.py": "ed9d50befde01b1e34431d888dfbc7b04829d88d7e3e2453c077d0fbaa488a97",
+    "ai-service/tests/test_redis_session_cache.py": "19f747078874cd913fb546b8d2919e87666c9eb792ab38eda9b255d4bd3bdcb3",
+    "ai-service/tests/test_redis_session_postgres.py": "6d6b6a54ff08b3614c3796c3be885c91c62e5b25c55cb24989676d33ddbd0408"
+  },
+  "protected_count": 373,
+  "protected_manifest_sha256": "4e1d30670bf1e87061a7050ee99c0726feb306b6df5d9965793c06796f16a194",
+  "protected_mismatches": [],
+  "seven_historical_files": {
+    "evals/reports/semantic_relations_v1/coverage_inventory.json": {
+      "expected": "ad872d63552ce5a4c87eefda8c7f9253fc16d8484a5b5576cf2baf6fb93563e5",
+      "actual": "ad872d63552ce5a4c87eefda8c7f9253fc16d8484a5b5576cf2baf6fb93563e5"
+    },
+    "evals/reports/semantic_relations_v1/failures.jsonl": {
+      "expected": "4e2ef1d91bc58ad15e61e41891c85224b95f41571f0c6807586c3abc9f3fdd22",
+      "actual": "4e2ef1d91bc58ad15e61e41891c85224b95f41571f0c6807586c3abc9f3fdd22"
+    },
+    "evals/reports/semantic_relations_v1/human_review_pack.md": {
+      "expected": "8295f8d86d64bb6f4310399887ffc2cb7fd7630609d80d26da278b9ac9309497",
+      "actual": "8295f8d86d64bb6f4310399887ffc2cb7fd7630609d80d26da278b9ac9309497"
+    },
+    "evals/reports/semantic_relations_v1/metrics.json": {
+      "expected": "31ab4cdc0f0f0109f9ace7d919cb54b0df8d2e50f9a6d788a4de147ce6fd0225",
+      "actual": "31ab4cdc0f0f0109f9ace7d919cb54b0df8d2e50f9a6d788a4de147ce6fd0225"
+    },
+    "evals/reports/semantic_relations_v1/results.jsonl": {
+      "expected": "d65e25fe8a45ef010d0936e973785b79ac9b52cbbd3f139cb1055b184b0bd3dd",
+      "actual": "d65e25fe8a45ef010d0936e973785b79ac9b52cbbd3f139cb1055b184b0bd3dd"
+    },
+    "evals/reports/semantic_relations_v1/semantic_relations_evaluation_v1_report.md": {
+      "expected": "2d605412c6aa65d90ad9c796a37f59c5e1c8cefae069112e1423bd86383483c9",
+      "actual": "2d605412c6aa65d90ad9c796a37f59c5e1c8cefae069112e1423bd86383483c9"
+    },
+    "evals/reports/semantic_relations_v1/validation.json": {
+      "expected": "925e4ddd93b92460c218f6e17964a494e2a86164cfea25da76880706596f8741",
+      "actual": "925e4ddd93b92460c218f6e17964a494e2a86164cfea25da76880706596f8741"
+    }
+  },
+  "source_changed": [],
+  "protected_manifest_changed": false
+}

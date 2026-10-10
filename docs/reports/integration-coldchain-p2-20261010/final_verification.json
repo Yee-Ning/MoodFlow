@@ -1,0 +1,105 @@
+{
+  "branch": "codex/integration-coldchain-p2",
+  "implementation_head": "62b594754c97a70bd77eec89449e561d6a90b7c1",
+  "merge_commits": {
+    "curator": {
+      "commit": "4c4ff182d673dcc2949bb09ea801cc7667039df3",
+      "parents": [
+        "787598fbd557ab28bbcce9ac73666c914d83d0ad",
+        "08a809c7832463a365b05467eb8b3e77fb79a287"
+      ]
+    },
+    "redis_p2": {
+      "commit": "62b594754c97a70bd77eec89449e561d6a90b7c1",
+      "parents": [
+        "4c4ff182d673dcc2949bb09ea801cc7667039df3",
+        "e20a7214b88cc2297b4166c19562269a0417d97a"
+      ]
+    }
+  },
+  "full_regression": {
+    "phase": "coldchain_p2_full",
+    "exit_code": 0,
+    "elapsed_seconds": 406.94,
+    "counts": {
+      "": 5581,
+      "passed": 2782,
+      "warnings": 336,
+      "subtests passed": 288,
+      "skipped": 12
+    },
+    "failed_nodeids": [],
+    "skipped_nodeids": [
+      "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+      "tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes",
+      "tests/test_jev_live.py::test_live_system_one_choice",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]"
+    ],
+    "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+    "targets": [
+      "tests",
+      "evals/tests"
+    ]
+  },
+  "skipped_nodeids_unchanged": true,
+  "source_unchanged_after_merge_commit": true,
+  "source_file_count": 34,
+  "protected_file_count": 373,
+  "protected_contracts": {
+    "context_policy_class_unchanged": true,
+    "policy_values_unchanged": true,
+    "intent_filter_condition_unchanged": true,
+    "provider_budget_guard_unchanged": true,
+    "protected_content_unchanged": {
+      "ai-service/app/llm/budget.py": true,
+      "ai-service/tests/test_budget_defaults.py": true,
+      "ai-service/tests/test_recovery_selfhealing_process.py": true,
+      "ai-service/app/tools/music.py": true
+    }
+  },
+  "excluded_branch_heads": {
+    "codex/agent-integration-chains": {
+      "head": "100004a5105e15624369b7bbea4abf94969925b2",
+      "included": false
+    },
+    "codex/longhorizon-foundation-projection": {
+      "head": "3be8707008db9e032685b85b6b1b7968dc926e0b",
+      "included": false
+    },
+    "codex/longhorizon-query-drilldown": {
+      "head": "deeb960d9ab4291e259d37bbadf28121e584911b",
+      "included": false
+    },
+    "codex/memory-hardening": {
+      "head": "ed6ae0a7c3c36154a92fac20a989c6d1f2e29817",
+      "included": false
+    },
+    "codex/redis-infra": {
+      "head": "d37eb9ed0f7e2ae51d60fa77ef9982169478a252",
+      "included": false
+    }
+  },
+  "original_workspace": {
+    "branch": "codex/journal-checkpoint-recovery",
+    "head": "787598fbd557ab28bbcce9ac73666c914d83d0ad",
+    "user_changes_not_touched": true
+  },
+  "static_checks": {
+    "ruff": "passed: 46 scoped Python files",
+    "syntax_compile": "passed without bytecode",
+    "git_diff_check": "passed",
+    "git_diff_cached_check": "passed"
+  },
+  "production_configuration_changed": false,
+  "push_or_deploy": false,
+  "heat_filter_gate0_ready": false,
+  "heat_filter_gate0_remaining": "comment-count read API and its real response field are not verified"
+}
