@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, StringConstraints, ValidationError
 
 from app.config.settings import get_settings
 from app.schemas.context import MusicAgentContext
+from app.schemas.popularity import SpringSongCommentSummaryResponse
 from app.schemas.music import (
     AlbumDetailResult,
     AddSongToPlaylistArgs,
@@ -154,6 +155,16 @@ class MusicServiceClient:
                 str(getattr(parsed, "message", "音乐服务请求失败。")),
             )
         return parsed
+
+    async def get_song_comment_count(self, song_id: int) -> int:
+        """Read the verified upstream total via Spring; never fetch comment text."""
+        if type(song_id) is not int or song_id <= 0:
+            raise ValueError("song_id must be a positive integer")
+        payload = await self._request("GET", f"/api/songs/{song_id}/comment-summary")
+        parsed = self._validate_response(payload, SpringSongCommentSummaryResponse)
+        if parsed.data.song_id != song_id:
+            raise MusicServiceError("invalid_response", "评论统计与请求歌曲不一致。")
+        return parsed.data.comment_count
 
     async def search_music(self, keyword: str, limit: int = 10) -> MusicSearchResult:
         search_input = SearchMusicArgs(keyword=keyword, limit=limit)

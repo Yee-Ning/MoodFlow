@@ -22,6 +22,7 @@ import cn.itcast.demo.musicbackend.dto.CreatedPlaylistData;
 import cn.itcast.demo.musicbackend.dto.DeletedPlaylistData;
 import cn.itcast.demo.musicbackend.dto.SongLikeData;
 import cn.itcast.demo.musicbackend.dto.SongData;
+import cn.itcast.demo.musicbackend.dto.SongCommentSummaryData;
 import cn.itcast.demo.musicbackend.dto.SongLyricsData;
 import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
 import cn.itcast.demo.musicbackend.dto.UserProfileData;
@@ -88,6 +89,21 @@ public class NeteaseMusicService {
         } while (hasMore);
 
         return List.copyOf(playlists);
+    }
+
+    public SongCommentSummaryData getSongCommentSummary(long songId) {
+        if (songId <= 0) {
+            throw new BadRequestException("歌曲 ID 必须为正整数");
+        }
+        // Gate 0 verified the actual top-level total. Never infer from page size.
+        Map<String, Object> response = get("/comment/music", Map.of(
+                "id", songId, "limit", 1, "offset", 0, "before", 0));
+        Object total = response.get("total");
+        if (!(total instanceof Integer || total instanceof Long)
+                || ((Number) total).longValue() < 0) {
+            throw invalidResponse("total");
+        }
+        return new SongCommentSummaryData(songId, ((Number) total).longValue());
     }
 
     public List<SongData> searchSongs(String keyword, int limit) {

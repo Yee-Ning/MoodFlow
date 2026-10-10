@@ -13,6 +13,7 @@ import cn.itcast.demo.musicbackend.dto.CreatedPlaylistData;
 import cn.itcast.demo.musicbackend.dto.DeletedPlaylistData;
 import cn.itcast.demo.musicbackend.dto.SongLikeData;
 import cn.itcast.demo.musicbackend.dto.SongData;
+import cn.itcast.demo.musicbackend.dto.SongCommentSummaryData;
 import cn.itcast.demo.musicbackend.dto.SongLyricsData;
 import cn.itcast.demo.musicbackend.dto.SongPlaybackData;
 import cn.itcast.demo.musicbackend.dto.UserProfileData;
@@ -68,6 +69,11 @@ public class UserMusicController {
             @PathVariable String type,
             @PathVariable long id) {
         return ApiResponse.success(neteaseMusicService.getMusicEntityDetail(type, id));
+    }
+
+    @GetMapping("/songs/{id}/comment-summary")
+    public ApiResponse<SongCommentSummaryData> getSongCommentSummary(@PathVariable long id) {
+        return ApiResponse.success(neteaseMusicService.getSongCommentSummary(id));
     }
 
     @GetMapping("/songs/{id}")
