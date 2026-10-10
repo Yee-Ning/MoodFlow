@@ -1,0 +1,392 @@
+{
+  "final_pytest_summary": "2215 passed, 46 skipped, 196 warnings, 288 subtests passed in 265.32s (0:04:25)",
+  "command": "python docs/reports/agent-explorer-v1-20261004/validate.py --fixture-root D:/code/ProjectsAll/MoodFlow -m pytest tests ../deploy/tests -q --junitxml=../.dev/agent-explorer-v1/full-final.xml",
+  "offline": true,
+  "production_requests": false,
+  "junit": {
+    "local_path": ".dev/agent-explorer-v1/full-final.xml",
+    "sha256": "2dda0dfc438abc920060f8d234dbb17242baa3ccb0885f49d671a20db249d534",
+    "suite": [
+      {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "46",
+        "tests": "2549",
+        "time": "265.241",
+        "timestamp": "2026-10-04T16:59:01.119533+08:00",
+        "hostname": "Yee"
+      }
+    ]
+  },
+  "log": {
+    "local_path": ".dev/agent-explorer-v1/full-final.log",
+    "sha256": "9159123167b0afe29dceaf554226e5f3541c1656bb1c90c54a28de7873937c4e"
+  },
+  "explorer_tests": [
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_captured_song_ids_are_selected_from_catalog_not_guessed_or_generated",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_timeline_root_prelude_then_ascending_dates_with_sources_and_narrative",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_knowledge_only_explicit_representative_and_unreachable_node_exclusion",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_graph_metadata_cannot_create_catalog_identity_or_unbacked_time[metadata0]",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_graph_metadata_cannot_create_catalog_identity_or_unbacked_time[metadata1]",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_graph_metadata_cannot_create_catalog_identity_or_unbacked_time[metadata2]",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_knowledge_song_id_shaped_like_catalog_is_not_playable_without_private_catalog_record",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_missing_source_and_unsupported_catalog_edge_do_not_enter_path",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_no_sources_gives_unverified_empty_path_without_fake_root_or_song",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_queue_rejects_invalid_or_coerced_song_ids[0]",
+      "time": "0.001"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_queue_rejects_invalid_or_coerced_song_ids[-1]",
+      "time": "0.001"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_queue_rejects_invalid_or_coerced_song_ids[True]",
+      "time": "0.001"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_queue_rejects_invalid_or_coerced_song_ids[210049]",
+      "time": "0.001"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_queue_is_unique_and_keeps_null_song_title_for_knowledge_node",
+      "time": "0.001"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_payload_budget_retains_valid_prefix_and_reports_omissions",
+      "time": "0.002"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_programmatic_worldline_expansions_reuse_catalog_and_emit_ordered_path",
+      "time": "0.085"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_unknown_entity_returns_honest_clarification_without_path",
+      "time": "0.080"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_real_transfer_envelope_queue_is_parsed_by_mock_curator_and_existing_play_tool",
+      "time": "0.089"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_transfer_with_knowledge_only_rows_keeps_null_ids_for_mock_curator",
+      "time": "0.005"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_existing_guard_can_reject_queue_without_playback_or_edge_changes",
+      "time": "0.004"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_song_and_album_roots_reuse_existing_entity_resolution[song]",
+      "time": "0.085"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_song_and_album_roots_reuse_existing_entity_resolution[album]",
+      "time": "0.084"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_catalog_unavailable_keeps_failed_status_and_empty_unverified_path",
+      "time": "0.096"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_retrieval_unavailable_is_honest_catalog_only_instead_of_fabricated_knowledge",
+      "time": "0.102"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_receiver_cannot_promote_queue_text_or_grant_action_authority",
+      "time": "0.001"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_queue_does_not_repair_invalid_transfer_target_or_tool_schema[bad_call0]",
+      "time": "0.003"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_queue_does_not_repair_invalid_transfer_target_or_tool_schema[bad_call1]",
+      "time": "0.003"
+    },
+    {
+      "classname": "ai-service.tests.test_explorer_journey_v1",
+      "name": "test_pronouns_and_branch_continuations_keep_existing_resolution_path",
+      "time": "0.001"
+    }
+  ],
+  "skipped_reasons": {
+    "isolated PostgreSQL acceptance requires DATABASE_URL": 21,
+    "set JEV_LIVE_TEST=1 to use the real TypeSafe API": 1,
+    "set RUN_LIVE_POSTGRES_SMOKE=1 to write smoke records to the development DB": 4,
+    "DATABASE_URL is required for PostgreSQL E2E": 7,
+    "project Clean v0.2 fixture is not available": 1,
+    "set QDRANT_INTEGRATION_URL to run against a real Qdrant server": 2,
+    "recovery process acceptance requires isolated DATABASE_URL": 7,
+    "set RUN_WORLDLINE_POSTGRES_RESTART=1 for real PostgreSQL restart acceptance": 3
+  },
+  "static_checks": {
+    "ruff_check": "passed",
+    "compileall": "passed",
+    "git_diff_check": "passed"
+  },
+  "contract_example_checks": {
+    "json_parsed": true,
+    "same_queue_as_nodes": true,
+    "exact_five_fields": true,
+    "summary_chars": 866,
+    "rows": 5
+  },
+  "validated_files_sha256": {
+    "ai-service/app/agent/handoff/journey.py": "3becabe85813e65d046ef3babd2e08cbf35a5bbd0d9853e9ac74781105bf269c",
+    "ai-service/app/agent/handoff/explorer.py": "22e3c555440024c34c57059222bc25db070cb1c9125b622b1f83dbb518934f42",
+    "ai-service/app/agent/handoff/agents.py": "e648c6f29a235925de30698eecab77f414431614c1a3a51747c840cc3fd5f166",
+    "ai-service/tests/test_explorer_journey_v1.py": "727d0db90dbf6575d1d8d5df5d7712ad3f92e9a1c31cc001d162c5a3561b862a",
+    "docs/reports/agent-explorer-v1-20261004/validate.py": "cb47b4a5168275fececff105963ee5491b7233c58692a305d6a024a6f5130e26"
+  },
+  "fixture_provenance": [
+    {
+      "path": "ai-service/evals/config/router_capability_contract.json",
+      "sha256": "238d373ff43db0eea72dae17525525276a666c3819f959de8925206b0915a97c",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/router_e2e_blind_v4.jsonl",
+      "sha256": "216197f910ef0efc7acc44e790744ee0770bbac20f9d9f2e1420f9780a4fdf7c",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/router_eval_gold_v2.jsonl",
+      "sha256": "fb4961666dd15c693a45ea16e4ac7f5d3de404e77dcea72cc61c26c948f416a6",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/router_eval_v2.jsonl",
+      "sha256": "d67ac23dd1ada5d04d93d96c8bd1325b8fe98f27803c7b7bfb0c8c2623e1a84e",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/multi_dev_v3.jsonl",
+      "sha256": "4d5eba1b34142593fde46997e355fdea62885f43b48de3988d7f81129174eb0c",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/multi_blind_test_v3.jsonl",
+      "sha256": "137e9e3c479b8f1d3a309fbf1e03142c79b55dc4933d34f55bcb600c78dedc94",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/single_blind_v3.jsonl",
+      "sha256": "8ca3cf3aca26530a3b8bfdcc9b83b0828bede2ba5b7916eb6c6f5caaeaf0118e",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/jev_router_baseline_v1.jsonl",
+      "sha256": "e1132af06bf50aca89d90df782c75d1dae1bed22a0edc6bc4d9191779f20671d",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/reports/jev_router_baseline_v1_results.jsonl",
+      "sha256": "41ce211e13b5d3a8661c6c531099265b27a439ac73cd49c47a88fda6e6078b1f",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/rag_eval_gold_v3.ai_assisted_source_resolution.jsonl",
+      "sha256": "5d2888542042af16bf38d3ae63f45c956c8e37f658397e2f5d3a78c3759236e9",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/rag_eval_gold_v4.candidate.jsonl",
+      "sha256": "75dc8910eab396ac7815ec303a126c14dc44b85bf97924f416f1278eee4ee038",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/rag_eval_gold_v4.expanded_50.candidate.jsonl",
+      "sha256": "1ca311c731b83c0fd0f3ab95dcf31d06a95565e54e631e174e09dd890b81ad4e",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/evals/datasets/rag_eval_gold_v4.frozen.jsonl",
+      "sha256": "1ca311c731b83c0fd0f3ab95dcf31d06a95565e54e631e174e09dd890b81ad4e",
+      "kind": "frozen_test_input; restored_after_execution"
+    },
+    {
+      "path": "ai-service/data/knowledge/v2/knowledge_release_manifest.json",
+      "sha256": "2680c92d114db1574d3e46144e4aa17032c44876981055e6d7011fc5e0416059",
+      "kind": "existing_local_test_fixture; no new knowledge_source"
+    },
+    {
+      "path": "ai-service/data/knowledge/v2/knowledge_enriched_chunks.jsonl",
+      "sha256": "8d4e0b3bb3ea8ea8a456fcfbb97b348d0e4af1252d06b5923cbabc5864289c5a",
+      "kind": "existing_local_test_fixture; no new knowledge_source"
+    },
+    {
+      "path": "ai-service/evals/artifacts/gold_v2_trace_v3_fallback_20260916.jsonl",
+      "sha256": "7e85baf64ff79163093e1712ba889cbb221c41023609c5c6b3d5fed657bd0c8e",
+      "kind": "existing_local_test_fixture; no new knowledge_source"
+    },
+    {
+      "path": "ai-service/evals/artifacts/gold_v2_trace_v3_nav_context6_20260916.jsonl",
+      "sha256": "9beacd474a7257253cec4cfa0655a8348e71943200456abc662d84928c40f967",
+      "kind": "existing_local_test_fixture; no new knowledge_source"
+    },
+    {
+      "path": "ai-service/artifacts/intent_model/classifier_head.pt",
+      "sha256": "2ca187ac89e8fd269ac20da7cc3564c91c9d0413e98f20b622aa890faac55b84",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/artifacts/intent_model/encoder/config.json",
+      "sha256": "51ff37b1fb9f7cb9f480d07fb3f226ca55d578c15037fc8b315624657c2ef2a9",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/artifacts/intent_model/encoder/model.safetensors",
+      "sha256": "b994bb91c56d105a0bbcff2744f1a8ba4bbc9e990a0f2a70e3070d9cecd97d67",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/artifacts/intent_model/encoder/tokenizer.json",
+      "sha256": "75ce1f61959fea5e506c672b2353612ed6d8434faa5301384cdd20843133c1ab",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/artifacts/intent_model/encoder/tokenizer_config.json",
+      "sha256": "30ddc9a9df40863ccd4b27b8dafd760b8a46da2ca596b45b0ec36cdfe72680b1",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/artifacts/intent_model/label_mapping.json",
+      "sha256": "cbc0e4667a65620b642f0487bc76c5aa6d1b65674836965b03152f9416f9813d",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/artifacts/intent_model/thresholds.json",
+      "sha256": "f6ac1edb9a59d0025344b4379650b8d61d6993e2d8c2205b13db156f0f3a578b",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/artifacts/intent_model/training_config.json",
+      "sha256": "ad76ace84aec3a25e8fb0a580d9286827fb305d8e1d30c950121415cefdaddf4",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/indexing/worldline/final-native-20260927/v4/index_build_manifest.json",
+      "sha256": "445b7263221ae5864015752a6689e5d8303c21409407375a6e0b33ac831f50f3",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/indexing/worldline/final-native-20260927/v4/index_projection.jsonl",
+      "sha256": "1552c23089f8e9051011bd32d70020cdea22b3354e77f5d8dc04d61b34e6c418",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/indexing/worldline/final-native-20260927/v4/ready_index_approval.json",
+      "sha256": "36301da7de536e26ccdbd7d72d74d25257551415ad814bf264c98eb607319127",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/entity_registry_candidates.jsonl",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/knowledge_corpus_manifest.jsonl",
+      "sha256": "e9ef7bc05fbf0536be0a7b7417bfe28d05792888a8c3bc7dbac33ae68f59468c",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/knowledge_enriched_chunks.jsonl",
+      "sha256": "38c28a4f2b2c94453567511cb959489c3c9a2fd1a5771020b304a04fc0140138",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/knowledge_quality_report.json",
+      "sha256": "4b600aed15500d2ef742ad6d863231ee4a87164e5fd1d1fb9abad9a92c8da582",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/knowledge_release_manifest.json",
+      "sha256": "8c9d8ed7e4c81ce85958aebfd207d9e22ec0425f5312bd7b32c7f367f6536d24",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/qa/claim_review_sample.jsonl",
+      "sha256": "dd9db815c1463b97118c4648014388cd7ab651dcf5ffeb6c957d1cca240bfc80",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/qa/entity_link_review_sample.jsonl",
+      "sha256": "f8f63ebe0d9a0dd8669c0df32a1a71ca7e065a51178f5d582642fd718a777d8d",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/qa/qa_review_attestation.json",
+      "sha256": "8ef0cd8d5ae41279427983dd9f46cb818b734c70e446877946b4c7bd36006696",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    },
+    {
+      "path": "ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/qa/qa_sampling_manifest.json",
+      "sha256": "f6921e87c3c99395c9de7a089003aaf0a2ad1c93c73522cab785937513205312",
+      "kind": "existing_locked_test_artifact; no index rebuild"
+    }
+  ],
+  "initial_failures_resolved": [
+    "route_key value comparison fixed in Explorer",
+    "mock playback track artists and pending client_action contract corrected",
+    "mock Guard uses existing review method",
+    "PYTHONPATH root added for deploy test collection",
+    "CRLF frozen input bytes aligned without changing content or assertions; originals restored",
+    "missing frozen worktree artifacts copied from existing local fixtures with exact lock hashes"
+  ]
+}

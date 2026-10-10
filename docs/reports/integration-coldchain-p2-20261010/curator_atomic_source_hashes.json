@@ -1,0 +1,12 @@
+{
+  "ai-service/app/agent/foundation/context_engineering.py": "2807112057050421ac93d2b0ae2f9808c3da3e3c90681245ee67409f78f85bb9",
+  "ai-service/app/agent/foundation/prompt_bindings.py": "f494e7645c5bffc084fd2b42aecde0dad94f34632baa5f0b983bea0e065d42c4",
+  "ai-service/app/agent/handoff/curator.py": "3efbff0d107329b1390e9e557d8b844ad63517821ee774d6d8a23b083abb3d03",
+  "ai-service/app/agent/handoff/curator_context.py": "22fd586449591ff1b25b25e645ce0076b193fbb6398e9434b3ddb999e41ce765",
+  "ai-service/app/agent/handoff/curator_prompts.py": "ed88e4c92972e3c53f18e41d9c8e0ee2c9307b1a21da3209e1b17c64d51f3b9c",
+  "ai-service/app/agent/handoff/curator_knowledge.py": "00446d26eaeed02e5c2bcea2b601b1f9f4078c4bb9f783fd949eef7dc96c8f3b",
+  "ai-service/tests/test_curator_context_budget.py": "6f22b59ad0477136704740458e93c3547233900c6b25e81663966afae90afac6",
+  "ai-service/tests/test_context_atomic_candidates.py": "71f401f5c1b31598afd01542f93f570734bf5b1c2fe5858fe6b4387a5252e296",
+  "ai-service/tests/test_curator_direct_request_routing.py": "8a8194cbc81e9805244cd01f88f9eef52c78e70c16c28936fa3e58eff5298223",
+  "ai-service/tests/test_agent_pack_impl_a.py": "d2aff08f1ab6c6ed92e6fcf9c17aa9bef0492da63abb05900e13500d11e4d217"
+}

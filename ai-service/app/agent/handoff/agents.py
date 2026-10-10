@@ -12,6 +12,7 @@ from app.agent.foundation.subgraphs.current_song.assistant import (
     answer_current_song_task,
 )
 from app.agent.foundation.subgraphs.general_chat import create_general_chat_subgraph
+from app.agent.foundation.subgraphs.general_chat.results import grounded_response, read_result_receipt
 from app.agent.foundation.subgraphs.tool_calling import create_tool_calling_subgraph
 from app.agent.foundation.subgraphs.tool_calling.assistant import all_tool_calling_tools
 from app.agent.handoff.song_context import SongContextRead, create_song_context_tool
@@ -19,6 +20,7 @@ from app.agent.handoff.search_scope import scoped_search_tools
 from app.agent.foundation.subgraphs.tool_calling.scope import scoped_playback_tools
 from app.agent.handoff.context import exploration_projection
 from app.agent.handoff.explorer import execute_exploration, get_worldline_subgraph
+from app.agent.handoff.curator import curation_request, execute_curation
 from app.agent.handoff.state import HandoffRun
 from app.agent.handoff.progress import create_combination_status_tool, latest_combination_progress
 from app.agent.handoff.tools import create_transfer_tools
@@ -107,6 +109,12 @@ async def choose_transfer(
     )
     if not isinstance(response, AIMessage):
         raise ValueError("transfer model returned an invalid message")
+    # Explorer supplies its server-built queue in the existing summary slot.
+    # All other agents, transfer targets, tasks and guard paths are unchanged.
+    from app.agent.handoff.registry import AgentKey
+    if run.current_agent is AgentKey.EXPLORER:
+        from app.agent.handoff.journey import attach_journey_transfer
+        response = attach_journey_transfer(response, run)
     return response
 
 
@@ -186,6 +194,13 @@ async def execute_owned_task(
             },
         )
     if task.route_key is RouteKey.TOOL_CALLING:
+        request = curation_request(task.input_text)
+        if request is not None:
+            return await execute_curation(
+                task, view, runtime, request=request,
+                model=instrument_chat_model(curator_model or get_base_chat_model()),
+                tools=tool_tools if tool_tools is not None else all_tool_calling_tools(),
+            )
         # Bind the same allowlist to model and executor, including the read tool.
         graph = create_tool_calling_subgraph(
             model=instrument_chat_model(curator_model or get_base_chat_model()),
@@ -207,6 +222,7 @@ async def execute_owned_task(
             if history and isinstance(history[-1], HumanMessage):
                 history.pop()
             status_tool = create_combination_status_tool(view.get("task_results", []))
+            receipt = await read_result_receipt(view.get("task_results", []))
             read_tools = {context_tool.name: context_tool}
             progress = latest_combination_progress(view.get("task_results", []))
             if progress and len(progress["tasks"]) > 1:
@@ -221,19 +237,20 @@ async def execute_owned_task(
 
                 invocation = business_invocation(RouteKey.GENERAL_CHAT, text,
                     phase="answer" if attempt == 0 else "read_observation",
-                    prompt_refs=("general-chat-base/v1", "general-chat-handoff-read/v1"),
+                    prompt_refs=("general-chat-base/v1", "general-chat-handoff-read/v1",
+                                 "general-chat-result-evidence/v1"),
                     route_task_id=task.task_id,
                     invocation_run_id=run.run_id,
                     inputs=AgentPackInputs(messages=history,
                     business_state=routing_context.model_dump_json(),
                     structured_output=json.dumps(
-                        [
+                        {"result_receipt": receipt.projection(), "prior_task_results": [
                             {
                                 "status": item.status.value,
                                 "content": (item.content or "")[:800],
                             }
                             for item in prior_results[-8:]
-                        ],
+                        ]},
                         ensure_ascii=False,
                     ),
                     continuity_context=view.get("continuity_context")))
@@ -242,7 +259,7 @@ async def execute_owned_task(
                 if not isinstance(response, AIMessage) or response.invalid_tool_calls:
                     raise ValueError("invalid chat message")
                 if not response.tool_calls:
-                    return response
+                    return grounded_response(response, text, receipt)
                 if attempt == 2 or len(response.tool_calls) != 1:
                     raise ValueError("chat context tool limit exceeded")
                 call = response.tool_calls[0]

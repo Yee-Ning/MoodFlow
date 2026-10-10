@@ -496,6 +496,14 @@ class ContextSelector:
                                            token_after=item.token_count if after is None else after,
                                            **(trace_context or {})))
 
+        def total(values: list[ContextItem]) -> int:
+            assembled = self.assembler.assemble(values, intent=intent)
+            return sum(
+                self.counter.count(str(message.content))
+                + (self.counter.count(_serialize(message.tool_calls)) if isinstance(message, AIMessage) and message.tool_calls else 0)
+                for message in assembled
+            )
+
         for original in items:
             item = original.model_copy(update={"priority": policy.priorities.get(original.source, policy.priorities.get(original.type, original.priority))})
             event(item, "collected", "source_available")
@@ -514,6 +522,14 @@ class ContextSelector:
                 event(item, "dropped", "intent_excluded", 0)
                 continue
             event(item, "selected", "required" if item.required else "policy_allowed")
+            # An optional item that cannot fit by itself belongs to no feasible
+            # selection. Drop it atomically before dedup/source quotas so it
+            # cannot displace smaller candidates or consume their identities.
+            # Required items retain the existing compression/refusal behavior.
+            if not item.required and total([item]) > policy.input_budget:
+                dropped.append(item.id)
+                event(item, "dropped", "total_budget_exceeded", 0)
+                continue
             keys = _dedup_keys(item)
             if keys & seen and not item.required:
                 dropped.append(item.id)
@@ -534,14 +550,6 @@ class ContextSelector:
                 continue
             source_used[item.source] += item.token_count
             candidates.append(item)
-
-        def total(values: list[ContextItem]) -> int:
-            assembled = self.assembler.assemble(values, intent=intent)
-            return sum(
-                self.counter.count(str(message.content))
-                + (self.counter.count(_serialize(message.tool_calls)) if isinstance(message, AIMessage) and message.tool_calls else 0)
-                for message in assembled
-            )
 
         # Drop lowest-value optional items before any extractive compression.
         while total(candidates) > policy.input_budget:

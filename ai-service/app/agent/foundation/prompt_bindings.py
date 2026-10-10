@@ -6,7 +6,10 @@ from types import MappingProxyType
 
 from app.agent.foundation.context_contracts import AgentOwner, AgentPhase, PromptManifest
 from app.agent.foundation.subgraphs.current_song.assistant import CURRENT_SONG_SYSTEM_PROMPT
-from app.agent.foundation.subgraphs.general_chat.assistant import GENERAL_CHAT_SYSTEM_PROMPT
+from app.agent.foundation.subgraphs.general_chat.assistant import (
+    GENERAL_CHAT_RESULT_EVIDENCE_PROMPT,
+    GENERAL_CHAT_SYSTEM_PROMPT,
+)
 from app.agent.foundation.subgraphs.tool_calling.assistant import (
     SEARCH_ONLY_PROMPT,
     SONG_PLAYBACK_PROMPT,
@@ -18,6 +21,7 @@ from app.agent.handoff.prompts import (
     HANDOFF_TRANSFER_PROMPT,
     TRANSFER_RETRY_PROMPT,
 )
+from app.agent.handoff.curator_prompts import PLAN_PROMPT, SELECTION_PROMPT
 from app.rag.query_understanding.analyzer import QUERY_ANALYSIS_PROMPT_V1
 
 
@@ -43,9 +47,13 @@ class PromptBinding:
 
 _BINDINGS = (
     PromptBinding("general-chat-base", GENERAL_CHAT_SYSTEM_PROMPT, ("general_chat",), ("answer", "read_observation")),
+    PromptBinding("general-chat-result-evidence", GENERAL_CHAT_RESULT_EVIDENCE_PROMPT, ("general_chat",),
+                  ("answer", "read_observation"), variant="result-evidence"),
     PromptBinding("general-chat-handoff-read", GENERAL_CHAT_HANDOFF_READ_PROMPT, ("general_chat",),
                   ("answer", "read_observation"), variant="handoff-read"),
     PromptBinding("curator-tools-base", TOOL_CALLING_SYSTEM_PROMPT, ("curator",), ("tool_step", "tool_observation")),
+    PromptBinding("curator-plan", PLAN_PROMPT, ("curator",), ("tool_step",)),
+    PromptBinding("curator-selection", SELECTION_PROMPT, ("curator",), ("tool_observation",)),
     PromptBinding("search-only", SEARCH_ONLY_PROMPT, ("curator",), ("tool_step", "tool_observation"),
                   variant="search-only", separator="\n"),
     PromptBinding("song-playback", SONG_PLAYBACK_PROMPT, ("curator",), ("tool_step", "tool_observation"),

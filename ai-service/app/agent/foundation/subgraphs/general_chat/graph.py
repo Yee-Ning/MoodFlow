@@ -15,6 +15,7 @@ from app.agent.foundation.subgraphs.general_chat.assistant import (
     answer_general_chat,
 )
 from app.agent.foundation.subgraphs.general_chat.state import GeneralChatState
+from app.agent.foundation.subgraphs.general_chat.clarification import clarification_response
 
 MAX_VISIBLE_RESPONSE_CHARACTERS = 2_000
 
@@ -34,7 +35,10 @@ def build_general_chat_subgraph(
     model: BaseChatModel | None = None,
 ) -> StateGraph:
     async def agent(state: GeneralChatState) -> dict[str, Any]:
-        if assistant is not None:
+        clarification = clarification_response(state["current_input"], state["messages"])
+        if clarification is not None:
+            response = clarification
+        elif assistant is not None:
             response = await assistant(
                 state["messages"],
                 state["current_input"],
@@ -53,7 +57,7 @@ def build_general_chat_subgraph(
             )
         if not isinstance(response, AIMessage):
             raise RuntimeError("General-chat assistant returned a non-AI message")
-        if response.tool_calls:
+        if response.tool_calls or response.invalid_tool_calls:
             raise RuntimeError("General-chat assistant attempted to call a tool")
         content = _visible_text(response)
         return {
@@ -62,7 +66,9 @@ def build_general_chat_subgraph(
             "task_result": TaskResult(
                 task_id=state["task_id"],
                 route_key=RouteKey.GENERAL_CHAT,
-                status=TaskStatus.SUCCESS,
+                status=TaskStatus.NEEDS_INPUT if response.additional_kwargs.get(
+                    "general_chat_clarification"
+                ) else TaskStatus.SUCCESS,
                 content=content,
                 data={"response_kind": "general_chat"},
             ),

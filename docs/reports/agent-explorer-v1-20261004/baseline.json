@@ -1,0 +1,44 @@
+{
+  "original_head": "bca48e208ddbd40e56bd37295489b343fb0a82f4",
+  "implementation_base": "9b156813883c788f8775730fe2a2724eb7df79e6",
+  "generalchat_baseline_merge": "9b156813883c788f8775730fe2a2724eb7df79e6",
+  "branch": "codex/agent-explorer-v1",
+  "ancestors": {
+    "f97d5d2": {
+      "full_hash": "f97d5d259cfcf153185581905ca7abb0aca33b50",
+      "merge_base_exit": 0
+    },
+    "588fa6f": {
+      "full_hash": "588fa6f776776e2d4662cdaf09e38e872745623a",
+      "merge_base_exit": 0
+    },
+    "37ffdab": {
+      "full_hash": "37ffdabb8e7c5a959027928b94b3de092b54be23",
+      "merge_base_exit": 0
+    },
+    "feea347": {
+      "full_hash": "feea34747f98081f613467be71cef00614e73d9e",
+      "merge_base_exit": 0
+    },
+    "a3cc649": {
+      "full_hash": "a3cc649c643b3167805a2c6e36722b6344d8beef",
+      "merge_base_exit": 0
+    },
+    "b983411b": {
+      "full_hash": "b983411b0029b154b8d50c4fe23b579128c758f9",
+      "merge_base_exit": 0
+    },
+    "c4096608": {
+      "full_hash": "c4096608e92ac6ad3077b807beced04932d3f5c6",
+      "merge_base_exit": 0
+    },
+    "08d18c5": {
+      "full_hash": "08d18c517c98094aff1c5303b6031dffb6366178",
+      "merge_base_exit": 0
+    },
+    "55c34210": {
+      "full_hash": "55c34210e7f64d0db2a7e9efee3a137a24239796",
+      "merge_base_exit": 0
+    }
+  }
+}

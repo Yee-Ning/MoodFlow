@@ -84,7 +84,8 @@ def call_manifests(caplog):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("route,phases,prompts", [
-    (RouteKey.GENERAL_CHAT, ["answer", "read_observation"], ["general-chat-base", "general-chat-handoff-read"]),
+    (RouteKey.GENERAL_CHAT, ["answer", "read_observation"],
+     ["general-chat-base", "general-chat-handoff-read", "general-chat-result-evidence"]),
     (RouteKey.TOOL_CALLING, ["tool_step", "tool_observation"], ["curator-tools-base"]),
     (RouteKey.CURRENT_SONG, ["song_analysis"], ["curator-current-song"]),
 ])

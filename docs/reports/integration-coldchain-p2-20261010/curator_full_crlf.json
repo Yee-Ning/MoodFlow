@@ -1,0 +1,24 @@
+{
+  "phase": "curator_full_crlf",
+  "exit_code": 2,
+  "elapsed_seconds": 377.34,
+  "counts": {
+    "": 4532,
+    "passed": 2264,
+    "warnings": 318,
+    "subtests passed": 149,
+    "skipped": 1,
+    "failed": 1
+  },
+  "failed_nodeids": [
+    "tests/test_recovery_selfhealing_process.py::test_native_exit_recovers_receipts_or_structured_block_without_external_write[after_write_before_result]"
+  ],
+  "skipped_nodeids": [
+    "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload"
+  ],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests",
+    "evals/tests"
+  ]
+}
