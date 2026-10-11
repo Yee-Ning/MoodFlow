@@ -23,10 +23,13 @@ def _row(case_id, gold, selected, jev=None, task="single_intent", status="histor
     }
 
 
-def test_prepare_keeps_historical_labels_and_candidates_separate():
+def test_prepare_keeps_historical_labels_and_candidates_separate(monkeypatch, tmp_path):
     before = Path("evals/datasets/router_eval_v2.jsonl").read_bytes()
+    original_diagnostic = DATASET.read_bytes()
+    generated = tmp_path / DATASET.name
+    monkeypatch.setattr("evals.jev_router_baseline_v1.DATASET", generated)
     prepare()
-    rows = [json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines()]
+    rows = [json.loads(line) for line in generated.read_text(encoding="utf-8").splitlines()]
     original = [json.loads(line) for line in before.decode("utf-8").splitlines()]
     assert len(rows) == len(original) + 12
     assert [(row["case_id"], row["gold_routes"]) for row in rows[:len(original)]] == [
@@ -34,6 +37,7 @@ def test_prepare_keeps_historical_labels_and_candidates_separate():
     ]
     assert {row["case_id"] for row in rows if row["label_status"] == "questionable"} == QUESTIONABLE
     assert Path("evals/datasets/router_eval_v2.jsonl").read_bytes() == before
+    assert DATASET.read_bytes() == original_diagnostic
 
 
 def test_metrics_separate_single_multi_boundary_and_candidate():

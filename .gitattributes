@@ -46,6 +46,7 @@ ai-service/evals/datasets/multi_blind_test_v3.jsonl text eol=lf
 ai-service/evals/datasets/multi_dev_v3.jsonl text eol=lf
 ai-service/evals/datasets/router_e2e_blind_v4.jsonl text eol=lf
 ai-service/evals/datasets/router_eval_gold_v2.jsonl text eol=lf
+ai-service/evals/datasets/router_eval_v2.jsonl text eol=lf
 ai-service/evals/datasets/single_blind_v3.jsonl text eol=lf
 ai-service/evals/datasets/worldline_eval_v0.jsonl text eol=lf
 ai-service/evals/reports/jev_multi_dev_v3_results.jsonl text eol=lf
