@@ -1,0 +1,37 @@
+{
+  "phase": "after",
+  "source_hashes": {
+    "ai-service/app/agent/handoff/recommendation.py": "3296b74f4868560fc3997211902573746ae5c4bf408396d2bf6443594417f8b8",
+    "ai-service/app/agent/handoff/recommendation_experiments.py": "7be0245d6df37dac431f5d7dc2cb0bbf67a47d4c4b50a57c1f9c1e4ce8aeabe3",
+    "ai-service/app/agent/handoff/rollout.py": "3abb5c2e4cf0d4a64a0a7627afe648d5d1442496a08a603788db2c75765dc81d",
+    "ai-service/app/agent/handoff/curator.py": "1d29fcf78e7b960e70d04c4c8dcbd563b660ed03b42792ae51ff5631585bff1e",
+    "ai-service/app/agent/handoff/curator_context.py": "0e638b6b8444f5216b97c52f00ba3a52e3c35d986c2d80b92cc873d42684468d",
+    "ai-service/tests/test_recommendation_weights.py": "592c573e2c3bf7846a32c25150400126c65b81ee8257beaead4991a57c85ca8d",
+    "ai-service/tests/test_recommendation_experiments.py": "11beebad799f6ae928f87b30ec91dda5cca0ca35dff937a1875991ac33b203b2",
+    "ai-service/tests/test_curator_weights_ab.py": "0037206c4c9b124830d37e359307983bdb79c87e2ae671a515b41449cc00e860"
+  },
+  "frozen_count": 373,
+  "frozen_mismatches": [],
+  "protected_content_unchanged": {
+    "ai-service/app/agent/foundation/prompt_bindings.py": true,
+    "ai-service/app/agent/handoff/curator_prompts.py": true,
+    "ai-service/app/agent/foundation/context_engineering.py": true,
+    "ai-service/app/llm/runtime.py": true,
+    "ai-service/app/llm/budget.py": true,
+    "ai-service/app/tools/music.py": true,
+    "ai-service/app/tools/popularity.py": true,
+    "ai-service/app/agent/handoff/niche.py": true,
+    "ai-service/app/config/settings.py": true,
+    "ai-service/tests/test_context_atomic_candidates.py": true,
+    "ai-service/tests/test_curator_context_budget.py": true,
+    "ai-service/tests/test_handoff_rollout.py": true
+  },
+  "new_python_files_lf": [
+    "ai-service/app/agent/handoff/recommendation.py",
+    "ai-service/app/agent/handoff/recommendation_experiments.py",
+    "ai-service/tests/test_recommendation_weights.py",
+    "ai-service/tests/test_recommendation_experiments.py",
+    "ai-service/tests/test_curator_weights_ab.py"
+  ],
+  "sources_unchanged_during_full_run": true
+}

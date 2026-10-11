@@ -1,0 +1,15 @@
+{
+  "phase": "recommendation_weights_unit",
+  "exit_code": 0,
+  "elapsed_seconds": 2.62,
+  "counts": {
+    "": 28,
+    "passed": 14
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests/test_recommendation_weights.py"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "phase": "curation_weights_gate0_baseline",
+  "exit_code": 0,
+  "elapsed_seconds": 68.23,
+  "counts": {
+    "": 352,
+    "passed": 176,
+    "warnings": 136
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests/test_curator_curation_v1.py",
+    "tests/test_curator_curation_v2.py",
+    "tests/test_curator_context_budget.py",
+    "tests/test_curator_direct_request_routing.py",
+    "tests/test_curator_popularity.py",
+    "tests/test_niche_ranking.py",
+    "tests/test_popularity_data.py",
+    "tests/test_context_atomic_candidates.py",
+    "tests/test_handoff_rollout.py",
+    "tests/test_handoff_observability.py"
+  ]
+}

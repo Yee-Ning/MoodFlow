@@ -1,0 +1,22 @@
+{
+  "curation_weights_gate0_baseline.log": {
+    "raw_sha256": "0d60e01eb06bd6dd0f245d22ed4405b39278a7d392bac5517b20ccb2484dffe0",
+    "archive": "curation_weights_gate0_baseline.log.gz"
+  },
+  "recommendation_weights_unit.log": {
+    "raw_sha256": "94a51e11d31f3f491f1e4d690e2f92eb85f3a54a8730a735ff7d02b881e28e7b",
+    "archive": "recommendation_weights_unit.log.gz"
+  },
+  "recommendation_experiments_unit.log": {
+    "raw_sha256": "084adc67ad1fb8acd2837f3bd68cd884bc104307a371e3c8a8fb52fd02daaaf9",
+    "archive": "recommendation_experiments_unit.log.gz"
+  },
+  "curation_weights_integration.log": {
+    "raw_sha256": "e510110fb03e32ecbf46b5f1128b4cd9ce0fbf6eb28dfa95a0fbfeb002e1b154",
+    "archive": "curation_weights_integration.log.gz"
+  },
+  "curation_weights_full.log": {
+    "raw_sha256": "ccaf30a68eed00c1521ed42601796c0696d5d808bba2a4b78a3e9e0d6b007e6f",
+    "archive": "curation_weights_full.log.gz"
+  }
+}

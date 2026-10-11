@@ -1,0 +1,57 @@
+{
+  "branch": "codex/curation-weights-ab",
+  "baseline": "7b0197a11382ac79bb95e6f433f846ae2d27a2bb",
+  "implementation_head": "dad94399faf1952a69e7e8db338486ee1290e6fc",
+  "gate0_passed": true,
+  "playback_history": "not_connected",
+  "default_weights": {
+    "user_preference": 4,
+    "knowledge_association": 2,
+    "scene_tags": 1
+  },
+  "ab_sticky_storage": false,
+  "evaluation_metrics_implemented": false,
+  "existing_hash_and_event_channels_reused": true,
+  "full_regression": {
+    "phase": "curation_weights_full",
+    "exit_code": 0,
+    "elapsed_seconds": 402.55,
+    "counts": {
+      "": 5737,
+      "passed": 2860,
+      "warnings": 363,
+      "subtests passed": 288,
+      "skipped": 12
+    },
+    "failed_nodeids": [],
+    "skipped_nodeids": [
+      "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+      "tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes",
+      "tests/test_jev_live.py::test_live_system_one_choice",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]"
+    ],
+    "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+    "targets": [
+      "tests",
+      "evals/tests"
+    ]
+  },
+  "additional_tests": 31,
+  "skip_set_unchanged": true,
+  "static_checks": {
+    "ruff": "passed",
+    "syntax_compile": "passed",
+    "git_diff_check": "passed"
+  },
+  "frozen_files_unchanged": 373,
+  "production_configuration_changed": false,
+  "merged_pushed_deployed": false
+}
