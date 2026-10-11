@@ -35,7 +35,7 @@ from app.agent.handoff.recommendation import (
     recommendation_metadata, uses_baseline_order,
 )
 from app.agent.handoff.recommendation_experiments import (
-    assign_recommendation_variant, get_recommendation_experiment, record_recommendation,
+    assign_recommendation_variant, get_recommendation_experiment, record_recommendation, snapshot_recommendation_likes,
 )
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
@@ -292,12 +292,14 @@ async def execute_curation(task, state, runtime, *, request, model, tools, weigh
     operations = active_operations.get()
     assignment, ranking_candidate_count = None, 0
 
-    def finish(message, status=TaskStatus.SUCCESS, reason=None):
+    async def finish(message, status=TaskStatus.SUCCESS, reason=None):
         if assignment is not None:
+            snapshot = await snapshot_recommendation_likes(
+                [song.song_id for song in selected], MusicServiceClient(session_cookie=runtime.context.session_cookie))
             record_recommendation(assignment, candidate_count=ranking_candidate_count,
                                   song_ids=[song.song_id for song in selected],
                                   tag_count=len(plan.tags) if plan else 0,
-                                  niche_requested=request.obscure, status=status)
+                                  niche_requested=request.obscure, status=status, like_snapshot=snapshot)
         draft = (
             introduction(request, accepted, liked, discovery_ids, niche_evidence) if accepted else None
         )
@@ -383,20 +385,20 @@ async def execute_curation(task, state, runtime, *, request, model, tools, weigh
         )
 
     if not 10 <= request.count <= 20:
-        return finish(
+        return await finish(
             "这轮场景歌单支持 10–20 首，请告诉我这个范围内的数量。",
             TaskStatus.NEEDS_INPUT,
             "count_out_of_range",
         )
     if operations is None:
-        return finish(
+        return await finish(
             "缺少可核对的写操作记账，尚未创建歌单或添加歌曲。",
             TaskStatus.FAILED,
             "journal_required",
         )
     scoped = [tool for tool in tools if tool.name in CURATION_TOOLS]
     if {tool.name for tool in scoped} != CURATION_TOOLS:
-        return finish(
+        return await finish(
             "策展需要的现有工具不可用，尚未创建歌单。",
             TaskStatus.FAILED,
             "missing_tools",
@@ -556,7 +558,7 @@ async def execute_curation(task, state, runtime, *, request, model, tools, weigh
             )
         if not candidates:
             suffix = "缺少可核实的歌曲年代证据。" if request.decade is not None else ""
-            return finish(
+            return await finish(
                 f"只找到 0 首可用候选，尚未创建歌单；不会编造或凑数。{suffix}",
                 reason="no_candidates",
             )
@@ -596,7 +598,7 @@ async def execute_curation(task, state, runtime, *, request, model, tools, weigh
                 }
             ordered = [candidates[row["song_id"]] for row in ranked]
             if not ordered:
-                return finish("只找到 0 首符合评论数区间且有知识关联证据的冷门候选，尚未创建歌单；不放宽阈值或凑数。",
+                return await finish("只找到 0 首符合评论数区间且有知识关联证据的冷门候选，尚未创建歌单；不放宽阈值或凑数。",
                               reason="no_niche_candidates")
         selection = await _structured(
             model,
@@ -640,7 +642,7 @@ async def execute_curation(task, state, runtime, *, request, model, tools, weigh
             niche_order={song.song_id: i for i, song in enumerate(ordered)} if request.obscure else None,
         )
         if not selected:
-            return finish(
+            return await finish(
                 "只找到 0 首符合场景的曲目，尚未创建歌单；不会拿无关歌曲凑数。",
                 reason="no_matches",
             )
@@ -676,7 +678,7 @@ async def execute_curation(task, state, runtime, *, request, model, tools, weigh
             if all_confirmed
             else "已生成歌单选曲，创建和加歌已有后端成功回执；未全部只读核对，歌曲尚未全部确认。"
         )
-        return finish(
+        return await finish(
             short + wording + ("\n" + "\n".join(warnings) if warnings else "")
         )
     except (ValueError, KeyError, TypeError, ContinuityConflict):
@@ -688,7 +690,7 @@ async def execute_curation(task, state, runtime, *, request, model, tools, weigh
         )
         if selected:
             message += f"选出 {len(selected)} 首，{len(accepted)} 首已有有效加歌回执，其余未确认。"
-        return finish(
+        return await finish(
             message,
             TaskStatus.FAILED,
             "write_unknown" if unknown else "curation_failed",

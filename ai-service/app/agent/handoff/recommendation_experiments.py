@@ -91,7 +91,36 @@ def assign_recommendation_variant(config, user_id, fallback_weights):
     raise AssertionError("validated traffic must cover all hash buckets")
 
 
-def record_recommendation(assignment, *, candidate_count, song_ids, tag_count, niche_requested, status):
+async def snapshot_recommendation_likes(song_ids, client):
+    """One emission-time read; unknown is never represented as not previously liked.
+
+    This is instrumentation only: no ranking input, tool budget mutation, writes,
+    retry or new account identifier. Reuse the existing HTTP read timeout.
+    """
+    import asyncio
+    from datetime import UTC, datetime
+    from app.config.settings import get_settings
+    from app.schemas.music import LikedSongsResult
+
+    started = datetime.now(UTC).isoformat()
+    status, liked = "empty", None
+    if song_ids:
+        try:
+            async with asyncio.timeout(get_settings().spring_boot_timeout_seconds):
+                result = LikedSongsResult(song_ids=await client.get_liked_song_ids())
+            liked, status = set(result.song_ids), "available"
+        except Exception:
+            # Do not leak exception text, cookies or a fabricated false baseline.
+            status = "unavailable"
+    return {"schema_version": "recommendation-like-snapshot-v1", "source": "get_liked_songs",
+            "status": status, "read_started_at_utc": started,
+            "observed_at_utc": datetime.now(UTC).isoformat(),
+            "songs": [{"song_id": song_id, "was_liked_before": song_id in liked if liked is not None else None}
+                      for song_id in dict.fromkeys(song_ids)]}
+
+
+def record_recommendation(assignment, *, candidate_count, song_ids, tag_count, niche_requested, status,
+                          like_snapshot=None):
     # Existing request/thread keys are reused. Do not create/log a raw or hashed
     # user identifier, raw query, history, liked IDs or playback measurements.
     fields = {"experiment_id": assignment.experiment_id, "variant_id": assignment.variant_id,
@@ -99,6 +128,8 @@ def record_recommendation(assignment, *, candidate_count, song_ids, tag_count, n
               "weights": asdict(assignment.weights), "playback_history_status": PLAYBACK_HISTORY_STATUS,
               "recommendation_context": {"candidate_count": candidate_count, "song_ids": song_ids,
                                          "scene_tag_count": tag_count, "niche_requested": niche_requested,
-                                         "status": str(status)}}
+                                         "status": str(status), "like_snapshot": like_snapshot or {
+                                             "status": "unavailable", "songs": [
+                                                 {"song_id": song_id, "was_liked_before": None} for song_id in song_ids]}}}
     _check_public_text(fields)
     return emit("curation.recommendation", fields)
