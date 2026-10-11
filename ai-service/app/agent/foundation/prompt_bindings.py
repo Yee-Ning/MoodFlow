@@ -15,7 +15,10 @@ from app.agent.foundation.subgraphs.tool_calling.assistant import (
     SONG_PLAYBACK_PROMPT,
     TOOL_CALLING_SYSTEM_PROMPT,
 )
-from app.agent.foundation.subgraphs.worldline.prompts import BRANCH_SYSTEM_PROMPT, NARRATIVE_SYSTEM_PROMPT
+from app.agent.foundation.subgraphs.worldline.prompts import (
+    BRANCH_SYSTEM_PROMPT, EXPLORATION_BRANCH_BASE_V1, EXPLORATION_BRANCH_RULE_V1,
+    NARRATIVE_SYSTEM_PROMPT, WORLDLINE_RETRY_RULE_V1,
+)
 from app.agent.handoff.prompts import (
     GENERAL_CHAT_HANDOFF_READ_PROMPT,
     HANDOFF_TRANSFER_PROMPT,
@@ -62,6 +65,11 @@ _BINDINGS = (
     PromptBinding("query-analysis", QUERY_ANALYSIS_PROMPT_V1, ("explorer",), ("query_analysis",)),
     PromptBinding("explorer-narrative", NARRATIVE_SYSTEM_PROMPT, ("explorer",), ("narrative",)),
     PromptBinding("explorer-branches", BRANCH_SYSTEM_PROMPT, ("explorer",), ("branches",)),
+    PromptBinding("explorer-branches-exploration", EXPLORATION_BRANCH_BASE_V1, ("explorer",), ("branches",)),
+    PromptBinding("explorer-exploration-rules", EXPLORATION_BRANCH_RULE_V1, ("explorer",), ("branches",),
+                  variant="exploration", separator="\n"),
+    PromptBinding("explorer-retry", WORLDLINE_RETRY_RULE_V1, ("explorer",), ("narrative", "branches"),
+                  variant="retry", separator="\n"),
     PromptBinding("handoff-transfer", HANDOFF_TRANSFER_PROMPT, ("general_chat", "curator", "explorer"), ("relay",)),
     PromptBinding("transfer-retry", TRANSFER_RETRY_PROMPT, ("general_chat", "curator", "explorer"),
                   ("relay",), variant="retry"),

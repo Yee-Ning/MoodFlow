@@ -158,8 +158,9 @@ class HistoryMemorySource:
 
 class SourceRegistry:
     def __init__(self, sources=None):
+        from .rag_source import RagSource
         self.sources: dict[str, ContextSource] = {}
-        for source in sources if sources is not None else (UserProfileSource(), HistoryMemorySource()):
+        for source in sources if sources is not None else (UserProfileSource(), HistoryMemorySource(), RagSource()):
             self.register(source)
 
     def register(self, source: ContextSource):
@@ -170,7 +171,9 @@ class SourceRegistry:
         self.sources[source.name] = source
 
     def collect(self, request):
-        result, status = [], {}
+        from .rag_source import SourceItems
+        from .rag_usage import RagAccountingFailure, RagBudgetRefusal
+        result, status = SourceItems(), {}
         if not request.allow_new_sources:
             return [], {name: "budget_stopped" for name in self.sources}
         for name, source in self.sources.items():
@@ -179,8 +182,10 @@ class SourceRegistry:
                 if any(item.source != name or item.type != load_context_policy()["sources"][name]["type"] or item.required for item in items):
                     raise ValueError("optional source cannot inject required context")
                 result.extend(items)
-                status[name] = "available" if items else "empty"
-            except SourceIntegrityError:
+                if getattr(items, "audit", None) is not None:
+                    result.source_audit[name] = items.audit
+                status[name] = getattr(items, "status", None) or ("available" if items else "empty")
+            except (SourceIntegrityError, RagBudgetRefusal, RagAccountingFailure):
                 raise
             except Exception as exc:
                 # Never expose history/profile text or exception messages in manifests.

@@ -95,7 +95,8 @@ async def test_real_handoff_business_calls_use_packs_and_versioned_prompts(monke
     original = AgentPackBuilder.build
 
     def record(self, value, **kwargs):
-        built.append(value)
+        if value.phase != "relay":
+            built.append(value)
         return original(self, value, **kwargs)
 
     monkeypatch.setattr(AgentPackBuilder, "build", record)
@@ -112,7 +113,7 @@ async def test_real_handoff_business_calls_use_packs_and_versioned_prompts(monke
     assert [value.phase for value in built] == phases
     assert len(model.calls) == len(phases)
     from app.agent.foundation.context_contracts import CallManifest
-    manifests = call_manifests(caplog)
+    manifests = [row for row in call_manifests(caplog) if row["agent_context"]["phase"] != "relay"]
     for phase, manifest, messages in zip(phases, manifests, model.calls, strict=True):
         audit = CallManifest.model_validate(manifest).agent_context
         assert audit.phase == phase and audit.recipe_version == "v1"

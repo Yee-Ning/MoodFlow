@@ -11,8 +11,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.agent.structured_output import StructuredOutputService
 from app.agent.structured_output.parser import model_output_from_response
-from app.agent.foundation.model_input import prepare_model_input
-from app.agent.foundation.routing import RouteKey
 from app.rag.knowledge.structured import strict_model_schema
 from app.rag.query_understanding.config import QueryUnderstandingConfig
 from app.rag.query_understanding.models import QueryType
@@ -40,21 +38,45 @@ class QueryAnalysisRuntime(Protocol):
 class ExistingLLMQueryAnalysisRuntime:
     async def analyze(self, query: str) -> QueryTypeOutput:
         from app.llm.client import create_structured_response
+        from app.agent.foundation.agent_pack import AgentPackInputs
+        from app.agent.foundation.subgraphs.worldline.stage_pack import active_stage_context, prepare_explorer_input
+        from app.llm.runtime import agent_scope
+
+        def render(pack):
+            system, context = "", []
+            projected = {}
+            for item in pack.items:
+                if item.type == "system":
+                    system = item.content
+                elif item.source == "retry_feedback":
+                    continue
+                elif item.type == "structured_output":
+                    projected.update(json.loads(item.content))
+                elif item.type == "user_query":
+                    if item.content != query:
+                        context.append({"type": "active_task", "content": item.content})
+                    else:
+                        projected["query"] = item.content
+                else:
+                    context.append({"type": item.type, "content": item.content})
+            if "query" not in projected:
+                raise ValueError("query analysis pack must contain the current query")
+            if context:
+                projected["context"] = context
+            return [{"role": "user", "content": json.dumps(projected, ensure_ascii=False, separators=(",", ":"))}], system
 
         async def generate(attempt: int, feedback: str | None):
             instructions = QUERY_ANALYSIS_PROMPT_V1
             if feedback:
                 instructions += f"\n{feedback}"
             schema = strict_model_schema(QueryTypeOutput)
-            model_input = await prepare_model_input(
-                RouteKey.WORLDLINE, system=instructions,
-                query=json.dumps({"query": query}, ensure_ascii=False, separators=(",", ":")),
-                schema=schema, schema_name="query_type_analysis_v1",
-            )
-            response = await create_structured_response(
-                model_input.input_items, model_input.instructions, schema,
-                schema_name="query_type_analysis_v1", request_budget=model_input.budget,
-            )
+            with agent_scope("explorer"):
+                model_input = await prepare_explorer_input("query_analysis", query=query, instructions=instructions,
+                    schema=schema, schema_name="query_type_analysis_v1", renderer=render,
+                    inputs=AgentPackInputs(structured_output={"query": query},
+                                          continuity_context=active_stage_context.get()))
+                response = await create_structured_response(model_input.input_items, model_input.instructions, schema,
+                    schema_name="query_type_analysis_v1", request_budget=model_input.budget)
             return model_output_from_response(response)
 
         return await StructuredOutputService(
@@ -126,7 +148,9 @@ class QueryAnalyzer:
                     output.confidence,
                     [],
                 )
-            except Exception:
+            except Exception as exc:
+                from app.agent.foundation.subgraphs.worldline.stage_pack import raise_hard_source_failure
+                raise_hard_source_failure(exc)
                 return AnalyzedQueryTypes(
                     [QueryType.EXPLORATORY],
                     0.6,

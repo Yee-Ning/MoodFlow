@@ -68,7 +68,7 @@ def test_repeated_derived_input_has_zero_token_or_dedup_recomputation(derived, m
         assert 0 < derived.client.ttl(key) <= 60
 
 
-@pytest.mark.parametrize("changed", ["query", "system", "message", "profile", "intent", "policy", "metadata", "user"])
+@pytest.mark.parametrize("changed", ["query", "system", "message", "profile", "intent", "policy", "metadata", "source_audit", "user"])
 def test_every_changed_input_addresses_a_new_derivation(derived, changed):
     values = inputs()
     build_context(RouteKey.GENERAL_CHAT, **values)
@@ -86,9 +86,14 @@ def test_every_changed_input_addresses_a_new_derivation(derived, changed):
         values["policy"] = POLICIES[RouteKey.GENERAL_CHAT].model_copy(update={"safety_margin": 257})
     elif changed == "metadata":
         values["messages"][0] = HumanMessage(content="earlier", additional_kwargs={"source_revision": 2})
+    elif changed == "source_audit":
+        values["continuity_context"]["entry_source_audit"] = {"rag": {"model_usage": [], "collection": None}}
     else:
         values["continuity_context"]["user_id"] = uuid4().hex
-    build_context(RouteKey.GENERAL_CHAT, **values)
+    result = build_context(RouteKey.GENERAL_CHAT, **values)
+    if changed == "source_audit":
+        assert result.manifest["sources"]["rag"]["model_usage"] == []
+        assert result.manifest["sources"]["rag"]["collection"] is None
     assert set(derived.client.scan_iter(match="contextpack:derived:*")) - old_keys
 
 
