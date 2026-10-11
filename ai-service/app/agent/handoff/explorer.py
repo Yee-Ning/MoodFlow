@@ -30,6 +30,19 @@ from app.agent.handoff.journey import (
     build_listening_journey,
     render_journey,
 )
+from app.agent.handoff.explorer_session import (
+    get_explorer_sessions,
+    is_branch_followup,
+    owner_key,
+    session_world,
+)
+from app.agent.handoff.explorer_preferences import (
+    preference_weights,
+    preference_note,
+    read_likes,
+)
+from app.agent.handoff.explorer_roots import root_guidance
+from app.agent.foundation.subgraphs.worldline.service import WorldLineExecutionError
 from app.rag.query_understanding.context import _CURRENT_SONG_REFERENCE
 
 
@@ -64,9 +77,113 @@ def journey_query(text: str) -> str:
     )
 
 
-async def execute_exploration(view, run, runtime, *, graph, context_tool) -> TaskResult:
+def clarification(task, code, content):
+    return TaskResult(
+        task_id=task.task_id,
+        route_key=RouteKey.WORLDLINE,
+        status=TaskStatus.NEEDS_INPUT,
+        content=content,
+        data={
+            "reason": code,
+            "journey_queue": [],
+            "listening_journey": ListeningJourney(
+                root_entity_id=None, evidence_state=EvidenceState.UNVERIFIED, nodes=()
+            ).model_dump(mode="json"),
+        },
+    )
+
+
+async def decorate_journey(result, world, snapshots, runtime):
+    likes, receipt = await read_likes(runtime)
+    weights, reasons, ids = preference_weights(world, snapshots, likes)
+    journey = build_listening_journey(
+        world,
+        None,
+        catalog_history=tuple(snapshots),
+        node_priorities=weights,
+        recommendation_reasons=reasons,
+        preference_song_ids=ids,
+    )
+    return result.model_copy(
+        update={
+            "content": render_journey(journey)
+            + "\n"
+            + preference_note(receipt, weights),
+            "data": {
+                **result.data,
+                "listening_journey": journey.model_dump(mode="json"),
+                "journey_queue": journey.transfer_payload().model_dump(mode="json")[
+                    "journey_queue"
+                ],
+                "personalization": {**receipt, "matched_node_ids": sorted(weights)},
+            },
+        }
+    )
+
+
+async def execute_exploration(
+    view, run, runtime, *, graph, context_tool, sessions=None
+) -> TaskResult:
     task = run.pending_tasks[0]
     text = _ground_same_turn_artist_reference(view, task)
+    owner = owner_key(view, runtime)
+    if is_branch_followup(text):
+        if owner is None:
+            return clarification(
+                task,
+                "explorer_session_missing",
+                "当前没有可恢复的对话探索图，请先指定歌曲、歌手或专辑；我不会另建图冒充刚才的分支。",
+            )
+        try:
+            response, snapshots, mode = await (
+                sessions or get_explorer_sessions()
+            ).follow(text, owner=owner, graph=graph, runtime=runtime)
+        except WorldLineExecutionError as exc:
+            return clarification(task, exc.code, str(exc))
+        world = session_world(response)
+        result = TaskResult(
+            task_id=task.task_id,
+            route_key=RouteKey.WORLDLINE,
+            status=TaskStatus.SUCCESS,
+            data={
+                "worldline_result": world.model_dump(mode="json"),
+                "explorer_session": response.model_dump(mode="json"),
+                "explorer_followup_mode": mode,
+            },
+        )
+        result = await decorate_journey(result, world, snapshots, runtime)
+        if mode == "explain_selected":
+            node = next(
+                (
+                    item
+                    for item in result.data["listening_journey"]["nodes"]
+                    if item["node_id"] == response.current_node
+                ),
+                None,
+            )
+            detail = (
+                (
+                    node["narrative"]
+                    + "；来源："
+                    + ", ".join(node["narration"]["source_ids"])
+                )
+                if node
+                else "该节点暂无可核实的详细说明，不补写知识。"
+            )
+            result = result.model_copy(
+                update={
+                    "content": result.content
+                    + "\n沿刚才选中的节点讲解："
+                    + detail
+                    + "。本次复用原图与来源，未重复扩展或重建。"
+                }
+            )
+        return result.model_copy(
+            update={"content": result.content + branch_note(response)}
+        )
+    guidance = root_guidance(text)
+    if guidance:
+        return clarification(task, "explorer_topic_root_guidance", guidance)
     target = None
     # Explicit titles follow the existing catalog/query-resolution workflow.
     if _CURRENT_SONG_REFERENCE.search(text) and not _QUOTED_ENTITY.search(text):
@@ -142,19 +259,26 @@ async def execute_exploration(view, run, runtime, *, graph, context_tool) -> Tas
             if raw_facts is not None
             else None
         )
-        journey = build_listening_journey(world, facts)
-        result = result.model_copy(
-            update={
-                "content": render_journey(journey),
-                "data": {
-                    **result.data,
-                    "listening_journey": journey.model_dump(mode="json"),
-                    "journey_queue": journey.transfer_payload().model_dump(mode="json")[
-                        "journey_queue"
-                    ],
-                },
-            }
+        response = None
+        if owner is not None:
+            response = await (sessions or get_explorer_sessions()).adopt(
+                result, facts, owner=owner, graph=graph, runtime=runtime
+            )
+            result = result.model_copy(
+                update={
+                    "data": {
+                        **result.data,
+                        "explorer_session": response.model_dump(mode="json"),
+                    }
+                }
+            )
+        result = await decorate_journey(
+            result, world, [facts] if facts else [], runtime
         )
+        if response is not None:
+            result = result.model_copy(
+                update={"content": result.content + branch_note(response)}
+            )
     else:
         journey = ListeningJourney(
             root_entity_id=None,
@@ -172,3 +296,16 @@ async def execute_exploration(view, run, runtime, *, graph, context_tool) -> Tas
             }
         )
     return result
+
+
+def branch_note(response):
+    names = "、".join(branch.target_entity.name for branch in response.branches)
+    current = next(
+        item.name for item in response.graph.nodes if item.id == response.current_node
+    )
+    outcome = (
+        "；此次未发现新的有来源关联" if response.outcome == "no_new_connections" else ""
+    )
+    return f"\n当前探索节点：{current}{outcome}。" + (
+        f"可继续指定分支：{names}。" if names else "当前没有新的可探索分支。"
+    )

@@ -85,7 +85,7 @@ def call_manifests(caplog):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("route,phases,prompts", [
     (RouteKey.GENERAL_CHAT, ["answer", "read_observation"],
-     ["general-chat-base", "general-chat-handoff-read", "general-chat-result-evidence"]),
+     ["general-chat-base", "general-chat-handoff-read", "general-chat-result-evidence", "general-chat-preferences"]),
     (RouteKey.TOOL_CALLING, ["tool_step", "tool_observation"], ["curator-tools-base"]),
     (RouteKey.CURRENT_SONG, ["song_analysis"], ["curator-current-song"]),
 ])
@@ -105,7 +105,8 @@ async def test_real_handoff_business_calls_use_packs_and_versioned_prompts(monke
     graph = build_handoff_graph(intent_router=Router(route), transfer_model=BoundaryModel(call()),
         general_model=model, curator_model=model, song_model=model, provider=provider,
         tool_tools=[]).compile()
-    state = input_state("看看当前歌曲信息")
+    query = "聊聊音乐里的表达" if route == RouteKey.GENERAL_CHAT else "看看当前歌曲信息"
+    state = input_state(query)
     state["continuity_context"] = {"user_id": "alice"}
     output = await graph.ainvoke(state)
     run = HandoffRun.model_validate(output["handoff_run"])
@@ -120,7 +121,7 @@ async def test_real_handoff_business_calls_use_packs_and_versioned_prompts(monke
         assert audit.recipe_id == ("general_chat" if route == RouteKey.GENERAL_CHAT else "curator")
         assert [prompt.prompt_id for prompt in audit.prompts] == prompts
         assert all(prompt.version == "v1" and prompt.content_digest.startswith("sha256:") for prompt in audit.prompts)
-        assert messages[-1].content == "看看当前歌曲信息" or any(isinstance(message, ToolMessage) for message in messages)
+        assert messages[-1].content == query or any(isinstance(message, ToolMessage) for message in messages)
         quotas = {row["source"]: row for row in references(manifest, "quota")}
         assert quotas["session_view"]["candidate_limit"] == 8 and quotas["session_view"]["tokens"] == 600
         assert quotas["history_memory"] == {"source": "history_memory", "candidate_limit": 24, "tokens": 600, "excerpt_characters": 400}
@@ -144,6 +145,35 @@ async def test_foundation_model_boundaries_also_have_agent_context(caplog, route
     else:
         await answer_current_song_task([], "分析歌曲", song(), player_context(), model=model)
     assert call_manifests(caplog)[0]["agent_context"]["recipe_id"] == ("general_chat" if route == RouteKey.GENERAL_CHAT else "curator")
+
+
+@pytest.mark.asyncio
+async def test_foundation_preferences_keep_owned_tool_pairs_and_pack_audit(caplog):
+    from app.agent.foundation.subgraphs.general_chat.session import SessionStore, session_for
+
+    caplog.set_level(logging.INFO, logger="app.llm.runtime")
+    context = {"user_id": "alice", "run_id": "run:shared", "conversation_id": "combined", "session_id": "combined"}
+    value = invocation(inputs=AgentPackInputs(continuity_context=context))
+    store = SessionStore()
+    session_for(context, store=store).confirmed = ["古典音乐"]
+    messages = [
+        HumanMessage(content="我喜欢电子乐，尚未确认"),
+        bind_produced_message(read_call(), value),
+        bind_produced_message(ToolMessage(content="只读结果：喜欢不能拆开工具协议", tool_call_id="read:one"), value),
+        bind_produced_message(AIMessage(content="FOREIGN_PRIVATE"), invocation("curator")),
+    ]
+    model = BoundaryModel(AIMessage(content="有依据的回答。"))
+    await answer_general_chat(messages, "聊聊音乐里的表达", player_context(), [], model=model,
+        continuity_context=context, route_task_id=value.task.task_id, session_store=store)
+    rendered = str(model.calls[0])
+    assert "尚未确认" not in rendered and "FOREIGN_PRIVATE" not in rendered
+    assert "古典音乐" in rendered and "confirmed_session_preferences" in rendered
+    assert any(isinstance(item, ToolMessage) and item.tool_call_id == "read:one" for item in model.calls[0])
+    assert any(isinstance(item, AIMessage) and item.tool_calls for item in model.calls[0])
+    audit = call_manifests(caplog)[0]["agent_context"]
+    assert [row["prompt_id"] for row in audit["prompts"]] == [
+        "general-chat-base", "general-chat-result-evidence", "general-chat-preferences"]
+    assert references(call_manifests(caplog)[0], "source_scope")
 
 
 @pytest.mark.asyncio

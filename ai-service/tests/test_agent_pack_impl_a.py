@@ -73,6 +73,13 @@ def test_prompt_utf8_digests_pin_the_baseline_text(reference, digest):
         PROMPT_BINDINGS[reference] = binding
 
 
+def test_preferences_prompt_has_its_own_immutable_version():
+    binding = PROMPT_BINDINGS["general-chat-preferences/v1"]
+    assert binding.manifest.version == "v1"
+    assert binding.manifest.variant == "preferences"
+    assert binding.manifest.content_digest == "sha256:d077ede03d1941f9c41c81cd4ee4b2d70d5045096c64a26b7dc289dd523b9bc8"
+
+
 @pytest.mark.parametrize("owner,phase,refs", [
     ("general_chat", "answer", ("general-chat-base/v1", "general-chat-handoff-read/v1")),
     ("curator", "tool_step", ("curator-tools-base/v1", "search-only/v1")),

@@ -7,6 +7,7 @@ from types import MappingProxyType
 from app.agent.foundation.context_contracts import AgentOwner, AgentPhase, PromptManifest
 from app.agent.foundation.subgraphs.current_song.assistant import CURRENT_SONG_SYSTEM_PROMPT
 from app.agent.foundation.subgraphs.general_chat.assistant import (
+    GENERAL_CHAT_PREFERENCES_PROMPT,
     GENERAL_CHAT_RESULT_EVIDENCE_PROMPT,
     GENERAL_CHAT_SYSTEM_PROMPT,
 )
@@ -50,6 +51,8 @@ class PromptBinding:
 
 _BINDINGS = (
     PromptBinding("general-chat-base", GENERAL_CHAT_SYSTEM_PROMPT, ("general_chat",), ("answer", "read_observation")),
+    PromptBinding("general-chat-preferences", GENERAL_CHAT_PREFERENCES_PROMPT, ("general_chat",),
+                  ("answer", "read_observation"), variant="preferences"),
     PromptBinding("general-chat-result-evidence", GENERAL_CHAT_RESULT_EVIDENCE_PROMPT, ("general_chat",),
                   ("answer", "read_observation"), variant="result-evidence"),
     PromptBinding("general-chat-handoff-read", GENERAL_CHAT_HANDOFF_READ_PROMPT, ("general_chat",),

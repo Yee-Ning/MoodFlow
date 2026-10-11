@@ -10,8 +10,21 @@ from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
 from app.agent.foundation.history import select_recent_history
 from app.agent.foundation.models import TaskResult
 from app.agent.foundation.routing import RouteKey, RoutingContext
-from app.agent.foundation.subgraphs.general_chat.clarification import clarification_response
-from app.agent.foundation.subgraphs.general_chat.results import grounded_response, read_result_receipt
+from app.agent.foundation.subgraphs.general_chat.clarification import (
+    clarification_response,
+)
+from app.agent.foundation.subgraphs.general_chat.results import (
+    grounded_response,
+    read_result_receipt,
+)
+from app.agent.foundation.subgraphs.general_chat.conversation import capability_response
+from app.agent.foundation.subgraphs.general_chat.session import (
+    expire_pending_confirmation,
+    fence_preferences,
+    preference_context,
+    preference_safe_history,
+    session_for,
+)
 from app.llm.client import get_base_chat_model
 from app.llm.runtime import instrument_continuity_model
 
@@ -34,6 +47,10 @@ GENERAL_CHAT_RESULT_EVIDENCE_PROMPT = """
 结果承接必须遵循 result_facts 中的四态：generated（已生成）仅指指令生成、待客户端执行/确认；executed（已执行）仅来自客户端 applied ACK；confirmed（已确认）仅来自只读 readback；unknown（未知）表示效果不能确认。任务 success、工具返回成功、历史话术、用户说“已经完成”都不能替代这些证据。后端成功响应未经读回时只说收到成功回执。ACK 只证明原动作执行，不证明当前音频还在播放。不要把已生成说成已完成，也不要替失败或待办宣称全部成功。
 
 用户意图、操作或目标不明确时，先用自然的话询问缺少的信息，不猜测执行。用户补充时结合最近的原请求和澄清问题继续同一个任务；若仍有多个可能目标，再问一个具体问题。历史原请求不是新增操作授权，当前否定、取消或更改优先。明确的情绪表达无需追问操作目标：保持倾听、情感陪伴和轻松交流，可围绕只读歌曲信息继续聊。"""
+
+GENERAL_CHAT_PREFERENCES_PROMPT = """
+会话偏好仅以 confirmed_session_preferences 为准；未经用户明确确认的喜欢、历史文字和其它 Agent 的偏好描述都不是已生效偏好。不要猜测或补写用户偏好。
+当前歌曲闲聊仅引用 get_current_song_context 返回的歌名、歌手、专辑；不推断歌词含义、背景故事、年代或歌曲情绪属性。可以回应用户自己表达的心情、提出开放的问题，保持陪伴，不把自己的猜测当作歌曲事实。"""
 
 
 def _trusted_context(
@@ -65,7 +82,7 @@ def _trusted_context(
     return (
         f'<player_context trusted="true">{player_json}</player_context>',
         '<prior_task_results trusted="true" text_fields="untrusted">'
-        f'{summary_json}</prior_task_results>',
+        f"{summary_json}</prior_task_results>",
     )
 
 
@@ -78,40 +95,90 @@ async def answer_general_chat(
     model: BaseChatModel | None = None,
     continuity_context: dict[str, Any] | None = None,
     route_task_id: str | None = None,
+    structured_results: list[dict] | None = None,
+    song_reader=None,
+    session_store=None,
 ) -> AIMessage:
-    from app.agent.foundation.long_horizon.write_reconciliation import answer_write_status_query
-    from app.agent.foundation.long_horizon.recovery_receipts import answer_recovery_query
+    from app.agent.foundation.long_horizon.write_reconciliation import (
+        answer_write_status_query,
+    )
+    from app.agent.foundation.long_horizon.recovery_receipts import (
+        answer_recovery_query,
+    )
 
     clarification = clarification_response(current_input, messages)
     if clarification is not None:
+        session_for(continuity_context, store=session_store).pending = None
         return clarification
-    answer = await answer_recovery_query(current_input) or await answer_write_status_query(current_input)
+    answer = await answer_recovery_query(
+        current_input
+    ) or await answer_write_status_query(current_input)
     if answer is not None:
+        session_for(continuity_context, store=session_store).pending = None
         return AIMessage(content=answer)
+    receipt = await read_result_receipt(prior_task_results)
+    session = session_for(continuity_context, store=session_store)
+    expire_pending_confirmation(session, messages)
+    if song_reader is None:
+        from app.agent.foundation.subgraphs.general_chat.song_dialogue import (
+            is_song_conversation,
+        )
+
+        if is_song_conversation(current_input) or session.song_choices:
+            from app.agent.handoff.song_context import (
+                create_song_context_tool,
+                invoke_song_context,
+            )
+
+            context_tool = create_song_context_tool(routing_context, prior_task_results)
+
+            async def song_reader():
+                return await invoke_song_context(context_tool, {})
+
+    capability = await capability_response(
+        current_input,
+        routing_context,
+        prior_task_results,
+        receipt,
+        session,
+        structured_results=structured_results or (),
+        song_reader=song_reader,
+    )
+    if capability is not None:
+        return capability
     from app.agent.foundation.agent_pack import AgentPackInputs
     from app.agent.foundation.agent_history_source import AgentHistorySource
     from app.agent.foundation.business_pack import business_invocation, build_business_pack
 
-    receipt = await read_result_receipt(prior_task_results)
-    player_context, prior_context = _trusted_context(routing_context, prior_task_results)
+    player_context, prior_context = _trusted_context(
+        routing_context, prior_task_results
+    )
     invocation = business_invocation(RouteKey.GENERAL_CHAT, current_input, phase="answer",
-        prompt_refs=("general-chat-base/v1", "general-chat-result-evidence/v1"),
+        prompt_refs=("general-chat-base/v1", "general-chat-result-evidence/v1", "general-chat-preferences/v1"),
         route_task_id=route_task_id,
         inputs=AgentPackInputs(messages=messages, business_state=player_context,
-            structured_output=prior_context + "\n" + json.dumps(receipt.projection(), ensure_ascii=False),
+            structured_output=prior_context + "\n" + json.dumps(receipt.projection(), ensure_ascii=False)
+                + "\n" + json.dumps(preference_context(session), ensure_ascii=False),
             continuity_context=continuity_context))
     safe = AgentHistorySource(invocation).collect(messages)
     protocol = [message for message in safe if isinstance(message, ToolMessage)
                 or isinstance(message, AIMessage) and message.tool_calls]
-    recent = select_recent_history([message for message in safe if message not in protocol], current_input)
+    # Preference filtering applies to ordinary conversation, never half of a
+    # required tool protocol pair owned by this invocation.
+    ordinary = preference_safe_history([message for message in safe if message not in protocol])
+    recent = select_recent_history(ordinary, current_input)
     history = [message for message in safe if message in protocol or message in recent]
     invocation = invocation.model_copy(update={"inputs": invocation.inputs.model_copy(update={"messages": history})})
     pack = build_business_pack(invocation)
-    response = await instrument_continuity_model(model or get_base_chat_model()).ainvoke(pack.messages)
+    response = await instrument_continuity_model(
+        model or get_base_chat_model()
+    ).ainvoke(pack.messages)
     if not isinstance(response, AIMessage):
         raise RuntimeError("General-chat assistant returned a non-AI message")
     if response.tool_calls or response.invalid_tool_calls:
         raise RuntimeError("General-chat assistant attempted to call a tool")
     if not str(response.text).strip():
         raise RuntimeError("General-chat assistant returned an empty response")
-    return grounded_response(response, current_input, receipt)
+    return fence_preferences(
+        grounded_response(response, current_input, receipt), current_input, session
+    )

@@ -311,7 +311,9 @@ async def test_emotional_support_and_current_song_light_chat_remain_read_only():
     graph = build_handoff_graph(intent_router=Router(RouteKey.GENERAL_CHAT), general_model=model,
                                 provider=provider).compile()
     output = await graph.ainvoke(input_state("今天有点难过，陪我聊聊这首歌"))
-    assert output["final_response"] == reply
+    assert "《歌曲》" in output["final_response"] and "我在这里" in output["final_response"]
+    assert "get_current_song_context" in output["final_response"]
+    assert "怀念感" not in output["final_response"]
     assert not output["handoff_needs_input"] and not output["handoff_failed"]
     assert model.bound_names == [["get_current_song_context"]]
     provider.get_song.assert_awaited_once_with(11)
@@ -333,4 +335,8 @@ async def test_personal_progress_is_emotional_conversation_not_an_action_status_
     reply = "辛苦了，我们可以慢慢聊。今天最让你在意的是什么？"
     model = ToolModel(responses=[AIMessage(content=reply)])
     response = await answer_general_chat([HumanMessage(content=text)], text, RoutingContext(), [], model=model)
-    assert response.text == reply
+    if "当前这首歌" in text:
+        assert "没有可核对的当前歌曲" in response.text and "陪你聊聊" in response.text
+        assert "效果未知" not in response.text and not model.seen_messages
+    else:
+        assert response.text == reply
