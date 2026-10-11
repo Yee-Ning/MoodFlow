@@ -333,7 +333,7 @@ class ContinuityCoordinator:
                 # runner returns the saved visible response without invoking again.
             elif blocked is None:
                 run_id = "foundation:" + digest(identity.request_id)[7:]
-                history = self.history.read(identity)
+                history = self.history.read(identity, query=message)
                 inherited = read_session_projection(self.store, session.session_id, session.inherited_handoff_id) if session.inherited_handoff_id else None
                 if inherited:
                     inherited = self.service.apply_revocations(inherited, session.task_id)

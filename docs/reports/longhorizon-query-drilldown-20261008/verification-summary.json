@@ -1,0 +1,145 @@
+{
+  "base_commit": "d1ff818c9318b532dfe5de81fb0c5cf2865a789e",
+  "branch": "codex/longhorizon-query-drilldown",
+  "query_focused": {
+    "exit_code": 0,
+    "elapsed_seconds": 95.22,
+    "counts": {
+      "passed": 27,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "subtests_passed": 0,
+      "warnings": 0
+    },
+    "failed_nodeids": [],
+    "skipped_nodeids": [],
+    "source_frozen": true,
+    "runtime_encoding": {
+      "utf8_mode": 1,
+      "stdio": "utf-8",
+      "subprocess_utf8": "1"
+    },
+    "args": [
+      "-p",
+      "pytest_asyncio.plugin",
+      "tests/test_query_drilldown.py",
+      "tests/test_query_drilldown_postgres.py",
+      "-q",
+      "--disable-warnings",
+      "--tb=short"
+    ]
+  },
+  "full_suite": {
+    "exit_code": 0,
+    "elapsed_seconds": 976.38,
+    "counts": {
+      "passed": 2359,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 12,
+      "subtests_passed": 288,
+      "warnings": 185
+    },
+    "failed_nodeids": [],
+    "skipped_nodeids": [
+      "tests/test_jev_live.py::test_live_system_one_choice",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+      "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]",
+      "tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes"
+    ],
+    "source_frozen": true,
+    "runtime_encoding": {
+      "utf8_mode": 1,
+      "stdio": "utf-8",
+      "subprocess_utf8": "1"
+    },
+    "args": [
+      "-p",
+      "pytest_asyncio.plugin",
+      "-p",
+      "xdist.plugin",
+      "-n",
+      "4",
+      "--dist",
+      "loadfile",
+      "tests",
+      "evals/tests",
+      "-q",
+      "--disable-warnings",
+      "--tb=short"
+    ],
+    "original_12_skips_unchanged": true
+  },
+  "handoff_phase3_regressions_on_final_source": {
+    "passed": 160,
+    "failed": 0,
+    "verification": "Included in final frozen full-suite run",
+    "passed_by_file": {
+      "tests/test_context_loop_coordinator.py": 35,
+      "tests/test_context_loop_history.py": 24,
+      "tests/test_context_loop_projection.py": 10,
+      "tests/test_context_loop_payload_integrity.py": 37,
+      "tests/test_context_contracts_phase3.py": 15,
+      "tests/test_context_contracts_postgres.py": 1,
+      "tests/test_context_loop_postgres_recovery.py": 12,
+      "tests/test_context_loop_postgres_payload_integrity.py": 9,
+      "tests/test_long_horizon_context.py": 17
+    }
+  },
+  "no_query_phase3_exact_blob_comparison": {
+    "base_commit": "d1ff818c9318b532dfe5de81fb0c5cf2865a789e",
+    "cases": 35,
+    "failures": 0,
+    "readonly": true,
+    "comparison": "Current no-query return JSON and error type/message against exact Phase 3 git blob"
+  },
+  "static_checks": {
+    "baseline_findings": 5,
+    "current_findings": 5,
+    "introduced_findings": [],
+    "removed_findings": []
+  },
+  "protected_paths_unchanged": [
+    "ai-service/app/agent/handoff",
+    "ai-service/app/agent/foundation/long_horizon/service.py",
+    "ai-service/app/agent/foundation/long_horizon/history_writer.py",
+    "ai-service/app/agent/foundation/long_horizon/journal_contracts.py",
+    "ai-service/app/agent/foundation/long_horizon/models.py",
+    "ai-service/app/agent/foundation/long_horizon/store.py",
+    "ai-service/app/agent/foundation/long_horizon/postgres_store.py",
+    "ai-service/app/agent/foundation/context_pointers.py"
+  ],
+  "changed_source_sha256": {
+    "ai-service/app/agent/foundation/long_horizon/coordinator.py": "744dc7b49ff51e636052e6a0d64533bba5881d8eba8848bd59d18c4e28e38fdd",
+    "ai-service/app/agent/foundation/long_horizon/drilldown.py": "b5e2c5a9e337fddcb3422eefe0dc37d869536d6c7727d46c88a0b2dfcab85f02",
+    "ai-service/app/agent/foundation/long_horizon/query_drilldown.py": "b4bdcddd273c18d10d21950428fbe7cd266f399e774647dd355447d38d8ae4bb",
+    "ai-service/tests/test_query_drilldown.py": "e9afae369a87435e5eb764b46bcd511498213dffd36f66f5cdfd78dd214eaf3b",
+    "ai-service/tests/test_query_drilldown_postgres.py": "0e79f152bfab09f44a46d1d1bc13aa83d227aeb25c839e6052516974104673b6"
+  },
+  "real_postgres": {
+    "image": "pgvector/pgvector:pg16-trixie@sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b",
+    "container": "moodflow-query-drilldown-test-20261008",
+    "binding": "127.0.0.1:15474",
+    "dedicated_test_server": true,
+    "cleaned_up": true
+  },
+  "limits": [
+    "Existing 12 environmental skips unchanged",
+    "Five pre-existing Ruff findings remain; introduced findings: zero",
+    "Lexical selection only; no semantic model or embedding ranking",
+    "Ranked snapshot scan cost grows with task history size",
+    "Query cursor is an opaque exact integer, not event_seq or a JavaScript Number",
+    "Only single-page-fit matching refs are complete across query pages; individually oversized refs are skipped",
+    "No-query behavior stays unchanged",
+    "No Journal writes, push or deployment"
+  ]
+}
