@@ -47,9 +47,14 @@ async def test_unverified_receipt_stays_generated_with_scoped_pack_and_audit(cap
     audit = manifests[0]["agent_context"]
     assert audit["recipe_id"] == "general_chat" and audit["phase"] == "answer"
     assert [row["prompt_id"] for row in audit["prompts"]] == [
-        "general-chat-base", "general-chat-result-evidence",
+        "general-chat-base", "general-chat-result-evidence", "general-chat-preferences",
     ]
     assert audit["prompts"][1]["variant"] == "result-evidence"
+    assert audit["prompts"][2]["variant"] == "preferences"
+    assert audit["prompts"][2]["version"] == "v1"
+    assert audit["prompts"][2]["content_digest"] == (
+        "sha256:d077ede03d1941f9c41c81cd4ee4b2d70d5045096c64a26b7dc289dd523b9bc8"
+    )
 
 
 def test_result_evidence_variant_preserves_frozen_v1_and_has_separate_identity():
