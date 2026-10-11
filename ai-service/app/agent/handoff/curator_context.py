@@ -29,6 +29,8 @@ def candidate_projection(candidate):
     } for value in candidate.get("knowledge_sources", [])]
     if "popularity_evidence" in candidate:
         row["popularity_evidence"] = candidate["popularity_evidence"]
+    if "recommendation_ranking" in candidate:
+        row["recommendation_ranking"] = candidate["recommendation_ranking"]
     return row
 
 

@@ -3,6 +3,13 @@
 import hashlib
 
 
+def deterministic_bucket(namespace, identifier, *, bucket_count=10_000):
+    """Shared hashing primitive; callers choose their own identity and namespace."""
+    if type(bucket_count) is not int or bucket_count <= 0:
+        raise ValueError("bucket count must be a positive integer")
+    return int.from_bytes(hashlib.sha256((namespace + "\0" + identifier).encode("utf-8")).digest()[:8], "big") % bucket_count
+
+
 def select_chat_graph(settings, thread_id):
     mode = settings.agent_graph_mode
     if (
@@ -12,11 +19,5 @@ def select_chat_graph(settings, thread_id):
     ):
         return mode
     salt = settings.handoff_canary_salt
-    bucket = (
-        int.from_bytes(
-            hashlib.sha256((salt + "\0" + thread_id).encode("utf-8")).digest()[:8],
-            "big",
-        )
-        % 10_000
-    )
+    bucket = deterministic_bucket(salt, thread_id)
     return "handoff" if bucket < settings.handoff_canary_percentage * 100 else mode

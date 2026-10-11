@@ -30,6 +30,13 @@ from app.agent.foundation.subgraphs.tool_calling.state import ToolCallingState
 from app.agent.handoff.curator_context import prepare_curation_pack
 from app.agent.handoff.curator_prompts import PLAN_PROMPT, SELECTION_PROMPT
 from app.agent.handoff.niche import get_niche_config, rank_niche
+from app.agent.handoff.recommendation import (
+    get_recommendation_weights, order_recommendation_selection, rank_recommendations,
+    recommendation_metadata, uses_baseline_order,
+)
+from app.agent.handoff.recommendation_experiments import (
+    assign_recommendation_variant, get_recommendation_experiment, record_recommendation,
+)
 from app.schemas.context import MusicAgentContext
 from app.schemas.music import (
     AddSongToPlaylistResult,
@@ -273,7 +280,7 @@ def introduction(request, selected, liked, discovery_ids=(), niche_evidence=None
     )
 
 
-async def execute_curation(task, state, runtime, *, request, model, tools):
+async def execute_curation(task, state, runtime, *, request, model, tools, weights=None, experiment=None):
     """Fixed read/select/create/add workflow; never retries an uncertain write."""
     records, facts, selected, accepted, warnings = [], [], [], [], []
     candidates, sources, conflicted = {}, {}, set()
@@ -283,8 +290,14 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
     niche_evidence, popularity_counts, popularity_unknown = {}, {}, []
     niche_config = get_niche_config() if request.obscure else None
     operations = active_operations.get()
+    assignment, ranking_candidate_count = None, 0
 
     def finish(message, status=TaskStatus.SUCCESS, reason=None):
+        if assignment is not None:
+            record_recommendation(assignment, candidate_count=ranking_candidate_count,
+                                  song_ids=[song.song_id for song in selected],
+                                  tag_count=len(plan.tags) if plan else 0,
+                                  niche_requested=request.obscure, status=status)
         draft = (
             introduction(request, accepted, liked, discovery_ids, niche_evidence) if accepted else None
         )
@@ -388,6 +401,10 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
             TaskStatus.FAILED,
             "missing_tools",
         )
+    baseline_weights = weights if weights is not None else get_recommendation_weights()
+    configured_experiment = experiment if experiment is not None else get_recommendation_experiment()
+    assignment = assign_recommendation_variant(configured_experiment, getattr(runtime.context, "user_id", None), baseline_weights)
+    effective_weights = assignment.weights
     builder = StateGraph(ToolCallingState, context_schema=MusicAgentContext)
     builder.add_node(
         "tools",
@@ -544,20 +561,9 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
                 reason="no_candidates",
             )
         # Preference is read-only and never imports songs absent from search.
-        ordered = sorted(
-            candidates.values(),
-            key=lambda song: (
-                song.song_id not in liked,
-                song.song_id not in discovery_ids,
-                -sum(
-                    tag.casefold()
-                    in (
-                        song.name + " " + song.album + " " + " ".join(song.artists)
-                    ).casefold()
-                    for tag in plan.tags
-                ),
-            ),
-        )[:60]
+        ordered = rank_recommendations(candidates.values(), liked, discovery_ids, plan.tags,
+                                       weights=effective_weights)[:60]
+        ranking_candidate_count = len(ordered)
         if request.obscure:
             # Only graph-backed, catalog-verified candidates can be called niche.
             # Missing heat data and empty intervals never fall back to seed songs.
@@ -574,7 +580,13 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
             popularity_unknown = [row["song_id"] for row in linked if row["song_id"] not in popularity_counts]
             for row in linked:
                 row["comment_count"] = popularity_counts.get(row["song_id"])
-            ranked = rank_niche(linked, request.count, config=niche_config)
+            ranked = rank_niche(linked, len(linked), config=niche_config)
+            if not uses_baseline_order(effective_weights):
+                eligible = rank_recommendations([candidates[row["song_id"]] for row in ranked],
+                                                liked, discovery_ids, plan.tags, weights=effective_weights)
+                by_id = {row["song_id"]: row for row in ranked}
+                ranked = [by_id[song.song_id] for song in eligible]
+            ranked = ranked[:request.count]
             for row in ranked:
                 path_text = "；".join(f"{edge['source_name']} → {edge['relation']} → {edge['target_name']}"
                                       for edge in row["association_path"])
@@ -606,6 +618,9 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
                         ),
                         "discovered": song.song_id in discovery_ids,
                         **({"popularity_evidence": niche_evidence[song.song_id]} if request.obscure else {}),
+                        **({"recommendation_ranking": recommendation_metadata(
+                            song, liked, discovery_ids, plan.tags, effective_weights)}
+                           if not uses_baseline_order(effective_weights) else {}),
                     }
                     for song in ordered
                 ],
@@ -619,32 +634,11 @@ async def execute_curation(task, state, runtime, *, request, model, tools):
             or not set(selection.song_ids) <= visible
         ):
             raise ValueError("selection contains invented or duplicate IDs")
-        selected = sorted(
-            [candidates[song_id] for song_id in selection.song_ids],
-            key=lambda song: song.song_id not in liked,
+        selected = order_recommendation_selection(
+            [candidates[song_id] for song_id in selection.song_ids], liked, discovery_ids, plan.tags,
+            weights=effective_weights,
+            niche_order={song.song_id: i for i, song in enumerate(ordered)} if request.obscure else None,
         )
-        if request.obscure:
-            rank = {song.song_id: position for position, song in enumerate(ordered)}
-            selected.sort(key=lambda song: rank[song.song_id])
-        elif selected:
-            # Preserve liked precedence, then alternate the two discovery paths.
-            liked_selected = [song for song in selected if song.song_id in liked]
-            novel = [
-                song
-                for song in selected
-                if song.song_id in discovery_ids and song.song_id not in liked
-            ]
-            original = [
-                song
-                for song in selected
-                if song.song_id not in discovery_ids and song.song_id not in liked
-            ]
-            selected = liked_selected
-            while novel or original:
-                if novel:
-                    selected.append(novel.pop(0))
-                if original:
-                    selected.append(original.pop(0))
         if not selected:
             return finish(
                 "只找到 0 首符合场景的曲目，尚未创建歌单；不会拿无关歌曲凑数。",
