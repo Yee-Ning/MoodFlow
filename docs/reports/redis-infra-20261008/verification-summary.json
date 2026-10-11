@@ -1,0 +1,396 @@
+{
+  "branch": "codex/redis-infra",
+  "implementation_commit": "eca6e0af19d9e91d1821fbc0515d8526acb09b03",
+  "main_baseline": "0fdf4f71dfa19a9a7fb57b04ed6b73719c02cd72",
+  "feature_heads": {
+    "codex/redis-budget-ledger": "5744ce6f9bbae9af8e1f1b1bfba545367e78804b",
+    "codex/redis-session-cache": "69a4601fd841dca73a57b891030d658e8376e267",
+    "codex/redis-ratelimit": "ca8b02f187d6ff01e4ad852d5a4e596c6d0a7a72",
+    "codex/redis-p2-cache-lock": "e20a7214b88cc2297b4166c19562269a0417d97a",
+    "codex/redis-p3-events": "10e90595ebdef5425e8cb3d5edf01a6ec7e13bfe"
+  },
+  "merge_commits": [
+    "8f8de51ee9f0cca9c7cb04fad33d2aaf8f1cbb36",
+    "33dbdbf4bd89596384ad722b1d679cac7276f378",
+    "4385259d85ceb82f00a5f54bce115e73afacd7a9",
+    "e88c5f3f7051f66b7374bb79a448f56ee2e10cdf",
+    "dfe54cc9d462a6e7012c77ad129f1add1ac15844"
+  ],
+  "merged_baseline": {
+    "exit_code": 0,
+    "elapsed_seconds": 400.2,
+    "counts": {
+      "passed": 2550,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 12,
+      "subtests_passed": 288,
+      "warnings": 213
+    },
+    "skipped_nodeids": [
+      "tests/test_jev_live.py::test_live_system_one_choice",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+      "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]",
+      "tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes"
+    ],
+    "original_skips_unchanged": true,
+    "source_frozen": true,
+    "args": [
+      "-p",
+      "pytest_asyncio.plugin",
+      "-p",
+      "xdist.plugin",
+      "-n",
+      "4",
+      "--dist",
+      "loadfile",
+      "tests",
+      "evals/tests",
+      "-q",
+      "--disable-warnings",
+      "--tb=short"
+    ],
+    "runtime_encoding": {
+      "utf8_mode": 1,
+      "stdio": "utf-8",
+      "subprocess_utf8": "1"
+    },
+    "source_map_sha256": "7bc083d5a63d204f6824e3e6bf02b5e52a64346b0f571202b4194810f28731ad"
+  },
+  "redis_specialized": {
+    "exit_code": 0,
+    "elapsed_seconds": 75.16,
+    "counts": {
+      "passed": 229,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "subtests_passed": 0,
+      "warnings": 32
+    },
+    "skipped_nodeids": [],
+    "source_frozen": true,
+    "args": [
+      "-p",
+      "pytest_asyncio.plugin",
+      "tests/test_redis_budget.py",
+      "tests/test_redis_budget_postgres.py",
+      "tests/test_redis_session_cache.py",
+      "tests/test_redis_session_postgres.py",
+      "tests/test_redis_ratelimit.py",
+      "tests/test_redis_ratelimit_postgres.py",
+      "tests/test_redis_p2_cache_lock.py",
+      "tests/test_redis_p2_postgres.py",
+      "tests/test_redis_p3_events.py",
+      "tests/test_redis_p3_postgres.py",
+      "tests/test_redis_infra_oom.py",
+      "-q",
+      "--disable-warnings",
+      "--tb=short"
+    ],
+    "runtime_encoding": {
+      "utf8_mode": 1,
+      "stdio": "utf-8",
+      "subprocess_utf8": "1"
+    },
+    "source_map_sha256": "79d6e0e0d8ce8fe12a7ca34ad38847955b459001b8ae44c246f5cedf70f59658",
+    "passed_by_file": {
+      "tests/test_redis_budget.py": 18,
+      "tests/test_redis_budget_postgres.py": 5,
+      "tests/test_redis_session_cache.py": 14,
+      "tests/test_redis_session_postgres.py": 21,
+      "tests/test_redis_ratelimit.py": 39,
+      "tests/test_redis_ratelimit_postgres.py": 2,
+      "tests/test_redis_p2_cache_lock.py": 46,
+      "tests/test_redis_p2_postgres.py": 5,
+      "tests/test_redis_p3_events.py": 42,
+      "tests/test_redis_p3_postgres.py": 26,
+      "tests/test_redis_infra_oom.py": 11
+    }
+  },
+  "oom": {
+    "exit_code": 0,
+    "elapsed_seconds": 17.33,
+    "counts": {
+      "passed": 11,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "subtests_passed": 0,
+      "warnings": 4
+    },
+    "skipped_nodeids": [],
+    "source_frozen": true,
+    "args": [
+      "-p",
+      "pytest_asyncio.plugin",
+      "tests/test_redis_infra_oom.py",
+      "-q",
+      "--disable-warnings",
+      "--tb=short"
+    ],
+    "runtime_encoding": {
+      "utf8_mode": 1,
+      "stdio": "utf-8",
+      "subprocess_utf8": "1"
+    },
+    "source_map_sha256": "79d6e0e0d8ce8fe12a7ca34ad38847955b459001b8ae44c246f5cedf70f59658"
+  },
+  "final_full": {
+    "exit_code": 0,
+    "elapsed_seconds": 394.36,
+    "counts": {
+      "passed": 2561,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 12,
+      "subtests_passed": 288,
+      "warnings": 217
+    },
+    "skipped_nodeids": [
+      "tests/test_jev_live.py::test_live_system_one_choice",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+      "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+      "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+      "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]",
+      "tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+      "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes"
+    ],
+    "original_skips_unchanged": true,
+    "source_frozen": true,
+    "args": [
+      "-p",
+      "pytest_asyncio.plugin",
+      "-p",
+      "xdist.plugin",
+      "-n",
+      "4",
+      "--dist",
+      "loadfile",
+      "tests",
+      "evals/tests",
+      "-q",
+      "--disable-warnings",
+      "--tb=short"
+    ],
+    "runtime_encoding": {
+      "utf8_mode": 1,
+      "stdio": "utf-8",
+      "subprocess_utf8": "1"
+    },
+    "source_map_sha256": "79d6e0e0d8ce8fe12a7ca34ad38847955b459001b8ae44c246f5cedf70f59658"
+  },
+  "deployment": {
+    "exit_code": 0,
+    "elapsed_seconds": 28.97,
+    "counts": {
+      "passed": 127,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "subtests_passed": 0,
+      "warnings": 0
+    },
+    "skipped_nodeids": [],
+    "source_frozen": true,
+    "args": [
+      "-p",
+      "pytest_asyncio.plugin",
+      "../deploy/tests",
+      "-q",
+      "--disable-warnings",
+      "--tb=short"
+    ],
+    "runtime_encoding": {
+      "utf8_mode": 1,
+      "stdio": "utf-8",
+      "subprocess_utf8": "1"
+    },
+    "source_map_sha256": "ad7a64481a62fd5fc00054c1186f81433ccce0fb4e72d12c50f82a08a2aed46b"
+  },
+  "memory": {
+    "redis_version": "8.10.2",
+    "sample_bytes": {
+      "budget_run_200_receipts": 20013,
+      "session_pair_32_fields_8k_each": 663174,
+      "profile_version_16k_with_pointer": 20617,
+      "derived_256k": 327753,
+      "ratelimit_identity": 131,
+      "dedup_slot": 106,
+      "transfer_receipt": 186,
+      "song_with_epoch": 189,
+      "stream_1000_entries_2groups_400_pending": 143448
+    },
+    "planning_population": {
+      "budget_run_200_receipts": 500,
+      "session_pair_32_fields_8k_each": 100,
+      "profile_version_16k_with_pointer": 500,
+      "derived_256k": 64,
+      "ratelimit_identity": 10000,
+      "dedup_slot": 1000,
+      "transfer_receipt": 10000,
+      "song_with_epoch": 10000,
+      "stream_1000_entries_2groups_400_pending": 100
+    },
+    "key_bytes_total": 127119392,
+    "total_mib": 121.23,
+    "headroom_512m": 4.22,
+    "allocator_frag_ratio": 1.06
+  },
+  "compose": {
+    "image": "moodflow/ai-service:redis-infra-validation-20261008",
+    "redis_image": "redis:8@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6",
+    "switches": [
+      {
+        "switch": "BUDGET_LEDGER_BACKEND",
+        "ok": true,
+        "component": "RedisBudgetLedger"
+      },
+      {
+        "switch": "SESSION_CACHE_BACKEND",
+        "ok": true,
+        "component": "CachedPostgresContinuityStore"
+      },
+      {
+        "switch": "RATELIMIT_BACKEND",
+        "ok": true,
+        "component": "RedisRateLimiter"
+      },
+      {
+        "switch": "CONTEXT_DERIVED_CACHE_BACKEND",
+        "ok": true,
+        "component": "RedisDerivedCache"
+      },
+      {
+        "switch": "PROFILE_CACHE_BACKEND",
+        "ok": true,
+        "component": "CachedProfileStore"
+      },
+      {
+        "switch": "DEDUP_LOCK_BACKEND",
+        "ok": true,
+        "component": "RedisDedupLocks"
+      },
+      {
+        "switch": "TRANSFER_IDEMPOTENCY_BACKEND",
+        "ok": true,
+        "component": "TransferStore"
+      },
+      {
+        "switch": "PLAYCOUNT_BACKEND",
+        "ok": true,
+        "component": "PlayCounts"
+      },
+      {
+        "switch": "PROGRESS_EVENTS_BACKEND",
+        "ok": true,
+        "component": "ProgressEvents"
+      }
+    ],
+    "startup": [
+      {
+        "scenario": "unhealthy",
+        "compose_exit": 0,
+        "redis_state": "running unhealthy",
+        "ai_healthy": true,
+        "http": {
+          "success": 200,
+          "invalid": 422
+        },
+        "warn_and_pg_fallback": true
+      },
+      {
+        "scenario": "failed",
+        "compose_exit": 0,
+        "redis_state": "exited unhealthy",
+        "ai_healthy": true,
+        "http": {
+          "success": 200,
+          "invalid": 422
+        },
+        "warn_and_pg_fallback": true
+      }
+    ],
+    "default_url_and_override": true,
+    "connection": {
+      "version": "8.10.2",
+      "ping": true
+    },
+    "no_host_ports_no_volumes_internal_only": true,
+    "all_on_http": {
+      "success": 200,
+      "invalid": 422
+    },
+    "restart_discards_hot_data": true
+  },
+  "development_compose": {
+    "compose_project": "moodflow-redis-infra-dev-20261008",
+    "health": "healthy",
+    "redis_version": "8.10.2",
+    "maxmemory_bytes": 536870912,
+    "maxmemory_policy": "noeviction",
+    "ports": {
+      "6379/tcp": null
+    },
+    "mounts": [],
+    "networks": [
+      "redis_internal"
+    ],
+    "network_internal": true,
+    "save": "",
+    "appendonly": "no",
+    "cleaned_up": true
+  },
+  "java": {
+    "command": "mvn -o test",
+    "jdk": "21.0.1",
+    "tests": 92,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontend": {
+    "commands": [
+      "test:ai-layout",
+      "test:ai-stream",
+      "test:music-assets",
+      "test:search",
+      "test:ai-trigger",
+      "test:worldline",
+      "build",
+      "lint"
+    ],
+    "all_passed": true,
+    "build_warning": "Existing chunk size >500 kB"
+  },
+  "ai_image": {
+    "tag": "moodflow/ai-service:redis-infra-validation-20261008",
+    "digest": "sha256:117a7a516c51d246891fe15a5bd7af6089bd1df186e3b31b93de19a0bd2cee40",
+    "build_passed": true,
+    "pip_check_passed": true,
+    "redis_py_version": "5.2.1",
+    "maintenance_imports_passed": true
+  },
+  "redis_linux_amd64_digest": "sha256:6e9101032a2126aeeb4b1e862ac77d2fcf26b831ae37e5ff2e69169f82ddd411",
+  "static_checks": {
+    "ruff": true,
+    "git_diff_check": true,
+    "compose_no_interpolate_no_env_resolution": true
+  },
+  "test_resources_cleaned_up": true,
+  "original_app_and_tests_unchanged_since_merged_baseline": true,
+  "original_branch_heads_unchanged": true
+}

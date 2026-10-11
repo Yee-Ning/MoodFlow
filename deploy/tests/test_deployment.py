@@ -321,7 +321,7 @@ def test_warm_models_uses_existing_singletons_without_inference():
 def test_compose_readiness_and_isolation():
     compose = yaml.safe_load((ROOT / "docker-compose.production.yml").read_text())
     services = compose["services"]
-    assert set(services) == {"postgres", "qdrant", "migrate", "netease", "java", "ai-service", "frontend"}
+    assert set(services) == {"redis", "postgres", "qdrant", "migrate", "netease", "java", "ai-service", "frontend"}
     for name, service in services.items():
         if name != "frontend":
             assert "ports" not in service

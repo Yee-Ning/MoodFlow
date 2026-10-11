@@ -1,0 +1,93 @@
+{
+  "phase": "redis-p3-events",
+  "date": "2026-10-08",
+  "baseline": "69a4601fd841dca73a57b891030d658e8376e267",
+  "exit_code": 0,
+  "elapsed_seconds": 327.41,
+  "counts": {
+    "passed": 2458,
+    "subtests_passed": 288,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 12,
+    "warnings": 207
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [
+    "tests/test_jev_live.py::test_live_system_one_choice",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+    "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]",
+    "tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+    "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_create_restart_explore_restart_restore",
+    "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_genre_executor_survives_process_restart",
+    "tests/test_worldline_postgres_restart.py::WorldLinePostgresRestartTests::test_same_branch_cannot_commit_twice_across_processes"
+  ],
+  "original_skips_unchanged": true,
+  "baseline_counts": {
+    "passed": 2390,
+    "subtests_passed": 288,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 12,
+    "warnings": 185
+  },
+  "scope": [
+    "tests",
+    "evals/tests"
+  ],
+  "execution": "pytest-xdist: four workers, loadfile",
+  "redis": "isolated-loopback-real-server",
+  "database": "isolated-loopback-postgres-15471",
+  "source_hashes": {
+    "app/agent/cached_checkpointing.py": "f650649336c0752597262de72f75a71775af902e128ea6d381e2723baa7a47d7",
+    "app/agent/checkpointing.py": "8708fdac2c5f6178307d22c0959ea669e8133fda81f2d372a994db2674c821ac",
+    "app/agent/foundation/long_horizon/cached_postgres_store.py": "6abc22469401edef8ea406b56ae5bdfa423e9fad5ff4e4389539fa489064f188",
+    "app/agent/foundation/long_horizon/coordinator.py": "88b1ea0f0ae9f21e4a5141d1bc9b11ef752d9cac657a70448c01aa6ea0b72a19",
+    "app/agent/foundation/long_horizon/runner.py": "6032b9ce92fd1a896889c221cf24f06841a4b54dcbb1c9d1b7cd415b98a91fdf",
+    "app/agent/foundation/long_horizon/runtime.py": "a215569d4452775004d4d82f82b52889ed46b8523f9f5b1026fe3ec3644d00db",
+    "app/agent/foundation/long_horizon/service.py": "b7bde01c0e5b2e6097e1aa0ffe15f9209dc8da9cec5640813f4d4fac87fd2b3b",
+    "app/agent/handoff/continuity.py": "c8238a82d9c0122868e9e67fb8e7c8497ef73f948d37b6f5ec0eed1dedadf56b",
+    "app/agent/session_cache.py": "1cd66a65c057ebb61b51ae22e3d1adca56374823baadae69144140f669ff80d6",
+    "app/api/redis_events.py": "e35412923c916b7965ad4243f3d9b23a79faf68b1bbe07227e2cd0d449084ff7",
+    "app/main.py": "9321f7207916080c73d7619ff8c142f61e4ef5e1415fb283dbc2b687e3c68cf8",
+    "app/redis_events/__init__.py": "1603c9114e4005f9ee2dca5a2479206eabef32284160d32b5d16ec70a03e400b",
+    "app/redis_events/config.py": "1a12b5ef3f836dfd8bb617deaa79c3beba45ba1b1683da8d92e37d49957d1707",
+    "app/redis_events/lua/align_playcount.lua": "5ce3e8012e0fb34167062c41ac6d13c2d97d7df611bd3b1c4c26b797099c03b9",
+    "app/redis_events/lua/increment_playcount.lua": "21f9f6c93e751517fddc2e102e3a74de102072ea0f080d47d1317dbefc51c5a6",
+    "app/redis_events/playcount.py": "afce5bc4e51ca0ba90445e6b67c49c689c8c534b604275f180e484dfbded6127",
+    "app/redis_events/runtime.py": "dc456a15c852ae128be047eba11ac7fb2f83bcee6dc0da795f7c5a895c35decf",
+    "app/redis_events/store.py": "d42e3bffa2d6d94d779dd04846e6bc749450daa642f7ed067cb3f01823786c8c",
+    "app/redis_events/streams.py": "0dbc34ac8e2e4e06d99db1c188d59ffc83377d6fe029bfa6a3f62bc8c8397694",
+    "app/redis_events/transfer.py": "f069f3bacf2c58b7dd5ff1a29043a551b8646cd3d45495648b1d6dcb5061eda8",
+    "migrations/postgresql/008_redis_events.sql": "53fbb86c9f12caa0761badd483f6617670a8934840aafbc40d5a30c4d8ad91d7",
+    "scripts/flush_redis_playcounts.py": "be7db142f7b803b7d0496c8bfcaa1b44e500816a53eab0668da1c20417fa114d",
+    "tests/test_redis_p3_events.py": "a9e27491d4b88f1c545ab58ffce71839b67de20962c4324ac5591574b0354d0b",
+    "tests/test_redis_p3_postgres.py": "48ad467a3ffdc0ec10af34b0b2c41054d1f632fa4b4246716176fcf4e3946ef3",
+    "tests/test_redis_session_cache.py": "92c133fcf0d39230b035aa67719f785d8b401048a3f29cc1371988f2d63dcdfb",
+    "tests/test_redis_session_postgres.py": "ace940909d036bd341792fa84656023e3316516eec2dc85a98e88a0a67b9fd55"
+  },
+  "source_unchanged_during_full_run": true,
+  "p1_sources_unchanged": true,
+  "implementation_commit": "447692c53388810cd3f248eb38140a0855531578",
+  "pytest_final_summary": "2458 passed, 12 skipped, 207 warnings, 288 subtests passed in 326.99s",
+  "pytest_elapsed_seconds": 326.99,
+  "new_test_cases": 68,
+  "targeted": {
+    "passed": 112,
+    "warnings": 42,
+    "elapsed_seconds": 78.9,
+    "exit_code": 0
+  },
+  "static_checks": {
+    "ruff": "passed",
+    "compileall": "passed",
+    "git_diff_cached_check": "passed"
+  },
+  "frontend_scope": "deferred: run ID, ACK and reconnect; old POST unchanged",
+  "playcount_recovery": "last successful PG flush; no per-play PG facts on healthy Redis"
+}
