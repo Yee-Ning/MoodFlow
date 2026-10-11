@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 
 
 class MemoryType(StrEnum):
@@ -41,14 +41,22 @@ class ExtractedMemory(BaseModel):
     confidence: float = Field(ge=0, le=1)
     importance: float = Field(ge=0, le=1)
     scene: str | None = Field(default=None, max_length=120)
+    valid_until: AwareDatetime | None = None
 
-    @field_validator("category", "subject", "value", "content", "evidence_quote")
+    @field_validator("category", "subject", "value", "content")
     @classmethod
     def normalize_required_text(cls, value: str) -> str:
         normalized = " ".join(value.split())
         if not normalized:
             raise ValueError("text must not be blank")
         return normalized
+
+    @field_validator("evidence_quote")
+    @classmethod
+    def preserve_verbatim_quote(cls, value):
+        if not value.strip():
+            raise ValueError("evidence quote must not be blank")
+        return value
 
     @field_validator("preference", "scene")
     @classmethod
@@ -65,6 +73,8 @@ class ExtractedMemory(BaseModel):
         parts = [category, subject]
         if self.memory_type is MemoryType.EPISODIC:
             parts.append(self.value.casefold().strip())
+        if self.scene:
+            parts.extend(("scene", self.scene.casefold()))
         key = ":".join(parts)
         if len(key) <= 400:
             return key
@@ -79,6 +89,7 @@ class ExtractedMemory(BaseModel):
             "preference": self.preference,
             "value": self.value,
             "scene": self.scene,
+            "valid_until": self.valid_until.isoformat() if self.valid_until else None,
         }
 
 
@@ -108,6 +119,9 @@ class MemoryRecord(BaseModel):
     version: int = Field(default=1, ge=1)
     superseded_by: str | None = Field(default=None, max_length=160)
     embedding: list[float] | None = None
+    source_message_id: str | None = Field(default=None, min_length=1, max_length=160)
+    evidence_quote: str | None = Field(default=None, min_length=1, max_length=500)
+    valid_until: AwareDatetime | None = None
 
 
 class MemoryWriteAction(StrEnum):
@@ -115,6 +129,24 @@ class MemoryWriteAction(StrEnum):
     CONFIRMED = "confirmed"
     SUPERSEDED = "superseded"
     IGNORED = "ignored"
+    REPLAYED = "replayed"
+    DISABLED = "disabled"
+
+
+class MemoryEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    evidence_id: str
+    user_id: str
+    source_message_id: str
+    source_thread_id: str
+    memory_type: MemoryType
+    memory_key: str
+    candidate_digest: str
+    memory_id: str | None
+    action: MemoryWriteAction
+    evidence_quote: str
+    observed_at: datetime
 
 
 class MemoryWriteResult(BaseModel):
@@ -134,6 +166,7 @@ class MemoryRetrievalRequest(BaseModel):
     scene: str | None = Field(default=None, max_length=120)
     memory_type: MemoryType | None = None
     top_k: int = Field(default=8, ge=1, le=50)
+    min_relevance: float = Field(default=0.4, ge=0, le=1)
 
 
 class RetrievedMemory(BaseModel):
@@ -147,6 +180,7 @@ class RetrievedMemory(BaseModel):
     importance: float = Field(ge=0, le=1)
     relevance: float = Field(ge=0, le=1)
     updated_at: datetime
+    memory_key: str | None = None
 
 
 class MemoryRetrievalResult(BaseModel):
@@ -159,6 +193,7 @@ class MemoryRetrievalResult(BaseModel):
         return [
             {
                 "memory_id": item.memory_id,
+                "memory_key": item.memory_key,
                 "memory_type": item.memory_type.value,
                 "content": item.content,
                 "structured_content": item.structured_content,
@@ -169,3 +204,32 @@ class MemoryRetrievalResult(BaseModel):
             }
             for item in self.items
         ]
+
+
+class MemoryPreferences(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    enabled: bool = True
+    generation: int = Field(default=0, ge=0)
+
+
+class MemoryJob(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    job_id: str
+    user_id: str
+    source_thread_id: str
+    source_message_id: str
+    user_message: str = Field(max_length=4000)
+    source_digest: str
+    generation: int
+    budget: dict[str, Any]
+    status: str = "pending"
+    owner: str | None = None
+    lease_until: AwareDatetime | None = None
+    attempts: int = 0
+    dispatches: int = 0
+    reported_tokens: int = 0
+    observed_dispatches: int = 0
+    usage_known: bool = True
+    created_at: AwareDatetime
+    extraction: dict[str, Any] | None = None
+    cancelled: bool = False

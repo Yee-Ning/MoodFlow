@@ -20,6 +20,8 @@
     "music": ["current_song", "tool_calling", "worldline"],
     "artist": ["tool_calling", "worldline"],
     "genre": ["current_song", "tool_calling", "worldline"],
+    "format": ["current_song", "tool_calling", "worldline"],
+    "recommendation_feedback": ["current_song", "tool_calling", "worldline"],
     "mood": ["general_chat", "current_song", "tool_calling"],
     "communication": ["general_chat"],
     "default": ["general_chat"]

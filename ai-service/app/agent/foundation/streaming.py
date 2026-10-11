@@ -157,14 +157,18 @@ async def _extract_memories(
     user_message: str,
     enabled: bool,
     memory_runtime: Any | None,
+    request_id: str | None = None,
 ) -> None:
     if user_id is None or (not enabled and memory_runtime is None):
         return
     try:
-        await (memory_runtime or get_memory_runtime()).extract_and_store(
+        runtime = memory_runtime or get_memory_runtime()
+        operation = runtime.extract_and_store if memory_runtime is not None else runtime.enqueue
+        await operation(
             user_id=user_id,
             source_thread_id=thread_id,
             user_message=user_message,
+            **({"source_message_id": request_id} if request_id else {}),
         )
     except Exception:
         logger.warning(
@@ -254,7 +258,7 @@ async def stream_foundation_assistant(
         user_id=user_id,
         memory_runtime=memory_runtime,
     )
-    request_id = f"request:{uuid4().hex}"
+    request_id = request_id or f"request:{uuid4().hex}"
     await _retrieve_query_memories(
         context=continuity_context,
         user_id=user_id,
@@ -405,6 +409,7 @@ async def stream_foundation_assistant(
         user_message=message,
         enabled=graph is None,
         memory_runtime=memory_runtime,
+        request_id=request_id,
     )
     yield FinalStreamEvent(
         response=_public_response(
@@ -449,7 +454,7 @@ async def invoke_foundation_assistant(
         user_id=user_id,
         memory_runtime=memory_runtime,
     )
-    request_id = f"request:{uuid4().hex}"
+    request_id = request_id or f"request:{uuid4().hex}"
     await _retrieve_query_memories(
         context=continuity_context,
         user_id=user_id,
@@ -519,6 +524,7 @@ async def invoke_foundation_assistant(
         user_message=message,
         enabled=graph is None,
         memory_runtime=memory_runtime,
+        request_id=request_id,
     )
     return _public_response(
         message_text.strip(),

@@ -17,6 +17,7 @@ import LoginPage from './pages/LoginPage'
 import LibraryPage from './pages/LibraryPage'
 import PlaylistDetailPage from './pages/PlaylistDetailPage'
 import SearchPage from './pages/SearchPage'
+import MemoryPage from './pages/MemoryPage'
 import { useAuthStore } from './store/authStore'
 import {
   getPhaseDuration,
@@ -75,6 +76,7 @@ function App() {
           <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
           <Route path="/liked" element={<StaticDestinationPage page="liked" />} />
           <Route path="/history" element={<StaticDestinationPage page="history" />} />
+          <Route path="/memory" element={<MemoryPage />} />
         </Route>
         <Route path="/genre/jazz-hiphop" element={<JazzHipHopPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

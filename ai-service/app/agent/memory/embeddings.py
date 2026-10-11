@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Protocol, TYPE_CHECKING
 
-from app.rag.indexing.dense import DenseEncoder, QwenDenseEncoder
-from app.rag.retrieval.config import load_retrieval_config
+if TYPE_CHECKING:
+    from app.rag.indexing.dense import DenseEncoder
 
 
 class MemoryEmbedder(Protocol):
@@ -24,6 +24,8 @@ class QwenMemoryEmbedder:
     )
 
     def __init__(self, encoder: DenseEncoder | None = None) -> None:
+        from app.rag.indexing.dense import QwenDenseEncoder
+        from app.rag.retrieval.config import load_retrieval_config
         self.config = load_retrieval_config().dense
         self._encoder = encoder or QwenDenseEncoder(self.config)  # type: ignore[arg-type]
 

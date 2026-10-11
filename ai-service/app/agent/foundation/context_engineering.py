@@ -259,6 +259,9 @@ class ContextCollector:
         for index, artifact in enumerate(artifact_projections or []):
             add(f"artifact:{index}", "artifact_projection", artifact)
         add("memory_source", "memory_source", memory_source)
+        if continuity_context and continuity_context.get("user_id"):
+            from app.agent.memory.context import current_memory_items
+            long_term_memory = current_memory_items(long_term_memory or [], continuity_context["user_id"])
         for index, memory in enumerate(long_term_memory or []):
             get = memory.get if isinstance(memory, dict) else lambda key, default=None: getattr(memory, key, default)
             memory_id = str(get("memory_id", index))
@@ -276,7 +279,7 @@ class ContextCollector:
                 f"long_term_memory:{memory_id}",
                 "long_term_memory",
                 safe_content,
-                metadata={"memory_id": memory_id},
+                metadata={"memory_id": memory_id, "memory_key": get("memory_key")},
                 relevance=float(get("relevance", 1.0) or 0.0),
                 priority=min(100, max(0, int(float(get("importance", 0.5) or 0.0) * 100))),
             )
@@ -318,6 +321,8 @@ def _dedup_keys(item: ContextItem) -> set[str]:
 def _compute_dedup_keys(item: ContextItem) -> set[str]:
     normalized = " ".join(item.content.casefold().split())
     keys = {"content:" + hashlib.sha256(normalized.encode("utf-8")).hexdigest()}
+    if item.type in {"long_term_memory", "user_profile"} and item.metadata.get("memory_key"):
+        keys.add("memory_fact:" + str(item.metadata["memory_key"]))
     if item.type == "rag_evidence" and item.metadata.get("evidence_id"):
         keys.add("evidence:" + str(item.metadata["evidence_id"]))
     return keys

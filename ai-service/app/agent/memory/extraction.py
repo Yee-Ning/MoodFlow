@@ -11,6 +11,7 @@ from app.agent.structured_output.parser import model_output_from_response
 from app.llm.client import create_structured_response
 
 from .models import MemoryExtractionOutput
+from .policy import MemoryAdmissionError, safe_user_message, validate_candidate
 
 ExtractionGenerator = Callable[[int, str | None], Awaitable[str | ModelOutput]]
 
@@ -26,6 +27,8 @@ MEMORY_EXTRACTION_PROMPT = """你是 MoodFlow 的长期用户记忆提取器。�
 - evidence_quote 必须逐字来自用户消息；content 是简短事实摘要。
 - 只有用户明确陈述时使用 explicit；单条行为不得伪装成 repeated_behavior。
 - 不确定时返回空 memories，不要猜测。
+- 场景偏好填写 scene（workout/sleep/commute/study）；不要让场景偏好覆盖全局偏好。
+- 临时偏好只有明确日期边界时可填写 valid_until，否则不写入 profile；不推算未知截止日期。
 
 返回严格符合 JSON Schema 的单个对象，不要输出额外文本。"""
 
@@ -59,13 +62,15 @@ class MemoryExtractor:
         *,
         generator: ExtractionGenerator | None = None,
     ) -> MemoryExtractionOutput:
-        if is_transient_only(user_message):
+        if is_transient_only(user_message) or not safe_user_message(user_message):
             return MemoryExtractionOutput()
 
         def grounded(output: MemoryExtractionOutput) -> None:
             for memory in output.memories:
-                if memory.evidence_quote not in user_message:
-                    raise SemanticValidationError("memory_evidence_not_in_user_message")
+                try:
+                    validate_candidate(memory, user_message=user_message)
+                except MemoryAdmissionError as exc:
+                    raise SemanticValidationError(str(exc)) from None
             if is_transient_only(user_message) and output.memories:
                 raise SemanticValidationError("transient_action_is_not_long_term_memory")
 

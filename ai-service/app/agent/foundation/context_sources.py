@@ -27,6 +27,7 @@ class SourceRequest:
     profile_store: ProfileStore | None = None
     history_store: Any = None
     allow_new_sources: bool = True
+    memory_store: Any = None
 
 
 class ContextSource(Protocol):
@@ -63,6 +64,11 @@ class UserProfileSource:
         if not user_id:
             return []
         raw = request.continuity.get("user_profile")
+        if request.profile_store is None and raw is not None:
+            from app.agent.foundation.user_profile import get_profile_store
+            current = get_profile_store().read(user_id)
+            if current is not None:
+                raw = current
         if raw is None:
             from app.agent.foundation.user_profile import get_profile_store
             raw = (request.profile_store or get_profile_store()).read(user_id)
@@ -71,8 +77,17 @@ class UserProfileSource:
         document = ProfileDocument.model_validate(validate_public_document(ProfileDocument, raw))
         if document.user_id != user_id:
             raise ValueError("profile user scope mismatch")
+        if not document.memory_enabled:
+            return []
+        from app.agent.memory.context import current_memory_items
+        entries = current_memory_items(document.entries, user_id, store=request.memory_store)
         # Bounded candidates; relevance and intent filtering happen in Select.
-        ranked = sorted(document.entries, key=lambda entry: (entry.updated_at, entry.confidence), reverse=True)
+        from app.agent.memory.scopes import infer_scene, is_current, matches_scene
+        scene = request.continuity.get("memory_scene") or infer_scene(request.query)
+        ranked = sorted((entry for entry in entries
+                         if is_current(entry.valid_until) and matches_scene(entry.scene, scene)),
+                        key=lambda entry: (excerpt(entry.value, request.query, 120)[1],
+                                           entry.updated_at, entry.confidence), reverse=True)
         result = []
         for entry in ranked[:limit]:
             content = entry.model_dump(mode="json")
@@ -80,6 +95,7 @@ class UserProfileSource:
             item = source_item(f"profile:{entry.key}", "user_profile", {**content, "value": projected},
                 source=self.name, intents=entry.intents,
                 metadata={"version": document.version, "confidence": entry.confidence,
+                          "memory_key": entry.memory_key, "memory_id": entry.memory_id,
                           "updated_at": entry.updated_at.isoformat(), "provenance": entry.source})
             original = source_item(item.id, item.type, content, source=self.name, intents=entry.intents)
             result.append(item.model_copy(update={"relevance": relevance,
