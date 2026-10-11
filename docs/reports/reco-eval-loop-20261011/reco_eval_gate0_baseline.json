@@ -1,0 +1,30 @@
+{
+  "phase": "reco_eval_gate0_baseline",
+  "exit_code": 0,
+  "elapsed_seconds": 68.92,
+  "counts": {
+    "": 466,
+    "passed": 233,
+    "warnings": 154
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests/test_recommendation_weights.py",
+    "tests/test_recommendation_experiments.py",
+    "tests/test_curator_weights_ab.py",
+    "tests/test_curator_curation_v1.py",
+    "tests/test_curator_curation_v2.py",
+    "tests/test_curator_popularity.py",
+    "tests/test_curator_context_budget.py",
+    "tests/test_curator_direct_request_routing.py",
+    "tests/test_popularity_data.py",
+    "tests/test_niche_ranking.py",
+    "tests/test_write_reconciliation.py",
+    "tests/test_rag_evaluation_service.py",
+    "tests/test_rag_evaluation_contracts.py",
+    "tests/test_rag_deepeval_adapter.py",
+    "evals/tests/test_worldline_eval_runner.py"
+  ]
+}

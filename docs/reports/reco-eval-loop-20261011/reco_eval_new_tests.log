@@ -1,0 +1,71 @@
+TEST_CODE_ROOT=C:\Users\33994\.codex\worktrees\coldchain-p2-integration\MoodFlow\ai-service\app\__init__.py
+bringing up nodes...
+bringing up nodes...
+
+...............F..
+================================== FAILURES ===================================
+_____ test_replay_calls_existing_ranker_without_adding_heldout_candidates _____
+[gw0] win32 -- Python 3.12.10 D:\code\ProjectsAll\MoodFlow\ai-service\.venv\Scripts\python.exe
+
+    def test_replay_calls_existing_ranker_without_adding_heldout_candidates():
+        tracks = [MusicTrack(song_id=i, name=f"track{i}", artists=["artist"], album="rain") for i in range(1, 11)]
+        response = {"keyword": "rain", "limit": 10, "songs": [song.model_dump() for song in tracks]}
+        training, _ = random_holdout(range(1, 11), EvaluationConfig())
+        weights = RecommendationWeights(1, 4, 1)
+>       actual = replay_existing_ranking(training, catalog_response=response, knowledge_ids=[3, 8],
+                                        tags=["rain"], weights=weights, k=3)
+
+evals\tests\test_recommendation_eval.py:70:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+training_ids = frozenset({1, 2, 3, 4, 5, 7, ...})
+catalog_response = {'keyword': 'rain', 'limit': 10, 'songs': [{'song_id': 1, 'name': 'track1', 'artists': ['artist'], 'album': 'rain', .....['artist'], 'album': 'rain', ...}, {'song_id': 6, 'name': 'track6', 'artists': ['artist'], 'album': 'rain', ...}, ...]}
+knowledge_ids = [3, 8], tags = ['rain']
+weights = RecommendationWeights(user_preference=1, knowledge_association=4, scene_tags=1)
+k = 3
+
+    def replay_existing_ranking(training_ids, *, catalog_response, knowledge_ids=(), tags=(), weights=None, k=15):
+        """Replay Curator's existing read-only ranking stage, not playlist writes/LLM selection.
+
+        Candidates must come from an independent saved search response. Never add
+        held-out song IDs to recall or pass the validation set into the scorer.
+        """
+        if type(k) is not int or not 0 <= k <= 20:
+            raise ValueError("k must be an integer in [0, 20]")
+        response = MusicSearchResult.model_validate(catalog_response)
+>       candidates = _catalog(response.model_dump_json(), response.keyword)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+evals\recommendation_eval_runner.py:31:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"keyword":"rain","limit":10,"songs":[{"song_id":1,"name":"track1","artists":["artist"],"album":"rain","cover_url":""...rl":"","duration":0},{"song_id":10,"name":"track10","artists":["artist"],"album":"rain","cover_url":"","duration":0}]}'
+keyword = 'rain'
+
+    def _catalog(content, keyword):
+        raw = json.loads(content)
+        if not isinstance(raw, dict) or not isinstance(raw.get("songs"), list):
+            raise ValueError("catalog result must be an object with songs")
+        # MusicTrack's compatibility aliases/coercion must not create a trusted ID.
+        for song in raw["songs"]:
+            if (
+                not isinstance(song, dict)
+                or type(song.get("song_id", song.get("id"))) is not int
+            ):
+                raise ValueError("catalog IDs must be integers")
+        parsed = MusicSearchResult.model_validate(raw)
+        if (
+            parsed.keyword != keyword
+            or parsed.limit != 50
+            or len(parsed.songs) > parsed.limit
+        ):
+>           raise ValueError("catalog result does not match search")
+E           ValueError: catalog result does not match search
+
+app\agent\handoff\curator.py:221: ValueError
+=========================== short test summary info ===========================
+FAILED evals/tests/test_recommendation_eval.py::test_replay_calls_existing_ranker_without_adding_heldout_candidates
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!! xdist.dsession.Interrupted: stopping after 1 failures !!!!!!!!!!!!
+1 failed, 17 passed, 6 warnings in 19.08s
+VALIDATION_EXIT_CODE=2

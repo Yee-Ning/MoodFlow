@@ -1,0 +1,17 @@
+{
+  "phase": "reco_eval_new_tests_fixed",
+  "exit_code": 0,
+  "elapsed_seconds": 16.17,
+  "counts": {
+    "": 58,
+    "passed": 29,
+    "warnings": 6
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "evals/tests/test_recommendation_eval.py",
+    "tests/test_recommendation_like_snapshot.py"
+  ]
+}

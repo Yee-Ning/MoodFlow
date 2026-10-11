@@ -1,0 +1,77 @@
+{
+  "schema_version": "recommendation-eval-v1",
+  "evaluation_timestamp": "2026-10-11T04:46:54.186826+00:00",
+  "git_commit": "646fc1db082fffbdd0daf26a5974d66cb391c0db",
+  "dataset_kind": "synthetic_contract_fixture",
+  "configuration": {
+    "holdout_ratio": 0.2,
+    "seed": 20261011,
+    "conversion_window_days": 7.0,
+    "completion_fraction": 0.9
+  },
+  "configuration_digest": "sha256:bb65b57d927a31023a60b8224fd82bbd008ce053fa75832c667811bf3f65c991",
+  "metric_definitions": {
+    "historical_like_hit_rate": {
+      "numerator": "distinct held-out liked song IDs recommended",
+      "denominator": "distinct held-out liked song IDs",
+      "window": "current snapshot; seeded random holdout, no chronological window",
+      "source": "get_liked_songs current cloud snapshot"
+    },
+    "like_conversion_rate": {
+      "numerator": "eligible exposures with a confirmed liked=true receipt within the configured window",
+      "denominator": "matured recommended song exposures with a successful snapshot and was_liked_before=false",
+      "window": "(recommendation at_utc, at_utc + conversion_window_days]",
+      "source": "curation.recommendation emission snapshot + verified OperationJournal receipts"
+    },
+    "play_completion_rate": {
+      "numerator": "plays reaching the configured completion fraction",
+      "denominator": "eligible started plays",
+      "window": "configured observation window",
+      "source": "not_connected; PlaybackCompletionEvent is a contract only"
+    }
+  },
+  "offline_cases": [
+    {
+      "experiment_id": "synthetic-exp",
+      "variant_id": "control",
+      "configuration_digest": "sha256:82c663f8e9d0f22c219fc4b11b04f079b3a34193eacddbca55f8c22e1f9d98e1",
+      "weights": {
+        "user_preference": 4.0,
+        "knowledge_association": 2.0,
+        "scene_tags": 1.0
+      },
+      "holdout_ratio": 0.2,
+      "seed": 20261011,
+      "training_size": 12,
+      "validation_size": 3,
+      "status": "measured",
+      "numerator": 3,
+      "denominator": 3,
+      "sample_size": 3,
+      "value": 1.0
+    }
+  ],
+  "offline_groups": [
+    {
+      "experiment_id": "synthetic-exp",
+      "variant_id": "control",
+      "configuration_digest": "sha256:82c663f8e9d0f22c219fc4b11b04f079b3a34193eacddbca55f8c22e1f9d98e1",
+      "cases": 1,
+      "numerator": 3,
+      "denominator": 3,
+      "sample_size": 3,
+      "value": 1.0
+    }
+  ],
+  "online_groups": [],
+  "play_completion_status": "not_connected",
+  "play_completion_rate": null,
+  "significance_test": "not_performed",
+  "evidence": {
+    "external_business_writes": 0,
+    "catalog": "controlled MusicServiceClient read fixture",
+    "model": "fixed contract responses"
+  },
+  "exclusions": {},
+  "replay_scope": "existing_curator_read_select_phase; first business write refused before implementation"
+}

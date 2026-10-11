@@ -1,0 +1,20 @@
+{
+  "phase": "reco_eval_new_tests",
+  "exit_code": 2,
+  "elapsed_seconds": 18.88,
+  "counts": {
+    "": 36,
+    "passed": 17,
+    "failed": 1,
+    "warnings": 6
+  },
+  "failed_nodeids": [
+    "evals/tests/test_recommendation_eval.py::test_replay_calls_existing_ranker_without_adding_heldout_candidates"
+  ],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\coldchain-p2-integration\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "evals/tests/test_recommendation_eval.py",
+    "tests/test_recommendation_like_snapshot.py"
+  ]
+}

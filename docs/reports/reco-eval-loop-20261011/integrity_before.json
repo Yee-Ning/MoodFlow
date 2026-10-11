@@ -1,0 +1,36 @@
+{
+  "phase": "before",
+  "frozen_count": 373,
+  "frozen_mismatches": [],
+  "protected_content_unchanged": {
+    "ai-service/app/agent/foundation/prompt_bindings.py": true,
+    "ai-service/app/agent/handoff/curator_prompts.py": true,
+    "ai-service/app/agent/handoff/recommendation.py": true,
+    "ai-service/app/agent/handoff/niche.py": true,
+    "ai-service/app/agent/handoff/curator_context.py": true,
+    "ai-service/app/agent/handoff/rollout.py": true,
+    "ai-service/app/agent/foundation/context_engineering.py": true,
+    "ai-service/app/llm/runtime.py": true,
+    "ai-service/app/llm/budget.py": true,
+    "ai-service/app/tools/music.py": true,
+    "ai-service/app/config/settings.py": true,
+    "ai-service/tests/test_curator_context_budget.py": true,
+    "ai-service/tests/test_recommendation_weights.py": true,
+    "ai-service/tests/test_recommendation_experiments.py": true,
+    "ai-service/tests/test_curator_weights_ab.py": true
+  },
+  "new_python_files_lf": [
+    "ai-service/evals/recommendation_metrics.py",
+    "ai-service/evals/recommendation_eval_runner.py",
+    "ai-service/evals/tests/test_recommendation_eval.py",
+    "ai-service/tests/test_recommendation_like_snapshot.py"
+  ],
+  "source_hashes": {
+    "ai-service/app/agent/handoff/curator.py": "d778de7b60236c5c6fe08f9c60333e793c0bf1212f6dc00432a45edeb15b025e",
+    "ai-service/app/agent/handoff/recommendation_experiments.py": "2be450872ccbfe1efef033c7c9b3038def15386ff8aebef7ffd562ae93ebb443",
+    "ai-service/evals/recommendation_metrics.py": "672c868f55240f4ed094c65cc7ac9e5eaafcc7921481c1088db8afff5013576c",
+    "ai-service/evals/recommendation_eval_runner.py": "35f65b6870f6685c02acd215192d1804f822b3f3967dedd752831fa47dceffa5",
+    "ai-service/evals/tests/test_recommendation_eval.py": "9c452d2146eb848edc9b871cf7cf74238a2a50d6b855d59f6cab9288fdb51b28",
+    "ai-service/tests/test_recommendation_like_snapshot.py": "7cd66c16b76d33346e78e0b166efd6eefbd4ff54f8180b6e46133bbb8654bb19"
+  }
+}
