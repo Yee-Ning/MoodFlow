@@ -1,5 +1,8 @@
 # Preserve phase5 frozen datasets and evidence hashes across platforms.
 .gitattributes text eol=lf
+# Keep byte-hashed routing contracts and semantic freeze documentation stable on Windows.
+ai-service/evals/config/router_capability_contract.json text eol=lf
+ai-service/evals/semantic_relations_v1/README.md text eol=lf
 ai-service/evals/datasets/router_e2e_blind_v5.jsonl text eol=lf
 ai-service/evals/datasets/handoff_guard_v1.jsonl text eol=lf
 ai-service/evals/datasets/handoff_guard_confirmation_v1.jsonl text eol=lf
@@ -23,3 +26,34 @@ docs/architecture/handoff-repair-and-canary.md text eol=lf
 docs/reports/handoff-repair-20261001/*.md text eol=lf
 docs/reports/handoff-repair-20261001/*.json text eol=lf
 docs/reports/handoff-repair-20261001/*.jsonl text eol=lf
+# Preserve unchanged byte-hashed evaluation and runtime files across Windows checkouts.
+ai-service/app/agent/foundation/subgraphs/worldline/__init__.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/conflict_semantics.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/entity_bridge.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/genre_actions.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/genre_executor.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/genre_registry.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/grounding.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/models.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/semantic_expansion.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/service.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/session.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/state.py text eol=lf
+ai-service/app/rag/query_understanding/config/v1.yaml text eol=lf
+ai-service/app/rag/reranking/config/v1.yaml text eol=lf
+ai-service/app/rag/retrieval/config/v1.yaml text eol=lf
+ai-service/evals/datasets/multi_blind_test_v3.jsonl text eol=lf
+ai-service/evals/datasets/multi_dev_v3.jsonl text eol=lf
+ai-service/evals/datasets/router_e2e_blind_v4.jsonl text eol=lf
+ai-service/evals/datasets/router_eval_gold_v2.jsonl text eol=lf
+ai-service/evals/datasets/single_blind_v3.jsonl text eol=lf
+ai-service/evals/datasets/worldline_eval_v0.jsonl text eol=lf
+ai-service/evals/reports/jev_multi_dev_v3_results.jsonl text eol=lf
+ai-service/evals/reports/jev_router_baseline_v1_results.jsonl text eol=lf
+ai-service/evals/semantic_relations_context_inputs.py text eol=lf
+ai-service/evals/semantic_relations_metrics.py text eol=lf
+ai-service/evals/semantic_relations_models.py text eol=lf
+ai-service/evals/semantic_relations_review.py text eol=lf
+ai-service/evals/semantic_relations_runner.py text eol=lf
+ai-service/evals/tests/semantic_relations_fixtures.py text eol=lf
+ai-service/evals/tests/test_semantic_relations_evaluation.py text eol=lf
