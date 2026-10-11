@@ -1,0 +1,355 @@
+[
+  {
+    "path": "ai-service/app/agent/handoff/journey_consumer.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "26d0adc1ede2a0af4ff6cdcb1dfae0c38d8ce36b"
+    },
+    "all_ref_history": [
+      "61f75b5 feat(handoff): connect frozen agent collaboration chains"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/handoff/chain_receivers.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "affb0cf8e489e203e51cf4e9fe016a70ddf5b633"
+    },
+    "all_ref_history": [
+      "61f75b5 feat(handoff): connect frozen agent collaboration chains"
+    ]
+  },
+  {
+    "path": "ai-service/app/llm/redis_budget.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": "b8f0b7346ca49533f024ef9562e53833251de4d4",
+      "unified": "b8f0b7346ca49533f024ef9562e53833251de4d4"
+    },
+    "all_ref_history": [
+      "065297e feat: add optional Redis atomic request budgets"
+    ]
+  },
+  {
+    "path": "ai-service/app/llm/lua/reserve_budget.lua",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": "0189bb64426a450ef2ac9d5a1de7ec8dc07f0fd4",
+      "unified": "0189bb64426a450ef2ac9d5a1de7ec8dc07f0fd4"
+    },
+    "all_ref_history": [
+      "065297e feat: add optional Redis atomic request budgets"
+    ]
+  },
+  {
+    "path": "ai-service/scripts/reconcile_redis_budget.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": "1715ab323835dca5a2784b22363eeac541c697d0",
+      "unified": "1715ab323835dca5a2784b22363eeac541c697d0"
+    },
+    "all_ref_history": [
+      "065297e feat: add optional Redis atomic request budgets"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/cached_checkpointing.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": "34e09cc1824189d48642e9cdd27989c5b2e78e84",
+      "unified": "34e09cc1824189d48642e9cdd27989c5b2e78e84"
+    },
+    "all_ref_history": [
+      "112d52a Add optional Redis session and projection caches"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/foundation/long_horizon/cached_postgres_store.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": "6ff699db0086740b8e41786a6a91973416e2c19e",
+      "unified": "6ff699db0086740b8e41786a6a91973416e2c19e"
+    },
+    "all_ref_history": [
+      "112d52a Add optional Redis session and projection caches"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/redis_reuse.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": "e5847d55b72151f11bf8c036eee9fdd00c1626f9",
+      "unified": "e5847d55b72151f11bf8c036eee9fdd00c1626f9"
+    },
+    "all_ref_history": [
+      "d73b1d1 Add Redis derived/profile caches and dedup slot locks"
+    ]
+  },
+  {
+    "path": "ai-service/app/api/rate_limit.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "b92290f97dcb7ae8cd78aa33a11de1dca571d6f4"
+    },
+    "all_ref_history": [
+      "d6fe13d feat: add optional Redis API rate limiting"
+    ]
+  },
+  {
+    "path": "ai-service/app/api/lua/sliding_window_counter.lua",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "d8451b9d7ee52e394d12af3fdba9d9ac8d225bb0"
+    },
+    "all_ref_history": [
+      "d6fe13d feat: add optional Redis API rate limiting"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/foundation/derived_cache.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": "ea17f2e69e438ee61f4280b23e0da2b9f3dd6b6e",
+      "unified": "ea17f2e69e438ee61f4280b23e0da2b9f3dd6b6e"
+    },
+    "all_ref_history": [
+      "d73b1d1 Add Redis derived/profile caches and dedup slot locks"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/foundation/profile_cache.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": "2401417b765f1aa05866648782aabf1e6351d568",
+      "unified": "2401417b765f1aa05866648782aabf1e6351d568"
+    },
+    "all_ref_history": [
+      "d73b1d1 Add Redis derived/profile caches and dedup slot locks"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/dedup_locks.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": "a3d091f911cf650d3324ee1392ffce38186bb388",
+      "unified": "a3d091f911cf650d3324ee1392ffce38186bb388"
+    },
+    "all_ref_history": [
+      "d73b1d1 Add Redis derived/profile caches and dedup slot locks"
+    ]
+  },
+  {
+    "path": "ai-service/app/api/redis_events.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "e59e2892898b7456bcd49fcd19351b1c01e27a14"
+    },
+    "all_ref_history": [
+      "447692c Add optional Redis transfer dedup, playcounts and progress streams"
+    ]
+  },
+  {
+    "path": "ai-service/app/redis_events/store.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "a1ef4ba5ecf4715c343b4988bf3347d91ba46072"
+    },
+    "all_ref_history": [
+      "447692c Add optional Redis transfer dedup, playcounts and progress streams"
+    ]
+  },
+  {
+    "path": "ai-service/app/redis_events/transfer.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "356449cd55e9663cf06a958c453a1006ca28ca68"
+    },
+    "all_ref_history": [
+      "447692c Add optional Redis transfer dedup, playcounts and progress streams"
+    ]
+  },
+  {
+    "path": "ai-service/app/redis_events/playcount.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "f25f8906ce5240f13fe78a371a31b09723ce5566"
+    },
+    "all_ref_history": [
+      "447692c Add optional Redis transfer dedup, playcounts and progress streams"
+    ]
+  },
+  {
+    "path": "ai-service/app/redis_events/streams.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "14f9e0098f2ed932ed0ee07443c8a230627befe8"
+    },
+    "all_ref_history": [
+      "447692c Add optional Redis transfer dedup, playcounts and progress streams"
+    ]
+  },
+  {
+    "path": "ai-service/migrations/postgresql/008_redis_events.sql",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "65ce3657ac74ae0cc180ed6878d1c35dbb0a777c"
+    },
+    "all_ref_history": [
+      "447692c Add optional Redis transfer dedup, playcounts and progress streams"
+    ]
+  },
+  {
+    "path": "ai-service/scripts/flush_redis_playcounts.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "b59982c875da102e4cf6f5cbcb9cb24e2209d80a"
+    },
+    "all_ref_history": [
+      "447692c Add optional Redis transfer dedup, playcounts and progress streams"
+    ]
+  },
+  {
+    "path": "deploy/redis_infra_acceptance.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "5ff07d42de7f8b211326198a266f3275216715d1"
+    },
+    "all_ref_history": [
+      "eca6e0a Add isolated ephemeral Redis infrastructure and fault acceptance"
+    ]
+  },
+  {
+    "path": "deploy/redis_infra_smoke.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "fbd4edb76d6b525d7386dea3d4167f0dd0ccf144"
+    },
+    "all_ref_history": [
+      "eca6e0a Add isolated ephemeral Redis infrastructure and fault acceptance"
+    ]
+  },
+  {
+    "path": "deploy/ai.Dockerfile",
+    "blobs": {
+      "main_3a11237c": "a0b38cb6506dc14de8a29e1d9efbf1f8c0bbd498",
+      "integration_174d7093": "a0b38cb6506dc14de8a29e1d9efbf1f8c0bbd498",
+      "unified": "4ca7c039cde3075bc6019438432b0d37d9ce47c0"
+    },
+    "all_ref_history": [
+      "eca6e0a Add isolated ephemeral Redis infrastructure and fault acceptance",
+      "1039afc Package frozen V5 router strategy in AI image",
+      "c424a4c Align Jev Choice criteria with capability contract and evaluate Gold V2",
+      "746311a Package frozen intent taxonomy in production AI image",
+      "af7f5a8 Build production AI image from verified local CPU Torch wheel",
+      "c8a96dd Prepare production deployment topology and deployability audit"
+    ]
+  },
+  {
+    "path": "docker-compose.production.yml",
+    "blobs": {
+      "main_3a11237c": "6943e7cc0c84fd1750cd9e1aff37c34d21f5a5b5",
+      "integration_174d7093": "b870320309b33aa069d45a012a97e3d2ef1b52a1",
+      "unified": "eaed3a46dc2c456b7197693347f458b399bd1795"
+    },
+    "all_ref_history": [
+      "eca6e0a Add isolated ephemeral Redis infrastructure and fault acceptance",
+      "08d18c5 chore: prepare closed V5 canary preflight",
+      "3276663 Prepare guarded V5 shadow production configuration",
+      "af7f5a8 Build production AI image from verified local CPU Torch wheel",
+      "c8a96dd Prepare production deployment topology and deployability audit"
+    ]
+  },
+  {
+    "path": "ai-service/docker-compose.qdrant.yml",
+    "blobs": {
+      "main_3a11237c": "424697462e08ada5df1eb76e9f7c87bf3683bd79",
+      "integration_174d7093": "424697462e08ada5df1eb76e9f7c87bf3683bd79",
+      "unified": "965754db548416e2261a97882165d193e0abbde5"
+    },
+    "all_ref_history": [
+      "eca6e0a Add isolated ephemeral Redis infrastructure and fault acceptance",
+      "b08b20f feat(rag): complete release-gated offline embedding pipeline",
+      "cff1a12 feat(rag): add offline dense and BM25 indexing pipeline"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/foundation/rag_source.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "a45c02ab7d8936f7525ab7150dbe6d3adcfd3883"
+    },
+    "all_ref_history": [
+      "2f6d5f9 feat: integrate accounted RAG source into context packs"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/foundation/subgraphs/worldline/stage_pack.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "36cae3e922f8839b326148a5bd25b321b77e644d"
+    },
+    "all_ref_history": [
+      "1f75b05 feat(agent-pack): wire Explorer stage recipes and RAG audit"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/foundation/long_horizon/foundation_projection.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "b0fa6c7f47e790c0aac1e33618dd321f24810510"
+    },
+    "all_ref_history": [
+      "3be8707 feat: preserve Foundation progress across session rollover"
+    ]
+  },
+  {
+    "path": "ai-service/app/agent/foundation/long_horizon/query_drilldown.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "de0eccbd466e9cd505b2932cb60f95684c7def30"
+    },
+    "all_ref_history": [
+      "deeb960 feat: select Journal history by current query"
+    ]
+  },
+  {
+    "path": "ai-service/app/api/memory.py",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "e0c195eeda0405da68027858a28327e15c502885"
+    },
+    "all_ref_history": [
+      "7a4803e feat(memory): queue budget-bound extraction and add offline quality evaluation",
+      "7f1a9d6 feat(memory): add authenticated memory management and revocation controls"
+    ]
+  },
+  {
+    "path": "soul-music-room/src/pages/MemoryPage.tsx",
+    "blobs": {
+      "main_3a11237c": null,
+      "integration_174d7093": null,
+      "unified": "eb45288f9876a704025e73c4f8c703642a394966"
+    },
+    "all_ref_history": [
+      "7f1a9d6 feat(memory): add authenticated memory management and revocation controls"
+    ]
+  }
+]

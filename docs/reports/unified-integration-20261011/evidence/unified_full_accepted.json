@@ -1,0 +1,26 @@
+{
+  "phase": "unified_full_accepted",
+  "exit_code": 2,
+  "elapsed_seconds": 443.67,
+  "counts": {
+    "": 5992,
+    "passed": 2992,
+    "warnings": 476,
+    "subtests passed": 177,
+    "skipped": 3,
+    "failed": 1
+  },
+  "failed_nodeids": [
+    "tests/test_rag_gold_v4_expand.py::GoldV4ExpansionTests::test_seed_is_byte_identical_prefix_and_new_cases_are_unique"
+  ],
+  "skipped_nodeids": [
+    "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]"
+  ],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\unified-integration-20261011\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests",
+    "evals/tests"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "path": "ai-service/evals/config/router_capability_contract.json",
+  "expected": "238d373ff43db0eea72dae17525525276a666c3819f959de8925206b0915a97c",
+  "before": "17bd911d3e5d16cc138b8391fe13e8a15225895011dfd31069d5ac442fbdb3e5",
+  "after": "238d373ff43db0eea72dae17525525276a666c3819f959de8925206b0915a97c",
+  "content_changed": false,
+  "repair": "LF checkout rule; unchanged frozen Git blob"
+}

@@ -1,0 +1,20 @@
+{
+  "phase": "unified_full",
+  "exit_code": 2,
+  "elapsed_seconds": 78.08,
+  "counts": {
+    "": 622,
+    "passed": 310,
+    "warnings": 136,
+    "failed": 1
+  },
+  "failed_nodeids": [
+    "tests/test_handoff_entry_rules.py::test_complete_rules_short_circuit_models_and_preserve_task_contract[\\u6682\\u505c\\u4e00\\u4e0b-routes0-True]"
+  ],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\unified-integration-20261011\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests",
+    "evals/tests"
+  ]
+}

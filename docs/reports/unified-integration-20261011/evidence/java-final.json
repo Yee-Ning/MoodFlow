@@ -1,0 +1,20 @@
+{
+  "command": [
+    "D:\\apache-maven-3.9.4\\bin\\mvn.cmd",
+    "--batch-mode",
+    "--no-transfer-progress",
+    "-o",
+    "clean",
+    "verify"
+  ],
+  "cwd": "C:\\Users\\33994\\.codex\\worktrees\\unified-integration-20261011\\MoodFlow\\music-backend",
+  "jdk": "D:\\code\\JDKall\\openjdk-21.0.1",
+  "exit_code": 0,
+  "elapsed_seconds": 50.55,
+  "counts": {
+    "tests": 100,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "baseline_main": "174d7093f27b4c9e88cd8a7c524c17055644e033",
+  "scope": "Git-tracked app, tests and evals; exclude local ignored analysis artifacts",
+  "ignored_local_artifact_issue_counts": {
+    "main": 36,
+    "combined": 0
+  },
+  "counts": {
+    "main": 5,
+    "combined": 5
+  },
+  "introduced": []
+}

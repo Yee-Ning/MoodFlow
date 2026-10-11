@@ -1,0 +1,31 @@
+{
+  "phase": "unified_full_complete",
+  "exit_code": 2,
+  "elapsed_seconds": 458.86,
+  "counts": {
+    "": 6552,
+    "passed": 3269,
+    "warnings": 506,
+    "subtests passed": 193,
+    "skipped": 8,
+    "failed": 1
+  },
+  "failed_nodeids": [
+    "tests/test_jev_router_single_ablation_v2.py::test_ablation_inputs_are_frozen_and_single_only"
+  ],
+  "skipped_nodeids": [
+    "tests/test_rag_indexing.py::QdrantStoreTests::test_real_qdrant_accepts_dense_bm25_and_parent_payload",
+    "tests/test_retrieval_fusion_qdrant.py::QdrantHybridSearchBackendTests::test_real_qdrant_runs_named_dense_and_bm25_legs",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_application_lifespan_uses_postgres_backends",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_checkpoint_history_and_handoff_survive_process_restart",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_memory_cross_thread_isolation_sql_vector_and_context_budget",
+    "tests/test_live_postgres_smoke.py::LivePostgresSmokeTests::test_real_qwen_embedding_pgvector_roundtrip",
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[after_add_before_result]",
+    "tests/test_recovery_selfhealing_process.py::test_dedicated_postgres_restart_preserves_gap_and_repairs_without_write[before_journal_committed]"
+  ],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\unified-integration-20261011\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests",
+    "evals/tests"
+  ]
+}

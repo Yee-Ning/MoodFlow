@@ -1,0 +1,13 @@
+{
+  "copied": [
+    "artifacts/intent_model/classifier_head.pt",
+    "artifacts/intent_model/encoder/config.json",
+    "artifacts/intent_model/encoder/model.safetensors",
+    "artifacts/intent_model/encoder/tokenizer.json",
+    "artifacts/intent_model/encoder/tokenizer_config.json",
+    "artifacts/intent_model/label_mapping.json",
+    "artifacts/intent_model/thresholds.json",
+    "artifacts/intent_model/training_config.json"
+  ],
+  "frozen_files": 20
+}

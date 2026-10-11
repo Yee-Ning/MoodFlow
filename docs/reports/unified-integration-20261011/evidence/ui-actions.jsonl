@@ -1,0 +1,4 @@
+{"action": "preferences", "body": {"enabled": false}}
+{"action": "preferences", "body": {"enabled": true}}
+{"action": "correct", "body": {"text": "我不喜欢周杰伦", "request_id": "ee8e94f0-4a52-41f6-b01c-76ddb96e2d3a"}}
+{"action": "forget", "body": {}}

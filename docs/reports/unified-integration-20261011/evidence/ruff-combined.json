@@ -1,0 +1,167 @@
+[
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 5
+    },
+    "filename": "ai-service/app/agent/foundation/routing.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from app.schemas.player import PlayerContext",
+          "end_location": {
+            "column": 68,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 32,
+      "row": 5
+    },
+    "message": "`app.schemas.player.PlayMode` imported but unused",
+    "noqa_row": 5,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 68,
+      "row": 5
+    },
+    "filename": "ai-service/app/agent/foundation/routing.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from app.schemas.player import PlayerContext",
+          "end_location": {
+            "column": 68,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 57,
+      "row": 5
+    },
+    "message": "`app.schemas.player.PlayerState` imported but unused",
+    "noqa_row": 5,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F841",
+    "end_location": {
+      "column": 22,
+      "row": 568
+    },
+    "filename": "ai-service/app/rag/parse_normalize/pdf/adapters.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 25,
+            "row": 568
+          },
+          "location": {
+            "column": 13,
+            "row": 568
+          }
+        }
+      ],
+      "message": "Remove assignment to unused variable `item_type`"
+    },
+    "location": {
+      "column": 13,
+      "row": 568
+    },
+    "message": "Local variable `item_type` is assigned to but never used",
+    "noqa_row": 568,
+    "url": "https://docs.astral.sh/ruff/rules/unused-variable"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 25,
+      "row": 7
+    },
+    "filename": "ai-service/app/rag/source_ingestion/auto_service.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 8
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Remove unused import: `pathlib.Path`"
+    },
+    "location": {
+      "column": 21,
+      "row": 7
+    },
+    "message": "`pathlib.Path` imported but unused",
+    "noqa_row": 7,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 27,
+      "row": 12
+    },
+    "filename": "ai-service/app/rag/source_ingestion/service.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from .models import (\r\n    CandidateSource,\r\n    RawSnapshotRecord,\r\n    ReviewStatus,\r\n    ensure_approved,\r\n)",
+          "end_location": {
+            "column": 2,
+            "row": 14
+          },
+          "location": {
+            "column": 1,
+            "row": 8
+          }
+        }
+      ],
+      "message": "Remove unused import: `.models.SourceNotApprovedError`"
+    },
+    "location": {
+      "column": 5,
+      "row": 12
+    },
+    "message": "`.models.SourceNotApprovedError` imported but unused",
+    "noqa_row": 12,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  }
+]

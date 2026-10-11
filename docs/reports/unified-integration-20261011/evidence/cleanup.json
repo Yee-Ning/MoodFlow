@@ -1,0 +1,23 @@
+{
+  "own_postgres_container_removed": true,
+  "container_id": "6322b9c217bf2842be8d71c07a9e07d8ad38f7437f3b0dad9633cc19aa599159",
+  "container_name": "/moodflow-unified-test-20261011",
+  "verified_label": {
+    "codex.task": "moodflow-unified-integration-20261011"
+  },
+  "removed_own_fixture_files": [
+    "ai-service/data/knowledge/v2/entity_registry_candidates.jsonl",
+    "ai-service/data/knowledge/v2/knowledge_corpus_manifest.jsonl",
+    "ai-service/data/knowledge/v2/knowledge_enriched_chunks.jsonl",
+    "ai-service/data/knowledge/v2/knowledge_quality_report.json",
+    "ai-service/data/knowledge/v2/knowledge_release_manifest.json",
+    "ai-service/data/knowledge/v2/qa/claim_review_sample.jsonl",
+    "ai-service/data/knowledge/v2/qa/entity_link_review_sample.jsonl",
+    "ai-service/data/knowledge/v2/qa/qa_review_attestation.json",
+    "ai-service/data/knowledge/v2/qa/qa_sampling_manifest.json"
+  ],
+  "working_tree_status_after_cleanup": "",
+  "ui_fixture_and_vite_stopped": true,
+  "other_worktrees_modified": false,
+  "unchanged_dataset_index_metadata_refreshed": "ai-service/evals/datasets/jev_router_baseline_v1.jsonl"
+}

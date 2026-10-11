@@ -1,0 +1,21 @@
+{
+  "phase": "foundation_projection_regression",
+  "exit_code": 0,
+  "elapsed_seconds": 221.19,
+  "counts": {
+    "": 194,
+    "passed": 97,
+    "warnings": 20
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\unified-integration-20261011\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests/test_foundation_projection.py",
+    "tests/test_foundation_projection_postgres.py",
+    "tests/test_context_loop_coordinator.py",
+    "tests/test_context_loop_projection.py",
+    "tests/test_context_loop_recovery.py",
+    "tests/test_context_loop_postgres_recovery.py"
+  ]
+}

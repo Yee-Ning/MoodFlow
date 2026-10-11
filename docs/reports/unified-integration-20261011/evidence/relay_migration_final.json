@@ -1,0 +1,28 @@
+{
+  "phase": "relay_migration_final",
+  "exit_code": 0,
+  "elapsed_seconds": 79.47,
+  "counts": {
+    "": 586,
+    "passed": 293,
+    "warnings": 28
+  },
+  "failed_nodeids": [],
+  "skipped_nodeids": [],
+  "code_root": "C:\\Users\\33994\\.codex\\worktrees\\unified-integration-20261011\\MoodFlow\\ai-service\\app\\__init__.py",
+  "targets": [
+    "tests/test_agent_pack_impl_a.py",
+    "tests/test_agent_pack_impl_b.py",
+    "tests/test_agent_pack_impl_c.py",
+    "tests/test_agent_pack_impl_d.py",
+    "tests/test_agent_pack_impl_e.py",
+    "tests/test_agent_pack_relay_migration.py",
+    "tests/test_context_rag_source.py",
+    "tests/test_context_rag_postgres.py",
+    "tests/test_context_source_manifest_compat.py",
+    "tests/test_redis_p2_cache_lock.py",
+    "tests/test_memory_controls.py",
+    "tests/test_context_engineering.py",
+    "evals/tests/test_agent_pack_quota.py"
+  ]
+}
