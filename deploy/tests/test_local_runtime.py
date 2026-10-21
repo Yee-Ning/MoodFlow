@@ -101,6 +101,28 @@ def test_approval_uses_existing_full_index_verification(tmp_path, monkeypatch):
     assert provider.binding is binding and provider.config is config
 
 
+def test_model_cache_fetches_both_pinned_models_before_serving(monkeypatch):
+    import huggingface_hub
+    from app.rag.retrieval.config import load_retrieval_config
+    from app.rag.reranking.config import load_rerank_config
+
+    download = Mock()
+    monkeypatch.setattr(huggingface_hub, "snapshot_download", download)
+    monkeypatch.setattr(runtime.time, "sleep", Mock())
+    runtime.prepare_model_cache()
+    dense, rerank = load_retrieval_config().dense, load_rerank_config().model
+    assert [(call.kwargs["repo_id"], call.kwargs["revision"]) for call in download.call_args_list] == [
+        (dense.model_name, dense.model_revision), (rerank.name, rerank.revision)]
+    download.side_effect = OSError("offline")
+    with pytest.raises(OSError, match="offline"):
+        runtime.prepare_model_cache()
+    assert download.call_count == 5  # Two successes, then three bounded attempts.
+    download.reset_mock(side_effect=True)
+    download.side_effect = [OSError("interrupted"), None, None]
+    runtime.prepare_model_cache()
+    assert download.call_count == 3
+
+
 def test_qdrant_readiness_and_timeout(monkeypatch):
     response = Mock()
     response.__enter__ = Mock(return_value=SimpleNamespace(status=200))

@@ -22,12 +22,14 @@ docker compose up --build -d
 docker compose ps -a
 ```
 
-全部服务就绪后访问 [localhost:8088](http://localhost:8088)。首次运行会下载 CPU PyTorch 和 Qwen 检索模型，并从仓库内的审核语料建立本地索引；根据网络和 CPU 性能可能需要较长时间：
+全部服务就绪后访问 [localhost:8088](http://localhost:8088)。首次运行会下载 CPU PyTorch、Qwen 检索与重排模型（模型下载约 2.4 GB），并从仓库内的审核语料建立本地索引；根据网络和 CPU 性能可能需要较长时间：
 
 ```bash
 docker compose logs -f prepare-index ai-service
 python scripts/smoke.py
 ```
+
+若模型或依赖下载反复中断，可在 `.env` 设置 `MOODFLOW_DOWNLOAD_PROXY`，使用 Docker 能访问的代理地址；也可按示例配置 `HF_ENDPOINT`。下载缓存会保留，重新运行启动命令会继续准备。
 
 `python scripts/smoke.py --chat` 会额外发送一次真实 AI 请求，使用你配置的模型服务。网易云登录、曲库和歌曲可播放性取决于账号、地区和上游服务。
 
@@ -54,4 +56,4 @@ docker compose down
 
 ## 许可与来源
 
-项目使用 [GPL-3.0-only](LICENSE)。第三方代码、模型和知识来源保留各自的许可与署名：分类编码器基于 [BAAI/bge-small-zh-v1.5](https://huggingface.co/BAAI/bge-small-zh-v1.5)，其 MIT 许可随模型保存；检索模型使用 [Qwen/Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B)。前端原有来源说明见 [前端 README](soul-music-room/README.md)，网易云 API 的许可见其子模块。
+项目使用 [GPL-3.0-only](LICENSE)。第三方代码、模型和知识来源保留各自的许可与署名：分类编码器基于 [BAAI/bge-small-zh-v1.5](https://huggingface.co/BAAI/bge-small-zh-v1.5)，其 MIT 许可随模型保存；检索与重排使用 [Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B) 和 [Qwen3-Reranker-0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B)。前端原有来源说明见 [前端 README](soul-music-room/README.md)，网易云 API 的许可见其子模块。

@@ -6,8 +6,11 @@ x-ai: &ai
   build:
     context: .
     dockerfile: deploy/ai.Dockerfile
+    args:
+      HTTP_PROXY: ${MOODFLOW_DOWNLOAD_PROXY:-}
+      HTTPS_PROXY: ${MOODFLOW_DOWNLOAD_PROXY:-}
   init: true
-  environment:
+  environment: &ai-environment
     LLM_API_KEY: ${LLM_API_KEY:-}
     LLM_BASE_URL: ${LLM_BASE_URL:-https://your-compatible-api.example/v1}
     LLM_MODEL: ${LLM_MODEL:-your-model-id}
@@ -26,6 +29,7 @@ x-ai: &ai
     AI_RAG_INDEX_MANIFEST: data/local/index/index_build_manifest.json
     QDRANT_URL: http://qdrant:6333
     HF_ENDPOINT: ${HF_ENDPOINT:-https://huggingface.co}
+    HF_HUB_DISABLE_XET: "1"
     JEV_ENABLED: "false"
     JEV_ROUTER_V5_SHADOW_ENABLED: "false"
     REDIS_URL: redis://redis:6379/0
@@ -73,6 +77,11 @@ services:
   prepare-index:
     <<: *ai
     command: [prepare-index]
+    environment:
+      <<: *ai-environment
+      HTTP_PROXY: ${MOODFLOW_DOWNLOAD_PROXY:-}
+      HTTPS_PROXY: ${MOODFLOW_DOWNLOAD_PROXY:-}
+      NO_PROXY: localhost,127.0.0.1,postgres,redis,qdrant,java,netease,host.docker.internal
     healthcheck: {disable: true}
     depends_on:
       migrate: {condition: service_completed_successfully}

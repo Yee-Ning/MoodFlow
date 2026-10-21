@@ -68,6 +68,31 @@ def verify_prepared_index(root, binding, config):
     verify_index(root, runtime, approve=True)
 
 
+def prepare_model_cache():
+    import httpx
+    from huggingface_hub import snapshot_download
+    from app.rag.retrieval.config import load_retrieval_config
+    from app.rag.reranking.config import load_rerank_config
+
+    dense, reranker = load_retrieval_config().dense, load_rerank_config().model
+    # The entry-context RAG source uses reranking even when WorldLine's separate
+    # rerank mode is off. Download both before the first user request deadline.
+    for name, revision in ((dense.model_name, dense.model_revision), (reranker.name, reranker.revision)):
+        for attempt in range(3):
+            try:
+                snapshot_download(repo_id=name, revision=revision, allow_patterns=[
+                    "config.json", "generation_config.json", "tokenizer*", "special_tokens_map.json",
+                    "vocab.json", "merges.txt", "model.safetensors",
+                ])
+                break
+            except (OSError, httpx.HTTPError):
+                if attempt == 2:
+                    raise
+                print(f"Retrying model download: {name} (attempt {attempt + 2}/3)")
+                time.sleep(2 ** attempt)
+        print(f"Model cache prepared: {name}@{revision}")
+
+
 def prepare_index(root: Path = SERVICE) -> None:
     from app.rag.indexing import OfflineIndexingService, load_indexing_config
     from app.rag.retrieval import load_retrieval_config, load_retrieval_index_binding
@@ -118,9 +143,13 @@ def main(argv: list[str] | None = None) -> int:
         from app.agent.postgres_migrations import run_all_migrations
         print(f"Applied {len(run_all_migrations(include_memory=True))} database migrations")
     elif args.command == "prepare-index":
+        prepare_model_cache()
         wait_for_qdrant()
         prepare_index()
     else:
+        # Required pinned files were fetched by prepare-index. Serving does not
+        # need Hub metadata requests in the middle of a user-request deadline.
+        os.environ["HF_HUB_OFFLINE"] = "1"
         import uvicorn
         uvicorn.run("app.main:app", host="0.0.0.0", port=8001)
     return 0
