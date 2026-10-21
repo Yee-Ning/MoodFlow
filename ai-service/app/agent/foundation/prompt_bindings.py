@@ -66,7 +66,7 @@ _BINDINGS = (
                   variant="song-playback", separator="\n"),
     PromptBinding("curator-current-song", CURRENT_SONG_SYSTEM_PROMPT, ("curator",), ("song_analysis",)),
     PromptBinding("query-analysis", QUERY_ANALYSIS_PROMPT_V1, ("explorer",), ("query_analysis",)),
-    PromptBinding("explorer-narrative", NARRATIVE_SYSTEM_PROMPT, ("explorer",), ("narrative",)),
+    PromptBinding("explorer-narrative", NARRATIVE_SYSTEM_PROMPT, ("explorer",), ("narrative",), version="v2"),
     PromptBinding("explorer-branches", BRANCH_SYSTEM_PROMPT, ("explorer",), ("branches",)),
     PromptBinding("explorer-branches-exploration", EXPLORATION_BRANCH_BASE_V1, ("explorer",), ("branches",)),
     PromptBinding("explorer-exploration-rules", EXPLORATION_BRANCH_RULE_V1, ("explorer",), ("branches",),

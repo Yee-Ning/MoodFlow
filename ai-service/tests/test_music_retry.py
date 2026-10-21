@@ -87,6 +87,28 @@ class TestRetryDelayCalculation:
 
 @pytest.mark.asyncio
 class TestMusicServiceClientRetry:
+    @pytest.mark.parametrize("method", ["POST", "DELETE"])
+    @pytest.mark.parametrize("failure", [429, 500, 502, 503, "timeout", "connection"])
+    async def test_uncertain_writes_are_dispatched_once_for_journal_readback(self, method, failure):
+        calls = []
+
+        def handler(request):
+            calls.append(request)
+            if failure == "timeout":
+                raise httpx.ReadTimeout("uncertain write", request=request)
+            if failure == "connection":
+                raise httpx.ConnectError("unavailable", request=request)
+            return httpx.Response(failure, json={"message": "controlled failure"})
+
+        sleeper = AsyncMock()
+        client = make_client(sleeper=sleeper)
+        transport = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        with patch("app.tools.music.httpx.AsyncClient", return_value=transport):
+            with pytest.raises(MusicServiceError):
+                await client._request(method, "/api/playlists/1/songs/2")
+        assert len(calls) == 1
+        sleeper.assert_not_awaited()
+
     async def test_timeout_retries_3_times_then_raises_friendly_error(self, caplog):
         caplog.set_level(logging.INFO)
         clock = FakeClock()

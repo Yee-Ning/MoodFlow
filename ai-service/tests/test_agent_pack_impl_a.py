@@ -35,7 +35,8 @@ from app.rag.chunk.token_counter import UnicodeHeuristicTokenCounter
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# Literal UTF-8 hashes audited at d1ff818c, independent of the runtime registry.
+# Literal UTF-8 hashes, independent of the runtime registry. Narrative v2 includes
+# the source-citation and abstention rules added after the d1ff818c baseline.
 BASELINE_DIGESTS = {
     "general-chat-base/v1": "4626a71fee1d1d7adaa979cd27837dbed5c93da9b4e5ab2a28da5b11dc6e38e9",
     "curator-tools-base/v1": "25fb024bf98caa16700f61f37ca03aaaf08e351e83c2e2cddcd57bef81fdac98",
@@ -43,7 +44,7 @@ BASELINE_DIGESTS = {
     "song-playback/v1": "39b683662e3195ed4a85e7f31e4e5c673419c175d4a3dc6ef1214c5191ae721c",
     "curator-current-song/v1": "ce45e29ec6e7cefd2326f22843d51389f358ed849bd26875aebf35cc1db167c4",
     "query-analysis/v1": "89c717bd39166cebec481128cd4c27fad5fc6a08394729fcbb612e6bbb7b01f0",
-    "explorer-narrative/v1": "f206bcbf1d402ba49c81dc8348537e29b5c9903a3fb71c1e09db9a74ada1ae66",
+    "explorer-narrative/v2": "05099b6cd6b9873067c169817a5c089ece5d1558dac351e90a077f443d7c599d",
     "explorer-branches/v1": "c2e3594834e8a9215eff64b6e81e6c246792bb708c73146583f3463e08f34e20",
     "handoff-transfer/v1": "c439d5c31d52b568a5feab831cba235cabbc0713a9b8218aa5993b0df0462cd4",
     "transfer-retry/v1": "e9ad532d821af713caac997680bc729267396c0d26bb14ef05e68b855cc675cb",
@@ -101,7 +102,7 @@ def test_static_variants_preserve_existing_concatenation(owner, phase, refs):
     (("general-chat-handoff-read/v1",), "general_chat", "answer"),
     (("general-chat-base/v1",), "curator", "answer"),
     (("general-chat-base/v1",), "general_chat", "relay"),
-    (("explorer-narrative/v1", "explorer-branches/v1"), "explorer", "narrative"),
+    (("explorer-narrative/v2", "explorer-branches/v1"), "explorer", "narrative"),
     (("curator-tools-base/v1", "search-only/v1", "song-playback/v1"), "curator", "tool_step"),
 ])
 def test_invalid_static_bindings_fail_before_collect(refs, owner, phase):

@@ -93,4 +93,6 @@ async def test_direct_spring_errors_keep_existing_failure_contract(spring_server
         error = MusicContextProviderError if adapter == "song" else MusicServiceError
         with pytest.raises(error):
             await invoke(adapter)
-    assert len(spring_server.requests) == 1
+    # Music search has bounded retries; identity/song adapters make one attempt.
+    assert len(spring_server.requests) == (4 if adapter == "search" else 1)
+    assert all(request == spring_server.requests[0] for request in spring_server.requests)

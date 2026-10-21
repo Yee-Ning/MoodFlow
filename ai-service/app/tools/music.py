@@ -219,6 +219,14 @@ class MusicServiceClient:
                     if status == 401:
                         raw_message = raw_message or "请先登录网易云音乐。"
 
+                    # A failed write may already have taken effect upstream.
+                    # The operation journal reconciles it through readback.
+                    if method.upper() not in {"GET", "HEAD", "OPTIONS"}:
+                        raise MusicServiceError(
+                            f"http_{status}",
+                            raw_message or "音乐服务暂时不可用，请稍后再试。",
+                        )
+
                     # 不可重试类型（400/401/403/404/422及其他4xx）：直接抛出，不进重试循环
                     if status in {400, 401, 403, 404, 422} or (400 <= status < 500 and status != 429):
                         raise MusicServiceError(
@@ -303,7 +311,7 @@ class MusicServiceClient:
                     last_error_code = error_code
                     last_exc = exc
 
-                    if attempt >= MAX_TOOL_RETRIES:
+                    if method.upper() not in {"GET", "HEAD", "OPTIONS"} or attempt >= MAX_TOOL_RETRIES:
                         logger.info(
                             'tool_retry{tool="%s", error="%s", attempt=%d, outcome="failed"}',
                             resolved_tool,

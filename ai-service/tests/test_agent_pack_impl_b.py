@@ -45,7 +45,7 @@ def invocation(h, *, inputs=None, **changes):
     phase, refs = {
         "general_chat": ("answer", ("general-chat-base/v1",)),
         "curator": ("tool_step", ("curator-tools-base/v1",)),
-        "explorer": ("narrative", ("explorer-narrative/v1",)),
+        "explorer": ("narrative", ("explorer-narrative/v2",)),
     }[owner]
     if relay:
         phase, refs = "relay", ("handoff-transfer/v1",)

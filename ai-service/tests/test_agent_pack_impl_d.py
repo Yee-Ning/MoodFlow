@@ -27,6 +27,7 @@ from app.agent.foundation.subgraphs.worldline.prompts import (
 from app.agent.foundation.subgraphs.worldline import stage_pack
 from app.agent.handoff.hop_context import hop_source_scope
 from app.llm.runtime import RequestLedger, RuntimeLimitError, active_ledger, active_manifest, agent_scope, estimate_tokens, request_scope
+from app.rag.chunk.token_counter import UnicodeHeuristicTokenCounter
 from app.rag.query_understanding.analyzer import ExistingLLMQueryAnalysisRuntime, QUERY_ANALYSIS_PROMPT_V1
 from app.rag.query_understanding.config import QueryUnderstandingConfig
 from app.rag.query_understanding.analyzer import QueryAnalyzer
@@ -74,7 +75,8 @@ async def test_each_actual_provider_phase_uses_recipe_and_static_prompt(monkeypa
     audit = PackManifest.model_validate(active_manifest.get()).agent_context
     assert audit.recipe_id == "explorer/v1" and audit.recipe_version == "v1"
     assert audit.phase == phase and audit.owner_agent == "explorer"
-    assert audit.prompts[0].prompt_id == prompt_id and audit.prompts[0].version == "v1"
+    assert audit.prompts[0].prompt_id == prompt_id
+    assert audit.prompts[0].version == ("v2" if phase == "narrative" else "v1")
     prompt = {"query_analysis": QUERY_ANALYSIS_PROMPT_V1, "narrative": NARRATIVE_SYSTEM_PROMPT,
               "branches": BRANCH_SYSTEM_PROMPT}[phase]
     assert audit.prompts[0].content_digest == "sha256:" + sha256(prompt.encode("utf-8")).hexdigest()
@@ -147,7 +149,14 @@ async def test_formal_source_preferred_and_shared_quota_preserves_required_evide
 
 
 @pytest.mark.asyncio
-async def test_combined_optional_pool_cannot_spend_two_times_5000():
+async def test_combined_optional_pool_cannot_spend_two_times_5000(monkeypatch):
+    # Exercise the shared 5000-token pool independently of the newer per-item
+    # 900-token compression cap, which would make this fixture too small.
+    from app.agent.foundation import rag_source
+    config = rag_source.load_context_packing_config()
+    config = config.model_copy(update={"compression": config.compression.model_copy(
+        update={"max_evidence_tokens": 1900, "max_item_tokens": 2100})})
+    monkeypatch.setattr(rag_source, "load_context_packing_config", lambda: config)
     rag = source(contents=["甲" * 1900, "乙" * 1900, "丙" * 1900])
     result = await prepare(registry=SourceRegistry([rag]), inputs=AgentPackInputs(rag_pack=SimpleNamespace(
         items=[{"id": "legacy-1", "excerpt": "丁" * 1900}, {"id": "legacy-2", "excerpt": "戊" * 1900}])))
@@ -239,9 +248,12 @@ async def test_reselect_preserves_static_and_rag_audit_without_recollecting(labe
         return [{"role": "user", "content": json.dumps([
             {"excerpt": item.content, "label": "栏" * label_tokens} for item in selected], ensure_ascii=False)}], system
     default = POLICIES[RouteKey.WORLDLINE]
-    # Preserve the original 1244-token input pressure with the merged output cap.
+    # Keep enough room for three short evidence items after the current static
+    # prompt, but force reselection once the provider framing adds long labels.
+    counter = UnicodeHeuristicTokenCounter()
+    input_limit = counter.count(NARRATIVE_SYSTEM_PROMPT) + 500
     policy = default.model_copy(update={
-        "total_input_budget": default.reserved_output_tokens + default.safety_margin + 1244})
+        "total_input_budget": default.reserved_output_tokens + default.safety_margin + input_limit})
     trace_context = {"task_id": "fixture:task", "session_id": "fixture:session", "request_id": "fixture:request"}
     result = await stage_pack.prepare_explorer_input("narrative", query="探索", instructions=NARRATIVE_SYSTEM_PROMPT,
         schema={}, schema_name="test", renderer=expensive_render, policy=policy, registry=SourceRegistry([rag]),

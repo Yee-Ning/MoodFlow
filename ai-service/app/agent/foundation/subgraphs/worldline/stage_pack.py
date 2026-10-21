@@ -262,7 +262,7 @@ def stage_prompts(phase, instructions, *, retry=False, exploration=False):
 
     base, references = {
         "query_analysis": (QUERY_ANALYSIS_PROMPT_V1, ("query-analysis/v1",)),
-        "narrative": (NARRATIVE_SYSTEM_PROMPT, ("explorer-narrative/v1",)),
+        "narrative": (NARRATIVE_SYSTEM_PROMPT, ("explorer-narrative/v2",)),
         "branches": (BRANCH_SYSTEM_PROMPT, ("explorer-branches/v1",)),
     }[phase]
     if exploration:
