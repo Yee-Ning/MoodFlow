@@ -3,8 +3,10 @@
 from pathlib import Path
 import hashlib
 import json
+import re
 import subprocess
 import unittest
+from urllib.parse import unquote, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +34,8 @@ class RepositoryHygieneTests(unittest.TestCase):
             "workspace/", "visual-qa/", "docs/reports/", "docs/plans/",
             "docs/superpowers/", "docs/project-summary/",
             "docs/deployment-preparation/", "ai-service/evals/", "ai-service/tools/",
+            "ai-service/data/source_ingestion/worldline-native-positive",
+            "ai-service/data/knowledge/worldline-native-positive",
         )
         for path in git("ls-files", "-z").decode().split("\0"):
             if not path:
@@ -50,8 +54,15 @@ class RepositoryHygieneTests(unittest.TestCase):
                     and not name.endswith(".example")
                 )
                 self.assertFalse(name.endswith((".pem", ".key", ".p12", ".pfx")))
-                if "/" not in path:
-                    self.assertFalse(name.endswith("_report.md"))
+                self.assertFalse(name.endswith(("_report.md", "-report.md")))
+                self.assertFalse(name.startswith("design-qa") and name.endswith(".md"))
+                self.assertFalse(name.startswith("validation7"))
+                self.assertNotEqual(name, "test_validation7_guards.py")
+                self.assertNotIn(name, {"combo_robustness_live.py", "tools_t1t2_live.py"})
+                if path.startswith("ai-service/data/knowledge/"):
+                    self.assertNotIn(name, {"native_preparation_run.json", "provider_trace.jsonl"})
+                if path.startswith("ai-service/data/indexing/"):
+                    self.assertNotEqual(name, "native_retrieval_smoke.json")
 
     def test_ignore_rules_cover_outputs_but_keep_source_and_examples(self):
         ignored = [
@@ -60,17 +71,60 @@ class RepositoryHygieneTests(unittest.TestCase):
             "ai-service/evals/old_benchmark.py", "ai-service/tools/old_repair.py",
             "new_report.md", "ai-service/.env", "ai-service/.env.production",
             "soul-music-room/node_modules/example/index.js", ".pytest_cache/state",
+            "soul-music-room/design-qa.md", "docs/component_report.md",
+            "docs/component-report.md", "soul-music-room/scripts/validation7.html",
+            "ai-service/scripts/validation7_runtime.py",
+            "ai-service/scripts/combo_robustness_live.py",
+            "ai-service/scripts/tools_t1t2_live.py",
+            "ai-service/tests/test_validation7_guards.py",
+            "ai-service/data/source_ingestion/worldline-native-positive-v4/result.json",
+            "ai-service/data/knowledge/worldline-native-positive-v4/provider_trace.jsonl",
+            "ai-service/data/knowledge/current/provider_trace.jsonl",
+            "ai-service/data/indexing/current/native_retrieval_smoke.json",
         ]
         kept = [
             ".env.example", "ai-service/.env.example",
             "ai-service/.env.worldline-online.example", "README.md",
             "ai-service/app/agent/decision/jev/config/router_capability_contract.json",
             "ai-service/tests/test_example.py",
+            "soul-music-room/THIRD_PARTY_NOTICES.md",
+            "ai-service/data/knowledge/releases/current/knowledge_quality_report.json",
+            "ai-service/scripts/handoff_acceptance.py",
+            "docs/contracts/context-pack.md",
         ]
         output = git(
             "check-ignore", "--no-index", "--stdin", input=("\n".join(ignored + kept) + "\n").encode()
         ).decode().splitlines()
         self.assertEqual(set(output), set(ignored))
+
+    def test_project_documentation_has_no_broken_local_links_or_machine_paths(self):
+        paths = git("ls-files", "-z", "*.md").decode().split("\0")
+        for path in paths:
+            if not path or path.startswith(("ai-service/data/", "ai-service/tests/")):
+                continue  # Corpus documents and parser fixtures are source data.
+            source = (ROOT / path).read_text(encoding="utf-8")
+            with self.subTest(path=path):
+                self.assertNotRegex(source, r"[A-Za-z]:[/\\](?:Users|code|ProjectsAll)[/\\]")
+                source = re.sub(r"```.*?```", "", source, flags=re.DOTALL)
+                for target in re.findall(r"\]\(([^\s)]+)\)", source):
+                    link = urlsplit(target.strip("<>"))
+                    if link.scheme or link.netloc or not link.path:
+                        continue
+                    resolved = (ROOT / path).parent / unquote(link.path)
+                    self.assertTrue(resolved.exists(), f"Broken link in {path}: {target}")
+
+    def test_knowledge_release_keeps_all_signed_artifacts(self):
+        paths = git("ls-files", "-z", "*knowledge_release_manifest.json").decode().split("\0")
+        manifests = [path for path in paths if path]
+        self.assertTrue(manifests, "Local initialization needs an approved knowledge release")
+        for path in manifests:
+            manifest = json.loads((ROOT / path).read_text(encoding="utf-8"))
+            directory = Path(path).parent
+            for relative, expected in manifest["artifacts"].items():
+                with self.subTest(manifest=path, artifact=relative):
+                    artifact = directory / relative
+                    versioned = git("show", ":" + artifact.as_posix())
+                    self.assertEqual("sha256:" + hashlib.sha256(versioned).hexdigest(), expected)
 
     def test_required_modules_and_submodule_are_present(self):
         paths = set(git("ls-files", "-z").decode().split("\0"))

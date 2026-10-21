@@ -48,8 +48,9 @@ Thumbs.db
 /docs/project-summary/
 /docs/deployment-preparation/
 /ai-service/evals/reports/
-/*_report.md
-/*-report.md
+*_report.md
+*-report.md
+design-qa*.md
 /foundation_subgraph_e2e_acceptance.md
 /tool-retry-*.md
 /gate1b-delete.ps1
@@ -57,3 +58,17 @@ Thumbs.db
 # Historical evaluation and one-off repair code lives in archive/research-20261021.
 /ai-service/evals/
 /ai-service/tools/
+
+# Retired local acceptance harnesses and superseded preparation runs.
+/soul-music-room/scripts/validation7.*
+/ai-service/scripts/validation7_*.py
+/ai-service/scripts/combo_robustness_live.py
+/ai-service/scripts/tools_t1t2_live.py
+/ai-service/tests/test_validation7_guards.py
+/ai-service/data/source_ingestion/worldline-native-positive*/
+/ai-service/data/knowledge/worldline-native-positive*/
+/ai-service/data/source_ingestion/jay_chou_corpus_v1/discovered_candidates_v2.json
+/ai-service/data/source_ingestion/jay_chou_corpus_v1/failed_sources_v1.json
+/ai-service/data/knowledge/**/native_preparation_run.json
+/ai-service/data/knowledge/**/provider_trace.jsonl
+/ai-service/data/indexing/**/native_retrieval_smoke.json

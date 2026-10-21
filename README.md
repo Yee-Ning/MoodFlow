@@ -51,8 +51,12 @@ docker compose down
 | `ai-service/data/` | 知识语料、审核清单及数据处理测试样本 |
 | `netease-music-api/` | 固定版本的网易云 API 子模块 |
 | `deploy/`、`scripts/` | 容器构建、本地初始化和验证工具 |
+| `docs/contracts/` | 当前上下文、代理交接和日志数据契约 |
+| `.github/workflows/` | 前端、后端和 Python 自动化检查 |
 
 开发和测试命令见 [DEVELOPMENT.md](DEVELOPMENT.md)，AI 模块说明见 [ai-service/README.md](ai-service/README.md)。历史评测、一次性审查工具及旧部署方案保存在 Git 标签 `archive/research-20261021`，不参与当前启动。
+
+仓库保留的知识发布包中，质量清单与审核记录参与完整性校验，属于初始化索引所需的数据。旧验收页面、执行日志和未使用的中间试验快照不随当前版本分发。
 
 网易云 API 子模块固定到本仓库的 `codex/netease-api-runtime` 依赖分支，保留了歌单写入响应的修复；其上游为 [NeteaseCloudMusicApiEnhanced/api-enhanced](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced)。
 
