@@ -1,7 +1,3 @@
 [submodule "netease-music-api"]
 	path = netease-music-api
 	url = https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced.git
-
-[submodule "visual-qa/mineradio-upstream"]
-	path = visual-qa/mineradio-upstream
-	url = https://github.com/XxHuberrr/Mineradio.git

@@ -270,7 +270,7 @@ def test_owner_scope_uses_curators_balance_and_rejects_wrong_policy():
 
 
 def test_old_pack_and_phase2_call_documents_read_and_serialize_compatibly():
-    legacy_call = json.loads((ROOT.parent / "docs/reports/context-engineering-phase2-20261005/manifest-example.json")
+    legacy_call = json.loads((Path(__file__).with_name("fixtures") / "legacy_call_manifest.json")
                              .read_text(encoding="utf-8"))["manifest"]
     call = CallManifest.model_validate(legacy_call)
     assert call.agent_context is None and "agent_context" not in call.model_dump()

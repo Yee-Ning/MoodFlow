@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from app.rag.knowledge.entity_linking.models import EntityType
+from app.rag.knowledge.entity_linking.linker import EntityLinker, _JAY_SHORT_NAME
 from app.rag.knowledge.entity_linking.registry import EntityRegistry, normalize_alias
 from app.rag.query_understanding.models import (
     CatalogReference,
@@ -98,7 +99,15 @@ class QueryEntityResolver:
         occupied_ids = set(seen_knowledge_ids)
         for surface in self.registry.detectable_aliases():
             normalized_surface = normalize_alias(surface)
+            is_shared_jay = normalized_surface == "jay" and {
+                item.entity_id for item in self.registry.candidates(surface)
+            } == {"artist:jay_chou", "album:jay_2000"}
             span = _surface_span(query, surface)
+            if is_shared_jay:
+                # A longer full-name alias may occupy the first Jay occurrence.
+                span = next((match.span() for match in _JAY_SHORT_NAME.finditer(query)
+                             if not any(match.start() < end and start < match.end()
+                                        for start, end in occupied_spans)), None)
             if normalized_surface in seen_surfaces or span is None:
                 continue
             if any(span[0] < end and start < span[1] for start, end in occupied_spans):
@@ -106,7 +115,17 @@ class QueryEntityResolver:
             seen_surfaces.add(normalized_surface)
             occupied_spans.append(span)
             type_hint = infer_entity_type(query, surface)
-            resolution = self.registry.resolve(surface, type_hint=type_hint)
+            if is_shared_jay:
+                # Reuse the offline 32-character window and exact cue vocabulary.
+                # A nearby label must not override missing/conflicting evidence.
+                context_type = EntityLinker._infer_jay_context_type(query)
+                resolution = self.registry.resolve(
+                    surface,
+                    type_hint=type_hint if context_type is not None else None,
+                    context_type=context_type,
+                )
+            else:
+                resolution = self.registry.resolve(surface, type_hint=type_hint)
             if resolution.candidate_entity_ids and set(
                 resolution.candidate_entity_ids
             ) <= occupied_ids:

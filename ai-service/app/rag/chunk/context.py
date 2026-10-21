@@ -12,10 +12,13 @@ def breadcrumb(document_title: str | None, section_path: tuple[str, ...]) -> str
 
 
 def retrieval_content(
-    breadcrumb_value: str, content: str, *, schema: str | None = None
+    breadcrumb_value: str, content: str, *, schema: str | None = None,
+    description: str | None = None,
 ) -> str:
     values = [breadcrumb_value]
     if schema:
         values.append(schema)
     values.append(content)
+    if description:
+        values.append(description)
     return "\n\n".join(value for value in values if value)

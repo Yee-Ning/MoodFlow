@@ -1,8 +1,0 @@
-{
-  "stopped_pids": [
-    44420,
-    42924
-  ],
-  "port_8001_listening": false,
-  "api_python_process_count": 0
-}

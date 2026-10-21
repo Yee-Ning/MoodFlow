@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from datetime import date
+import re
 from urllib.parse import urljoin
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Comment, Doctype, NavigableString, Tag
 
 from ..base import BaseParser, ParserError
 from ..models import (
@@ -21,7 +22,7 @@ from ..table_support import document_tables_from_blocks
 
 class HtmlParser(BaseParser):
     parser_name = "html"
-    parser_version = "1.2.0"
+    parser_version = "1.2.1"
     supported_file_types = frozenset({DetectedFileType.HTML})
 
     _SEMANTIC_TAGS = (
@@ -40,6 +41,10 @@ class HtmlParser(BaseParser):
         "img",
     )
     _ATOMIC_ANCESTORS = {"ul", "ol", "blockquote", "pre", "table"}
+    _FALLBACK_BLOCKS = {"div", "article", "section", "main", "body"}
+    _NOISE_TAGS = {"head", "nav", "header", "footer", "aside", "form", "button", "select", "script", "style", "noscript", "template"}
+    _NOISE_ROLES = {"navigation", "banner", "complementary", "contentinfo", "search", "dialog", "menu"}
+    _NOISE_TOKEN = re.compile(r"(?:^|[\s_-])(?:ads?|advertisement|advertising|navigation|navbar|menu|breadcrumb|social|cookie|consent|promo)(?:$|[\s_-])", re.I)
 
     def parse(self, parse_input: ParseInput) -> ParserResult:
         try:
@@ -131,10 +136,11 @@ class HtmlParser(BaseParser):
     def _blocks(self, body: Tag, source_id: str, base_url: str) -> list[DocumentBlock]:
         blocks: list[DocumentBlock] = []
         headings: dict[int, str] = {}
-        for tag in body.find_all(self._SEMANTIC_TAGS):
-            if self._inside_atomic_container(tag):
-                continue
-            block_type, text, level, metadata = self._tag_content(tag, base_url)
+        for item in self._content_nodes(body):
+            if isinstance(item, str):
+                block_type, text, level, metadata = BlockType.PARAGRAPH, item, None, {"source": "uncovered_dom_text"}
+            else:
+                block_type, text, level, metadata = self._tag_content(item, base_url)
             if block_type is None or (not text and block_type is not BlockType.IMAGE):
                 continue
             order_index = len(blocks)
@@ -162,6 +168,62 @@ class HtmlParser(BaseParser):
                 )
             )
         return blocks
+
+    def _content_nodes(self, body: Tag) -> list[Tag | str]:
+        """Keep loose article text in DOM order without revisiting semantic blocks.
+
+        Noise exclusion applies only to newly recovered text; existing semantic
+        tags retain their established parse-stage behavior.
+        """
+        result: list[Tag | str] = []
+        pending: list[str] = []
+
+        def flush() -> None:
+            text = " ".join("".join(pending).split())
+            if text:
+                result.append(text)
+            pending.clear()
+
+        def visit(node, allowed: bool) -> None:
+            if isinstance(node, (Comment, Doctype)):
+                return
+            if isinstance(node, NavigableString):
+                if allowed:
+                    pending.append(str(node))
+                return
+            if not isinstance(node, Tag):
+                return
+            if node.name == "br" and allowed:
+                pending.append("\n")
+                return
+            if node.name in self._SEMANTIC_TAGS:
+                flush()
+                result.append(node)
+                return
+            boundary = node.name in self._FALLBACK_BLOCKS
+            noise = self._fallback_noise(node)
+            if boundary or noise:
+                flush()
+            for child in node.children:
+                visit(child, allowed and not noise)
+            if boundary or noise:
+                flush()
+
+        visit(body, True)
+        flush()
+        return result
+
+    def _fallback_noise(self, tag: Tag) -> bool:
+        identity = " ".join([str(tag.get("id", "")), *tag.get("class", [])])
+        style = str(tag.get("style", "")).replace(" ", "").casefold()
+        return (
+            tag.name in self._NOISE_TAGS
+            or tag.get("role") in self._NOISE_ROLES
+            or tag.has_attr("hidden")
+            or str(tag.get("aria-hidden", "")).casefold() == "true"
+            or "display:none" in style or "visibility:hidden" in style
+            or self._NOISE_TOKEN.search(identity) is not None
+        )
 
     def _tag_content(
         self, tag: Tag, base_url: str

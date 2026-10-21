@@ -8,13 +8,13 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 
-DEFAULT_KNOWLEDGE_CONFIG_PATH = Path(__file__).with_name("config") / "v13.yaml"
+DEFAULT_KNOWLEDGE_CONFIG_PATH = Path(__file__).with_name("config") / "v19.yaml"
 
 
 class KnowledgeConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    entity_linking_version: str = Field(default="v4", pattern=r"^v\d+$")
+    entity_linking_version: str = Field(default="v5", pattern=r"^v\d+$")
     claim_extraction_version: str = Field(default="v10", pattern=r"^v\d+$")
     claim_verification_version: str = Field(default="v3", pattern=r"^v\d+$")
     prompt_version: str = Field(default="v1", pattern=r"^v\d+$")

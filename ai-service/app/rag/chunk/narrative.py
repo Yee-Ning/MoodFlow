@@ -45,7 +45,9 @@ class NarrativeChunker:
                     for part in group
                 ],
             }
-            child_texts = self._merge_small(self.splitter.split_child(content))
+            merge_stats: dict[str, int] = {}
+            child_texts = self._merge_small(self.splitter.split_child(content), metrics=merge_stats)
+            metadata["small_merge"] = merge_stats
             parents.append(
                 ParentDraft(
                     order_key=(run.order_index, parent_offset),
@@ -104,8 +106,14 @@ class NarrativeChunker:
             groups.append(current)
         return groups
 
-    def _merge_small(self, values: list[str]) -> list[str]:
+    def _merge_small(
+        self, values: list[str], *, metrics: dict[str, int] | None = None
+    ) -> list[str]:
         chunks = [value.strip() for value in values if value.strip()]
+        if metrics is not None:
+            metrics.update(input_child_count=len(chunks), small_candidate_count=sum(
+                self.counter.count(value) < self.config.min_child_tokens for value in chunks
+            ), merge_operation_count=0)
         index = 0
         while index < len(chunks):
             if self.counter.count(chunks[index]) >= self.config.min_child_tokens:
@@ -118,6 +126,8 @@ class NarrativeChunker:
                 if self.counter.count(merged) <= self.config.max_child_tokens:
                     chunks[index - 1] = merged
                     del chunks[index]
+                    if metrics is not None:
+                        metrics["merge_operation_count"] += 1
                     continue
             if index + 1 < len(chunks):
                 merged = self.config.content_joiner.join(
@@ -126,6 +136,8 @@ class NarrativeChunker:
                 if self.counter.count(merged) <= self.config.max_child_tokens:
                     chunks[index] = merged
                     del chunks[index + 1]
+                    if metrics is not None:
+                        metrics["merge_operation_count"] += 1
                     continue
             index += 1
         return chunks

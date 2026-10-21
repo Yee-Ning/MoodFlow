@@ -1,8 +1,0 @@
-{
-  "retrieval_mode": "empty",
-  "rerank_mode": "off",
-  "index_manifest_configured": false,
-  "checkpoint_backend": "memory",
-  "online_external_services_tested": false,
-  "real_postgres_restart_tested": false
-}

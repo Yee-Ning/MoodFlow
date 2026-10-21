@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -24,6 +24,8 @@ class CleanReportPaths:
     rule_hits_csv: Path
     suspicious_documents: Path
     before_after_samples: Path
+    single_reports_dir: Path
+    stage_metrics_json: Path
 
 
 class CleanReporter:
@@ -55,6 +57,10 @@ class CleanReporter:
         dry_run: bool,
         run_id: str,
         cleaned_manifest_path: Path | None,
+        manual_review: list[dict[str, object]] | None = None,
+        output_document_count: int | None = None,
+        input_document_count: int | None = None,
+        include_manual_review: bool = False,
     ) -> tuple[dict[str, object], CleanReportPaths]:
         if not self._RUN_ID.fullmatch(run_id):
             raise CleanPipelineError("invalid_clean_run_id")
@@ -74,14 +80,41 @@ class CleanReporter:
         document_type_resolution_statistics = Counter(
             audit.document_type_origin or "missing" for audit in audits
         )
+
+        # Stage metrics aggregation
+        stage_summary: dict[str, dict[str, int]] = defaultdict(lambda: {"removed_chars": 0, "removed_blocks": 0})
+        language_distribution: Counter[str] = Counter()
+        docs_with_english_blocks = 0
+        total_english_blocks = 0
+        concept_drift_docs = 0
+
+        for res in results:
+            active_stages = res.stages or (tuple(res.single_report.stages) if res.single_report else ())
+            for st in active_stages:
+                stage_summary[st.stage_name]["removed_chars"] += st.removed_chars
+                stage_summary[st.stage_name]["removed_blocks"] += st.removed_blocks
+            if res.language_annotation:
+                language_distribution[res.language_annotation.primary_language] += 1
+                if res.language_annotation.has_english_blocks:
+                    docs_with_english_blocks += 1
+                total_english_blocks += res.language_annotation.english_block_count
+            if any("length_ratio_" in w for w in res.audit.warnings):
+                concept_drift_docs += 1
+
         summary: dict[str, object] = {
-            "report_version": "v0.1",
+            "report_version": "v0.2",
             "run_id": run_id,
             "dry_run": dry_run,
             "clean_version": self.clean_version,
             "rule_registry_checksum": self.registry_checksum,
             "document_count": len(audits),
             "total_documents": len(audits),
+            "input_document_count": len(audits) if input_document_count is None else input_document_count,
+            "include_manual_review": include_manual_review,
+            "manual_review_document_count": len(manual_review or []),
+            "output_document_count": len(audits) if output_document_count is None else output_document_count,
+            "manual_review_documents": manual_review or [],
+            "quarantined_document_count": sum(row["disposition"] == "quarantined" for row in (manual_review or [])),
             "changed_documents": changed_count,
             "unchanged_documents": len(audits) - changed_count,
             "characters_before": before_chars,
@@ -90,6 +123,17 @@ class CleanReporter:
             "removed_ratio": round(
                 removed_chars / before_chars if before_chars else 0.0, 8
             ),
+            "stage_metrics_summary": dict(stage_summary),
+            "language_detection_summary": {
+                "language_distribution": dict(sorted(language_distribution.items())),
+                "documents_with_english_blocks": docs_with_english_blocks,
+                "total_english_blocks": total_english_blocks,
+                "english_block_policy": "retained_unfiltered",
+                "pending_decision": "English block filtering policy awaits West decision",
+            },
+            "concept_drift_summary": {
+                "concept_drift_documents": concept_drift_docs,
+            },
             "rule_hit_statistics": dict(sorted(rule_hits.items())),
             "suspicious_documents": suspicious_count,
             "document_type_resolution_statistics": dict(
@@ -101,6 +145,7 @@ class CleanReporter:
                 else None
             ),
         }
+        single_reports_dir = directory / "documents"
         paths = CleanReportPaths(
             directory=directory,
             summary=directory / "clean_summary.json",
@@ -109,8 +154,11 @@ class CleanReporter:
             rule_hits_csv=directory / "rule_hits.csv",
             suspicious_documents=directory / "suspicious_documents.jsonl",
             before_after_samples=directory / "before_after_samples.jsonl",
+            single_reports_dir=single_reports_dir,
+            stage_metrics_json=directory / "stage_metrics.json",
         )
         atomic_write_json(paths.summary, summary)
+        atomic_write_jsonl(directory / "manual_review_documents.jsonl", manual_review or [])
         atomic_write_jsonl(
             paths.document_changes,
             (audit.model_dump(mode="json") for audit in audits),
@@ -125,6 +173,21 @@ class CleanReporter:
         writer.writeheader()
         writer.writerows(hit_rows)
         atomic_write_text(paths.rule_hits_csv, csv_buffer.getvalue())
+
+        # Write stage metrics summary artifact
+        stage_metric_rows = [
+            {"stage_name": stage_name, **metrics}
+            for stage_name, metrics in sorted(stage_summary.items())
+        ]
+        atomic_write_json(paths.stage_metrics_json, stage_metric_rows)
+
+        # Write per-document independent reports if configured
+        if getattr(self.config, "write_per_document_reports", True):
+            for result in results:
+                if result.single_report:
+                    doc_report_path = single_reports_dir / f"{result.document.document_id}.json"
+                    atomic_write_json(doc_report_path, result.single_report.model_dump(mode="json"))
+
         suspicious = [
             audit.model_dump(mode="json") for audit in audits if audit.needs_review
         ]

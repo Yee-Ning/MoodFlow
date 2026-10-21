@@ -101,7 +101,7 @@ class CleanPipelineServiceTests(unittest.TestCase):
             config, checksum = load_clean_config()
             outcome = CleanPipelineService(
                 root, config, registry_checksum=checksum
-            ).run(dry_run=False, run_id="formal-test")
+            ).run(dry_run=False, run_id="formal-test", include_manual_review=True)
 
             self.assertIsNotNone(outcome.cleaned_manifest_path)
             assert outcome.cleaned_manifest_path is not None
@@ -138,7 +138,7 @@ class CleanPipelineServiceTests(unittest.TestCase):
             self._corpus(root)
             config, checksum = load_clean_config()
             CleanPipelineService(root, config, registry_checksum=checksum).run(
-                dry_run=False, run_id="first"
+                dry_run=False, run_id="first", include_manual_review=True
             )
 
             with self.assertRaises(RuleRegistryError):
@@ -146,7 +146,7 @@ class CleanPipelineServiceTests(unittest.TestCase):
                     root,
                     config,
                     registry_checksum="sha256:" + "b" * 64,
-                ).run(dry_run=False, run_id="conflict")
+                ).run(dry_run=False, run_id="conflict", include_manual_review=True)
 
 
 class CleanCliTests(unittest.TestCase):

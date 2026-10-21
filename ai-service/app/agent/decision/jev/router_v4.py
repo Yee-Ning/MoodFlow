@@ -38,15 +38,25 @@ _NOUL_FALSE = (
     "No distinct affirmative supported task for this route; mere mentions, negations "
     "and unresolved entities do not count."
 )
+# A bare 别 starts negation at clause syntax, never inside 分别/特别/区别.
+# These noun/adjective stems also use 别 at the start of a clause; keep them literal.
+_NEGATION_START = (
+    r"(?:(?<!\w)|(?<=然后)|(?<=接着)|(?<=随后)|(?<=顺便)|"
+    r"(?<=另外)|(?<=同时)|(?<=以及)|(?<=并且)|(?<=并)|(?<=最后))"
+)
+_NEGATION_PREFIX = (
+    r"(?:请勿|不要|不用|无需|不必|"
+    rf"{_NEGATION_START}别(?!(?:人|的|墅|名|称|针|样|致|扭|院|字)))"
+)
 _SPLIT = re.compile(
-    r"(?:请勿|不要|不用|无需|别|不必)[^,，]{0,60}[，,]|"
+    rf"{_NEGATION_PREFIX}[^,，]{{0,60}}[，,]|"
     r"[;；。!?！？]+|[,，](?=\s*(?:先|再|然后|接着|随后|最后|另外|顺便|同时))|"
     r"然后|接着|随后|顺便|另外|同时|以及|并且|"
     r"再(?=(?:帮|请|给|把|说|讲|解|分|收|播|搜|查|看|探|打|调|静|暂|换))|"
     r"并(?!(?:非|不|没|未|行|列))|最后",
 )
 _SEQUENCE = re.compile(r"然后|接着|随后|最后|再|^先$")
-_NEGATED = re.compile(r"^(?:请勿|不要|不用|无需|别|不必|do not\b|don't\b)", re.I)
+_NEGATED = re.compile(rf"^(?:{_NEGATION_PREFIX}|do not\b|don't\b)", re.I)
 _PRONOUN = re.compile(r"(?:这个|那个|这位|那位|同名|(?<!其)他|她|它)")
 _COUNTERFACTUAL = re.compile(r"(?:如果|假如|倘若|要是).*(?:从未|从来没|没有|未曾).*(?:发行|出道|存在|创作|演唱)")
 _CURRENT_REFERENCE = re.compile(r"(?:这首歌|当前(?:这)?首|正在(?:播放|放)|在播|眼下(?:这)?首|它)")

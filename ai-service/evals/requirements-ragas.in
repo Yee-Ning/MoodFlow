@@ -1,0 +1,6 @@
+# Isolated Step 3 environment only; do not install into the production .venv.
+ragas==0.4.3
+langchain-openai==1.1.7
+datasets==4.4.2
+# Ragas 0.4.3's legacy imports require the community vertexai module.
+langchain-community==0.4.1

@@ -18,6 +18,7 @@ from app.agent.foundation.subgraphs.general_chat.results import (
     read_result_receipt,
 )
 from app.agent.foundation.subgraphs.general_chat.conversation import capability_response
+from app.agent.foundation.subgraphs.general_chat.recall import recalled_preference_response
 from app.agent.foundation.subgraphs.general_chat.session import (
     expire_pending_confirmation,
     fence_preferences,
@@ -170,6 +171,9 @@ async def answer_general_chat(
     history = [message for message in safe if message in protocol or message in recent]
     invocation = invocation.model_copy(update={"inputs": invocation.inputs.model_copy(update={"messages": history})})
     pack = build_business_pack(invocation)
+    recalled = recalled_preference_response(current_input, session, pack)
+    if recalled is not None:
+        return recalled
     response = await instrument_continuity_model(
         model or get_base_chat_model()
     ).ainvoke(pack.messages)

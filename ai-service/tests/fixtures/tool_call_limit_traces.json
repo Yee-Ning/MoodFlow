@@ -1,0 +1,1035 @@
+{
+  "source": "original BLAS validation saved evidence; rejected batches unavailable",
+  "continuation_boundary": "item3 additions are minimum legitimate work required by original request; item5 extra reads are controlled boundary inputs, not recovered model output",
+  "phase_inventory": [
+    {
+      "name": "search_music",
+      "line": 415,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "read",
+      "proposed_phase": "retrieval"
+    },
+    {
+      "name": "search_entities_tool",
+      "line": 428,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "read",
+      "proposed_phase": "retrieval"
+    },
+    {
+      "name": "get_song_lyrics",
+      "line": 464,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "read",
+      "proposed_phase": "retrieval"
+    },
+    {
+      "name": "get_user_playlists",
+      "line": 476,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "read",
+      "proposed_phase": "retrieval"
+    },
+    {
+      "name": "get_playlist_detail_tool",
+      "line": 490,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "read",
+      "proposed_phase": "retrieval"
+    },
+    {
+      "name": "get_album_detail_tool",
+      "line": 505,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "read",
+      "proposed_phase": "retrieval"
+    },
+    {
+      "name": "add_song_to_playlist",
+      "line": 518,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "write",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "set_song_liked_tool",
+      "line": 537,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "write",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "create_playlist_tool",
+      "line": 548,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "write",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "remove_song_from_playlist_tool",
+      "line": 559,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "write",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "get_liked_songs",
+      "line": 570,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "read",
+      "proposed_phase": "retrieval"
+    },
+    {
+      "name": "delete_playlist_tool",
+      "line": 593,
+      "file": "ai-service/app/tools/music.py",
+      "effect": "write",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "pause_player",
+      "line": 28,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "resume_player",
+      "line": 34,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "play_next",
+      "line": 40,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "play_previous",
+      "line": 46,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "set_volume",
+      "line": 52,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "set_muted",
+      "line": 58,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "seek_to",
+      "line": 64,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "seek_by",
+      "line": 70,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "set_play_mode",
+      "line": 76,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "play_song",
+      "line": 82,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "insert_next_track",
+      "line": 88,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "append_to_queue",
+      "line": 94,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "play_album",
+      "line": 100,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "play_playlist",
+      "line": 110,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "jump_to_queue_item",
+      "line": 124,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "set_liked",
+      "line": 134,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "open_lyrics",
+      "line": 140,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "clear_queue",
+      "line": 146,
+      "file": "ai-service/app/agent/foundation/subgraphs/tool_calling/client_tools.py",
+      "effect": "client_action",
+      "proposed_phase": "execution"
+    },
+    {
+      "name": "get_current_song_context",
+      "file": "ai-service/app/agent/handoff/song_context.py",
+      "line": 110,
+      "effect": "read",
+      "proposed_phase": "retrieval"
+    }
+  ],
+  "item3": {
+    "request": {
+      "message": "请让 Curator 为今晚安静阅读创建一个私密网易云歌单，名称为“MF-local-20261012-8cf8b5b2”，加入至少3首适合夜间阅读的歌曲，附简短导语，并返回真实歌单ID。",
+      "request_id": "821bd4c4-bf5d-4316-a5c8-8dc3c3a94438",
+      "thread_id": "local-stage12-blas-3-30da30b5-f46f-46ca-b42a-120bd609cec0"
+    },
+    "observed_calls": [
+      {
+        "name": "search_music",
+        "args": {
+          "limit": 10,
+          "keyword": "夜晚 安静 钢琴"
+        }
+      },
+      {
+        "name": "search_music",
+        "args": {
+          "limit": 10,
+          "keyword": "安静 阅读 轻音乐"
+        }
+      },
+      {
+        "name": "create_playlist_tool",
+        "args": {
+          "name": "MF-local-20261012-8cf8b5b2",
+          "privacy": 10
+        }
+      }
+    ],
+    "songs": [
+      {
+        "song_id": 415086350,
+        "name": "我心永恒(钢琴独奏)",
+        "artists": [
+          "孙昊天"
+        ],
+        "album": "安静的夜晚(流行歌翻弹)",
+        "cover_url": "http://p4.music.126.net/9u7WIfiZ7GtiuzI8WsOU3w==/18027592649149631.jpg",
+        "duration": 320052
+      },
+      {
+        "song_id": 415086510,
+        "name": "my love(钢琴独奏)",
+        "artists": [
+          "孙昊天"
+        ],
+        "album": "安静的夜晚(流行歌翻弹)",
+        "cover_url": "http://p4.music.126.net/9u7WIfiZ7GtiuzI8WsOU3w==/18027592649149631.jpg",
+        "duration": 266083
+      },
+      {
+        "song_id": 415086351,
+        "name": "what are words(钢琴演奏)",
+        "artists": [
+          "孙昊天"
+        ],
+        "album": "安静的夜晚(流行歌翻弹)",
+        "cover_url": "http://p4.music.126.net/9u7WIfiZ7GtiuzI8WsOU3w==/18027592649149631.jpg",
+        "duration": 279327
+      },
+      {
+        "song_id": 418326967,
+        "name": "突然好想你(钢琴独奏)",
+        "artists": [
+          "孙昊天"
+        ],
+        "album": "安静的夜晚(流行歌翻弹)",
+        "cover_url": "http://p3.music.126.net/9u7WIfiZ7GtiuzI8WsOU3w==/18027592649149631.jpg",
+        "duration": 228911
+      },
+      {
+        "song_id": 429460827,
+        "name": "她说(钢琴演奏)",
+        "artists": [
+          "孙昊天"
+        ],
+        "album": "安静的夜晚(流行歌翻弹)",
+        "cover_url": "http://p4.music.126.net/9u7WIfiZ7GtiuzI8WsOU3w==/18027592649149631.jpg",
+        "duration": 355160
+      },
+      {
+        "song_id": 415086854,
+        "name": "小幸运(钢琴独奏)",
+        "artists": [
+          "孙昊天"
+        ],
+        "album": "安静的夜晚(流行歌翻弹)",
+        "cover_url": "http://p3.music.126.net/9u7WIfiZ7GtiuzI8WsOU3w==/18027592649149631.jpg",
+        "duration": 133799
+      },
+      {
+        "song_id": 422428081,
+        "name": "明天你好(钢琴独奏)",
+        "artists": [
+          "孙昊天"
+        ],
+        "album": "安静的夜晚(流行歌翻弹)",
+        "cover_url": "http://p3.music.126.net/9u7WIfiZ7GtiuzI8WsOU3w==/18027592649149631.jpg",
+        "duration": 236355
+      },
+      {
+        "song_id": 2153953034,
+        "name": "夜晚安静的钢琴曲",
+        "artists": [
+          "童译"
+        ],
+        "album": "",
+        "cover_url": "http://p3.music.126.net/ThjQyq_2E-VznbPoL3P1Fg==/109951169573083560.jpg",
+        "duration": 192999
+      },
+      {
+        "song_id": 417596311,
+        "name": "海阔天空(钢琴独奏)",
+        "artists": [
+          "孙昊天"
+        ],
+        "album": "安静的夜晚(流行歌翻弹)",
+        "cover_url": "http://p4.music.126.net/9u7WIfiZ7GtiuzI8WsOU3w==/18027592649149631.jpg",
+        "duration": 294060
+      },
+      {
+        "song_id": 418326763,
+        "name": "演员(钢琴独奏)",
+        "artists": [
+          "孙昊天"
+        ],
+        "album": "安静的夜晚(流行歌翻弹)",
+        "cover_url": "http://p4.music.126.net/9u7WIfiZ7GtiuzI8WsOU3w==/18027592649149631.jpg",
+        "duration": 251219
+      },
+      {
+        "song_id": 1989455698,
+        "name": "安静的阅读 (适合看书 刷题的舒缓解压轻音乐)",
+        "artists": [
+          "治愈音乐集"
+        ],
+        "album": "阅读 背诵 学习适合听的轻音乐｜舒缓放松催眠曲",
+        "cover_url": "http://p4.music.126.net/2M6SVrn9qiQJcsPQYp598A==/109951167965772028.jpg",
+        "duration": 120000
+      },
+      {
+        "song_id": 2065675245,
+        "name": "看书时适合听的音乐（阅读 书吧 安静）",
+        "artists": [
+          "轻音乐馆"
+        ],
+        "album": "背景音乐纯音乐/钢琴曲纯音乐经典/放松心情的音乐",
+        "cover_url": "http://p3.music.126.net/bnpRG6z1GiUVqoXmukB8aw==/109951168751439864.jpg",
+        "duration": 234254
+      },
+      {
+        "song_id": 1919197156,
+        "name": "看书轻音乐.颜如玉（八音盒）",
+        "artists": [
+          "轻音乐馆"
+        ],
+        "album": "看书时适合听的音乐（阅读 书吧 安静）",
+        "cover_url": "http://p4.music.126.net/mbF8vUJL_Ut5dhC2huFRuA==/109951167035558374.jpg",
+        "duration": 104000
+      },
+      {
+        "song_id": 1919197158,
+        "name": "看书轻音乐.颜如玉（古筝）",
+        "artists": [
+          "轻音乐馆"
+        ],
+        "album": "看书时适合听的音乐（阅读 书吧 安静）",
+        "cover_url": "http://p4.music.126.net/mbF8vUJL_Ut5dhC2huFRuA==/109951167035558374.jpg",
+        "duration": 104000
+      },
+      {
+        "song_id": 421110791,
+        "name": "年轮-钢琴版（《潮流琴房》曲谱试听）",
+        "artists": [
+          "文武贝"
+        ],
+        "album": "《潮流琴房》（乐谱音频）",
+        "cover_url": "http://p3.music.126.net/QXI329jEogBgxr2GM93vjQ==/109951162819438408.jpg",
+        "duration": 219527
+      },
+      {
+        "song_id": 1919198634,
+        "name": "看书纯音乐.黄金屋(八音盒)",
+        "artists": [
+          "轻音乐馆"
+        ],
+        "album": "看书时适合听的音乐（阅读 书吧 安静）",
+        "cover_url": "http://p4.music.126.net/mbF8vUJL_Ut5dhC2huFRuA==/109951167035558374.jpg",
+        "duration": 116756
+      },
+      {
+        "song_id": 2610916526,
+        "name": "你在我眼中",
+        "artists": [
+          "音巢阿呆"
+        ],
+        "album": "夏的雪（纯音集）",
+        "cover_url": "http://p4.music.126.net/9jA52mW3C3Sp3QlqAkp-rQ==/109951169812069228.jpg",
+        "duration": 90000
+      },
+      {
+        "song_id": 1919198635,
+        "name": "看书纯音乐.黄金屋(钢琴)",
+        "artists": [
+          "轻音乐馆"
+        ],
+        "album": "看书时适合听的音乐（阅读 书吧 安静）",
+        "cover_url": "http://p4.music.126.net/mbF8vUJL_Ut5dhC2huFRuA==/109951167035558374.jpg",
+        "duration": 116756
+      },
+      {
+        "song_id": 437715323,
+        "name": "Merry Christmas Mr. Lawrence",
+        "artists": [
+          "坂本龍一"
+        ],
+        "album": "Merry Christmas Mr. Lawrence (Original Motion Picture Soundtrack)",
+        "cover_url": "http://p4.music.126.net/PywoXPKK3AjseU0Wx9wdXw==/109951167267731534.jpg",
+        "duration": 276619
+      },
+      {
+        "song_id": 1988630099,
+        "name": "远方的寂静 (静心钢琴曲)",
+        "artists": [
+          "Alice Perry"
+        ],
+        "album": "书店轻音乐 陪伴阅读 放松聆听 书店背景音乐 安静轻音乐",
+        "cover_url": "http://p3.music.126.net/T_A_jz1PmeQ3iopTa52mKg==/109951167957673774.jpg",
+        "duration": 108000
+      }
+    ],
+    "playlist_id": 18478701581
+  },
+  "item5": {
+    "request": {
+      "message": "请让 Explorer 以周杰伦《晴天》（song_id=186016）为起点，规划一个3节点的音乐探索旅程。每节点应有讲解与来源，可信歌曲带 song_id；不能确认歌曲的节点只讲知识。只规划，不建单、不播放。",
+      "request_id": "ea49d008-83f9-41bc-92bc-b1e451488d27",
+      "thread_id": "local-stage12-blas-5-47b373a6-cd39-4a89-a56f-afedb52e7c8a",
+      "context": {
+        "current_song_id": 186016
+      }
+    },
+    "observed_calls": [
+      {
+        "name": "search_music",
+        "args": {
+          "limit": 5,
+          "keyword": "晴天 周杰伦"
+        }
+      },
+      {
+        "name": "search_music",
+        "args": {
+          "limit": 5,
+          "keyword": "七里香 周杰伦"
+        }
+      },
+      {
+        "name": "search_music",
+        "args": {
+          "limit": 5,
+          "keyword": "稻香 周杰伦"
+        }
+      },
+      {
+        "name": "search_music",
+        "args": {
+          "limit": 5,
+          "keyword": "不能说的秘密 周杰伦"
+        }
+      }
+    ],
+    "songs": [
+      {
+        "song_id": 2652820720,
+        "name": "晴天(深情版)",
+        "artists": [
+          "Lucky小爱"
+        ],
+        "album": "晴天(深情版)",
+        "cover_url": "http://p3.music.126.net/F0fTkmBTVykCa2o7Vgu1rQ==/109951173569626660.jpg",
+        "duration": 278961
+      },
+      {
+        "song_id": 3440441479,
+        "name": "晴天",
+        "artists": [
+          "Jay"
+        ],
+        "album": "晴天",
+        "cover_url": "http://p3.music.126.net/gRjIWVVpJu_ogi5hsqotXw==/109951172952456016.jpg",
+        "duration": 112373
+      },
+      {
+        "song_id": 2668397359,
+        "name": "晴天 (原唱 周杰伦)",
+        "artists": [
+          "RyaVocal"
+        ],
+        "album": "晴天",
+        "cover_url": "http://p3.music.126.net/-NVLOT5vt9I91LRiZV1TCQ==/109951170413587092.jpg",
+        "duration": 270738
+      },
+      {
+        "song_id": 3391116218,
+        "name": "晴天",
+        "artists": [
+          "梦里啥都有"
+        ],
+        "album": "晴天",
+        "cover_url": "http://p3.music.126.net/qsx-FdpFhW8veNlse8ecGA==/109951173348863096.jpg",
+        "duration": 228545
+      },
+      {
+        "song_id": 1945894789,
+        "name": "晴天 (钢琴版) [原唱: 周杰伦]",
+        "artists": [
+          "纪钧瀚 (Bryan Chi)"
+        ],
+        "album": "钢琴放松轻听 流行轻音乐 华语经典",
+        "cover_url": "http://p3.music.126.net/1Bvyzvt4qnU_8cf4Gf3xlQ==/109951167394412301.jpg",
+        "duration": 238098
+      },
+      {
+        "song_id": 2712018330,
+        "name": "七里香",
+        "artists": [
+          "Xai小爱"
+        ],
+        "album": "七里香",
+        "cover_url": "http://p3.music.126.net/1OrLWyanoNDn-gN-ho5vCA==/109951173981943912.jpg",
+        "duration": 317269
+      },
+      {
+        "song_id": 2647102754,
+        "name": "七里香 (女声版)",
+        "artists": [
+          "吉拉朵"
+        ],
+        "album": "吉拉朵的合集一",
+        "cover_url": "http://p3.music.126.net/IrwKQCgK1Tov85bYDktxsg==/109951170157396676.jpg",
+        "duration": 261903
+      },
+      {
+        "song_id": 2108553289,
+        "name": "七里香 (MV版)",
+        "artists": [
+          "王俊凯"
+        ],
+        "album": "",
+        "cover_url": "http://p3.music.126.net/DKSSOEE1UvPHujd8Sv_02A==/109951169162046146.jpg",
+        "duration": 301776
+      },
+      {
+        "song_id": 2602018480,
+        "name": "七里香(钢琴曲)(原唱：周杰伦)",
+        "artists": [
+          "酷客音乐"
+        ],
+        "album": "流行轻音乐 新世纪钢琴大提琴空灵曲",
+        "cover_url": "http://p4.music.126.net/ylRg0dBex9Jd4WogztnHWg==/109951169721326223.jpg",
+        "duration": 247740
+      },
+      {
+        "song_id": 2098968713,
+        "name": "【八音盒】周杰伦-七里香",
+        "artists": [
+          "樱晚haruka"
+        ],
+        "album": "harukaの八音盒-part1",
+        "cover_url": "http://p4.music.126.net/n_Y8YAJdQfajbRA1GUEZAQ==/109951169048618915.jpg",
+        "duration": 168535
+      },
+      {
+        "song_id": 2651425710,
+        "name": "稻香(深情版)",
+        "artists": [
+          "Lucky小爱"
+        ],
+        "album": "稻香(深情版)",
+        "cover_url": "http://p4.music.126.net/YSc5EpQhsJTiFgoexUnHUA==/109951173982244370.jpg",
+        "duration": 231609
+      },
+      {
+        "song_id": 3381542797,
+        "name": "稻香(治愈版)",
+        "artists": [
+          "周杰伦.",
+          "街道办GDC/欧阳耀莹."
+        ],
+        "album": "终究意难平",
+        "cover_url": "http://p4.music.126.net/ZSzD7Y1Ox0EAc0Mi4f889g==/109951168734682555.jpg",
+        "duration": 120022
+      },
+      {
+        "song_id": 3441643322,
+        "name": "稻香",
+        "artists": [
+          "Jay"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p4.music.126.net/vXLDJSeFok7SybwJoHWzzA==/109951172952453654.jpg",
+        "duration": 198013
+      },
+      {
+        "song_id": 2742150885,
+        "name": "稻香(正式版)",
+        "artists": [
+          "沈幼楚"
+        ],
+        "album": "我心破碎零散",
+        "cover_url": "http://p3.music.126.net/RDt4EUoHwZRmEkTD0DHG0A==/109951171961023051.jpg",
+        "duration": 54031
+      },
+      {
+        "song_id": 3356938736,
+        "name": "稻香",
+        "artists": [
+          "何兵兵"
+        ],
+        "album": "说好了不见面",
+        "cover_url": "http://p4.music.126.net/RwJjw23vByOKyjH1DTibsA==/109951167325185458.jpg",
+        "duration": 121599
+      },
+      {
+        "song_id": 2646733205,
+        "name": "不能说的秘密 (女声版)",
+        "artists": [
+          "余不不"
+        ],
+        "album": "不能说的秘密 (女声版)",
+        "cover_url": "http://p4.music.126.net/MZYoYXcuFMB-tsUtjQ922Q==/109951170154010751.jpg",
+        "duration": 295026
+      },
+      {
+        "song_id": 2008026148,
+        "name": "不能说的秘密 (钢琴版) [原唱: 周杰伦]",
+        "artists": [
+          "贵族钢琴轻音乐"
+        ],
+        "album": "钢琴 轻音乐 读书背景 国语流行曲",
+        "cover_url": "http://p4.music.126.net/h_zg0xtoRTJ7j0ZbG6-FfQ==/109951168160512090.jpg",
+        "duration": 275709
+      },
+      {
+        "song_id": 3382966638,
+        "name": "不能说的秘密",
+        "artists": [
+          "我是蛋宝"
+        ],
+        "album": "不能说的秘密",
+        "cover_url": "http://p3.music.126.net/g1gHQFLYVR57rAIyh8XWug==/109951173235734766.jpg",
+        "duration": 272875
+      },
+      {
+        "song_id": 3416838866,
+        "name": "不能说的秘密",
+        "artists": [
+          "纸飞机"
+        ],
+        "album": "不能说的秘密",
+        "cover_url": "http://p3.music.126.net/16HnidPkoxFJGapJb74dGA==/109951173700231446.jpg",
+        "duration": 282723
+      },
+      {
+        "song_id": 2160818134,
+        "name": "不能说的秘密(钢琴曲)(原唱：周杰伦)",
+        "artists": [
+          "酷客音乐"
+        ],
+        "album": "纯音乐心灵洗涤所 古典钢琴与流行",
+        "cover_url": "http://p3.music.126.net/_SQ8OjvlHnCPz2GO003Irw==/109951169632868598.jpg",
+        "duration": 292103
+      }
+    ]
+  },
+  "item7-search": {
+    "request": {
+      "message": "请搜索周杰伦《稻香》。",
+      "request_id": "d2d8e92d-83f5-4047-b95b-d907f97cb49b",
+      "thread_id": "local-stage12-blas-7-search-a5dc2cab-4a1f-41b1-9635-70648efe2b5c"
+    },
+    "observed_calls": [
+      {
+        "name": "search_music",
+        "args": {
+          "limit": 10,
+          "keyword": "周杰伦 稻香"
+        }
+      },
+      {
+        "name": "search_music",
+        "args": {
+          "limit": 30,
+          "keyword": "稻香"
+        }
+      }
+    ],
+    "songs": [
+      {
+        "song_id": 3357698666,
+        "name": "稻香",
+        "artists": [
+          "Montagem"
+        ],
+        "album": "青花瓷",
+        "cover_url": "http://p4.music.126.net/VGsmmMUgkgVoHwn9D7XU4g==/109951172861932473.jpg",
+        "duration": 183948
+      },
+      {
+        "song_id": 3381542797,
+        "name": "稻香(治愈版)",
+        "artists": [
+          "周杰伦.",
+          "街道办GDC/欧阳耀莹."
+        ],
+        "album": "终究意难平",
+        "cover_url": "http://p4.music.126.net/ZSzD7Y1Ox0EAc0Mi4f889g==/109951168734682555.jpg",
+        "duration": 120022
+      },
+      {
+        "song_id": 3441643322,
+        "name": "稻香",
+        "artists": [
+          "Jay"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p4.music.126.net/vXLDJSeFok7SybwJoHWzzA==/109951172952453654.jpg",
+        "duration": 198013
+      },
+      {
+        "song_id": 2742150885,
+        "name": "稻香(正式版)",
+        "artists": [
+          "沈幼楚"
+        ],
+        "album": "我心破碎零散",
+        "cover_url": "http://p4.music.126.net/RDt4EUoHwZRmEkTD0DHG0A==/109951171961023051.jpg",
+        "duration": 54031
+      },
+      {
+        "song_id": 3356938736,
+        "name": "稻香",
+        "artists": [
+          "何兵兵"
+        ],
+        "album": "说好了不见面",
+        "cover_url": "http://p4.music.126.net/RwJjw23vByOKyjH1DTibsA==/109951167325185458.jpg",
+        "duration": 121599
+      },
+      {
+        "song_id": 2651425710,
+        "name": "稻香(深情版)",
+        "artists": [
+          "Lucky小爱"
+        ],
+        "album": "稻香(深情版)",
+        "cover_url": "http://p4.music.126.net/YSc5EpQhsJTiFgoexUnHUA==/109951173982244370.jpg",
+        "duration": 231609
+      },
+      {
+        "song_id": 3399425846,
+        "name": "稻香",
+        "artists": [
+          "纸飞机"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p4.music.126.net/WJ1HhfrML4-eTtq-JoL72w==/109951173477283355.jpg",
+        "duration": 203102
+      },
+      {
+        "song_id": 1911225189,
+        "name": "[免费]周杰伦 × 王力宏 Type Beat“稻香”",
+        "artists": [
+          "e崽"
+        ],
+        "album": "[免费]周杰伦 × 王力宏 Type Beat“稻香”",
+        "cover_url": "http://p4.music.126.net/r6JCsFtWHjQLcc5shOk7Zw==/109951166922675241.jpg",
+        "duration": 232154
+      },
+      {
+        "song_id": 1945895725,
+        "name": "稻香 (钢琴版) [原唱: 周杰伦]",
+        "artists": [
+          "纪钧瀚 (Bryan Chi)"
+        ],
+        "album": "钢琴放松轻听 流行轻音乐 华语经典",
+        "cover_url": "http://p4.music.126.net/1Bvyzvt4qnU_8cf4Gf3xlQ==/109951167394412301.jpg",
+        "duration": 196094
+      },
+      {
+        "song_id": 1947584923,
+        "name": "稻香 (女声版)",
+        "artists": [
+          "余不不"
+        ],
+        "album": "稻香 (女声版)",
+        "cover_url": "http://p4.music.126.net/LLBjRcdquxGVItzpyDAVgg==/109951170157481385.jpg",
+        "duration": 190975
+      },
+      {
+        "song_id": 3372049929,
+        "name": "稻香",
+        "artists": [
+          "Lie"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p3.music.126.net/WDYxUtUXhORLHZ1Oz268NQ==/109951173089238896.jpg",
+        "duration": 196623
+      },
+      {
+        "song_id": 2104034295,
+        "name": "《稻香》童声",
+        "artists": [
+          "卡罗尔"
+        ],
+        "album": "《悬溺》+《空心》+《没有泪点》",
+        "cover_url": "http://p3.music.126.net/agu6hCDE9q33ZEGu6FtdCA==/109951169135343730.jpg",
+        "duration": 211707
+      },
+      {
+        "song_id": 2721618831,
+        "name": "稻香",
+        "artists": [
+          "Xai小爱"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p4.music.126.net/Rkg4jMWXFhRRYF1PjZVzFQ==/109951171391521007.jpg",
+        "duration": 238778
+      },
+      {
+        "song_id": 2135106643,
+        "name": "《稻香》童声",
+        "artists": [
+          "连麻Swimming"
+        ],
+        "album": "000作废",
+        "cover_url": "http://p4.music.126.net/p0M_gv-0dkLpFVH-oLgjAA==/109951170620568471.jpg",
+        "duration": 120501
+      },
+      {
+        "song_id": 3373894494,
+        "name": "稻香",
+        "artists": [
+          "小女孩"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p4.music.126.net/8iqnxUj8z6PHK3DUnnzAYw==/109951173108805600.jpg",
+        "duration": 174939
+      },
+      {
+        "song_id": 2730150860,
+        "name": "稻香 (DJ Wave版)",
+        "artists": [
+          "DJ Wave"
+        ],
+        "album": "",
+        "cover_url": "http://p4.music.126.net/gS8lOO2Kltpm5ronb0vgaQ==/109951171524921695.jpg",
+        "duration": 320100
+      },
+      {
+        "song_id": 2066670543,
+        "name": "稻香 (Piano Ver.)",
+        "artists": [
+          "Piano Echoes"
+        ],
+        "album": "Jay Chou〜ピアノで聴く名曲集",
+        "cover_url": "http://p3.music.126.net/p4V2p4kT7gGgDCdxpYWANQ==/109951168760973063.jpg",
+        "duration": 215399
+      },
+      {
+        "song_id": 2736563612,
+        "name": "稻香 (Live)",
+        "artists": [
+          "小皓"
+        ],
+        "album": "",
+        "cover_url": "http://p3.music.126.net/UN1cXiGhnssPzWrtT3eMfQ==/109951171872652266.jpg",
+        "duration": 65123
+      },
+      {
+        "song_id": 1379930857,
+        "name": "稻香",
+        "artists": [
+          "itmusicstudio"
+        ],
+        "album": "日和 花盛 阳光雨",
+        "cover_url": "http://p4.music.126.net/fKTKToIjyYlEF6QXaipQjA==/109951164236861099.jpg",
+        "duration": 213978
+      },
+      {
+        "song_id": 2146737748,
+        "name": "稻香 (钢琴版) (原唱：周杰伦)",
+        "artists": [
+          "酷客音乐"
+        ],
+        "album": "流行轻音乐 沉睡催眠钢琴曲",
+        "cover_url": "http://p4.music.126.net/YOXrZt0Nw5CPzH03KhUXdQ==/109951169504798220.jpg",
+        "duration": 205000
+      },
+      {
+        "song_id": 3343998608,
+        "name": "稻香",
+        "artists": [
+          "大碗小面"
+        ],
+        "album": "稻香（清新女版）",
+        "cover_url": "http://p3.music.126.net/aSWz-KiI_eTwo5EuiP2blQ==/109951172655796689.jpg",
+        "duration": 175519
+      },
+      {
+        "song_id": 3385544484,
+        "name": "稻香",
+        "artists": [
+          "提米FM"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p4.music.126.net/iB3Xw6BzYzfGeQ5kQpZjCA==/109951173271721974.jpg",
+        "duration": 190746
+      },
+      {
+        "song_id": 3385210554,
+        "name": "稻香",
+        "artists": [
+          "睡眠火山"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p4.music.126.net/dqJOCKKEYAMJL6DyzKWZQQ==/109951173265916150.jpg",
+        "duration": 182125
+      },
+      {
+        "song_id": 2154503538,
+        "name": "稻香（深情版）",
+        "artists": [
+          "肖启伦"
+        ],
+        "album": "晴天（深情版）",
+        "cover_url": "http://p3.music.126.net/mqxpAf6jJRm60lG0DT5qzA==/109951169578057177.jpg",
+        "duration": 103652
+      },
+      {
+        "song_id": 1982406648,
+        "name": "稻香",
+        "artists": [
+          "燥夏"
+        ],
+        "album": "数啊数啊，那些如同金子般闪闪发亮的回忆",
+        "cover_url": "http://p3.music.126.net/ncj7ytfW9D_YFBjyQ0Wi5A==/109951167887479936.jpg",
+        "duration": 223464
+      },
+      {
+        "song_id": 3328595679,
+        "name": "稻香(柔情版)",
+        "artists": [
+          "Sazablue"
+        ],
+        "album": "修炼爱情",
+        "cover_url": "http://p3.music.126.net/XmRKnE3DqLRTYv3GDf5aPg==/109951172409924758.jpg",
+        "duration": 113216
+      },
+      {
+        "song_id": 1955625421,
+        "name": "大城小爱",
+        "artists": [
+          "稻香"
+        ],
+        "album": "翻唱",
+        "cover_url": "http://p4.music.126.net/dA5ctkE2wDlOOh6hPvcRdA==/109951167545107557.jpg",
+        "duration": 116976
+      },
+      {
+        "song_id": 2692013304,
+        "name": "稻香",
+        "artists": [
+          "无限音域"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p3.music.126.net/4U0wBPtlqS5V_y6Z4iJykw==/109951170699602910.jpg",
+        "duration": 214805
+      },
+      {
+        "song_id": 3404293607,
+        "name": "稻香",
+        "artists": [
+          "Lie"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p4.music.126.net/QuGjMOW6mwqoiNOo7vwbkw==/109951173532440724.jpg",
+        "duration": 218462
+      },
+      {
+        "song_id": 3344001367,
+        "name": "稻香",
+        "artists": [
+          "大川"
+        ],
+        "album": "稻香",
+        "cover_url": "http://p4.music.126.net/WwaDmstKz7P-y1axfat-bQ==/109951172655812363.jpg",
+        "duration": 194839
+      },
+      {
+        "song_id": 3326262874,
+        "name": "淡想",
+        "artists": [
+          "周稻香"
+        ],
+        "album": "淡想(深情版)",
+        "cover_url": "http://p3.music.126.net/DdnrU4Tuyb7F5es4KBXBIA==/109951172401604159.jpg",
+        "duration": 239299
+      }
+    ]
+  }
+}

@@ -53,6 +53,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     sample.add_argument("--output", type=Path)
     sample.add_argument("--seed", type=int)
     sample.add_argument("--size", type=int)
+    sample.add_argument("--samples-per-stratum", type=int)
+    sample.add_argument("--by-site", action="store_true")
 
     inspect_tables = subparsers.choices["inspect-tables"]
     inspect_tables.add_argument("--output", type=Path)
@@ -63,6 +65,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
     clean = subparsers.choices["clean"]
     clean.add_argument("--dry-run", action="store_true")
+    clean.add_argument("--include-manual-review", action="store_true")
     clean.add_argument("--run-id")
     clean.add_argument("--cleaned-output-root", type=Path)
     clean.add_argument("--report-root", type=Path)
@@ -111,7 +114,14 @@ def main(
                     **({"sample_size": args.size} if args.size is not None else {}),
                 }
             )
-            sampling = StratifiedSampler(sampling_config).sample(reader.load_all())
+            sampler = StratifiedSampler(sampling_config)
+            if args.by_site:
+                sampling = sampler.sample_by_source_type_and_site(
+                    reader.load_all(),
+                    samples_per_stratum=args.samples_per_stratum,
+                )
+            else:
+                sampling = sampler.sample(reader.load_all())
             output = _resolve(root, args.output) or (
                 root
                 / "data"
@@ -197,7 +207,7 @@ def main(
                 cleaned_output_root=_resolve(root, args.cleaned_output_root),
                 report_root=_resolve(root, args.report_root),
             )
-            outcome = service.run(dry_run=args.dry_run, run_id=args.run_id)
+            outcome = service.run(dry_run=args.dry_run, run_id=args.run_id, include_manual_review=args.include_manual_review)
             payload = {
                 **outcome.summary,
                 "report_directory": _relative(root, outcome.report_paths.directory),

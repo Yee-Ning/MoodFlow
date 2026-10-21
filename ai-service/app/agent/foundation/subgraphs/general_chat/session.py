@@ -75,6 +75,12 @@ def expire_pending_confirmation(session, messages):
             session.pending = None
 
 
+def is_preference_query(text):
+    return bool(re.search(
+        r"(?:确认过|记住|记下|会话).{0,8}(?:偏好|喜欢)|(?:我的偏好|按我的偏好)", text
+    ))
+
+
 def preference_response(text, session):
     compact = text.strip().rstrip("。！!？?")
     if re.fullmatch(
@@ -151,17 +157,13 @@ def preference_response(text, session):
         return AIMessage(content="好，这项偏好不记下。")
     # An unrelated turn must not leave an old confirmation question armed.
     session.pending = None
-    if re.search(
-        r"(?:确认过|记住|记下|会话).{0,8}(?:偏好|喜欢)|(?:我的偏好|按我的偏好)", text
-    ):
+    if is_preference_query(text) and session.confirmed:
         return AIMessage(
             content=(
                 "这个会话里你已确认喜欢"
                 + "、".join(session.confirmed)
                 + "。需要调整时可以撤销。"
             )
-            if session.confirmed
-            else "这个会话还没有已确认的偏好。你可以告诉我喜欢什么，我会先征求确认。"
         )
     return None
 

@@ -15,6 +15,8 @@ def enrichment_input_hash(
     inherited_metadata: dict[str, object],
     parent_primary_subject: PrimarySubject | None,
     enrichment_version: str,
+    llm_enabled: bool | None = None,
+    rule_fingerprint: str | None = None,
 ) -> str:
     payload = {
         "content": chunk.content,
@@ -27,6 +29,9 @@ def enrichment_input_hash(
             else None
         ),
         "enrichment_version": enrichment_version,
+        # None represents legacy callers with an unspecified execution mode.
+        "llm_enabled": llm_enabled,
+        "rule_fingerprint": rule_fingerprint,
     }
     serialized = json.dumps(
         payload,

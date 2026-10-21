@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue
 class ChunkType(StrEnum):
     NARRATIVE = "narrative"
     TABLE = "table"
+    STRUCTURED_RECORD = "structured_record"
 
 
 class TableHeaderState(StrEnum):
@@ -111,6 +112,8 @@ class ChunkStats(BaseModel):
     narrative_child_count: int = Field(ge=0)
     table_parent_count: int = Field(ge=0)
     table_child_count: int = Field(ge=0)
+    structured_record_parent_count: int = Field(default=0, ge=0)
+    structured_record_child_count: int = Field(default=0, ge=0)
     parent_tokens: int = Field(ge=0)
     child_tokens: int = Field(ge=0)
     min_child_tokens: int = Field(ge=0)

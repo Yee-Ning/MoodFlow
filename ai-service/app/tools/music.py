@@ -1,5 +1,12 @@
+import asyncio
+from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 import logging
+import math
+import random
 import re
+from time import perf_counter
 from typing import Annotated, Any, Literal
 
 import httpx
@@ -10,6 +17,7 @@ from pydantic import BaseModel, Field, StringConstraints, ValidationError
 from app.config.settings import get_settings
 from app.schemas.context import MusicAgentContext
 from app.schemas.popularity import SpringSongCommentSummaryResponse
+from app.tools.popularity_tools import get_song_popularity_tool
 from app.schemas.music import (
     AlbumDetailResult,
     AddSongToPlaylistArgs,
@@ -49,6 +57,8 @@ from app.schemas.music import (
     UserPlaylist,
     UserPlaylistsResult,
     MusicEntity,
+    MusicTrack,
+    NonBlankText,
 )
 
 logger = logging.getLogger(__name__)
@@ -69,12 +79,84 @@ class MusicServiceError(RuntimeError):
 # Backwards-compatible name used by the existing isolated search tests.
 MusicSearchError = MusicServiceError
 
+MAX_TOOL_RETRIES = 3
+MAX_500_RETRIES = 1
+BASE_RETRY_DELAY = 1.0
+MAX_RETRY_DELAY = 8.0
+RETRY_JITTER_RATIO = 0.25
+MAX_RETRY_AFTER_CAP = 10.0
+
+
+def _parse_retry_after(value: str | None, now: datetime) -> float | None:
+    if value is None:
+        return None
+    value = value.strip()
+    try:
+        if re.fullmatch(r"\d+", value):
+            seconds = float(value)
+        else:
+            deadline = parsedate_to_datetime(value)
+            if deadline.tzinfo is None:
+                return None
+            seconds = max(0.0, (deadline - now).total_seconds())
+        return seconds if math.isfinite(seconds) else None
+    except (ValueError, TypeError, OverflowError):
+        return None
+
+
+def _calculate_retry_delay(attempt: int, jitter_val: float) -> float:
+    delay = min(MAX_RETRY_DELAY, BASE_RETRY_DELAY * (2 ** max(0, attempt - 1)))
+    delay_with_jitter = delay * (1 + RETRY_JITTER_RATIO * jitter_val)
+    return min(MAX_RETRY_DELAY, delay_with_jitter)
+
+
+def _resolve_tool_name(path: str, method: str = "GET", tool_name: str | None = None) -> str:
+    if tool_name:
+        return tool_name
+    clean_path = path.split("?")[0].rstrip("/")
+    if clean_path == "/api/music/search":
+        return "search_music"
+    if clean_path == "/api/music/entities/search":
+        return "search_entities"
+    if "/api/music/entities/" in clean_path:
+        return "get_entity_detail"
+    if "/comment-summary" in clean_path or "/comment-count" in clean_path:
+        return "get_song_comment_count"
+    if "/lyrics" in clean_path:
+        return "get_song_lyrics"
+    if clean_path == "/api/user/playlists":
+        return "get_user_playlists"
+    if "/songs/" in clean_path and "/playlists/" in clean_path:
+        return "add_song_to_playlist" if method.upper() == "POST" else "remove_song_from_playlist"
+    if re.search(r"/api/playlists/\d+", clean_path):
+        return "delete_playlist" if method.upper() == "DELETE" else "get_playlist_detail"
+    if clean_path == "/api/playlists":
+        return "create_playlist"
+    if re.search(r"/api/albums/\d+", clean_path):
+        return "get_album_detail"
+    if clean_path == "/api/user/liked-songs":
+        return "get_liked_songs"
+    if clean_path.endswith("/like"):
+        return "set_song_liked"
+    if clean_path == "/api/user/profile":
+        return "get_account_id"
+    parts = [p for p in clean_path.split("/") if p and not p.isdigit()]
+    return parts[-1] if parts else "music_tool"
+
 
 class MusicServiceClient:
     """HTTP-only adapter from Python tools to the trusted Spring Boot API."""
 
-    def __init__(self, session_cookie: str | None = None) -> None:
+    def __init__(
+        self,
+        session_cookie: str | None = None,
+        *,
+        sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
+        jitter: Callable[[], float] = random.random,
+    ) -> None:
         self._session_cookie = session_cookie
+        self._sleeper = sleeper
+        self._jitter = jitter
 
     async def _request(
         self,
@@ -82,6 +164,7 @@ class MusicServiceClient:
         path: str,
         *,
         params: dict[str, Any] | None = None,
+        tool_name: str | None = None,
     ) -> Any:
         settings = get_settings()
         url = f"{str(settings.spring_boot_base_url).rstrip('/')}{path}"
@@ -90,45 +173,166 @@ class MusicServiceClient:
             if self._session_cookie is not None
             else None
         )
+        resolved_tool = _resolve_tool_name(path, method, tool_name)
+        durations_ms: list[float] = []
+        attempt = 0
+        last_error_type: str = "unknown"
+        last_error_code: str = "tool_execution_failed"
+        last_exc: Exception | None = None
 
-        try:
-            async with httpx.AsyncClient(
-                timeout=settings.spring_boot_timeout_seconds,
-                trust_env=False,
-            ) as client:
-                response = await client.request(
-                    method,
-                    url,
-                    params=params,
-                    headers=headers,
-                )
-        except httpx.TimeoutException as exc:
-            raise MusicServiceError(
-                "timeout",
-                "音乐服务请求超时，请稍后再试。",
-            ) from exc
-        except httpx.RequestError as exc:
-            raise MusicServiceError(
-                "unavailable",
-                "暂时无法连接音乐服务，请稍后再试。",
-            ) from exc
+        async with httpx.AsyncClient(
+            timeout=settings.spring_boot_timeout_seconds,
+            trust_env=False,
+        ) as client:
+            while True:
+                req_start = perf_counter()
+                try:
+                    response = await client.request(
+                        method,
+                        url,
+                        params=params,
+                        headers=headers,
+                    )
+                    req_duration_ms = (perf_counter() - req_start) * 1000
+                    durations_ms.append(round(req_duration_ms, 2))
 
-        if not response.is_success:
-            message = self._read_error_message(response)
-            if response.status_code == 401:
-                message = message or "请先登录网易云音乐。"
-            raise MusicServiceError(
-                f"http_{response.status_code}",
-                message or "音乐服务暂时不可用，请稍后再试。",
-            )
+                    if response.is_success:
+                        try:
+                            payload = response.json()
+                        except ValueError as exc:
+                            raise MusicServiceError(
+                                "invalid_response",
+                                "音乐服务返回了无法识别的数据。",
+                            ) from exc
 
-        try:
-            return response.json()
-        except ValueError as exc:
-            raise MusicServiceError(
-                "invalid_response",
-                "音乐服务返回了无法识别的数据。",
-            ) from exc
+                        if attempt > 0:
+                            logger.info(
+                                'tool_retry{tool="%s", error="%s", attempt=%d, outcome="success"}',
+                                resolved_tool,
+                                last_error_type,
+                                attempt,
+                            )
+                        return payload
+
+                    status = response.status_code
+                    raw_message = self._read_error_message(response)
+                    if status == 401:
+                        raw_message = raw_message or "请先登录网易云音乐。"
+
+                    # 不可重试类型（400/401/403/404/422及其他4xx）：直接抛出，不进重试循环
+                    if status in {400, 401, 403, 404, 422} or (400 <= status < 500 and status != 429):
+                        raise MusicServiceError(
+                            f"http_{status}",
+                            raw_message or "音乐服务暂时不可用，请稍后再试。",
+                        )
+
+                    # 可重试判断
+                    if status == 500:
+                        max_allowed = MAX_500_RETRIES
+                        error_type = "500"
+                        error_code = "http_500"
+                    elif status in {502, 503, 504}:
+                        max_allowed = MAX_TOOL_RETRIES
+                        error_type = str(status)
+                        error_code = f"http_{status}"
+                    elif status == 429:
+                        max_allowed = MAX_TOOL_RETRIES
+                        error_type = "429"
+                        error_code = "http_429"
+                    else:
+                        max_allowed = MAX_TOOL_RETRIES
+                        error_type = str(status)
+                        error_code = f"http_{status}"
+
+                    last_error_type = error_type
+                    last_error_code = error_code
+                    last_exc = MusicServiceError(error_code, raw_message)
+
+                    if attempt >= max_allowed:
+                        logger.info(
+                            'tool_retry{tool="%s", error="%s", attempt=%d, outcome="failed"}',
+                            resolved_tool,
+                            error_type,
+                            attempt,
+                        )
+                        logger.error(
+                            "Tool execution failed after %d retries: tool=%s error=%s durations_ms=%s",
+                            attempt,
+                            resolved_tool,
+                            error_type,
+                            durations_ms,
+                        )
+                        raise MusicServiceError(
+                            error_code,
+                            "音乐服务暂时不可用，请稍后重试。",
+                        )
+
+                    attempt += 1
+                    if status == 429:
+                        retry_after_str = response.headers.get("Retry-After")
+                        parsed_sec = _parse_retry_after(retry_after_str, datetime.now(UTC))
+                        if parsed_sec is not None:
+                            delay = min(MAX_RETRY_AFTER_CAP, max(0.0, parsed_sec))
+                        else:
+                            delay = _calculate_retry_delay(attempt, self._jitter())
+                    else:
+                        delay = _calculate_retry_delay(attempt, self._jitter())
+
+                    delay_ms = int(delay * 1000)
+                    logger.info(
+                        'tool_retry{tool="%s", error="%s", attempt=%d, delay_ms=%d, outcome="retrying"}',
+                        resolved_tool,
+                        error_type,
+                        attempt,
+                        delay_ms,
+                    )
+                    await self._sleeper(delay)
+
+                except (httpx.TimeoutException, httpx.RequestError) as exc:
+                    req_duration_ms = (perf_counter() - req_start) * 1000
+                    durations_ms.append(round(req_duration_ms, 2))
+
+                    if isinstance(exc, httpx.TimeoutException):
+                        error_type = "timeout"
+                        error_code = "timeout"
+                    else:
+                        error_type = "unavailable"
+                        error_code = "unavailable"
+
+                    last_error_type = error_type
+                    last_error_code = error_code
+                    last_exc = exc
+
+                    if attempt >= MAX_TOOL_RETRIES:
+                        logger.info(
+                            'tool_retry{tool="%s", error="%s", attempt=%d, outcome="failed"}',
+                            resolved_tool,
+                            error_type,
+                            attempt,
+                        )
+                        logger.error(
+                            "Tool execution failed after %d retries: tool=%s error=%s durations_ms=%s",
+                            attempt,
+                            resolved_tool,
+                            error_type,
+                            durations_ms,
+                        )
+                        raise MusicServiceError(
+                            error_code,
+                            "音乐服务暂时不可用，请稍后重试。",
+                        ) from exc
+
+                    attempt += 1
+                    delay = _calculate_retry_delay(attempt, self._jitter())
+                    delay_ms = int(delay * 1000)
+                    logger.info(
+                        'tool_retry{tool="%s", error="%s", attempt=%d, delay_ms=%d, outcome="retrying"}',
+                        resolved_tool,
+                        error_type,
+                        attempt,
+                        delay_ms,
+                    )
+                    await self._sleeper(delay)
 
     @staticmethod
     def _read_error_message(response: httpx.Response) -> str:
@@ -623,6 +827,7 @@ MUSIC_AGENT_TOOLS: list[BaseTool] = [
     remove_song_from_playlist_tool,
     get_liked_songs_tool,
     delete_playlist_tool,
+    get_song_popularity_tool,
 ]
 
 

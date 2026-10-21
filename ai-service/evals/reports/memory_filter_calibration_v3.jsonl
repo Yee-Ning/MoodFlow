@@ -1,5 +1,0 @@
-{"threshold":0.5,"cases":51,"key_recall":1.0,"precision":0.6623376623376623,"false_drop":0,"false_keep_rate":0.07282913165266107,"candidate_reduction":0.8112745098039216}
-{"threshold":0.45,"cases":51,"key_recall":1.0,"precision":0.6538461538461539,"false_drop":0,"false_keep_rate":0.07563025210084033,"candidate_reduction":0.8088235294117647}
-{"threshold":0.4,"cases":51,"key_recall":1.0,"precision":0.6144578313253012,"false_drop":0,"false_keep_rate":0.0896358543417367,"candidate_reduction":0.7965686274509804}
-{"threshold":0.35,"cases":51,"key_recall":1.0,"precision":0.5368421052631579,"false_drop":0,"false_keep_rate":0.12324929971988796,"candidate_reduction":0.767156862745098}
-{"threshold":0.55,"cases":51,"key_recall":0.9803921568627451,"precision":0.6756756756756757,"false_drop":1,"false_keep_rate":0.06722689075630252,"candidate_reduction":0.8186274509803921}

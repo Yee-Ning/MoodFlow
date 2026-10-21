@@ -1,0 +1,9 @@
+{
+  "request_id": "2c45dfb0-5724-4bde-b3ed-5a4a08bb6736",
+  "input": "请说出我之前让你记住的长期音乐偏好。",
+  "offline_new_session_output": "这个会话还没有已确认的偏好。你可以告诉我喜欢什么，我会先征求确认。",
+  "matches_live_output": true,
+  "scope": "preference_response reads only ChatSession.confirmed; capability_response returns it before LLM context packing",
+  "persistent_record_exists": true,
+  "no_external_calls": true
+}

@@ -16,6 +16,13 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 Generator = Callable[[int, str | None], Awaitable[str | ModelOutput]]
 Repair = Callable[[dict[str, Any], ValidationFailure], dict[str, Any] | None]
+Normalizer = Callable[[dict[str, Any], int], dict[str, Any]]
+
+
+class NormalizationError(RuntimeError):
+    """A local normalization/audit fault, never a reason for provider retry."""
+
+    code = "normalization_failed"
 
 
 class StructuredOutputService(Generic[T]):
@@ -26,6 +33,7 @@ class StructuredOutputService(Generic[T]):
         *,
         semantic_validator: Callable[[T], None] | None = None,
         repair: Repair | None = None,
+        normalizer: Normalizer | None = None,
         max_attempts: int = 2,
     ) -> None:
         if not 1 <= max_attempts <= 3:
@@ -34,7 +42,25 @@ class StructuredOutputService(Generic[T]):
         self.schema = schema
         self.semantic_validator = semantic_validator
         self.repair = repair
+        self.normalizer = normalizer
         self.max_attempts = max_attempts
+
+    def _normalize(self, payload: dict[str, Any], attempt: int) -> dict[str, Any]:
+        if self.normalizer is None:
+            return payload
+        try:
+            normalized = self.normalizer(payload, attempt)
+            if not isinstance(normalized, dict):
+                raise TypeError("normalizer_must_return_object")
+            return normalized
+        except Exception as exc:
+            # Normalization/audit faults must never consume another model call.
+            self._log(attempt, False, FailureType.MODEL_ERROR, "failed", perf_counter())
+            failure = NormalizationError("normalization_failed")
+            failure.__cause__ = exc
+            raise StructuredOutputError(
+                self.schema_name, FailureType.MODEL_ERROR, attempts=attempt
+            ) from failure
 
     def _validate(self, payload: dict[str, Any]) -> tuple[T, bool]:
         try:
@@ -58,7 +84,7 @@ class StructuredOutputService(Generic[T]):
         try:
             parsed = parse_json_object(raw)
             repair_applied = parsed.repair_applied
-            output, repaired = self._validate(parsed.value)
+            output, repaired = self._validate(self._normalize(parsed.value, 1))
         except ValidationFailure as exc:
             self._log(1, repair_applied or exc.repair_applied, exc.failure_type, "failed", started)
             raise StructuredOutputError(
@@ -91,8 +117,10 @@ class StructuredOutputService(Generic[T]):
                         raise ValidationFailure(FailureType.MODEL_ERROR, "empty_model_output")
                     raw = raw.text
                 parsed = parse_json_object(raw)
-                output, repaired = self._validate(parsed.value)
+                output, repaired = self._validate(self._normalize(parsed.value, attempt))
                 repaired = repaired or parsed.repair_applied
+            except StructuredOutputError:
+                raise
             except ValidationFailure as exc:
                 last_failure = exc
                 final = attempt == self.max_attempts

@@ -1,0 +1,515 @@
+{
+  "source": "action-authorization-audit-20261012 E02/E05/E06; copied without semantic changes",
+  "task0": {
+    "task_id": "4fc54c9ddb7548dd879085b639198945:tool_calling:0",
+    "route_key": "tool_calling",
+    "input_text": "请让 Curator 为今晚安静阅读创建一个私密网易云歌单，名称为“MF-local-20261012-8cf8b5b2”，加入至少3首适合夜间阅读的歌曲，附简短导语",
+    "intent_orders": [
+      0
+    ],
+    "depends_on": []
+  },
+  "existing": [
+    {
+      "action": "insert_next_track",
+      "text": "把晴天放到下一首",
+      "args": {},
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "insert_next_track",
+      "text": "搜索周杰伦",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "insert_next_track",
+      "text": "不要把晴天放到下一首",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "append_to_queue",
+      "text": "把晴天加到队列末尾",
+      "args": {},
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "append_to_queue",
+      "text": "搜索周杰伦",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "append_to_queue",
+      "text": "不要把晴天加到队列末尾",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "play_album",
+      "text": "播放这张专辑",
+      "args": {},
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "play_album",
+      "text": "搜索周杰伦",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "play_album",
+      "text": "不要播放这张专辑",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "play_playlist",
+      "text": "播放我的学习歌单",
+      "args": {},
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "play_playlist",
+      "text": "搜索周杰伦",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "play_playlist",
+      "text": "不要播放我的学习歌单",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "jump_to_queue_item",
+      "text": "跳到第 3 首",
+      "args": {
+        "index": 3
+      },
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "jump_to_queue_item",
+      "text": "搜索周杰伦",
+      "args": {
+        "index": 3
+      },
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "jump_to_queue_item",
+      "text": "不要跳到第 3 首",
+      "args": {
+        "index": 3
+      },
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "clear_queue",
+      "text": "清空播放队列",
+      "args": {},
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "clear_queue",
+      "text": "搜索周杰伦",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "clear_queue",
+      "text": "不要清空播放队列",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "create_playlist_tool",
+      "text": "新建学习歌单",
+      "args": {
+        "name": "学习"
+      },
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "create_playlist_tool",
+      "text": "搜索周杰伦",
+      "args": {
+        "name": "学习"
+      },
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "create_playlist_tool",
+      "text": "不要新建学习歌单",
+      "args": {
+        "name": "学习"
+      },
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "remove_song_from_playlist_tool",
+      "text": "从学习歌单移除晴天",
+      "args": {},
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "remove_song_from_playlist_tool",
+      "text": "搜索周杰伦",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "remove_song_from_playlist_tool",
+      "text": "不要从学习歌单移除晴天",
+      "args": {},
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "set_song_liked_tool",
+      "text": "收藏这首歌",
+      "args": {
+        "liked": true
+      },
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "set_song_liked_tool",
+      "text": "搜索周杰伦",
+      "args": {
+        "liked": true
+      },
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "set_song_liked_tool",
+      "text": "不要收藏这首歌",
+      "args": {
+        "liked": true
+      },
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "set_song_liked_tool",
+      "text": "取消红心",
+      "args": {
+        "liked": false
+      },
+      "expected_allowed": true,
+      "baseline": {},
+      "current": {},
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "set_song_liked_tool",
+      "text": "搜索周杰伦",
+      "args": {
+        "liked": false
+      },
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    },
+    {
+      "action": "set_song_liked_tool",
+      "text": "不要取消红心",
+      "args": {
+        "liked": false
+      },
+      "expected_allowed": false,
+      "baseline": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "current": {
+        "mutation": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      },
+      "source": "test_tool_action_authorization.py existing 30 subtest cases; functions only, no executor"
+    }
+  ],
+  "actions": [
+    {
+      "action": "pause_player",
+      "text": "播放器，暂停",
+      "errors": {}
+    },
+    {
+      "action": "resume_player",
+      "text": "播放器，继续播放",
+      "errors": {}
+    },
+    {
+      "action": "play_next",
+      "text": "播放器，下一首",
+      "errors": {}
+    },
+    {
+      "action": "play_previous",
+      "text": "播放器，上一首",
+      "errors": {}
+    },
+    {
+      "action": "set_volume",
+      "text": "音量，设置到0.3",
+      "errors": {}
+    },
+    {
+      "action": "set_muted",
+      "text": "播放器，静音",
+      "errors": {}
+    },
+    {
+      "action": "seek_to",
+      "text": "播放进度，跳到30秒",
+      "errors": {}
+    },
+    {
+      "action": "seek_by",
+      "text": "播放进度，快进10秒",
+      "errors": {}
+    },
+    {
+      "action": "set_play_mode",
+      "text": "播放模式，设为随机",
+      "errors": {}
+    },
+    {
+      "action": "play_song",
+      "text": "这首歌，播放它",
+      "errors": {}
+    },
+    {
+      "action": "insert_next_track",
+      "text": "这首歌，下一首播放",
+      "errors": {}
+    },
+    {
+      "action": "append_to_queue",
+      "text": "把晴天加到，队列末尾",
+      "errors": {
+        "append_to_queue": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      }
+    },
+    {
+      "action": "play_album",
+      "text": "这张专辑，播放它",
+      "errors": {}
+    },
+    {
+      "action": "play_playlist",
+      "text": "学习歌单，播放它",
+      "errors": {}
+    },
+    {
+      "action": "jump_to_queue_item",
+      "text": "队列第3首，跳到那里",
+      "errors": {}
+    },
+    {
+      "action": "clear_queue",
+      "text": "播放队列，清空",
+      "errors": {}
+    },
+    {
+      "action": "set_liked",
+      "text": "这首歌，收藏",
+      "errors": {}
+    },
+    {
+      "action": "set_song_liked_tool",
+      "text": "这首歌，收藏",
+      "errors": {}
+    },
+    {
+      "action": "create_playlist_tool",
+      "text": "新建，学习歌单",
+      "errors": {
+        "create_playlist_tool": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      }
+    },
+    {
+      "action": "remove_song_from_playlist_tool",
+      "text": "学习歌单里的晴天，移除",
+      "errors": {}
+    },
+    {
+      "action": "delete_playlist_tool",
+      "text": "确认，删除歌单77",
+      "errors": {
+        "delete_playlist_tool": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      }
+    },
+    {
+      "action": "open_lyrics",
+      "text": "歌词面板，打开",
+      "errors": {
+        "open_lyrics": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      }
+    },
+    {
+      "action": "add_song_to_playlist",
+      "text": "新建学习歌单，加入晴天",
+      "errors": {
+        "add_song_to_playlist": "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+      }
+    }
+  ]
+}

@@ -512,6 +512,13 @@ JSON Schema、Pydantic 和实体文本落地校验；超时、非法结构或未
 并标记 `partial`。合并优先级固定为 existing/manual → parser/inherited → rule → LLM，
 冲突保存在 `quality.metadata_conflicts`，不静默覆盖。
 
+作品名规则保留 `《…》/〈…〉` 的提取，同时只读复用现有默认 entity registry 的 album/song
+canonical names 和 aliases，补齐无书名号的已知作品候选（如“范特西”“专辑范特西”
+“周杰伦的范特西”）。按最长名称优先占用文本范围，避免“依然范特西”再提取出“范特西”；
+拉丁别名忽略大小写并检查词边界。仅紧邻的“专辑/歌曲/album/song”等明确前缀提供类型
+hint，其余候选保留 unknown；本阶段不消歧、不产生 entity ID。未知且无引号、无继承元数据
+的作品不会猜测提取。metadata mention 优先，规范化去重后沿用 100 条上限。
+
 ```powershell
 # 默认安全路径：只跑继承和规则层，不消耗 LLM
 python run_enrich.py --limit 20 --sample-size 5 --rule-only
@@ -527,11 +534,13 @@ python run_enrich.py --validate-only --sample-size 0
 ```
 
 配置位于 `app/rag/enrichment/config/v1.yaml`，包括 batch size、并发、单次超时与重试。
-`content + title + section_path + inherited metadata + parent subject + enrichment version`
+`content + title + section_path + inherited metadata + parent subject + enrichment version + rule fingerprint`
 共同生成 `input_hash`；hash 和三个版本均未变化且已有成功结果时标记 `skipped`，不再次
 调用 LLM。输出通过 `chunk_id` 与 Chunk V1 对应，并原子写入独立 JSONL，不覆盖
 `data/chunked`。本阶段只抽取 mention，不生成 entity ID、不合并 alias，也不包含
 Claim、Embedding、Qdrant、BM25、Hybrid 或 Rerank。
+rule fingerprint 包含规则版本、作品词表与前缀规则；新规则或词表变化会使旧 enrichment
+缓存失效，实际重跑时按当前 rule-only/LLM 模式重新处理。本轮未重跑真实语料。
 
 `quality` 同时记录 `structural_status`、`semantic_status` 与 `index_ready`。关闭或拒绝
 语义 LLM 不再等同于结构失败；只要原 Chunk 保留、继承字段和规则字段通过校验，数据仍可
@@ -592,6 +601,13 @@ Embedding、Qdrant、HNSW、BM25、Hybrid Search 或 Rerank。
 quality report、corpus manifest 与 registry candidate 清单，再确定性抽取 100 条 Claim
 和 100 条实体链接供人工复核：
 
+release 按文档隔离含任意非 `SUPPORTED` Claim 的输入（实际 verdict 包括
+`PARTIALLY_SUPPORTED`、`CONTRADICTED`、`INSUFFICIENT_EVIDENCE`）。默认整篇文档的
+Parent/Child 均不进入发布的 corpus/manifest，其余文档照常发布。工作集原文、claim 和
+verdict 保持不变；`review-root/manual_review_documents.jsonl` 与
+`release_selection_report.json` 保存文档/claim ID、verdict 和 `disposition=quarantined`。
+正式发布物也携带隔离清单与 manual_review 汇总，且清单参与 artifact 哈希。
+
 ```powershell
 # 只生成可复核抽样包，不运行 LLM、Embedding 或索引
 python run_knowledge_release.py --prepare-review
@@ -601,11 +617,25 @@ python run_knowledge_release.py --prepare-review
 # attestation_version, reviewer, review_status=approved,
 # claim_sample_sha256, entity_link_sample_sha256,
 # claim_reviewed_count, entity_link_reviewed_count,
+# release_selection_sha256,
 # generation_mode=rule_only, rejected_sample_ids=[]
 
 # 仅在所有门禁和签字均通过时冻结 data/knowledge/v2
 python run_knowledge_release.py --finalize
 ```
+
+抽样 manifest 与人工 attestation 都必须绑定 `release_selection_sha256`，它包含完整工作集
+hash、实际入选 chunk 和本次隔离策略。旧抽样/签字需重新准备；切换 flag 或工作集变化后，
+即使少量抽样文本恰好不变，也不能复用旧签字。全部文档均隔离时 prepare 返回
+`quarantined` 并保存清单，finalize 不创建空 release。
+
+待审文档需显式放行时，prepare 与 finalize **每次**均传 `--include-manual-review`，
+重新复核对应抽样并签字；标记为 `included_by_flag`，不写回或清除源文档待审状态。
+下次不带 flag 会重新隔离。放行不改 verdict：发布物如实标记
+`all_claims_supported=false`、`pre_embedding_release_ready=false`，现有 indexing 门仍会拒绝。
+已有 release 不允许覆盖；不同入选集合应选择新的 output-root。
+新增审计文件和 selection 绑定也会改变构建 hash，历史 release 即使入选集合相同，
+也需选择新的发布目录进行构建，不能原地重建。
 
 V2 使用 `create_once_or_verify_identical` 策略：首次创建后，相同内容可重复验证；任一
 文件发生变化都会拒绝覆盖。`knowledge_release_manifest.json` 记录 Enriched 输入、配置、
@@ -616,7 +646,8 @@ Embedding、Qdrant、BM25、在线检索、RRF 与 Rerank。
 ## Music RAG Offline Indexing V1
 
 `app/rag/indexing/` 是离线数据链路的最终阶段。它只读取
-`KnowledgeEnrichedChunk`，只为 Child Chunk 构建检索索引，不实现任何在线查询：
+`KnowledgeEnrichedChunk`，为 Child Chunk 和无 Child 的 `STRUCTURED_RECORD` Parent
+构建检索索引，不实现任何在线查询：
 
 ```text
 KnowledgeEnrichedChunk JSONL
@@ -626,7 +657,7 @@ KnowledgeEnrichedChunk JSONL
   -> deterministic dense_text / bm25_text / payload projection
   -> index_projection.jsonl
   -> Qwen3-Embedding-0.6B document embedding (1024d, L2 normalized)
-  -> one Qdrant point per Child
+  -> one Qdrant point per Child or childless structured record Parent
        named vector: dense
        named vector: bm25 (qdrant/bm25, multilingual tokenizer, IDF)
        payload: compact Parent context + entities + supported claims + provenance
@@ -636,12 +667,41 @@ KnowledgeEnrichedChunk JSONL
 
 Dense 文本直接使用现有 `retrieval_content`，不向文档添加 query instruction；BM25
 文本在此基础上确定性追加 topics、keywords、canonical entity names 和 registry aliases。
+Parent-only structured record 的 Dense 文本使用 `parent.content.strip()`：上游已原子保存
+记录 heading 和完整 JSON（含现有 Markdown 标记），不再重解析或改写字段。BM25 使用同一
+正文并追加上述检索词；payload 保留 `record_id`、记录原文和来源，`record_type=parent`，
+投影的 `parent_id` 指向自身并保留 `parent_context`，以兼容现有检索契约。源 Parent 不变，
+不补 Child；普通 Parent 仍只作为 Child 的上下文。有 Child 的 structured record Parent
+不会重复建点（即使 Child 被质量门禁排除）。所有候选沿用同一质量门禁与向量校验。
 只有 `SUPPORTED` Claim 的紧凑结构和 evidence span 会进入 Payload，Claim 文本不会重复
 拼入向量输入。每个 Child Payload 同时保存对应 Parent 的正文、section path、breadcrumb
 与 token count；不会复制体积过大的原始 `document_metadata`。
 Point ID 由 `chunk_id` 确定性生成 UUID5，完整投影、模型 revision、BM25 配置与版本共同
-生成 `index_input_hash`；Qdrant 中 hash 未变化的 point 会在加载模型前直接跳过。
+生成 `index_input_hash`。本地 Dense 缓存先按该 hash 查找并重新校验维度、有限值和范数；
+随后 Qdrant 中 hash 未变化的 point 直接跳过 upsert。其余 point 优先复用本地向量，
+仅缓存未命中的输入加载模型推理，每批校验通过后立即提交缓存，再处理下批和 upsert。
+缓存与 collection/release
+输出目录分离，重建 collection 或 upsert 失败重试可复用已计算的向量。
 CPU/GPU、batch size 与 `local_files_only` 等运行时参数不参与 hash。
+
+缓存文件为 `ai-service/data/indexing/embedding_cache/v1/embeddings.sqlite3`，使用标准库
+SQLite 事务和 `input_hash` 主键，不引入依赖。该目录沿用 `data/indexing/**` 的 Git 忽略规则。
+文本、payload、release 或模型指纹变化会自然产生新 key；旧 key 不会误命中。缓存损坏条目
+会被丢弃后重算；缓存不可读/不可写时继续原推理流程，在 summary/manifest 的 warnings
+记录原因。失败或未通过向量校验的结果不会入缓存。`--validate-only` 不读写缓存。
+
+清理方式：停止所有离线 indexing 进程后，在 `ai-service` 目录执行下面的命令（仅删除本地
+派生缓存，不影响语料或 Qdrant）。后续需要推理的输入按需重建缓存；已有 Qdrant point 的
+hash 若相同，仍走原跳过机制，不为回填缓存额外推理。
+
+```powershell
+Remove-Item -LiteralPath data/indexing/embedding_cache/v1/embeddings.sqlite3 -ErrorAction SilentlyContinue
+```
+
+summary/manifest 的 `embedding_cache_path` 记录相对 `ai-service` 的缓存路径；
+`embedding_cache_hit_count` 为本次所有投影中有效的本地命中数（可与 Qdrant skip 重叠），
+`embedding_computed_count` 为本次成功计算并校验的向量数。`indexed_count` 包含缓存向量的
+upsert，`skipped_count` 继续只计 Qdrant hash 相同而无需 upsert 的点。
 
 默认配置位于 `app/rag/indexing/config/v1.yaml`，固定 Qwen3 模型 revision、1024 维
 Cosine、Dense HNSW `m=16/ef_construct=200`、Qdrant 1.19 和中文

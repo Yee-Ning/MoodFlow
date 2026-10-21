@@ -11,7 +11,7 @@ from pathlib import Path
 
 from app.rag.indexing.models import PreparedIndexDocument
 from app.rag.indexing.release import KnowledgeReleaseValidator
-from app.rag.knowledge.entity_linking.registry import EntityRegistry, DEFAULT_ENTITY_REGISTRY_PATH
+from app.rag.query_understanding.registry_binding import load_bound_registry, registry_file_hashes
 from app.rag.knowledge.qa import sha256_file
 from app.rag.retrieval.binding import RetrievalIndexBinding
 from app.rag.source_context import relation_provenance, source_context
@@ -70,8 +70,10 @@ class VerifiedEndpointMaterializer:
         }
         if any(approval.get(key) != value for key, value in expected.items()):
             raise ValueError("runtime_binding_index_not_approved")
-        registry = EntityRegistry.load(DEFAULT_ENTITY_REGISTRY_PATH.with_name(
-            binding.profile.registry_version + ".yaml"))
+        release_payload = json.loads(within(manifest.source_release_manifest_path).read_text(encoding="utf-8"))
+        if registry_file_hashes(release_payload) != binding.profile.registry_file_hashes:
+            raise ValueError("runtime_binding_registry_identity_mismatch")
+        registry = load_bound_registry(binding.profile, root)
         rows = [PreparedIndexDocument.model_validate_json(line)
                 for line in projection.read_text(encoding="utf-8").splitlines() if line.strip()]
         payloads = {row.chunk_id: row.payload for row in rows}

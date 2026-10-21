@@ -108,6 +108,7 @@ async def _run(
     service = QueryUnderstandingService(
         config=understanding_config,
         index_profile=binding.profile,
+        project_root=project_root,
     )
     graph = create_query_understanding_graph(service=service)
     current_song_id = args.current_song_id

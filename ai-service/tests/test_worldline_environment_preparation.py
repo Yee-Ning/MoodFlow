@@ -47,7 +47,9 @@ def test_native_document_metadata_reaches_context_pack_and_worldline():
         ))
     config = load_retrieval_config()
     backend = QdrantHybridSearchBackend(config, client=QdrantTransport(documents, config))
-    binding = SimpleNamespace(profile=profile(), manifest=SimpleNamespace(projected_count=4))
+    binding = SimpleNamespace(profile=profile(), manifest=SimpleNamespace(
+        projected_count=4, dense_distance="cosine", bm25_idf_modifier=True,
+    ))
     service = HybridRetrievalService(binding, config=config, encoder=FakeEncoder(), backend=backend)
     query_plan = plan(index_profile=profile())
     result = asyncio.run(service.retrieve(query_plan))

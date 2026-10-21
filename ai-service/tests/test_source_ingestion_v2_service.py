@@ -1,12 +1,14 @@
 import tempfile
 import unittest
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 from app.rag.source_ingestion.attempts import SourceAttemptLedger
 from app.rag.source_ingestion.auto_service import AutoSourceIngestionService
 from app.rag.source_ingestion.http_client import RawHttpResponse
 from app.rag.source_ingestion.quality_filter import AutoSourceQualityFilter
+from app.rag.source_ingestion.retry import HostRetryScheduler, SourceRetryConfig
 from app.rag.source_ingestion.snapshot import RawSnapshotStore
 from app.rag.source_ingestion.v2_models import (
     DiscoveredCandidate,
@@ -107,6 +109,12 @@ class AutoSourceIngestionServiceTests(unittest.TestCase):
         self.temporary_directory.cleanup()
 
     def _service(self, client: StubHttpClient) -> AutoSourceIngestionService:
+        now = [FIXED_TIME]
+
+        def sleep(seconds):
+            now[0] += timedelta(seconds=seconds)
+
+        config = SourceRetryConfig()
         return AutoSourceIngestionService(
             snapshot_store=self.store,
             http_client=client,
@@ -114,6 +122,8 @@ class AutoSourceIngestionServiceTests(unittest.TestCase):
             quality_filter=AutoSourceQualityFilter(),
             attempt_ledger=self.ledger,
             existing_candidates=[],
+            retry_config=config,
+            retry_scheduler=HostRetryScheduler(config, now=lambda: now[0], sleeper=sleep, jitter=lambda: 0),
         )
 
     def test_fetch_and_validation_failures_fall_back_to_third_candidate(self) -> None:
@@ -201,6 +211,77 @@ class AutoSourceIngestionServiceTests(unittest.TestCase):
 
         self.assertEqual(summary.fetch_success, 1)
         self.assertEqual(client.urls, [str(pdf.url)])
+
+    def test_reopen_failed_retries_exhausted_group_when_automatic_retry_disabled(self) -> None:
+        candidate = _candidate("retry-source", group="retry-group", priority=1)
+        client = StubHttpClient({str(candidate.url): TimeoutError("temporary")})
+        service = self._service(client)
+        service.retry_config = SourceRetryConfig(enabled=False)
+        service.run([candidate], target_count=1, max_replacement_attempts=1)
+        client.outcomes[str(candidate.url)] = _valid_html("recovered")
+        default = service.run([candidate], target_count=1, max_replacement_attempts=3)
+        self.assertEqual(default.fetch_attempted, 0)
+        recovered = service.run([candidate], target_count=1, max_replacement_attempts=1, reopen_failed=True)
+        self.assertEqual(recovered.fetch_success, 1)
+        self.assertEqual(len(client.urls), 2)
+        again = service.run([candidate], target_count=1, max_replacement_attempts=1, reopen_failed=True)
+        self.assertEqual(again.fetch_attempted, 0)
+
+    def test_reopen_preserves_filter_and_duplicate_terminals_and_attempt_cap(self) -> None:
+        candidates = [_candidate(f"retry-{i}", group="retry-group", priority=i) for i in range(1, 5)]
+        candidates[0] = candidates[0].model_copy(update={"artist": "Other"})
+        existing = candidates[1]
+        service = self._service(StubHttpClient({str(c.url): TimeoutError("temporary") for c in candidates}))
+        service.existing_candidates = [existing]
+        first = service.run(candidates, target_count=1, max_replacement_attempts=1)
+        second = service.run(candidates, target_count=1, max_replacement_attempts=1, reopen_failed=True)
+        self.assertEqual((first.filtered_out, first.duplicate_candidates, first.fetch_attempted), (1, 1, 1))
+        self.assertEqual((second.filtered_out, second.duplicate_candidates, second.fetch_attempted), (0, 0, 1))
+        self.assertEqual(len(service.http_client.urls), 2)
+
+    def test_invalid_latest_snapshot_is_refetched_even_when_target_was_reached(self) -> None:
+        for damage in ("missing", "corrupt", "unreadable"):
+            with self.subTest(damage=damage), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                store = RawSnapshotStore(root, now=lambda: FIXED_TIME)
+                candidate = _candidate("repair-source", group="repair-group", priority=1)
+                client = StubHttpClient({str(candidate.url): _valid_html("restored")})
+                service = AutoSourceIngestionService(
+                    snapshot_store=store, http_client=client, validator=SnapshotValidator(),
+                    quality_filter=AutoSourceQualityFilter(),
+                    attempt_ledger=SourceAttemptLedger(root / "data/raw/source_attempts.jsonl"),
+                    existing_candidates=[],
+                )
+                self.assertEqual(service.run([candidate], target_count=1, max_replacement_attempts=1).fetch_success, 1)
+                old = service._raw_records()[0]
+                service.existing_candidates = [candidate]
+                client.urls.clear()
+                raw = root / old.raw_path
+                if damage == "missing":
+                    raw.unlink()
+                elif damage == "corrupt":
+                    raw.write_bytes(b"corrupt")
+                original_read = Path.read_bytes
+
+                def read_bytes(path):
+                    if damage == "unreadable" and path == raw:
+                        raise PermissionError("fixture read denied")
+                    return original_read(path)
+
+                service.snapshot_store = RawSnapshotStore(root, now=lambda: FIXED_TIME + timedelta(seconds=1))
+                with patch.object(Path, "read_bytes", read_bytes):
+                    result = service.run([candidate], target_count=1, max_replacement_attempts=1)
+                self.assertEqual((result.fetch_success, result.total_valid_snapshots), (1, 1))
+                self.assertEqual(len(store.manifest_path.read_text(encoding="utf-8").splitlines()), 2)
+
+    def test_healthy_latest_snapshot_is_kept_without_fetch(self) -> None:
+        candidate = _candidate("healthy-source", group="healthy-group", priority=1)
+        response = _valid_html("healthy")
+        self.store.save_auto_validated(candidate, response, SnapshotValidator().validate(candidate, response))
+        client = StubHttpClient({})
+        outcome = self._service(client).run([candidate], target_count=1, max_replacement_attempts=1)
+        self.assertEqual(outcome.total_valid_snapshots, 1)
+        self.assertEqual(client.urls, [])
 
 
 if __name__ == "__main__":

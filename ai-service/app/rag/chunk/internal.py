@@ -33,11 +33,20 @@ class RoutedTable:
     table_id: str
 
 
+@dataclass(frozen=True, slots=True)
+class RoutedRecord:
+    order_index: int
+    record_id: str
+    section_path: tuple[str, ...]
+    parts: tuple[NarrativePart, ...]
+
+
 @dataclass(slots=True)
 class ChildDraft:
     content: str
     metadata: dict[str, JsonValue]
     table_data: TableChunkData | None = None
+    retrieval_description: str | None = None
 
 
 @dataclass(slots=True)

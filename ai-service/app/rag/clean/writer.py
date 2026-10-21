@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -68,6 +69,9 @@ class CleanedDatasetWriter:
                     "cleaned_path": (source_directory / "document.json")
                     .relative_to(self.project_root)
                     .as_posix(),
+                    "cleaned_sha256": "sha256:" + hashlib.sha256(
+                        (source_directory / "document.json").read_bytes()
+                    ).hexdigest(),
                 }
             )
         manifest_path = self.output_root / "cleaned_corpus_manifest.jsonl"

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -49,9 +50,13 @@ class EnrichmentCorpusReader:
                     raise EnrichmentCorpusError(
                         f"chunks_path_outside_selected_root:{line_number}"
                     )
-                document = ChunkedDocument.model_validate_json(
-                    path.read_text(encoding="utf-8")
-                )
+                content = path.read_bytes()
+                if row.get("chunks_sha256") != "sha256:" + hashlib.sha256(content).hexdigest():
+                    raise EnrichmentCorpusError(f"chunked_manifest_hash_mismatch_or_missing:{line_number}")
+                document = ChunkedDocument.model_validate_json(content)
+                for field in ("document_id", "source_id", "chunk_version", "config_fingerprint", "token_counter"):
+                    if row.get(field) != getattr(document, field):
+                        raise EnrichmentCorpusError(f"chunked_manifest_identity_mismatch:{line_number}:{field}")
             except EnrichmentCorpusError:
                 raise
             except (OSError, ValidationError, ValueError, json.JSONDecodeError) as exc:

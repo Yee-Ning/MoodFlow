@@ -15,6 +15,7 @@ from types import SimpleNamespace
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
+from qdrant_client import models
 
 from app.agent.checkpointing import create_memory_checkpointer
 from app.agent.foundation import build_main_graph, create_main_state
@@ -59,6 +60,7 @@ from tests.test_worldline_graph import FakeGenerator, entity
 from tests.test_worldline_graph import initial_state
 from tests.test_worldline_influence_source_context import context_pair
 from tests.test_worldline_influence_expansion import document
+from tests.test_query_registry_binding import bound_registry_hashes
 
 
 QUERY = "探索歌手《A》的音乐世界线、发行年代、音乐场景与音乐影响"
@@ -71,6 +73,7 @@ def profile():
         index_schema_version="v2",
         projection_version="v4",
         registry_version="v3",
+        registry_file_hashes=bound_registry_hashes(),
     )
 
 
@@ -281,10 +284,10 @@ class QdrantTransport:
                 params=SimpleNamespace(
                     vectors={
                         self.config.dense.vector_name: SimpleNamespace(
-                            size=self.config.dense.dimension
+                            size=self.config.dense.dimension, distance=models.Distance.COSINE,
                         )
                     },
-                    sparse_vectors={self.config.bm25.vector_name: {}},
+                    sparse_vectors={self.config.bm25.vector_name: SimpleNamespace(modifier=models.Modifier.IDF)},
                 )
             ),
         )
@@ -353,7 +356,9 @@ def runtime(*, catalog_registry=None):
     config = load_retrieval_config()
     transport = QdrantTransport(prepared, config)
     binding = SimpleNamespace(
-        profile=profile(), manifest=SimpleNamespace(projected_count=len(prepared))
+        profile=profile(), manifest=SimpleNamespace(
+            projected_count=len(prepared), dense_distance="cosine", bm25_idf_modifier=True,
+        )
     )
     retrieval = HybridRetrievalService(
         binding,
@@ -596,7 +601,9 @@ def test_context_pack_missing_or_tampered_capture_fails_closed():
     pool = asyncio.run(
         HybridRetrievalService(
             SimpleNamespace(
-                profile=profile(), manifest=SimpleNamespace(projected_count=4)
+                profile=profile(), manifest=SimpleNamespace(
+                    projected_count=4, dense_distance="cosine", bm25_idf_modifier=True,
+                )
             ),
             encoder=FakeEncoder(),
             backend=QdrantHybridSearchBackend(

@@ -45,6 +45,7 @@ class SearchMusicToolDefinitionTests(unittest.TestCase):
             "remove_song_from_playlist_tool": {"playlist_id", "song_id"},
             "get_liked_songs": set(),
             "delete_playlist_tool": {"playlist_id", "confirmed"},
+            "get_song_popularity_tool": {"song_ids"},
         }
 
         self.assertEqual(

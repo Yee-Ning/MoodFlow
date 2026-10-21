@@ -1,6 +1,7 @@
 .env
 .venv/
 .venv-eval/
+.venv-ragas/
 .deepeval/
 __pycache__/
 .pytest_cache/

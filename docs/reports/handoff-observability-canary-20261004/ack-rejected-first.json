@@ -1,9 +1,0 @@
-{
-  "sample_kind": "acceptance",
-  "passed": false,
-  "failure": "probe_expected_nested_owner_but_SSE_owner_fields_are_top_level",
-  "unique_generated_actions": 1,
-  "ack_posts": 0,
-  "player_action_applied": false,
-  "preserved_in_collected_events": true
-}

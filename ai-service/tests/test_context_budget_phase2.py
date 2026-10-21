@@ -287,7 +287,8 @@ async def test_jev_sdk_usage_or_estimate_enters_same_l3_and_model_dimension(tmp_
         configured = settings().model_copy(update={"typesafe_api_key": SecretStr("offline")})
         with patch("app.agent.decision.jev.client.AsyncTypeSafeClient", SDK), request_scope(ledger):
             await JevClient(configured).decide("hi", {"route": Choice(instructions="choose", criteria={"chat": None})})
-        assert sent[0]["extra_body"] == {"max_tokens": output_limit("jev-latest")}
+        assert "extra_body" not in sent[0]
+        assert ledger.call_manifests[0]["max_output_tokens"] == output_limit("jev-latest")
         usage = ledger.budget_ledger.get_agent_total(h.run.run_id, "jev")
         assert usage == ledger.budget_ledger.get_task_total(h.run.run_id)
         assert ledger.budget_ledger.get_model_breakdown(h.run.run_id) == {"jev-latest": usage}

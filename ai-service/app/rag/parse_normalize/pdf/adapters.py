@@ -11,6 +11,7 @@ import json
 import re
 import subprocess
 import tempfile
+from hashlib import sha256
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -18,10 +19,13 @@ from importlib import import_module as standard_import_module
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Protocol
+from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
+from app.rag.clean.io import atomic_write_json
 from app.rag.parse_normalize.base import ParserError
+from app.rag.parse_normalize.cache_identity import component_identity, identity_hash
 from app.rag.parse_normalize.models import (
     BlockType,
     DocumentBlock,
@@ -59,6 +63,9 @@ class PDFParserAdapter(ABC):
     @property
     def parser_version(self) -> str:
         return self.adapter_version
+
+    def cache_identity(self) -> dict[str, object]:
+        return {"class": f"{type(self).__module__}.{type(self).__qualname__}", "name": self.parser_name, "version": self.parser_version}
 
     @abstractmethod
     def parse(
@@ -456,39 +463,51 @@ class MinerUAdapter(PDFParserAdapter):
         backend = getattr(self.runner, "version_label", "custom-runner")
         return f"{backend}+a{self.adapter_version}"
 
+    def cache_identity(self) -> dict[str, object]:
+        from dataclasses import asdict
+        import shutil
+
+        try:
+            installed = version("mineru")
+        except PackageNotFoundError:
+            installed = "unavailable"
+        executable = shutil.which(getattr(self.runner, "executable", "mineru"))
+        return {**super().cache_identity(), "runner": component_identity(self.runner), "config": asdict(self.config), "installed": installed, "executable_sha256": sha256(Path(executable).read_bytes()).hexdigest() if executable else None}
+
     def parse(
         self, parse_input: ParseInput, inspection: PDFInspection
     ) -> PDFAdapterOutput:
         cache_directory = self._cache_directory(parse_input)
         allow_ocr = inspection.suspected_scan
+        cached = not parse_input.force_reparse and self._cache_valid(cache_directory, parse_input)
         try:
-            if not self._has_output(cache_directory):
-                self.runner.run(parse_input, cache_directory, allow_ocr)
-            content_path = self._first_named(
-                cache_directory,
-                ("content_list_v2.json", "content_list.json"),
-            ) or self._first_suffix(cache_directory, "_content_list.json")
-            middle_path = self._first_named(
-                cache_directory, ("middle.json", "layout.json")
-            ) or self._first_suffix(cache_directory, "_middle.json")
-            markdown_path = self._first_named(
-                cache_directory, ("full.md",)
-            ) or self._first_suffix(cache_directory, ".md")
-            content_list = self._load_json(content_path) if content_path else []
-            middle = self._load_json(middle_path) if middle_path else {}
-            markdown = (
-                markdown_path.read_text(encoding="utf-8") if markdown_path else ""
-            )
-            if not isinstance(content_list, list):
-                raise ParserError("mineru_structured_output_invalid")
-            result, artifacts = self._map_result(
-                parse_input,
-                cache_directory,
-                content_list,
-                middle,
-                markdown,
-                allow_ocr,
-            )
+            if cached:
+                try:
+                    result, artifacts, content_list = self._read_output(parse_input, cache_directory, allow_ocr)
+                except (ParserError, OSError, ValueError):
+                    cached = False
+            if not cached:
+                cache_directory.parent.mkdir(parents=True, exist_ok=True)
+                with tempfile.TemporaryDirectory(prefix=".mineru-build-", dir=cache_directory.parent) as temporary:
+                    staging = Path(temporary) / "output"
+                    self.runner.run(parse_input, staging, allow_ocr)
+                    result, artifacts, content_list = self._read_output(parse_input, staging, allow_ocr)
+                    atomic_write_json(staging / "cache_manifest.json", {
+                        "cache_version": 1,
+                        "raw_content_hash": parse_input.snapshot.content_hash,
+                        "files": self._cache_hashes(staging),
+                    })
+                    # Keep the previous cache for diagnosis; only publish a fully
+                    # parsed and hashed generation. No source snapshots are changed.
+                    previous = cache_directory.with_name(f".{cache_directory.name}.previous-{uuid4().hex}")
+                    if cache_directory.exists():
+                        cache_directory.rename(previous)
+                    try:
+                        staging.rename(cache_directory)
+                    except OSError:
+                        if previous.exists():
+                            previous.rename(cache_directory)
+                        raise
         except ParserError:
             raise
         except Exception as exc:
@@ -507,8 +526,45 @@ class MinerUAdapter(PDFParserAdapter):
             ocr_used=allow_ocr,
         )
 
+    def _read_output(self, parse_input: ParseInput, directory: Path, allow_ocr: bool):
+        content_path = self._first_named(directory, ("content_list_v2.json", "content_list.json")) or self._first_suffix(directory, "_content_list.json")
+        middle_path = self._first_named(directory, ("middle.json", "layout.json")) or self._first_suffix(directory, "_middle.json")
+        markdown_path = self._first_named(directory, ("full.md",)) or self._first_suffix(directory, ".md")
+        content_list = self._load_json(content_path) if content_path else []
+        middle = self._load_json(middle_path) if middle_path else {}
+        markdown = markdown_path.read_text(encoding="utf-8") if markdown_path else ""
+        if not isinstance(content_list, list):
+            raise ParserError("mineru_structured_output_invalid")
+        result, artifacts = self._map_result(parse_input, directory, content_list, middle, markdown, allow_ocr)
+        return result, artifacts, content_list
+
+    @staticmethod
+    def _cache_hashes(directory: Path) -> dict[str, str]:
+        result = {}
+        for path in sorted(directory.rglob("*")):
+            if not path.is_file() or path.name == "cache_manifest.json":
+                continue
+            if not path.resolve().is_relative_to(directory.resolve()):
+                raise ParserError("mineru_cache_path_unsafe")
+            result[path.relative_to(directory).as_posix()] = sha256(path.read_bytes()).hexdigest()
+        return result
+
+    def _cache_valid(self, directory: Path, parse_input: ParseInput) -> bool:
+        try:
+            manifest = json.loads((directory / "cache_manifest.json").read_text(encoding="utf-8"))
+            return (
+                isinstance(manifest, dict)
+                and manifest.get("cache_version") == 1
+                and manifest.get("raw_content_hash") == parse_input.snapshot.content_hash
+                and bool(manifest.get("files"))
+                and manifest["files"] == self._cache_hashes(directory)
+                and self._has_output(directory)
+            )
+        except (OSError, ValueError, ParserError):
+            return False
+
     def _cache_directory(self, parse_input: ParseInput) -> Path:
-        digest = parse_input.snapshot.content_hash.removeprefix("sha256:")[:20]
+        digest = identity_hash({"raw": parse_input.snapshot.content_hash, "backend": self.cache_identity()})[:20]
         return self.cache_root / parse_input.snapshot.source_id / digest
 
     @classmethod
@@ -849,6 +905,7 @@ class LocalDoclingRuntime:
 
 class DoclingAdapter(PDFParserAdapter):
     parser_name = "docling"
+    adapter_version = "1.1.0"
 
     def __init__(self, runtime: DoclingRuntime | None = None) -> None:
         self.runtime = runtime or LocalDoclingRuntime()
@@ -860,6 +917,9 @@ class DoclingAdapter(PDFParserAdapter):
         except PackageNotFoundError:
             backend_version = "lazy"
         return f"{backend_version}+a{self.adapter_version}"
+
+    def cache_identity(self) -> dict[str, object]:
+        return {**super().cache_identity(), "runtime": component_identity(self.runtime)}
 
     def parse(
         self, parse_input: ParseInput, inspection: PDFInspection
@@ -1001,6 +1061,7 @@ class DoclingAdapter(PDFParserAdapter):
             title = title or parsed.title
         if not blocks:
             raise ParserError("docling_output_empty")
+        blocks = self._reading_order(blocks)
         return ParserResult(
             title=title,
             language="und",
@@ -1012,6 +1073,36 @@ class DoclingAdapter(PDFParserAdapter):
                 "ocr_used": allow_ocr,
             },
         )
+
+    @staticmethod
+    def _reading_order(blocks: list[DocumentBlock]) -> list[DocumentBlock]:
+        # Docling boxes default to BOTTOMLEFT; retain the original box for
+        # provenance while using a top-down coordinate only for ordering.
+        def position(block):
+            bbox = block.metadata.get("bbox")
+            if not isinstance(bbox, list) or len(bbox) != 4:
+                return (block.metadata.get("page_number", 1), float("inf"), 0)
+            left, top, right, bottom = bbox
+            y = min(top, bottom) if block.metadata.get("coord_origin") == "TOPLEFT" else -max(top, bottom)
+            return (block.metadata.get("page_number", 1), y, min(left, right))
+
+        ordered = sorted(blocks, key=position)
+        headings: dict[int, DocumentBlock] = {}
+        result = []
+        for index, block in enumerate(ordered):
+            metadata = dict(block.metadata)
+            positioned = isinstance(metadata.get("bbox"), list)
+            if block.block_type is BlockType.HEADING and positioned:
+                level = block.level or 1
+                headings = {key: value for key, value in headings.items() if key < level}
+            parent = headings[max(headings)].block_id if headings and positioned else None
+            if not positioned:
+                metadata["heading_assignment"] = "position_unavailable"
+            updated = block.model_copy(update={"order_index": index, "parent_block_id": parent, "metadata": metadata})
+            result.append(updated)
+            if block.block_type is BlockType.HEADING and positioned:
+                headings[block.level or 1] = updated
+        return result
 
     @classmethod
     def _append_docling_block(
@@ -1052,6 +1143,7 @@ class DoclingAdapter(PDFParserAdapter):
             metadata["page_number"] = max(1, page_number)
         bbox = first.get("bbox")
         if isinstance(bbox, dict):
+            metadata["coord_origin"] = str(bbox.get("coord_origin", "BOTTOMLEFT")).upper()
             values = [bbox.get(key) for key in ("l", "t", "r", "b")]
             if all(isinstance(value, (int, float)) for value in values):
                 metadata["bbox"] = values

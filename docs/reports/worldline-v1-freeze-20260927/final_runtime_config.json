@@ -1,9 +1,0 @@
-{
-  "launcher_pid": 38820,
-  "mode": "production_uvicorn",
-  "retrieval_mode": "hybrid",
-  "ready_index_manifest": "approved",
-  "manifest": "data/indexing/worldline/final-native-20260927/v4/index_build_manifest.json",
-  "checkpoint_backend": "postgres",
-  "observer_removed": true
-}

@@ -2,6 +2,7 @@
 from copy import deepcopy
 from hashlib import sha256
 from types import SimpleNamespace
+import json
 
 import pytest
 
@@ -14,6 +15,7 @@ from app.rag.knowledge.entity_linking.models import EntityRegistryDocument
 from app.rag.knowledge.entity_linking.registry import EntityRegistry
 from app.rag.query_understanding.models import IndexProfile
 from tests.test_worldline_influence_expansion import graph, plan, document
+from tests.test_query_registry_binding import bound_profile, copy_registry_snapshot, REGISTRY, SNAPSHOT_REGISTRY
 
 
 def fixture(*, scene=False, missing=False, ambiguous=False):
@@ -137,6 +139,52 @@ def test_projection_tamper_blocks_materializer_initialization(tmp_path):
         projection_path="projection.jsonl", projection_fingerprint="sha256:" + "0" * 64))
     with pytest.raises(ValueError, match="projection_hash_mismatch"):
         VerifiedEndpointMaterializer.from_binding(tmp_path, binding)
+
+
+@pytest.mark.parametrize("tampered", [False, True])
+@pytest.mark.parametrize("registry_directory", [REGISTRY, SNAPSHOT_REGISTRY])
+def test_materializer_verifies_registry_bytes_before_loading(bound_profile, monkeypatch, tampered, registry_directory):
+    root, selected = bound_profile
+    if registry_directory == SNAPSHOT_REGISTRY:
+        selected = copy_registry_snapshot(root)
+    projection = root / "projection.jsonl"
+    projection.write_text("", encoding="utf-8")
+    release_path = root / "release.json"
+    release_path.write_text(json.dumps({"source": {"entity_registry_files": [
+        {"path": path, "sha256": digest} for path, digest in selected.registry_file_hashes.items()
+    ]}}), encoding="utf-8")
+    manifest_path = root / "index_build_manifest.json"
+    manifest_path.write_text("{}", encoding="utf-8")
+    manifest = SimpleNamespace(
+        projection_path="projection.jsonl", projection_fingerprint="sha256:" + sha256(b"").hexdigest(),
+        source_path="knowledge.jsonl", source_release_manifest_path="release.json",
+        source_release_id=selected.source_release_id, collection_name=selected.collection_name,
+        source_release_manifest_fingerprint="sha256:" + sha256(release_path.read_bytes()).hexdigest(),
+        source_fingerprint="sha256:" + "a" * 64,
+    )
+    release = SimpleNamespace(
+        release_id=manifest.source_release_id,
+        manifest_fingerprint=manifest.source_release_manifest_fingerprint,
+        knowledge_fingerprint=manifest.source_fingerprint,
+    )
+    monkeypatch.setattr(
+        "app.agent.foundation.subgraphs.worldline.runtime_entity_binding.KnowledgeReleaseValidator",
+        lambda *args, **kwargs: SimpleNamespace(validate=lambda: release),
+    )
+    (root / "ready_index_approval.json").write_text(json.dumps({
+        "status": "approved", "manifest_sha256": "sha256:" + sha256(manifest_path.read_bytes()).hexdigest(),
+        "collection_name": manifest.collection_name, "source_release_id": manifest.source_release_id,
+        "projection_fingerprint": manifest.projection_fingerprint,
+    }), encoding="utf-8")
+    binding = SimpleNamespace(manifest=manifest, manifest_path=manifest_path, profile=selected)
+    if tampered:
+        target = root / registry_directory / "v2.yaml"
+        target.write_bytes(target.read_bytes() + b"\n# changed\n")
+        with pytest.raises(ValueError, match="registry_hash_mismatch"):
+            VerifiedEndpointMaterializer.from_binding(root, binding)
+    else:
+        materializer = VerifiedEndpointMaterializer.from_binding(root, binding)
+        assert materializer.registry.get("artist:jay_chou") is not None
 
 
 def test_conflicting_existing_identity_rejects_claim_atomically():

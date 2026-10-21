@@ -78,6 +78,8 @@ class MetadataEnrichmentPipeline:
                     inherited_metadata=context.inherited_metadata,
                     parent_primary_subject=context.parent_primary_subject,
                     enrichment_version=self.config.enrichment_version,
+                    llm_enabled=self.config.llm_enabled,
+                    rule_fingerprint=self.rule_enricher.fingerprint(),
                 ),
             )
             if prior is not None and self._can_skip(prior, provenance):
@@ -229,6 +231,8 @@ class MetadataEnrichmentPipeline:
                 inherited_metadata=dict(base.metadata),
                 parent_primary_subject=None,
                 enrichment_version=self.config.enrichment_version,
+                llm_enabled=self.config.llm_enabled,
+                rule_fingerprint=self.rule_enricher.fingerprint(),
             ),
         )
 

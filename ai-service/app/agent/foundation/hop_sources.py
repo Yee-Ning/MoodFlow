@@ -16,7 +16,7 @@ from app.agent.handoff.continuity import ProgressProjector
 from app.agent.handoff.hop_context import CurrentHopSnapshot, active_hop
 from app.agent.handoff.registry import CAPABILITY_OWNERS
 from app.llm.budget_strategy import prepare_sources
-from app.llm.runtime import active_ledger, active_manifest
+from app.llm.runtime import active_ledger, active_manifest, replace_context_pack
 
 
 @dataclass(frozen=True)
@@ -319,6 +319,8 @@ def build_hop_pack(invocation: AgentPackInvocation, *, builder=None, registry=No
         audit = projection.agent_context.model_copy(update={"envelope": projection.agent_context.envelope.model_copy(
             update={"selected_fields": fields})})
         manifest = projection.model_copy(update={"agent_context": audit}).model_dump(mode="json")
+        previous = pack
         pack = ContextPack.model_validate({**pack.__dict__, "manifest": manifest})
         active_manifest.set(pack.manifest)
+        replace_context_pack(previous, pack)
     return HopPackResult(pack, prepared.source_status)

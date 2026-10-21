@@ -40,6 +40,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--registry", type=Path, default=DEFAULT_ENTITY_REGISTRY_PATH)
     parser.add_argument("--claim-sample-size", type=int, default=100)
     parser.add_argument("--entity-sample-size", type=int, default=100)
+    parser.add_argument("--include-manual-review", action="store_true")
     return parser.parse_args(argv)
 
 
@@ -66,7 +67,11 @@ def main(
             claim_sample_size=args.claim_sample_size,
             entity_sample_size=args.entity_sample_size,
         )
-        outcome = builder.prepare_review() if args.prepare_review else builder.finalize()
+        outcome = (
+            builder.prepare_review(include_manual_review=args.include_manual_review)
+            if args.prepare_review
+            else builder.finalize(include_manual_review=args.include_manual_review)
+        )
         payload = {
             "status": outcome.status,
             "release_id": outcome.release_id,

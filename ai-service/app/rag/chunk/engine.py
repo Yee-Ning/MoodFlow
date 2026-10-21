@@ -10,7 +10,8 @@ from app.rag.clean.models import CleanedDocument
 from app.rag.parse_normalize.models import NormalizedDocument
 
 from .config import ChunkConfig
-from .context import retrieval_content
+from .context import breadcrumb, retrieval_content
+from .internal import ParentDraft
 from .ids import stable_chunk_id
 from .markdown_fallback import MarkdownFallbackSectioner
 from .models import (
@@ -18,6 +19,7 @@ from .models import (
     ChunkedDocument,
     ParentChunk,
     TableHeaderState,
+    ChunkType,
 )
 from .narrative import NarrativeChunker
 from .projection import CleanBlockProjector
@@ -70,6 +72,20 @@ class ChunkEngine:
                     base_metadata=base_metadata,
                 )
             )
+
+        for record in routes.records:
+            drafts.append(ParentDraft(
+                order_key=(record.order_index, 0), chunk_type=ChunkType.STRUCTURED_RECORD,
+                section_path=record.section_path,
+                breadcrumb=breadcrumb(cleaned.title, record.section_path),
+                content=self.config.content_joiner.join(part.content for part in record.parts),
+                metadata={**base_metadata, "record_id": record.record_id,
+                          "source_block_ids": [part.block_id for part in record.parts],
+                          "source_block_metadata": [
+                              {"block_id": part.block_id, "metadata": part.metadata}
+                              for part in record.parts
+                          ], "record_policy": "parent_only_reject_oversize"},
+            ))
 
         table_by_id = {table.table_id: table for table in normalized.tables}
         block_by_id = {block.block_id: block for block in normalized.blocks}
@@ -157,6 +173,7 @@ class ChunkEngine:
                             draft.breadcrumb,
                             child_draft.content,
                             schema=schema,
+                            description=child_draft.retrieval_description,
                         ),
                         table_data=child_draft.table_data,
                     )

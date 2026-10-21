@@ -148,15 +148,23 @@ def _serialize(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), default=str)
 
 
+def _tool_list_projection(total: int, shown: int) -> dict[str, Any]:
+    """Cardinality of the returned list, not an inferred upstream catalog total."""
+    return {"total": total, "shown": shown, "truncated": shown < total}
+
+
 def _project_tool_result(raw: Any) -> Any:
-    """Keep actionable IDs/status and bounded result fields, including full play_song tracks."""
+    """Keep audited tool facts and make bounded list previews explicit."""
     if isinstance(raw, str):
         try:
             raw = json.loads(raw)
         except ValueError:
             return raw[:4000]
     if isinstance(raw, list):
-        return [_project_tool_result(value) for value in raw[:10]]
+        rows = [_project_tool_result(value) for value in raw[:10]]
+        if len(raw) > len(rows):
+            return {"items": rows, "_projection": {"items": _tool_list_projection(len(raw), len(rows))}}
+        return rows
     if not isinstance(raw, dict):
         return raw
     keys = {
@@ -165,8 +173,29 @@ def _project_tool_result(raw: Any) -> Any:
         "entities", "entity_type", "type", "tracks", "lyrics", "original_lyrics",
         "translated_lyrics", "song", "client_action", "liked", "privacy",
         "total", "count", "result", "data", "id", "title", "keyword", "limit", "success",
+        # Public facts from the music, client-action and read-only context tools.
+        "song_ids", "track_count", "creator", "creator_id", "special_type", "subscribed",
+        "query", "source", "metadata", "artist_ids", "aliases", "album_size", "music_size",
+        "publish_time", "company", "size", "operation_id", "write_state",
+        "arguments", "volume", "muted", "seconds", "offset_seconds", "mode", "index",
+        "reason", "target_source", "lyrics_status", "candidates",
+        "run_id", "stop_reason", "blocked_at", "tasks", "position", "task_id", "route_key",
+        "steps", "pending_client_actions",
     }
-    return {key: _project_tool_result(value) for key, value in raw.items() if key in keys}
+    projected = {}
+    lists = {}
+    for key, value in raw.items():
+        if key not in keys:
+            continue
+        if isinstance(value, list):
+            projected[key] = [_project_tool_result(row) for row in value[:10]]
+            if len(value) > len(projected[key]):
+                lists[key] = _tool_list_projection(len(value), len(projected[key]))
+        else:
+            projected[key] = _project_tool_result(value)
+    if lists:
+        projected["_projection"] = lists
+    return projected
 
 
 class ContextCollector:
@@ -226,9 +255,17 @@ class ContextCollector:
                     metadata={"role": "user" if isinstance(message, HumanMessage) else "assistant",
                               "tool_calls": tool_calls, "text": str(message.text)})
             elif isinstance(message, ToolMessage):
-                projected = _project_tool_result(message.content)
+                popularity = message.name == "get_song_popularity_tool" and message.status != "error"
+                if popularity:
+                    from app.schemas.popularity import SongPopularityResult
+                    projected = SongPopularityResult.model_validate_json(message.content).model_dump(mode="json")
+                else:
+                    projected = _project_tool_result(message.content)
                 add(f"tool:{message.tool_call_id}", "tool_result", projected,
                     required=message.tool_call_id in paired_call_ids,
+                    # These parallel partitions form one typed snapshot; generic
+                    # independent list trimming would invalidate count/ID pairing.
+                    compressible=not popularity,
                     metadata={"tool_call_id": message.tool_call_id if message.tool_call_id in paired_call_ids else None,
                                              "name": message.name or "",
                                              "token_before_projection": self.counter.count(_serialize(message.content))})
@@ -366,16 +403,33 @@ def _compress_tool_json(text: str, limit: int, counter: TokenCounter) -> str:
         value = json.loads(text)
     except ValueError:
         return _truncate(text, limit, counter)
+    if isinstance(value, list):
+        # A root list needs a container for model-visible cardinality too.
+        value = {"items": value}
     if not isinstance(value, dict):
         return _truncate(text, limit, counter)
 
     def render() -> str:
         return _serialize(value)
 
-    for field in ("songs", "playlists"):
-        rows = value.get(field)
-        while isinstance(rows, list) and len(rows) > 1 and counter.count(render()) > limit:
-            rows.pop()
+    def trim_lists(parent: dict) -> None:
+        # Keep the original songs/playlists priority, then cover the other
+        # audited lists (IDs, entities, action tracks and nested task facts).
+        fields = ["songs", "playlists", *(key for key in parent if key not in {"songs", "playlists", "_projection"})]
+        for field in fields:
+            rows = parent.get(field)
+            if isinstance(rows, list):
+                total = parent.get("_projection", {}).get(field, {}).get("total", len(rows))
+                while len(rows) > 1 and counter.count(render()) > limit:
+                    rows.pop()
+                    parent.setdefault("_projection", {})[field] = _tool_list_projection(total, len(rows))
+                for row in rows:
+                    if isinstance(row, dict):
+                        trim_lists(row)
+            elif isinstance(rows, dict):
+                trim_lists(rows)
+
+    trim_lists(value)
     for field in ("translated_lyrics", "original_lyrics", "lyrics", "message"):
         current = value.get(field)
         while isinstance(current, str) and len(current) > 32 and counter.count(render()) > limit:
@@ -525,7 +579,8 @@ class ContextSelector:
     @cached_derivation_stage
     def build(self, items: list[ContextItem], policy: ContextPolicy,
               trace_context: dict[str, str] | None = None,
-              *, intent: dict[str, Any] | None = None, source_audit=None) -> ContextPack:
+              *, intent: dict[str, Any] | None = None, source_audit=None,
+              request_tools: list | None = None) -> ContextPack:
         if policy.input_budget <= 0:
             raise ValueError("context input budget must be positive")
         trace: list[ContextTraceEntry] = []
@@ -542,6 +597,9 @@ class ContextSelector:
 
         def total(values: list[ContextItem]) -> int:
             assembled = self.assembler.assemble(values, intent=intent)
+            if request_tools is not None:
+                from app.llm.runtime import estimate_tokens
+                return estimate_tokens({"messages": assembled, "tools": request_tools})
             return sum(
                 self.counter.count(str(message.content))
                 + (self.counter.count(_serialize(message.tool_calls)) if isinstance(message, AIMessage) and message.tool_calls else 0)

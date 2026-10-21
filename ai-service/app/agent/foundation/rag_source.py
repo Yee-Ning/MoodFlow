@@ -22,6 +22,9 @@ from app.rag.retrieval.config import load_retrieval_config
 from app.rag.retrieval.encoder import QwenQueryEncoder
 from app.rag.retrieval.service import HybridRetrievalService
 from app.rag.retrieval.models import RetrievalStatus
+from app.rag.chunk.token_counter import CallableTokenCounter, UnicodeHeuristicTokenCounter
+from app.rag.context_packing.config import load_context_packing_config
+from app.rag.context_packing.service import _truncate_tokens
 
 from .rag_usage import AccountedQueryEncoder, AccountedRerankScorer, RetrievalUsage
 
@@ -59,6 +62,30 @@ def literal_search_plan(query, profile, limit):
         metadata_filter=MetadataFilter(), strategy=RetrievalStrategy.HYBRID,
         candidate_top_k=limit, final_top_k=min(limit, load_rerank_config().top_k),
         needs_rerank=True, analysis_version="v1", prompt_version="v1", index_profile=profile)
+
+
+def bounded_parent_context(candidate, make_item):
+    """Preserve Child evidence and breadcrumbs before spending the Parent budget."""
+    compression = load_context_packing_config().compression
+    counter = UnicodeHeuristicTokenCounter()
+    evidence = _truncate_tokens(candidate.primary_child_content,
+                               compression.max_evidence_tokens, counter)
+    breadcrumb = "\n\n".join(dict.fromkeys(value.strip() for value in (
+        candidate.parent_context.breadcrumb, candidate.primary_child_breadcrumb,
+    ) if value.strip()))
+    # Account for source_item's JSON quoting/escaping inside the same item limit.
+    encoded_counter = CallableTokenCounter(lambda text: make_item(text).token_count,
+                                           name="rag_source_serialized")
+    if breadcrumb:
+        prefix_counter = CallableTokenCounter(
+            lambda text: encoded_counter.count(text + "\n\n" + evidence),
+            name="rag_source_breadcrumb_and_evidence",
+        )
+        breadcrumb = _truncate_tokens(breadcrumb, compression.max_item_tokens, prefix_counter)
+    required = "\n\n".join(value for value in (breadcrumb, evidence) if value)
+    content = "\n\n".join(dict.fromkeys((required, candidate.parent_context.content.strip())))
+    return _truncate_tokens(content, compression.max_item_tokens, encoded_counter,
+                            required_prefix=required)
 
 
 class RagSource:
@@ -146,16 +173,19 @@ class RagSource:
                 "source_name": candidate.source_name,
                 "source_url": str(candidate.source_url) if candidate.source_url else None,
                 "title": candidate.title, "chunk_id": candidate.primary_child_id,
+                "parent_id": candidate.parent_id,
+                "breadcrumb": candidate.parent_context.breadcrumb,
+                "child_breadcrumb": candidate.primary_child_breadcrumb,
                 "fusion_score": candidate.fusion_score, "rerank_score": score,
                 "score": score if score is not None else candidate.fusion_score,
                 "score_basis": "rerank" if score is not None else "rrf_fallback",
                 "retrieval_rank": ranked.retrieval_rank, "rerank_rank": ranked.rerank_rank}
-            # Child content only: Parent expansion is not a second hidden L1 input.
-            # Keep the evidence identity for legacy dedup, but namespace item
-            # IDs so trace/manifest rows cannot alias the rag_pack side channel.
-            item = source_item("evidence:rag:" + candidate.parent_id, "rag_evidence",
-                candidate.primary_child_content, source=self.name, intents=["worldline"],
-                metadata=metadata, references=[candidate.doc_id, candidate.source_id])
+            # Parent context uses this same visible, budgeted L1 item.
+            def make_item(content):
+                return source_item("evidence:rag:" + candidate.parent_id, "rag_evidence",
+                    content, source=self.name, intents=["worldline"],
+                    metadata=metadata, references=[candidate.doc_id, candidate.source_id])
+            item = make_item(bounded_parent_context(candidate, make_item))
             items.append(item.model_copy(update={"relevance": score if score is not None
                                                 else candidate.fusion_score / (1 + candidate.fusion_score)}))
         return items

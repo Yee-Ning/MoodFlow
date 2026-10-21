@@ -11,7 +11,7 @@ from app.agent.foundation.routing import (
     RoutingContext,
 )
 
-from .router_v4 import Clause, _safety_question, split_clauses
+from .router_v4 import Clause, _NEGATION_PREFIX, _safety_question, split_clauses
 
 _ACTION_VERBS = re.compile(
     r"(?:搜索|查找|搜|播放|放|暂停|恢复|静音|调低|调高|调小|调大|"
@@ -21,7 +21,7 @@ _COMPACT_BOUNDARY = re.compile(
     r"(?<=》)(?=(?:播放|打开|收藏|查看|分析|解释))|"
     r"(?<=区别)(?=(?:查看|搜索|播放|打开|收藏|探索))"
 )
-_NEGATIVE_PREFIX = re.compile(r"^(?:不要|不用|无需|别|不必|请勿)")
+_NEGATIVE_PREFIX = re.compile(rf"^{_NEGATION_PREFIX}")
 _DEPENDENCY_REFERENCE = re.compile(r"(?:它|其|搜索到的|刚刚|播放的版本|这首|这个结果|选一首)")
 _UNSPECIFIED_WORLDLINE_ROOT = re.compile(
     r"(?:其他|某位|某个|一些|一位|这个|那个)(?:艺人|歌手|乐队|专辑|歌曲)"

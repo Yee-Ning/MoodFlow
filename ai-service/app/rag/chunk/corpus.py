@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from pydantic import ValidationError
 
 from app.rag.clean.models import CleanedDocument
 from app.rag.parse_normalize.models import NormalizedDocument
+from app.rag.parse_normalize.review import normalized_review_reasons
 
 
 class ChunkCorpusError(ValueError):
@@ -39,8 +41,10 @@ class ChunkCorpusReader:
             if manifest_path is not None
             else self.cleaned_root / "cleaned_corpus_manifest.jsonl"
         )
+        self.manual_review: list[dict[str, object]] = []
 
-    def load_all(self) -> list[ChunkSourceDocument]:
+    def load_all(self, *, include_manual_review: bool = False) -> list[ChunkSourceDocument]:
+        self.manual_review = []
         try:
             lines = self.manifest_path.read_text(encoding="utf-8").splitlines()
         except OSError as exc:
@@ -60,13 +64,21 @@ class ChunkCorpusReader:
                     raise ChunkCorpusError(
                         f"cleaned_path_outside_selected_root:{line_number}"
                     )
-                cleaned = CleanedDocument.model_validate_json(
-                    cleaned_path.read_text(encoding="utf-8")
-                )
+                content = cleaned_path.read_bytes()
+                if row.get("cleaned_sha256") != "sha256:" + hashlib.sha256(content).hexdigest():
+                    raise ChunkCorpusError(f"cleaned_manifest_hash_mismatch_or_missing:{line_number}")
+                cleaned = CleanedDocument.model_validate_json(content)
+                if row.get("document_id") != cleaned.document_id or row.get("source_id") != cleaned.source_id:
+                    raise ChunkCorpusError(f"cleaned_manifest_identity_mismatch:{line_number}")
                 normalized_path = self._project_path(cleaned.normalized_path)
                 normalized = NormalizedDocument.model_validate_json(
                     normalized_path.read_text(encoding="utf-8")
                 )
+                reasons = normalized_review_reasons(normalized, normalized_path)
+                if cleaned.metadata.get("parse_status") == "manual_review" and "parse_manual_review" not in reasons:
+                    reasons.append("parse_manual_review")
+                if cleaned.needs_review:
+                    reasons.append("clean_needs_review")
             except ChunkCorpusError:
                 raise
             except (OSError, ValidationError, ValueError, json.JSONDecodeError) as exc:
@@ -83,6 +95,10 @@ class ChunkCorpusReader:
                 )
             seen_documents.add(cleaned.document_id)
             seen_sources.add(cleaned.source_id)
+            if reasons:
+                self.manual_review.append({"document_id": cleaned.document_id, "source_id": cleaned.source_id, "reasons": reasons, "disposition": "included_by_flag" if include_manual_review else "quarantined"})
+                if not include_manual_review:
+                    continue
             sources.append(
                 ChunkSourceDocument(
                     cleaned=cleaned,

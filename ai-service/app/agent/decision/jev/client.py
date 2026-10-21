@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from time import perf_counter
 from typing import Any, Mapping, Protocol
 
-from typesafe_sdk import AsyncTypeSafeClient, Choice, Noul, RetryPolicy, Score
+from typesafe_sdk import AsyncTypeSafeClient, Choice, Noul, RetryPolicy, Score, TypeSafeAPIError
 
 from app.config.settings import Settings, get_settings
 from app.llm.runtime import RuntimeLimitError, accounted_call
@@ -109,6 +109,25 @@ def _parse_answer(raw: Any, question: Question) -> DecisionAnswer:
     )
 
 
+def _upstream_error(exc: Exception, api_key: str) -> tuple[int | None, str, str]:
+    """Log only bounded, redacted error fields, never the full SDK exception/body."""
+    if not isinstance(exc, TypeSafeAPIError):
+        return None, "", ""
+    detail = exc.body.get("detail") if isinstance(exc.body, dict) else None
+    if not isinstance(detail, dict):
+        return exc.status, "", ""
+
+    def field(name: str) -> str:
+        value = detail.get(name)
+        if not isinstance(value, str):
+            return ""
+        # Redact before truncation so a truncated credential cannot leak.
+        safe = _safe_state(value, api_key.strip())
+        return " ".join(safe.split())[:256]
+
+    return exc.status, field("error_type"), field("message")
+
+
 class JevClient:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
@@ -136,7 +155,6 @@ class JevClient:
                         state=safe,
                         questions=questions,
                         model=self.settings.jev_model,
-                        extra_body={"max_tokens": maximum},
                     ),
                     {"state": safe, "questions": dict(questions)},
                     output_tokens=maximum,
@@ -161,5 +179,9 @@ class JevClient:
             raise
         except Exception as exc:
             # SDK/HTTP errors can include request details. Never log or relay their text.
-            logger.warning("jev.request_failed error_type=%s", type(exc).__name__)
+            status, error_type, message = _upstream_error(exc, key.get_secret_value())
+            logger.warning(
+                "jev.request_failed error_type=%s http_status=%s upstream_error_type=%s upstream_message=%s",
+                type(exc).__name__, status, error_type, message,
+            )
             raise JevDecisionError(type(exc).__name__) from None

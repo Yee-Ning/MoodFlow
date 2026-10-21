@@ -21,6 +21,7 @@ from .entity_linking.registry import EntityRegistry
 from .models import KnowledgeEnrichedChunk
 from .qa import KnowledgeQASampler, sha256_file
 from .report import KnowledgeQualityReporter
+from .release_review import select_release_documents
 from .validator import KnowledgeValidator
 from .writer import KnowledgeDatasetWriter
 
@@ -76,13 +77,32 @@ class KnowledgeReleaseBuilder:
             entity_sample_size=entity_sample_size,
         )
 
-    def prepare_review(self) -> KnowledgeReleaseOutcome:
-        chunks, report = self._validate_source()
+    def prepare_review(
+        self, *, include_manual_review: bool = False
+    ) -> KnowledgeReleaseOutcome:
+        chunks, report = self._validate_source(
+            include_manual_review=include_manual_review
+        )
+        if not chunks:
+            return KnowledgeReleaseOutcome(
+                status="quarantined",
+                release_id=None,
+                output_root=None,
+                review_root=self.review_root,
+                summary={**report["manual_review"], "pre_embedding_ready": False},
+            )
         claim_path, entity_path, manifest_path, manifest = self.sampler.write(
             chunks, self.review_root
         )
+        manifest["release_selection_sha256"] = report["release_selection_sha256"]
+        atomic_write_json(manifest_path, manifest)
         summary = {
-            "pre_embedding_ready": report["quality_gates"]["pre_embedding_ready"],
+            **report["manual_review"],
+            "pre_embedding_ready": (
+                report["quality_gates"]["pre_embedding_ready"]
+                and report["all_claims_supported"]
+            ),
+            "all_claims_supported": report["all_claims_supported"],
             "claim_sample_count": manifest["claim_sample_count"],
             "entity_link_sample_count": manifest["entity_link_sample_count"],
             "claim_sample_path": self._relative(claim_path),
@@ -100,9 +120,15 @@ class KnowledgeReleaseBuilder:
             summary=summary,
         )
 
-    def finalize(self) -> KnowledgeReleaseOutcome:
-        chunks, report = self._validate_source()
-        sampling_manifest, attestation = self._validate_attestation(chunks)
+    def finalize(
+        self, *, include_manual_review: bool = False
+    ) -> KnowledgeReleaseOutcome:
+        chunks, report = self._validate_source(
+            include_manual_review=include_manual_review
+        )
+        if not chunks:
+            raise KnowledgeReleaseError("knowledge_release_no_eligible_documents")
+        sampling_manifest, attestation = self._validate_attestation(chunks, report)
         self.output_root.parent.mkdir(parents=True, exist_ok=True)
         stage: Path | None = Path(
             tempfile.mkdtemp(
@@ -145,7 +171,9 @@ class KnowledgeReleaseBuilder:
                 output_root=self.output_root,
                 review_root=self.review_root,
                 summary={
-                    "pre_embedding_release_ready": True,
+                    **report["manual_review"],
+                    "all_claims_supported": report["all_claims_supported"],
+                    "pre_embedding_release_ready": report["all_claims_supported"],
                     "chunk_count": report["chunk_count"],
                     "claim_count": report["claims"]["claim_count"],
                     "linked_entities": report["entity_linking"]["linked_occurrences"],
@@ -163,7 +191,7 @@ class KnowledgeReleaseBuilder:
                 shutil.rmtree(stage)
 
     def _validate_source(
-        self,
+        self, *, include_manual_review: bool = False,
     ) -> tuple[list[KnowledgeEnrichedChunk], dict[str, object]]:
         for name in self.REQUIRED_SOURCE_FILES:
             if not (self.source_root / name).is_file():
@@ -187,8 +215,6 @@ class KnowledgeReleaseBuilder:
         registry = EntityRegistry.load(self.registry_path)
         if registry.version != self.config.registry_version:
             raise KnowledgeReleaseError("knowledge_release_registry_version_mismatch")
-        if any(not chunk.enrichment.quality.index_ready for chunk in chunks):
-            raise KnowledgeReleaseError("knowledge_release_enrichment_not_ready")
         expected_versions = {
             "entity_linking_version": self.config.entity_linking_version,
             "claim_extraction_version": self.config.claim_extraction_version,
@@ -215,20 +241,41 @@ class KnowledgeReleaseBuilder:
         )
         if persisted_report != report:
             raise KnowledgeReleaseError("knowledge_release_quality_report_stale")
-        gates = report["quality_gates"]
-        if not gates["pre_embedding_ready"]:
-            raise KnowledgeReleaseError("knowledge_release_quality_gate_failed")
-        verification = report["claims"]["verification_status"]
-        if any(
+        chunks, review = select_release_documents(
+            chunks, include_manual_review=include_manual_review
+        )
+        report = reporter.build(chunks)
+        report["manual_review"] = review
+        report["all_claims_supported"] = not any(
             count
-            for status, count in verification.items()
+            for status, count in report["claims"]["verification_status"].items()
             if status != "SUPPORTED"
-        ):
-            raise KnowledgeReleaseError("knowledge_release_claim_verification_incomplete")
+        )
+        # Bind the full source and this invocation's admission policy, even when
+        # a small QA sample happens to be identical for two different selections.
+        selection = {
+            "source_knowledge_sha256": sha256_file(writer.chunks_path),
+            "selected_chunk_ids": [chunk.chunk_id for chunk in chunks],
+            "manual_review": review,
+        }
+        report["release_selection_sha256"] = "sha256:" + hashlib.sha256(
+            json.dumps(
+                selection, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+        ).hexdigest()
+        atomic_write_jsonl(
+            self.review_root / "manual_review_documents.jsonl",
+            review["manual_review_documents"],
+        )
+        atomic_write_json(self.review_root / "release_selection_report.json", report)
+        if any(not chunk.enrichment.quality.index_ready for chunk in chunks):
+            raise KnowledgeReleaseError("knowledge_release_enrichment_not_ready")
+        if chunks and not report["quality_gates"]["pre_embedding_ready"]:
+            raise KnowledgeReleaseError("knowledge_release_quality_gate_failed")
         return chunks, report
 
     def _validate_attestation(
-        self, chunks: list[KnowledgeEnrichedChunk]
+        self, chunks: list[KnowledgeEnrichedChunk], report: dict[str, object]
     ) -> tuple[dict[str, object], dict[str, object]]:
         claim_path = self.review_root / "claim_review_sample.jsonl"
         entity_path = self.review_root / "entity_link_review_sample.jsonl"
@@ -246,6 +293,11 @@ class KnowledgeReleaseBuilder:
         if self._load_jsonl(entity_path) != expected_entities:
             raise KnowledgeReleaseError("knowledge_release_entity_sample_stale")
         manifest = self._load_json(manifest_path)
+        if (
+            manifest.get("release_selection_sha256")
+            != report["release_selection_sha256"]
+        ):
+            raise KnowledgeReleaseError("knowledge_release_review_selection_stale")
         if manifest.get("claim_sample_sha256") != sha256_file(claim_path):
             raise KnowledgeReleaseError("knowledge_release_claim_sample_hash_mismatch")
         if manifest.get("entity_link_sample_sha256") != sha256_file(entity_path):
@@ -259,6 +311,7 @@ class KnowledgeReleaseBuilder:
             "claim_reviewed_count": manifest["claim_sample_count"],
             "entity_link_reviewed_count": manifest["entity_link_sample_count"],
             "generation_mode": "rule_only",
+            "release_selection_sha256": manifest["release_selection_sha256"],
         }
         if any(attestation.get(key) != value for key, value in required.items()):
             raise KnowledgeReleaseError("knowledge_release_attestation_invalid")
@@ -276,13 +329,13 @@ class KnowledgeReleaseBuilder:
         report: dict[str, object],
     ) -> None:
         stage.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(
-            self.source_root / "knowledge_enriched_chunks.jsonl",
+        atomic_write_jsonl(
             stage / "knowledge_enriched_chunks.jsonl",
+            (chunk.model_dump(mode="json") for chunk in chunks),
         )
-        source_manifest = self._load_jsonl(
-            self.source_root / "knowledge_corpus_manifest.jsonl"
-        )
+        source_manifest = KnowledgeDatasetWriter(
+            self.project_root, self.source_root
+        ).manifest_rows(chunks)
         released_path = self._relative(
             self.output_root / "knowledge_enriched_chunks.jsonl"
         )
@@ -291,8 +344,15 @@ class KnowledgeReleaseBuilder:
         atomic_write_jsonl(stage / "knowledge_corpus_manifest.jsonl", source_manifest)
         reporter = KnowledgeQualityReporter(self.project_root, stage)
         reporter.write(chunks)
-        if reporter.build(chunks) != report:
+        if any(
+            report.get(key) != value for key, value in reporter.build(chunks).items()
+        ):
             raise KnowledgeReleaseError("knowledge_release_report_not_reproducible")
+        atomic_write_json(reporter.report_path, report)
+        atomic_write_jsonl(
+            stage / "manual_review_documents.jsonl",
+            report["manual_review"]["manual_review_documents"],
+        )
 
     def _artifact_hashes(self, stage: Path) -> dict[str, str]:
         return {
@@ -315,8 +375,12 @@ class KnowledgeReleaseBuilder:
             "dataset_version": self.output_root.name,
             "release_id": release_id,
             "immutability_policy": "create_once_or_verify_identical",
+            "manual_review": report["manual_review"],
             "source": {
                 "working_dataset_root": self._relative(self.source_root),
+                "working_knowledge_sha256": sha256_file(
+                    self.source_root / "knowledge_enriched_chunks.jsonl"
+                ),
                 "enriched_chunks_path": self._relative(self.enriched_path),
                 "enriched_chunks_sha256": sha256_file(self.enriched_path),
                 "knowledge_config_path": self._relative(self.config_path),
@@ -340,12 +404,12 @@ class KnowledgeReleaseBuilder:
                     "linked_occurrences"
                 ],
                 "claim_count": report["claims"]["claim_count"],
-                "all_claims_supported": True,
+                "all_claims_supported": report["all_claims_supported"],
                 "pipeline_quality_gates": report["quality_gates"],
                 "qa_sampling": sampling_manifest,
                 "qa_attestation": attestation,
                 "generation_mode": attestation["generation_mode"],
-                "pre_embedding_release_ready": True,
+                "pre_embedding_release_ready": report["all_claims_supported"],
             },
             "excluded_stages": [
                 "embedding",

@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 
 from app.rag.parse_normalize.base import BaseParser, ParserError
+from app.rag.parse_normalize.cache_identity import component_identity, identity_hash
 from app.rag.parse_normalize.models import (
     DetectedFileType,
     ParseInput,
@@ -174,7 +175,13 @@ class PdfCascadeParser(BaseParser):
         return True
 
     def fingerprint(self, parser_mode: str = "auto") -> str:
-        return f"{self.parser_name}:{self.parser_version}:{parser_mode}"
+        identity = {
+            "backends": {key.value: adapter.cache_identity() for key, adapter in self.adapters.items()},
+            "inspector": component_identity(self.inspector),
+            "quality": component_identity(self.quality_evaluator),
+            "router": component_identity(self.router),
+        }
+        return f"{self.parser_name}:{self.parser_version}:{parser_mode}:{identity_hash(identity)}"
 
     def _attempt(
         self,

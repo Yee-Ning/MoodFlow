@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from hashlib import sha256
 from dataclasses import dataclass
 
 from ..base import BaseParser, ParserError
@@ -104,7 +105,7 @@ class _BlockCollector:
 
 class JsonParser(BaseParser):
     parser_name = "json"
-    parser_version = "1.0.0"
+    parser_version = "1.1.0"
     supported_file_types = frozenset({DetectedFileType.JSON})
 
     def __init__(self, config: JsonParserConfig | None = None) -> None:
@@ -117,10 +118,76 @@ class JsonParser(BaseParser):
             raise ParserError("json_parse_failed") from exc
 
         if self._is_wikidata(payload):
-            return self._parse_wikidata(payload, parse_input.snapshot.source_id)
-        if self._is_musicbrainz(payload):
-            return self._parse_musicbrainz(payload, parse_input.snapshot.source_id)
-        return self._parse_generic(payload, parse_input.snapshot.source_id)
+            result = self._parse_wikidata(payload, parse_input.snapshot.source_id)
+        elif self._is_musicbrainz(payload):
+            result = self._parse_musicbrainz(payload, parse_input.snapshot.source_id)
+        else:
+            result = self._parse_generic(payload, parse_input.snapshot.source_id)
+        return self._atomic_records(payload, parse_input.snapshot.source_id, result)
+
+    def _atomic_records(
+        self, payload: JsonValue, source_id: str, result: ParserResult
+    ) -> ParserResult:
+        # Explicit identities only: never infer an entity from prose or headings.
+        records: list[tuple[str, dict[str, JsonValue]]] = []
+        if self._is_wikidata(payload):
+            records = [
+                (f"/entities/{key}", value)
+                for key, value in payload["entities"].items()
+                if isinstance(value, dict)
+            ]
+        elif self._is_musicbrainz(payload) or self._is_entity_record(payload):
+            records = [("/", payload)]
+        elif isinstance(payload, list) and payload and all(
+            self._is_entity_record(value) for value in payload
+        ):
+            records = [(f"/{index}", value) for index, value in enumerate(payload)]
+        if not records:
+            return result
+        if len(records) > self.config.max_items:
+            raise ParserError("structured_record_item_limit_exceeded")
+        blocks = []
+        output_chars = 0
+        for pointer, record in records:
+            # Preserve every field, including fields absent from profile renderers.
+            # Generic non-record JSON retains the existing bounded renderer.
+            content = json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            title = self._first_string(record, "name", "title", "id")
+            if not title:
+                title, _ = self._localized_value(record.get("labels"))
+            title = title or pointer.rsplit("/", 1)[-1] or "JSON Record"
+            output_chars += len(content) + len(title)
+            if output_chars > self.config.max_output_chars:
+                raise ParserError("structured_record_output_limit_exceeded")
+            record_id = "record:" + sha256(f"{source_id}:{pointer}".encode()).hexdigest()[:24]
+            metadata = {"record_id": record_id, "record_pointer": pointer,
+                        "record_profile": result.metadata["json_profile"]}
+            heading_id = f"{source_id}-b{len(blocks):06d}"
+            blocks.append(DocumentBlock(
+                block_id=heading_id, block_type=BlockType.HEADING, text=title,
+                level=1, order_index=len(blocks), metadata=metadata,
+            ))
+            blocks.append(DocumentBlock(
+                block_id=f"{source_id}-b{len(blocks):06d}", block_type=BlockType.CODE,
+                text=content, order_index=len(blocks), parent_block_id=heading_id,
+                metadata={**metadata, "language": "json"},
+            ))
+        return result.model_copy(update={
+            "blocks": blocks,
+            "metadata": {**result.metadata, "truncated": False,
+                         "structured_record_count": len(records)},
+        })
+
+    @staticmethod
+    def _is_entity_record(value: JsonValue) -> bool:
+        return (
+            isinstance(value, dict)
+            and isinstance(value.get("id"), (str, int))
+            and not isinstance(value.get("id"), bool)
+            and bool(str(value["id"]).strip())
+            and any(isinstance(value.get(key), str) and value[key].strip()
+                    for key in ("name", "title", "type"))
+        )
 
     @staticmethod
     def _is_wikidata(payload: JsonValue) -> bool:

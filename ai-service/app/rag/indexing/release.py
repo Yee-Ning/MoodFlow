@@ -70,6 +70,8 @@ class KnowledgeReleaseValidator:
         knowledge_fingerprint = fingerprints.get(self.knowledge_path.name)
         if knowledge_fingerprint is None:
             raise KnowledgeReleaseError("knowledge_release_corpus_not_declared")
+        if sha256_file(self.knowledge_path) != knowledge_fingerprint:
+            raise KnowledgeReleaseError("knowledge_release_selected_corpus_hash_mismatch")
 
         quality = payload.get("quality")
         if not isinstance(quality, dict):

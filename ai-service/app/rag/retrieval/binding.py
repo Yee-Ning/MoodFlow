@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from app.rag.indexing.models import IndexBuildManifest
+from app.rag.indexing.dense import DENSE_POOLING
 from app.rag.query_understanding.index_profile import load_index_profile
 from app.rag.query_understanding.models import IndexProfile
 
@@ -57,9 +58,12 @@ def _validate_manifest_matches_runtime(
         "dense_dimension": config.dense.dimension,
         "dense_distance": "cosine",
         "dense_normalized": config.dense.normalize,
+        "dense_max_length": config.dense.max_length,
+        "dense_pooling": DENSE_POOLING,
         "bm25_vector_name": config.bm25.vector_name,
         "bm25_model": config.bm25.model_name,
         "bm25_options": config.bm25.query_options(),
+        "bm25_idf_modifier": True,
     }
     actual = {
         "dense_vector_name": manifest.dense_vector_name,
@@ -68,9 +72,12 @@ def _validate_manifest_matches_runtime(
         "dense_dimension": manifest.dense_dimension,
         "dense_distance": manifest.dense_distance,
         "dense_normalized": manifest.dense_normalized,
+        "dense_max_length": manifest.dense_max_length,
+        "dense_pooling": manifest.dense_pooling,
         "bm25_vector_name": manifest.bm25_vector_name,
         "bm25_model": manifest.bm25_model,
         "bm25_options": manifest.bm25_options,
+        "bm25_idf_modifier": manifest.bm25_idf_modifier,
     }
     mismatches = [key for key, value in expected.items() if actual[key] != value]
     if mismatches:

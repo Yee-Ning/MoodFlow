@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 
 from app.rag.clean.models import CleanedDocument
 from app.rag.parse_normalize.models import DocumentBlock, DocumentTable
+from app.rag.parse_normalize.normalizer import MarkdownNormalizer
 
 from .config import ChunkConfig
 from .context import breadcrumb
@@ -35,7 +36,9 @@ class ChunkValidator:
     ) -> ChunkValidationReport:
         issues: list[ChunkValidationIssue] = []
         all_chunks: list[ParentChunk | ChildChunk] = [*parents, *children]
-        if cleaned.cleaned_text.strip() and not children:
+        if cleaned.cleaned_text.strip() and not children and not (
+            parents and all(parent.chunk_type is ChunkType.STRUCTURED_RECORD for parent in parents)
+        ):
             self._add(
                 issues,
                 "no_chunks_emitted",
@@ -44,6 +47,7 @@ class ChunkValidator:
         self._basic(cleaned, all_chunks, issues)
         self._duplicates(parents, children, issues)
         self._relationships(parents, children, issues)
+        self._records(parents, children, block_by_id, issues)
         self._tables(source_tables, block_by_id, children, issues)
         errors = sum(issue.severity is ValidationSeverity.ERROR for issue in issues)
         warnings = len(issues) - errors
@@ -53,6 +57,37 @@ class ChunkValidator:
             error_count=errors,
             warning_count=warnings,
         )
+
+    def _records(self, parents, children, block_by_id, issues) -> None:
+        records: dict[str, list[DocumentBlock]] = defaultdict(list)
+        for block in block_by_id.values():
+            record_id = block.metadata.get("record_id")
+            if isinstance(record_id, str):
+                records[record_id].append(block)
+        normalizer = MarkdownNormalizer()
+        for record_id, blocks in records.items():
+            owners = [parent for parent in parents if parent.metadata.get("record_id") == record_id]
+            block_ids = [block.block_id for block in blocks]
+            if len(owners) != 1:
+                self._add(issues, "record_parent_count", f"record {record_id} must have exactly one parent")
+            for owner in owners:
+                expected = self.config.content_joiner.join(
+                    normalizer.render([block]).strip() for block in blocks
+                )
+                if (owner.chunk_type is not ChunkType.STRUCTURED_RECORD
+                        or owner.metadata.get("source_block_ids") != block_ids
+                        or owner.content != expected):
+                    self._add(issues, "record_not_atomic", "record content or boundary changed", owner.chunk_id)
+                if any(child.parent_id == owner.chunk_id for child in children):
+                    self._add(issues, "record_has_children", "atomic record must not emit children", owner.chunk_id)
+            for chunk in [*parents, *children]:
+                if chunk not in owners and set(chunk.metadata.get("source_block_ids", [])) & set(block_ids):
+                    self._add(issues, "record_boundary_leaked", "record blocks emitted outside atomic parent", chunk.chunk_id)
+        for chunk in [*parents, *children]:
+            if chunk.chunk_type is ChunkType.STRUCTURED_RECORD and (
+                isinstance(chunk, ChildChunk) or chunk.metadata.get("record_id") not in records
+            ):
+                self._add(issues, "record_identity_invalid", "record chunk lacks a valid source record", chunk.chunk_id)
 
     def _basic(
         self,

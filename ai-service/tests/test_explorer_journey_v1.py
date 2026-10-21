@@ -67,17 +67,9 @@ from tests.test_worldline_graph import (
 def captured_facts():
     # Reuse already committed real Java catalog evidence, not guessed IDs or
     # mutable current search results. Knowledge/time fixtures below are mocks.
-    path = (
-        Path(__file__).resolve().parents[2]
-        / "docs/reports/handoff-repair-20261001/combo-final.json"
-    )
-    response = json.loads(path.read_text(encoding="utf-8"))["response"]
+    path = Path(__file__).with_name("fixtures") / "explorer_catalog_worldline.json"
     world = WorldLineResult.model_validate(
-        next(
-            item["metadata"]["worldline_result"]
-            for item in response["results"]
-            if item["subgraph"] == "worldline"
-        )
+        json.loads(path.read_text(encoding="utf-8"))
     )
     nodes = [item for item in world.graph.nodes if item.type is WorldLineNodeType.SONG][
         :2

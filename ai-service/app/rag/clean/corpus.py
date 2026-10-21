@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from pydantic import ValidationError
 
 from app.rag.parse_normalize.models import NormalizedDocument
+from app.rag.parse_normalize.review import normalized_review_reasons
 
 from .document_types import (
     DocumentTypeOrigin,
@@ -33,6 +34,7 @@ class NormalizedDocumentContext:
     document_type_origin: DocumentTypeOrigin | None
     document_type_sidecar_version: str | None
     document_type_sidecar_checksum: str | None
+    review_reasons: tuple[str, ...] = ()
 
 
 class NormalizedCorpusReader:
@@ -80,6 +82,7 @@ class NormalizedCorpusReader:
                 document = NormalizedDocument.model_validate_json(
                     resolved.read_text(encoding="utf-8")
                 )
+                review_reasons = normalized_review_reasons(document, resolved)
             except (OSError, ValidationError, ValueError) as exc:
                 raise NormalizedCorpusError(
                     f"normalized_document_invalid:{resolved}"
@@ -123,6 +126,7 @@ class NormalizedCorpusReader:
                     document_type_origin=document_type_origin,
                     document_type_sidecar_version=sidecar_version,
                     document_type_sidecar_checksum=sidecar_checksum,
+                    review_reasons=tuple(review_reasons),
                 )
             )
         return sorted(documents, key=lambda item: item.document.document_id)

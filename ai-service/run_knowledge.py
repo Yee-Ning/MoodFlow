@@ -16,10 +16,14 @@ if str(AI_SERVICE_ROOT) not in sys.path:
 
 from app.rag.knowledge import (  # noqa: E402
     DEFAULT_KNOWLEDGE_CONFIG_PATH,
+    EntityLinker,
+    EntityRegistry,
+    KnowledgePipeline,
     KnowledgePipelineService,
     latest_enriched_path,
     load_knowledge_config,
 )
+from app.rag.knowledge.entity_linking.registry import DEFAULT_ENTITY_REGISTRY_PATH  # noqa: E402
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -59,12 +63,19 @@ def main(
                 "paid LLM disabled by default; pass --allow-paid-llm or --rule-only"
             )
         enriched_path = _resolve(root, args.enriched_path) or latest_enriched_path(root)
+        registry = EntityRegistry.load(
+            DEFAULT_ENTITY_REGISTRY_PATH.with_name(f"{config.registry_version}.yaml")
+        )
+        pipeline = KnowledgePipeline(
+            config, entity_linker=EntityLinker(config, registry=registry)
+        )
         outcome = asyncio.run(
             KnowledgePipelineService(
                 root,
                 config,
                 enriched_path=enriched_path,
                 output_root=_resolve(root, args.output_root),
+                pipeline=pipeline,
             ).run(
                 limit=args.limit,
                 validate_only=args.validate_only,

@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 import uuid
 
+from app.rag.chunk.models import ChunkType
+
 from .config import IndexingConfig
 from .models import IndexPoint, PreparedIndexDocument
 
@@ -17,7 +19,12 @@ class IndexingValidator:
         parsed = uuid.UUID(document.point_id)
         if parsed.version != 5:
             raise ValueError(f"point_id_not_uuid5:{document.chunk_id}")
-        if document.payload.get("record_type") != "child":
+        is_record_parent = (
+            document.payload.get("record_type") == "parent"
+            and document.payload.get("chunk_type") == ChunkType.STRUCTURED_RECORD.value
+            and document.parent_id == document.chunk_id
+        )
+        if document.payload.get("record_type") != "child" and not is_record_parent:
             raise ValueError(f"non_child_index_document:{document.chunk_id}")
         if document.payload.get("chunk_id") != document.chunk_id:
             raise ValueError(f"payload_chunk_id_mismatch:{document.chunk_id}")

@@ -1,9 +1,0 @@
-{
-  "source": "installed runtime dependency closure, Linux markers",
-  "pinned_packages": 103,
-  "unresolved_linux_dependencies": [],
-  "excluded_cuda_dependencies": [],
-  "linux_resolver_verified": false,
-  "linux_extra_uvloop_version": "0.22.1",
-  "linux_extra_source": "https://pypi.org/pypi/uvloop/json"
-}

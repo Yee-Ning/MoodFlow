@@ -146,6 +146,113 @@ class StratifiedSampler:
         material = f"{self.config.seed}|{value}".encode("utf-8")
         return hashlib.sha256(material).hexdigest()
 
+    def sample_by_source_type_and_site(
+        self,
+        documents: list[NormalizedDocumentContext],
+        samples_per_stratum: int | None = None,
+    ) -> SamplingManifest:
+        """Stratified sampling by source_type (HTML/PDF/JSON) x site (source)."""
+        limit_per_stratum = (
+            samples_per_stratum
+            if samples_per_stratum is not None
+            else (self.config.samples_per_stratum or 2)
+        )
+        dimensions_used = ["source_type", "source"]
+
+        strata: defaultdict[tuple[str, str], list[NormalizedDocumentContext]] = (
+            defaultdict(list)
+        )
+        for item in documents:
+            source_type = item.source_type or MISSING_DIMENSION
+            source = item.source or MISSING_DIMENSION
+            strata[(source_type, source)].append(item)
+
+        for values in strata.values():
+            values.sort(
+                key=lambda item: self._stable_score(
+                    f"document|{item.document.document_id}"
+                )
+            )
+
+        selected: list[tuple[tuple[str, str], NormalizedDocumentContext]] = []
+        ordered_strata = sorted(
+            strata,
+            key=lambda key: self._stable_score("stratum|" + "|".join(key)),
+        )
+
+        for key in ordered_strata:
+            items_in_stratum = strata[key]
+            for item in items_in_stratum[:limit_per_stratum]:
+                selected.append((key, item))
+
+        rows: list[SampleManifestRow] = []
+        for rank, (key, item) in enumerate(selected, 1):
+            rows.append(
+                SampleManifestRow(
+                    selection_rank=rank,
+                    document_id=item.document.document_id,
+                    source_id=item.document.source_id,
+                    source=item.source,
+                    source_type=item.source_type,
+                    document_type=item.document_type,
+                    length_bucket=self.length_bucket(len(item.document.markdown)),
+                    text_length=len(item.document.markdown),
+                    normalized_path=item.relative_normalized_path,
+                    stratum=dict(zip(dimensions_used, key, strict=True)),
+                )
+            )
+
+        return SamplingManifest(
+            seed=self.config.seed,
+            requested_size=len(ordered_strata) * limit_per_stratum,
+            actual_size=len(rows),
+            corpus_document_count=len(documents),
+            dimensions_requested=["source_type", "source"],
+            dimensions_used=dimensions_used,
+            degraded_dimensions={},
+            documents=rows,
+        )
+
+    @staticmethod
+    def detect_new_strata(
+        existing_manifest: SamplingManifest,
+        documents: list[NormalizedDocumentContext],
+    ) -> list[dict[str, str]]:
+        """Identify new (source_type, source) strata not present in existing sample."""
+        existing_strata = {
+            (
+                row.stratum.get("source_type", row.source_type or MISSING_DIMENSION),
+                row.stratum.get("source", row.source or MISSING_DIMENSION),
+            )
+            for row in existing_manifest.documents
+        }
+        current_strata = {
+            (
+                item.source_type or MISSING_DIMENSION,
+                item.source or MISSING_DIMENSION,
+            )
+            for item in documents
+        }
+        new_keys = sorted(current_strata - existing_strata)
+        return [
+            {"source_type": st, "source": s}
+            for st, s in new_keys
+        ]
+
+    def resample_if_new_strata(
+        self,
+        existing_manifest: SamplingManifest,
+        documents: list[NormalizedDocumentContext],
+        samples_per_stratum: int | None = None,
+    ) -> SamplingManifest | None:
+        """Trigger re-sampling when a new source or new source type is detected."""
+        new_strata = self.detect_new_strata(existing_manifest, documents)
+        if not new_strata:
+            return None
+        return self.sample_by_source_type_and_site(
+            documents, samples_per_stratum=samples_per_stratum
+        )
+
 
 def write_sampling_manifest(manifest: SamplingManifest, output_path: Path) -> None:
     atomic_write_json(output_path, manifest.model_dump(mode="json"))

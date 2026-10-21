@@ -81,6 +81,13 @@ class SourceAttemptRecord(BaseModel):
     reason: str | None = Field(default=None, max_length=1_000)
     duplicate_of: str | None = Field(default=None, max_length=128)
     raw_path: str | None = Field(default=None, max_length=1_000)
+    source_attempt_number: int = Field(default=0, ge=0)
+    retry_host: str | None = None
+    retry_after_seconds: float | None = Field(default=None, ge=0)
+    retry_not_before: datetime | None = None
+    host_failure_streak: int = Field(default=0, ge=0)
+    empty_200_streak: int = Field(default=0, ge=0)
+    failure_detail: str | None = Field(default=None, max_length=1_000)
 
 
 class AutoIngestionRunSummary(BaseModel):
@@ -92,6 +99,8 @@ class AutoIngestionRunSummary(BaseModel):
     fetch_attempted: int = Field(ge=0)
     fetch_success: int = Field(ge=0)
     fetch_failed: int = Field(ge=0)
+    rate_limited: int = Field(default=0, ge=0)
+    robots_denied: int = Field(default=0, ge=0)
     replacement_success: int = Field(ge=0)
     unresolved_source_gap: int = Field(ge=0)
     total_valid_snapshots: int = Field(ge=0)

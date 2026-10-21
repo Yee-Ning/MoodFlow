@@ -53,6 +53,28 @@ def _parse_input(raw: bytes = RAW_HTML) -> ParseInput:
 
 
 class HtmlParserTests(unittest.TestCase):
+    def test_uncovered_article_text_is_preserved_once_in_dom_order(self) -> None:
+        raw = """<html><body><h1>标题</h1><article><div>正文<span>事实</span></div>
+        <p>支持的段落<span>完整</span></p><section>后续正文</section></article></body></html>""".encode()
+        result = HtmlParser().parse(_parse_input(raw))
+        self.assertEqual([b.text for b in result.blocks], ["标题", "正文事实", "支持的段落完整", "后续正文"])
+        self.assertEqual(result.blocks[1].parent_block_id, result.blocks[0].block_id)
+
+    def test_fallback_excludes_identifiable_noise_and_hidden_text(self) -> None:
+        raw = """<html><body><h1>标题</h1><main>正文事实<br>下一行</main>
+        <nav>菜单噪音</nav><footer>页脚噪音</footer><aside>侧栏噪音</aside>
+        <div role="navigation">导航噪音</div><div class="ad-banner">广告噪音</div>
+        <div id="cookie-consent">弹窗噪音</div><div hidden>隐藏一</div>
+        <div aria-hidden="true">隐藏二</div><div style="display: none">隐藏三</div>
+        <!-- 注释噪音 --><form>表单噪音</form></body></html>""".encode()
+        result = HtmlParser().parse(_parse_input(raw))
+        self.assertEqual([b.text for b in result.blocks], ["标题", "正文事实 下一行"])
+
+    def test_existing_semantic_navigation_and_atomic_blocks_are_not_duplicated(self) -> None:
+        raw = b"<body><nav><p>Existing navigation</p>new loose menu</nav><ul><li>One</li><li>Two</li></ul></body>"
+        result = HtmlParser().parse(_parse_input(raw))
+        self.assertEqual([b.text for b in result.blocks], ["Existing navigation", "One\nTwo"])
+
     def test_metadata_only_spa_falls_back_to_source_title_and_description(self) -> None:
         raw = """<!doctype html>
         <html lang="zh-Hant"><head>

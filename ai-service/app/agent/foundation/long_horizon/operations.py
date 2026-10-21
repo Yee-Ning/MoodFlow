@@ -25,6 +25,7 @@ def safe_tool_result(name, content):
         SongLikeResult, MusicSearchResult, EntitySearchResult, SongLyricsResult, UserPlaylistsResult,
         PlaylistDetailResult, AlbumDetailResult, LikedSongsResult, DeletedPlaylistResult)
     from app.agent.handoff.song_context import SongContextRead
+    from app.schemas.popularity import SongPopularityResult
 
     schemas = {"create_playlist_tool": CreatedPlaylistResult, "add_song_to_playlist": AddSongToPlaylistResult,
                "remove_song_from_playlist_tool": RemoveSongFromPlaylistResult, "set_song_liked_tool": SongLikeResult,
@@ -32,7 +33,8 @@ def safe_tool_result(name, content):
                "get_song_lyrics": SongLyricsResult, "get_user_playlists": UserPlaylistsResult,
                "get_playlist_detail_tool": PlaylistDetailResult, "get_album_detail_tool": AlbumDetailResult,
                "get_current_song_context": SongContextRead, "get_liked_songs": LikedSongsResult,
-               "delete_playlist_tool": DeletedPlaylistResult}
+               "delete_playlist_tool": DeletedPlaylistResult,
+               "get_song_popularity_tool": SongPopularityResult}
     if name not in schemas:
         raise ValueError("tool result has no artifact whitelist")
     value = schemas[name].model_validate_json(content).model_dump(mode="json")

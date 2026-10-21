@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from collections.abc import Sequence
 from typing import Any
@@ -60,16 +61,41 @@ from app.schemas.music import (
     UserPlaylistsResult,
 )
 from app.tools.music import handle_music_tool_error
-from app.agent.foundation.long_horizon.operations import journal_tool_call
+from app.agent.foundation.long_horizon.operations import WRITES, journal_tool_call
 from app.agent.foundation.agent_history_source import bind_tool_result
+from app.agent.foundation.subgraphs.tool_calling.playlist_inheritance import (
+    capture_created_receipts,
+    inherited_playlist_id,
+    producer_state,
+    requests_inherited_add,
+)
 
-MAX_TOOL_CALLS = 5
+MAX_TOOL_CALLS = 12
+TOOL_PHASE_LIMITS = {"retrieval": 8, "execution": 8}
+logger = logging.getLogger(__name__)
 MAX_VISIBLE_RESPONSE_CHARACTERS = 2_000
 TOOL_LIMIT_MESSAGE = (
     "这次任务需要的工具调用次数超过安全上限，我已停止继续操作。"
     "请缩小请求范围或分成两次完成。"
 )
 INVALID_TOOL_OUTPUT_MESSAGE = "工具选择或参数格式无效，已停止后续工具执行。"
+
+
+def _tool_call_phase(name: str) -> str:
+    return "execution" if name in WRITES or name in CLIENT_ACTION_TOOL_NAMES else "retrieval"
+
+
+def _tool_phase_counts(state: ToolCallingState) -> dict[str, int]:
+    counts = state.get("tool_call_counts_by_phase")
+    if counts is not None:
+        return {phase: counts.get(phase, 0) for phase in TOOL_PHASE_LIMITS}
+    # Adapters start each task at zero. Preserve admitted attempts if an existing
+    # caller supplies a populated private state without the new optional field.
+    counts = dict.fromkeys(TOOL_PHASE_LIMITS, 0)
+    for call in state.get("tool_calls", []):
+        counts[_tool_call_phase(str(call.get("name") or ""))] += 1
+    return counts
+
 
 # Tool output and conversation history can supply entity references, but only
 # the assigned user clause can authorize a player or library mutation.
@@ -102,7 +128,9 @@ _ACTION_CLAUSE = re.compile(r"[,，.。!！?？;；]|然后|接着|随后|并且
 _ACTION_NEGATION = re.compile(r"(?:别|不要|不用|无需|不再|不要再)[^,，.。!！?？;；]{0,8}$")
 
 
-def _action_intent_errors(state: ToolCallingState) -> dict[str, str]:
+def _action_intent_errors(
+    state: ToolCallingState, *, inherited_playlist_id: int | None = None,
+) -> dict[str, str]:
     text = state["current_input"]
     clauses = _ACTION_CLAUSE.split(text)
     errors: dict[str, str] = {}
@@ -127,8 +155,30 @@ def _action_intent_errors(state: ToolCallingState) -> dict[str, str]:
                 break
             if allowed:
                 break
+        if (not allowed and name == "add_song_to_playlist"
+                and inherited_playlist_id is not None
+                and type(args.get("playlist_id")) is int
+                and args["playlist_id"] == inherited_playlist_id):
+            allowed = requests_inherited_add(
+                text, _ACTION_REQUESTS["create_playlist_tool"], _ACTION_CLAUSE, _ACTION_NEGATION,
+            )
         if not allowed:
             errors[str(call.get("id") or "")] = "当前任务没有明确请求这个操作；请只执行本轮用户明确要求的动作。"
+    return errors
+
+
+def _scoped_action_intent_errors(state: ToolCallingState) -> dict[str, str]:
+    # The same per-call proof is used by routing and rejection diagnostics.
+    errors = _action_intent_errors(state)
+    for call in _latest_tool_calls(state):
+        call_id = str(call.get("id") or "")
+        if call_id not in errors:
+            continue
+        playlist_id = inherited_playlist_id(state, call)
+        if playlist_id is not None:
+            inherited_errors = _action_intent_errors(state, inherited_playlist_id=playlist_id)
+            if call_id not in inherited_errors:
+                errors.pop(call_id)
     return errors
 
 
@@ -487,6 +537,12 @@ def _reference_errors(state: ToolCallingState) -> dict[str, str]:
                     for item in synced
                 ):
                     errors[call_id] = "请先调用 set_song_liked_tool 同步云端，成功后自动更新本地红心。"
+        elif name == "get_song_popularity_tool":
+            identities = args.get("song_ids")
+            if not isinstance(identities, list) or any(
+                type(identity) is not int or identity not in songs for identity in identities
+            ):
+                errors[call_id] = "评论核实的歌曲 ID 必须来自可信目录结果；请先搜索，不得猜测。"
         elif name == "play_song":
             try:
                 track = MusicTrack.model_validate(args.get("song"))
@@ -685,6 +741,9 @@ def _final_task_result(
                 ],
                 "entities": entities.model_dump(mode="json"),
                 "tool_calls": state.get("tool_call_count", 0),
+                "tool_call_counts_by_phase": _tool_phase_counts(state),
+                **({"tool_budget_stop": state["tool_budget_stop"]}
+                   if state.get("tool_budget_stop") is not None else {}),
                 "tool_call_details": [
                     {"name": str(item.get("name") or "unknown"),
                      "status": str(item.get("status") or "unknown"),
@@ -721,6 +780,7 @@ def build_tool_calling_subgraph(
     assistant: ToolCallingAssistant | None = None,
     model: BaseChatModel | None = None,
     tools: Sequence[BaseTool] | None = None,
+    niche_request_text: str | None = None,
 ) -> StateGraph:
     graph_tools = list(tools or all_tool_calling_tools())
     tools_by_name = {item.name: item for item in graph_tools}
@@ -761,18 +821,44 @@ def build_tool_calling_subgraph(
                 StructuredOutputService(
                     f"tool_arguments.{selected.name}", schema, max_attempts=1,
                 ).validate(selected.args)
-            except StructuredOutputError:
-                errors[call_id] = ("invalid_tool_arguments", INVALID_TOOL_OUTPUT_MESSAGE)
+            except StructuredOutputError as exc:
+                message = INVALID_TOOL_OUTPUT_MESSAGE
+                if (selected.name == "get_song_popularity_tool"
+                    and getattr(exc.__cause__, "code", None) == "comment_tool_batch_limit:song_ids"):
+                    from app.schemas.popularity import COMMENT_TOOL_BATCH_GUIDANCE
+
+                    message = COMMENT_TOOL_BATCH_GUIDANCE
+                errors[call_id] = ("invalid_tool_arguments", message)
         return errors
 
     async def agent(state: ToolCallingState) -> dict[str, Any]:
+        from app.agent.handoff.niche_readback import finish_niche_readback, niche_read_limit
+
+        request = niche_request_text or state["current_input"]
+        niche_scope = niche_read_limit(request) is not None
+        completed = finish_niche_readback(
+            request, state["task_id"], state.get("tool_results", []),
+            [*(song for refs in state.get("prior_entities", []) for song in refs.songs),
+             *(_extract_entities(state.get("tool_results", [])).songs)],
+        ) if niche_scope else None
+        if completed is not None:
+            content, entities, receipt = completed
+            message = AIMessage(content=content)
+            answer, result, actions = _final_task_result(state, message)
+            result = result.model_copy(update={"data": {**result.data,
+                "entities": entities.model_dump(mode="json"), "niche_readback": receipt.model_dump(mode="json")}})
+            return {"messages": [message], "answer": answer, "task_result": result, "client_actions": actions}
         if assistant is not None:
-            result = await assistant(
-                state["messages"],
-                state["current_input"],
-                state["routing_context"],
-                state.get("prior_entities", []),
-            )
+            token = producer_state.set(state)
+            try:
+                result = await assistant(
+                    state["messages"],
+                    state["current_input"],
+                    state["routing_context"],
+                    state.get("prior_entities", []),
+                )
+            finally:
+                producer_state.reset(token)
         else:
             from app.llm.runtime import RuntimeLimitError
 
@@ -810,22 +896,52 @@ def build_tool_calling_subgraph(
         ):
             return _fail_invalid_tool_output(state, "malformed_tool_call")
 
+        if niche_scope and not result.tool_calls:
+            stopped = _fail_invalid_tool_output(state, "niche_verification_missing")
+            message = "尚无可完整核对歌曲目录与评论数的成功回执，未提供冷门推荐。"
+            stopped["messages"] = [AIMessage(content=message)]
+            stopped["answer"] = message
+            stopped["task_result"] = stopped["task_result"].model_copy(update={"content": message, "error": message})
+            return stopped
+
         tool_call_count = state.get("tool_call_count", 0)
         requested_calls = len(result.tool_calls)
-        if requested_calls and tool_call_count + requested_calls > MAX_TOOL_CALLS:
+        phase_counts = _tool_phase_counts(state)
+        requested_by_phase = dict.fromkeys(TOOL_PHASE_LIMITS, 0)
+        for call in result.tool_calls:
+            requested_by_phase[_tool_call_phase(call["name"])] += 1
+        exceeded = (["total"] if tool_call_count + requested_calls > MAX_TOOL_CALLS else []) + [
+            phase for phase, limit in TOOL_PHASE_LIMITS.items()
+            if phase_counts[phase] + requested_by_phase[phase] > limit
+        ]
+        stop = None
+        if requested_calls and exceeded:
+            stop = {
+                "budget": exceeded[0], "exceeded_budgets": exceeded,
+                "used": {**phase_counts, "total": tool_call_count},
+                "requested": {**requested_by_phase, "total": requested_calls},
+                "limits": {**TOOL_PHASE_LIMITS, "total": MAX_TOOL_CALLS},
+            }
+            logger.warning("Tool call budget exceeded: %s", stop)
             result = AIMessage(content=TOOL_LIMIT_MESSAGE)
             requested_calls = 0
+        else:
+            phase_counts = {phase: used + requested_by_phase[phase]
+                            for phase, used in phase_counts.items()}
 
         update: dict[str, Any] = {
             "messages": [result],
             "tool_call_count": tool_call_count + requested_calls,
+            "tool_call_counts_by_phase": phase_counts,
             "tool_calls": [
                 *state.get("tool_calls", []),
                 *[dict(call) for call in result.tool_calls],
             ],
         }
+        if stop is not None:
+            update["tool_budget_stop"] = stop
         if not result.tool_calls:
-            answer, task_result, client_actions = _final_task_result(state, result)
+            answer, task_result, client_actions = _final_task_result({**state, **update}, result)
             update.update(
                 answer=answer,
                 task_result=task_result,
@@ -869,13 +985,13 @@ def build_tool_calling_subgraph(
                     status="error",
                 )
             results.append(record.model_dump(mode="json"))
-        return {"tool_results": results}
+        return {"tool_results": results, "created_playlist_receipts": capture_created_receipts(state)}
 
     def reject_invalid_tool_calls(state: ToolCallingState) -> dict[str, Any]:
         argument_errors = _argument_errors(state)
         reference_errors = _reference_errors(state)
         duplicate_errors = _duplicate_call_errors(state)
-        action_errors = _action_intent_errors(state)
+        action_errors = _scoped_action_intent_errors(state)
         messages: list[ToolMessage] = []
         for call in _latest_tool_calls(state):
             call_id = str(call.get("id", ""))
@@ -912,18 +1028,34 @@ def build_tool_calling_subgraph(
         return (
             "reject_tool_calls"
             if (_argument_errors(state) or _reference_errors(state)
-                or _duplicate_call_errors(state) or _action_intent_errors(state))
+                or _duplicate_call_errors(state) or _scoped_action_intent_errors(state))
             else "tools"
         )
 
     async def scoped_tool_call(request, execute):
-        output = await journal_tool_call(request, execute)
-        return bind_tool_result(output, request.state["messages"][-1])
+        is_create = request.tool_call.get("name") == "create_playlist_tool"
+        executed_create = False
+
+        async def execute_creation(tool_request):
+            nonlocal executed_create
+            result = await execute(tool_request)
+            executed_create = isinstance(result, ToolMessage) and result.status == "success"
+            return result
+
+        output = await journal_tool_call(request, execute_creation if is_create else execute)
+        output = bind_tool_result(output, request.state["messages"][-1])
+        if is_create and isinstance(output, ToolMessage) and "owner_agent" in output.additional_kwargs:
+            # Journal replay/reconciliation is not a fresh successful create in
+            # this task. Attest only the actual execute callback, never history.
+            output = output.model_copy(update={"additional_kwargs": {
+                **output.additional_kwargs, "executed_create": executed_create,
+            }})
+        return output
 
     async def direct_actions(state: ToolCallingState, runtime):
         from uuid import uuid4
         output = await resolve_direct_actions(state, runtime)
-        return {**output, "pack_run_id": f"call:{uuid4()}"}
+        return {**output, "pack_run_id": f"call:{uuid4()}", "created_playlist_receipts": []}
 
     builder = StateGraph(
         ToolCallingState,
@@ -966,9 +1098,11 @@ def create_tool_calling_subgraph(
     assistant: ToolCallingAssistant | None = None,
     model: BaseChatModel | None = None,
     tools: Sequence[BaseTool] | None = None,
+    niche_request_text: str | None = None,
 ) -> CompiledStateGraph:
     return build_tool_calling_subgraph(
         assistant=assistant,
         model=model,
         tools=tools,
+        niche_request_text=niche_request_text,
     ).compile(checkpointer=False)

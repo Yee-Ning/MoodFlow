@@ -42,6 +42,10 @@ class SamplingConfig(BaseModel):
 
     seed: int = 104_729
     sample_size: int = Field(default=18, ge=1)
+    samples_per_stratum: int | None = Field(default=None, ge=1)
+    strata_dimensions: list[str] = Field(
+        default_factory=lambda: ["source_type", "source"]
+    )
     max_text_chars_per_document: int = Field(default=12_000, ge=200)
     length_buckets: list[LengthBucket] = Field(min_length=1)
 
@@ -111,6 +115,45 @@ class ReportingConfig(BaseModel):
 
     before_after_sample_size: int = Field(default=20, ge=1, le=1_000)
     max_sample_text_chars: int = Field(default=4_000, ge=200, le=100_000)
+    write_per_document_reports: bool = Field(default=True)
+
+
+class StructuralCleanConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    enabled: bool = True
+    whitelist_tables: bool = True
+    whitelist_lists: bool = True
+
+
+class TemplateDeduplicationConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    enabled: bool = True
+    min_doc_frequency: int = Field(default=3, ge=2)
+    similarity_threshold: float = Field(default=0.85, ge=0.5, le=1.0)
+    min_block_chars: int = Field(default=20, ge=5)
+    max_block_chars: int = Field(default=2000, ge=50)
+
+
+class LanguageDetectionConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    enabled: bool = True
+    default_english_policy: str = Field(
+        default="retain",
+        pattern=r"^retain$",
+        description="Default policy for English blocks: retain unfiltered, pending West decision",
+    )
+    confidence_threshold: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class ConceptDriftConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    enabled: bool = True
+    min_retention_ratio: float = Field(default=0.30, ge=0.0, le=1.0)
+    max_retention_ratio: float = Field(default=1.05, ge=1.0)
 
 
 class CleanRuleConfig(BaseModel):
@@ -151,6 +194,16 @@ class CleanPipelineConfig(BaseModel):
     noise_discovery: NoiseDiscoveryConfig
     semantic_guard: SemanticGuardConfig
     reporting: ReportingConfig
+    structural_clean: StructuralCleanConfig = Field(
+        default_factory=StructuralCleanConfig
+    )
+    template_dedup: TemplateDeduplicationConfig = Field(
+        default_factory=TemplateDeduplicationConfig
+    )
+    language_detection: LanguageDetectionConfig = Field(
+        default_factory=LanguageDetectionConfig
+    )
+    concept_drift: ConceptDriftConfig = Field(default_factory=ConceptDriftConfig)
     rules: list[CleanRuleConfig] = Field(default_factory=list)
 
     @model_validator(mode="after")

@@ -1,0 +1,238 @@
+{
+  "source_file_sha256": "b3c0fc0a49195a49d7476d21518077276655844336616018c8abcafbe3dc9e50",
+  "scope": "Exact count, ID and catalog track fields from local test-account artifacts; other account metadata omitted.",
+  "cases": {
+    "liked": {
+      "artifact_id": "b2d21f4cf393fb88755cdcad6e6474dcbbed91e8bcba36cfce2a3035d76faab1",
+      "tool": "get_liked_songs",
+      "result": {
+        "song_ids": [
+          18969070,
+          18969071,
+          18969075,
+          18969076,
+          18969084,
+          18969206,
+          18969209,
+          26524156,
+          29850762,
+          409736439,
+          524152312,
+          1873876300,
+          1873876997,
+          1951144886,
+          2085859568,
+          2652820720,
+          3333988321,
+          3395921362
+        ]
+      }
+    },
+    "playlist": {
+      "artifact_id": "482c768736af5b0dce864d4781fe8f34df46dfe8dfa1d16e3ffd47d75dba79a2",
+      "tool": "get_playlist_detail_tool",
+      "result": {
+        "playlist_id": 18442239357,
+        "name": "我喜欢的音乐",
+        "track_count": 18,
+        "songs": [
+          {
+            "name": "Simon",
+            "album": "神经志",
+            "artists": [
+              "丁世光"
+            ],
+            "song_id": 524152312,
+            "duration": 416901,
+            "cover_url": "https://p3.music.126.net/vHgX5LPws_TSNzjeTGt_sQ==/109951163087231653.jpg"
+          },
+          {
+            "name": "晴天(深情版)",
+            "album": "晴天(深情版)",
+            "artists": [
+              "Lucky小爱"
+            ],
+            "song_id": 2652820720,
+            "duration": 278961,
+            "cover_url": "https://p4.music.126.net/F0fTkmBTVykCa2o7Vgu1rQ==/109951173569626660.jpg"
+          },
+          {
+            "name": "Good Life",
+            "album": "Graduation",
+            "artists": [
+              "Kanye West",
+              "T-Pain"
+            ],
+            "song_id": 18969071,
+            "duration": 207052,
+            "cover_url": "https://p3.music.126.net/1pIJlLQmblxVIJXaKnWykw==/109951167119530519.jpg"
+          },
+          {
+            "name": "Moon",
+            "album": "Donda",
+            "artists": [
+              "Kanye West"
+            ],
+            "song_id": 1873876997,
+            "duration": 156091,
+            "cover_url": "https://p4.music.126.net/vH5CPDR5HWzphsuXIzIpQw==/109951166462949375.jpg"
+          },
+          {
+            "name": "Everything I Am",
+            "album": "Graduation",
+            "artists": [
+              "Kanye West",
+              "DJ Premier"
+            ],
+            "song_id": 18969076,
+            "duration": 227773,
+            "cover_url": "https://p3.music.126.net/1pIJlLQmblxVIJXaKnWykw==/109951167119530519.jpg"
+          },
+          {
+            "name": "Devil In A New Dress",
+            "album": "My Beautiful Dark Twisted Fantasy",
+            "artists": [
+              "Kanye West",
+              "Rick Ross"
+            ],
+            "song_id": 18969209,
+            "duration": 352466,
+            "cover_url": "https://p4.music.126.net/fCCxDPyFjN11uSZ4GZsifw==/109951166027217441.jpg"
+          },
+          {
+            "name": "All Of The Lights",
+            "album": "My Beautiful Dark Twisted Fantasy",
+            "artists": [
+              "Kanye West",
+              "Rihanna",
+              "Kid Cudi",
+              "Fergie"
+            ],
+            "song_id": 18969206,
+            "duration": 299676,
+            "cover_url": "https://p4.music.126.net/fCCxDPyFjN11uSZ4GZsifw==/109951166027217441.jpg"
+          },
+          {
+            "name": "I Wonder",
+            "album": "Graduation",
+            "artists": [
+              "Kanye West"
+            ],
+            "song_id": 18969070,
+            "duration": 243426,
+            "cover_url": "https://p4.music.126.net/1pIJlLQmblxVIJXaKnWykw==/109951167119530519.jpg"
+          },
+          {
+            "name": "Touch The Sky",
+            "album": "Late Registration",
+            "artists": [
+              "Kanye West",
+              "Lupe Fiasco"
+            ],
+            "song_id": 18969084,
+            "duration": 237333,
+            "cover_url": "https://p4.music.126.net/M4s782utwaMBIDmt0UOvEA==/109951170517268501.jpg"
+          },
+          {
+            "name": "Come to Life",
+            "album": "Donda",
+            "artists": [
+              "Kanye West"
+            ],
+            "song_id": 1873876300,
+            "duration": 310393,
+            "cover_url": "https://p4.music.126.net/vH5CPDR5HWzphsuXIzIpQw==/109951166462949375.jpg"
+          },
+          {
+            "name": "I Love Kanye",
+            "album": "The Life Of Pablo",
+            "artists": [
+              "Kanye West"
+            ],
+            "song_id": 409736439,
+            "duration": 44830,
+            "cover_url": "https://p3.music.126.net/MyVCeQH4HMftVRFNgCVdMA==/109951167086398533.jpg"
+          },
+          {
+            "name": "True Love",
+            "album": "True Love",
+            "artists": [
+              "Kanye West",
+              "XXXTENTACION"
+            ],
+            "song_id": 1951144886,
+            "duration": 148816,
+            "cover_url": "https://p4.music.126.net/mVyU7DdUYL9HW6AR-ArByg==/109951167481680751.jpg"
+          },
+          {
+            "name": "Only One",
+            "album": "Only One",
+            "artists": [
+              "Kanye West",
+              "Paul McCartney"
+            ],
+            "song_id": 29850762,
+            "duration": 280226,
+            "cover_url": "https://p3.music.126.net/Bbn0zehoVagAQtxXiZooIg==/109951167428707382.jpg"
+          },
+          {
+            "name": "Flashing Lights",
+            "album": "Graduation",
+            "artists": [
+              "Kanye West",
+              "Dwele"
+            ],
+            "song_id": 18969075,
+            "duration": 237506,
+            "cover_url": "https://p4.music.126.net/1pIJlLQmblxVIJXaKnWykw==/109951167119530519.jpg"
+          },
+          {
+            "name": "Bound 2",
+            "album": "Yeezus",
+            "artists": [
+              "Kanye West",
+              "Charlie Wilson"
+            ],
+            "song_id": 26524156,
+            "duration": 229253,
+            "cover_url": "https://p4.music.126.net/opDBl7iH5V_RzDnPhscsWg==/109951168852618413.jpg"
+          },
+          {
+            "name": "OK (feat. Don Toliver)",
+            "album": "BULLY - DELUXE",
+            "artists": [
+              "Kanye West",
+              "Ye",
+              "Don Toliver"
+            ],
+            "song_id": 3395921362,
+            "duration": 158193,
+            "cover_url": "https://p3.music.126.net/wJhFaiWhdinuBl8dUcs6jA==/109951173427879020.jpg"
+          },
+          {
+            "name": "一半一半",
+            "album": "一半一半",
+            "artists": [
+              "Top Barry",
+              "INDEcompany"
+            ],
+            "song_id": 3333988321,
+            "duration": 235285,
+            "cover_url": "https://p4.music.126.net/EgbPD3CwVQojZ4OWse4YrA==/109951172511748152.jpg"
+          },
+          {
+            "name": "LET ME LUV U",
+            "album": "MOSLOS",
+            "artists": [
+              "mac ova seas",
+              "付思遥"
+            ],
+            "song_id": 2085859568,
+            "duration": 211898,
+            "cover_url": "https://p3.music.126.net/nmOWPii-tnHeLzMjhbqaxA==/109951168945233919.jpg"
+          }
+        ]
+      }
+    }
+  }
+}

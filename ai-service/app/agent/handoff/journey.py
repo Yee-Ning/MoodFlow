@@ -165,7 +165,10 @@ def build_listening_journey(
     node_priorities: dict[str, int] | None = None,
     recommendation_reasons: dict[str, str] | None = None,
     preference_song_ids: dict[str, tuple[int, ...]] | None = None,
+    node_limit: int = MAX_JOURNEY_NODES,
 ) -> ListeningJourney:
+    if type(node_limit) is not int or not 1 <= node_limit <= MAX_JOURNEY_NODES:
+        raise ValueError("journey node limit must stay within the existing bound")
     sources = {item.id: item for item in world.sources}
     graph_nodes = {item.id: item for item in world.graph.nodes}
     catalog = {}
@@ -292,6 +295,9 @@ def build_listening_journey(
     nodes = []
     omitted = []
     for node_id in ordered:
+        if len(nodes) >= node_limit:
+            omitted.extend(ordered[ordered.index(node_id):])
+            break
         node = graph_nodes[node_id]
         evidence_ids = tuple(sorted(node_sources[node_id]))[:8]
         knowledge = any(
@@ -426,6 +432,8 @@ def build_listening_journey(
         limitations.append("存在冲突的关系未用于路径或歌曲映射。")
     if omitted:
         limitations.append(
+            f"按本轮要求保留最多{node_limit}个有来源节点；没有补写未核实的节点。"
+            if node_limit < MAX_JOURNEY_NODES and len(nodes) == node_limit else
             "路径为有界前缀，达到既有转交载荷预算；没有截断歌曲 ID 或 JSON。"
         )
     return ListeningJourney(

@@ -18,6 +18,7 @@ def knowledge_input_hash(chunk: EnrichedChunk, config: KnowledgeConfig) -> str:
         "claim_verification_version": config.claim_verification_version,
         "registry_version": config.registry_version,
         "prompt_version": config.prompt_version,
+        "llm_enabled": config.llm_enabled,
     }
     serialized = json.dumps(
         payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")

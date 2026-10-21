@@ -23,6 +23,7 @@ from app.agent.foundation.subgraphs.general_chat.results import read_result_rece
 from app.agent.foundation.subgraphs.general_chat.session import (
     expire_pending_confirmation,
     fence_preferences,
+    is_preference_query,
     session_for,
 )
 
@@ -73,16 +74,28 @@ def build_general_chat_subgraph(
                 song_reader=song_reader,
             )
             if response is None:
-                response = await assistant(
-                    state["messages"],
-                    state["current_input"],
-                    state["routing_context"],
-                    state.get("prior_task_results", []),
-                )
-                if isinstance(response, AIMessage):
-                    response = fence_preferences(
-                        response, state["current_input"], session
+                if is_preference_query(state["current_input"]) and not session.confirmed:
+                    # Handoff injects an assistant too. Use the same scoped Pack
+                    # recall path before its session-only model response fence.
+                    response = await answer_general_chat(
+                        state["messages"], state["current_input"],
+                        state["routing_context"], state.get("prior_task_results", []),
+                        model=model, continuity_context=state.get("continuity_context"),
+                        route_task_id=state["task_id"],
+                        structured_results=state.get("structured_results"),
+                        song_reader=song_reader, session_store=session_store,
                     )
+                else:
+                    response = await assistant(
+                        state["messages"],
+                        state["current_input"],
+                        state["routing_context"],
+                        state.get("prior_task_results", []),
+                    )
+                    if isinstance(response, AIMessage):
+                        response = fence_preferences(
+                            response, state["current_input"], session
+                        )
         else:
             response = await answer_general_chat(
                 state["messages"],

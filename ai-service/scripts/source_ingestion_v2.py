@@ -27,6 +27,7 @@ from app.rag.source_ingestion.http_client import (
 from app.rag.source_ingestion.manifest import load_candidates
 from app.rag.source_ingestion.quality_filter import AutoSourceQualityFilter
 from app.rag.source_ingestion.report import SourceCorpusReporter
+from app.rag.source_ingestion.retry import SourceRetryConfig
 from app.rag.source_ingestion.snapshot import RawSnapshotStore
 from app.rag.source_ingestion.validation import SnapshotValidator
 
@@ -45,6 +46,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--failure-manifest", type=Path)
     parser.add_argument("--target-count", type=int, default=62)
     parser.add_argument("--max-replacement-attempts", type=int, default=3)
+    parser.add_argument("--auto-retry", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--max-source-attempts", type=int, default=3)
+    parser.add_argument(
+        "--reopen-failed", action="store_true",
+        help="Retry failed candidates and reopen exhausted groups with a fresh per-run attempt cap.",
+    )
     parser.add_argument(
         "--user-agent",
         default=os.getenv("MOODFLOW_INGESTION_USER_AGENT", DEFAULT_USER_AGENT),
@@ -81,6 +88,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         raise SystemExit("--target-count must be positive")
     if args.max_replacement_attempts <= 0:
         raise SystemExit("--max-replacement-attempts must be positive")
+    if args.max_source_attempts <= 0:
+        raise SystemExit("--max-source-attempts must be positive")
     if args.max_response_mb <= 0:
         raise SystemExit("--max-response-mb must be positive")
 
@@ -110,11 +119,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                 quality_filter=AutoSourceQualityFilter(),
                 attempt_ledger=attempt_ledger,
                 existing_candidates=existing_candidates,
+                retry_config=SourceRetryConfig(
+                    enabled=args.auto_retry, max_source_attempts=args.max_source_attempts,
+                ),
             )
             run_summary = service.run(
                 discovered_candidates,
                 target_count=args.target_count,
                 max_replacement_attempts=args.max_replacement_attempts,
+                reopen_failed=args.reopen_failed,
             )
 
     report = SourceCorpusReporter(root).write_outputs(

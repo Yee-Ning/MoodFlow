@@ -49,7 +49,7 @@ class IndexFailure(BaseModel):
 class IndexBuildManifest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    manifest_version: str = Field(default="v2", pattern=r"^v\d+$")
+    manifest_version: str = Field(default="v3", pattern=r"^v\d+$")
     status: str = Field(pattern=r"^(completed|partial)$")
     ready_for_retrieval: bool
     created_at: datetime
@@ -73,9 +73,14 @@ class IndexBuildManifest(BaseModel):
     dense_dimension: int = Field(ge=1)
     dense_distance: str
     dense_normalized: bool
+    # Historical manifests parse, but online binding rejects unknown identity.
+    dense_max_length: int | None = Field(default=None, ge=32, le=32_768)
+    dense_pooling: str | None = None
     bm25_vector_name: str
     bm25_model: str
     bm25_options: dict[str, JsonValue]
+    # None preserves parsing of historical artifacts, never implies IDF enabled.
+    bm25_idf_modifier: bool | None = None
     hnsw_m: int = Field(ge=1)
     hnsw_ef_construct: int = Field(ge=1)
     parent_count: int = Field(ge=0)
@@ -87,6 +92,9 @@ class IndexBuildManifest(BaseModel):
     limited_to: int | None = Field(default=None, ge=1)
     indexed_count: int = Field(ge=0)
     skipped_count: int = Field(ge=0)
+    embedding_cache_path: str | None = None
+    embedding_cache_hit_count: int = Field(default=0, ge=0)
+    embedding_computed_count: int = Field(default=0, ge=0)
     failed_count: int = Field(ge=0)
     pruned_count: int = Field(ge=0)
     collection_point_count: int | None = Field(default=None, ge=0)

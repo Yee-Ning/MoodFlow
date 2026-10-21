@@ -16,32 +16,66 @@ from .document_types import (
 )
 from .engine import CleanEngine
 from .guard import SemanticGuard
-from .models import CleanDocumentAudit, CleanedDocument, CleanExecutionResult
+from .drift import ConceptDriftEvent, ConceptDriftMonitor
+from .evaluation_hooks import (
+    CleanEvaluationMetrics,
+    CleanEvaluationSample,
+    CleanEvaluationService,
+)
+from .language import LanguageDetector
+from .models import (
+    CleanDocumentAudit,
+    CleanDocumentReport,
+    CleanedDocument,
+    CleanExecutionResult,
+    LanguageAnnotation,
+    LineDiffStats,
+    StageMetrics,
+)
 from .profiling import NormalizedCorpusProfiler, write_profile_report
 from .registry import RuleAction, RuleRegistry, RuleScopeType
+from .review import (
+    CandidateReviewEntry,
+    CandidateReviewFile,
+    CandidateReviewManager,
+)
 from .sampling import SamplingManifest, StratifiedSampler, write_sampling_manifest
 from .service import CleanPipelineService, CleanRunOutcome
+from .structural import StructuralCleaner, StructuralCleanResult
 from .table_inspection import (
     NormalizedTableInspector,
     TableInspectionConfig,
     TableInspectionPaths,
     write_table_inspection_report,
 )
+from .template_dedup import TemplateDeduplicationOutcome, TemplateDeduplicator
 
 __all__ = [
     "DEFAULT_CLEAN_CONFIG_PATH",
+    "CandidateReviewEntry",
+    "CandidateReviewFile",
+    "CandidateReviewManager",
     "CleanPipelineConfig",
     "CleanPipelineService",
     "CleanRunOutcome",
     "CleanDocumentAudit",
+    "CleanDocumentReport",
     "CleanedDocument",
     "CleanEngine",
+    "CleanEvaluationMetrics",
+    "CleanEvaluationSample",
+    "CleanEvaluationService",
     "CleanExecutionResult",
+    "ConceptDriftEvent",
+    "ConceptDriftMonitor",
     "DocumentTypeAssignment",
     "DocumentTypeOrigin",
     "DocumentTypeResolver",
     "DocumentTypeReviewStatus",
     "DocumentTypeSidecar",
+    "LanguageAnnotation",
+    "LanguageDetector",
+    "LineDiffStats",
     "NormalizedCorpusProfiler",
     "NormalizedCorpusReader",
     "NormalizedDocumentContext",
@@ -50,7 +84,12 @@ __all__ = [
     "RuleRegistry",
     "RuleScopeType",
     "SamplingManifest",
+    "StageMetrics",
     "StratifiedSampler",
+    "StructuralCleaner",
+    "StructuralCleanResult",
+    "TemplateDeduplicationOutcome",
+    "TemplateDeduplicator",
     "NormalizedTableInspector",
     "TableInspectionConfig",
     "TableInspectionPaths",

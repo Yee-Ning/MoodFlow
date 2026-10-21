@@ -69,6 +69,32 @@ class CandidateNoisePattern(BaseModel):
     false_positive_risk: str = Field(min_length=1, max_length=400)
     uncertain: bool
     evidence_document_ids: list[str] = Field(min_length=1, max_length=10)
+    positive_examples: list[str] = Field(
+        default_factory=list,
+        max_length=20,
+        description="Positive noise examples that should match the candidate rule",
+    )
+    negative_examples: list[str] = Field(
+        default_factory=list,
+        max_length=20,
+        description="Negative valid content examples that must NOT match",
+    )
+    priority: int = Field(
+        default=100,
+        ge=0,
+        le=100_000,
+        description="Execution priority; lower values execute before higher values",
+    )
+    pattern: str | None = Field(
+        default=None,
+        max_length=1_000,
+        description="Normalized regex pattern if ready",
+    )
+    replacement: str | None = Field(
+        default=None,
+        max_length=1_000,
+        description="Replacement string if action is REPLACE",
+    )
 
 
 class NoiseDiscoveryBatchResult(BaseModel):

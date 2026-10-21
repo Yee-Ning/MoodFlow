@@ -75,7 +75,7 @@ class RagCollectionAudit(ProjectionContract):
     rejected_without_provenance: int = Field(ge=0)
     warnings: list[str]
     plan_id: str | None = None
-    index_profile: dict[str, str] | None = None
+    index_profile: dict[str, str | dict[str, str]] | None = None
     rerank_input_count: int | None = Field(default=None, ge=0)
     rerank_fallback_used: bool | None = None
 

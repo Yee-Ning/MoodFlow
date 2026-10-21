@@ -108,6 +108,7 @@ class ParseInput(BaseModel):
     snapshot: RawSnapshotRecord
     raw_bytes: bytes
     candidate: CandidateSource | None = None
+    force_reparse: bool = False
 
 
 class ParserResult(BaseModel):

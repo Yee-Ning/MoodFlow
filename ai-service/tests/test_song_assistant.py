@@ -79,6 +79,7 @@ class SongAssistantTests(unittest.TestCase):
                 "remove_song_from_playlist_tool",
                 "get_liked_songs",
                 "delete_playlist_tool",
+                "get_song_popularity_tool",
             ],
         )
         self.assertEqual(bound_tools, MUSIC_AGENT_TOOLS)

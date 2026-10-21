@@ -1,0 +1,292 @@
+{
+  "root_entity": {
+    "entity_id": "netease:artist:6452",
+    "entity_type": "artist",
+    "name": "周杰伦",
+    "artist": "周杰伦",
+    "album": null,
+    "source": "netease",
+    "metadata": {
+      "music_size": 568,
+      "aliases": [
+        "Jay Chou",
+        "周董"
+      ],
+      "album_size": 44,
+      "cover_url": "https://p3.music.126.net/NWv6PtSBkyWZzqbJVzBr7g==/109951169164936450.jpg"
+    }
+  },
+  "graph": {
+    "root": "netease:artist:6452",
+    "nodes": [
+      {
+        "id": "netease:artist:6452",
+        "type": "artist",
+        "name": "周杰伦",
+        "description": "世界线根实体；netease 音乐目录中的artist实体",
+        "metadata": {
+          "music_size": 568,
+          "aliases": [
+            "Jay Chou",
+            "周董"
+          ],
+          "album_size": 44,
+          "cover_url": "https://p3.music.126.net/NWv6PtSBkyWZzqbJVzBr7g==/109951169164936450.jpg",
+          "artist": "周杰伦",
+          "album": null,
+          "source": "netease",
+          "entity_reference": {
+            "node_id": "netease:artist:6452",
+            "node_type": "artist",
+            "canonical_name": "周杰伦",
+            "knowledge_entity_id": "artist:jay_chou",
+            "catalog_reference": {
+              "provider": "netease",
+              "entity_id": "6452",
+              "entity_type": "artist",
+              "name": "周杰伦"
+            },
+            "aliases": [
+              "周杰倫",
+              "周董",
+              "Jay Chou",
+              "Chou",
+              "Jay"
+            ]
+          }
+        }
+      },
+      {
+        "id": "netease:song:210049",
+        "type": "song",
+        "name": "布拉格广场",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "蔡依林、周杰伦",
+          "album": "看我72变",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:5257138",
+        "type": "song",
+        "name": "屋顶",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "周杰伦、温岚、吴宗宪",
+          "album": "男女情歌对唱冠军全记录",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:1888354230",
+        "type": "song",
+        "name": "默 (Live)",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "李荣浩、周杰伦",
+          "album": "2021中国好声音 第1期",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:509781655",
+        "type": "song",
+        "name": "想你就写信 (Live)",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "周杰伦、李硕、张鑫",
+          "album": "中国新歌声第二季 第13期",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:255020",
+        "type": "song",
+        "name": "刀马旦",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "李玟、周杰伦",
+          "album": "Promise",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:5268423",
+        "type": "song",
+        "name": "手牵手",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "王力宏、陶喆、蔡琴、江蕙、苏芮、庾澄庆、张惠妹、顺子、动力火车、张清芳、周华健、张信哲、伍思凯、张宇、周杰伦、李玟、吴宗宪、陶晶莹、林慧萍、蔡依林、许茹芸、萧亚轩、孙燕姿、徐若瑄、彭佳慧、信乐团、游鸿明、范逸臣、迪克牛仔、李心洁、S.H.E、周渝民、朱孝天、Energy、可米小子、B.A.D、黄立成&麻吉、Tension、林志炫、罗志祥、欧汉声、光良、品冠、万芳、温岚、黄立行、王心凌、杨丞琳、范玮琪、潘玮柏、丁文琪、林晓培、袁惟仁、张惠春、康康、黄韵玲、黄嘉千、许慧欣、路嘉欣、萧潇、江美琪、Lisa Djaati",
+          "album": "用音乐加油！！手牵手大合唱",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:490602328",
+        "type": "song",
+        "name": "沧海一声笑 (Live)",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "那英、周杰伦、刘欢、陈奕迅",
+          "album": "中国新歌声第二季 第1期",
+          "source": "netease"
+        }
+      },
+      {
+        "id": "netease:song:210062",
+        "type": "song",
+        "name": "骑士精神",
+        "description": "netease 音乐目录中的song实体",
+        "metadata": {
+          "artist": "蔡依林、周杰伦",
+          "album": "看我72变",
+          "source": "netease"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "netease:song:210049",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "布拉格广场 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:5257138",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "屋顶 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:1888354230",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "默 (Live) performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:509781655",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "想你就写信 (Live) performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:255020",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "刀马旦 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:5268423",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "手牵手 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:490602328",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "沧海一声笑 (Live) performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      },
+      {
+        "source": "netease:song:210062",
+        "target": "netease:artist:6452",
+        "relation": "performed_by",
+        "description": "骑士精神 performed_by 周杰伦",
+        "evidence_ids": [
+          "music-api:artist:6452"
+        ]
+      }
+    ]
+  },
+  "narrative": "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。\n周杰伦（Jay Chou）1979年1月18日出生于台湾省新北市，祖籍福建省永春县，是华语流行乐男歌手、音乐人、演员、导演，毕业于淡江中学。2000年发行个人首张音乐专辑《Jay》并在华语乐坛获得广泛关注，2001年凭借专辑《范特西》奠定乐坛地位并获得三座台湾金曲奖。此后他推出《叶惠美》《七里香》《11月的萧邦》《依然范特西》等专辑，2003年登上美国《时代》杂志封面。2005年主演首部电影《头文字D》，凭该片获得香港电影金像奖和台湾电影金马奖“最佳新演员奖”；2007年成立“杰威尔音乐有限公司”，并首度自编自导、领衔主演爱情片《不能说的秘密》。2009年起凭《魔杰座》和《跨时代》两度获得台湾金曲奖“最佳国语男歌手奖”，2023年凭专辑《最伟大的作品》成为首位获得全球年度销量冠军的华语歌手，2024年成为首位在台北大巨蛋开唱的歌手，2026年发行专辑《太阳之子》。他共获得15座台湾金曲奖，是获得该奖最多的音乐人，四次获得世界音乐大奖“中国区最畅销艺人奖”、两次获得MTV亚洲大奖“最受欢迎歌手奖”，被美国CNN评为“25位亚洲最具影响力人物”之一、被《Fast Company》评为“全球百大创意人物”之一；作为音乐人，他为自己的所有原唱歌曲作曲并担任制作人，并将R&B、嘻哈等风格的唱法与中国传统音乐融合，使“中国风”这一名词登上流行音乐行列。[music-api:artist:6452]\n\n从目录数据看，这位艺人名下关联着44张专辑与568首音乐作品，规模本身构成了继续沿世界线探索的理由：节点越多，可延伸的路径越丰富。[music-api:artist:6452]\n\n当前世界线图以周杰伦为根节点，向外连接八首歌曲，关系均为“performed_by”，即这些作品由周杰伦演绎。它们分别是《布拉格广场》《屋顶》《默 (Live)》《想你就写信 (Live)》《刀马旦》《手牵手》《沧海一声笑 (Live)》与《骑士精神》。[music-api:artist:6452]\n\n这八条边值得继续探索的原因在于它们呈现出不同的面貌：其中《默 (Live)》《想你就写信 (Live)》《沧海一声笑 (Live)》带有现场版本标记，而《布拉格广场》《屋顶》《刀马旦》《手牵手》《骑士精神》则以录音室作品的形式出现。沿着这些节点，可以分别走向现场演绎与录音室作品两条不同的探索路径。[music-api:artist:6452]\n\n需要说明的是，当前内容只覆盖音乐目录事实，知识库中并没有可用的创作背景或历史影响资料，因此以上关于作品面貌的描述仅基于目录中的名称与关系，不能视为对创作背景或历史影响的核实。[music-api:artist:6452]",
+  "branches": [
+    {
+      "id": "branch:1",
+      "title": "布拉格广场：周杰伦的异域叙事与合唱作品",
+      "description": "从《布拉格广场》继续探索周杰伦音乐世界线中的异域场景与合唱方向。",
+      "branch_type": "related_work",
+      "target_entity": {
+        "id": "netease:song:210049",
+        "type": "song",
+        "name": "布拉格广场"
+      }
+    },
+    {
+      "id": "branch:2",
+      "title": "屋顶：周杰伦的对唱与抒情作品",
+      "description": "从《屋顶》继续探索周杰伦音乐世界线中的对唱与抒情歌曲方向。",
+      "branch_type": "related_work",
+      "target_entity": {
+        "id": "netease:song:5257138",
+        "type": "song",
+        "name": "屋顶"
+      }
+    },
+    {
+      "id": "branch:3",
+      "title": "刀马旦：周杰伦的中国风与跨风格合作",
+      "description": "从《刀马旦》继续探索周杰伦音乐世界线中的中国风与跨风格合作方向。",
+      "branch_type": "related_work",
+      "target_entity": {
+        "id": "netease:song:255020",
+        "type": "song",
+        "name": "刀马旦"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "music-api:artist:6452",
+      "source_type": "music_api",
+      "title": "网易云音乐 artist entity 6452",
+      "source": "MoodFlow Java Music Service",
+      "url": null,
+      "excerpt": null,
+      "metadata": {
+        "provider": "netease",
+        "entity_type": "artist",
+        "entity_id": 6452
+      }
+    }
+  ],
+  "citations": [
+    {
+      "id": "music-api:artist:6452",
+      "source_type": "music_api",
+      "title": "网易云音乐 artist entity 6452",
+      "source": "MoodFlow Java Music Service",
+      "url": null,
+      "excerpt": null,
+      "metadata": {
+        "provider": "netease",
+        "entity_type": "artist",
+        "entity_id": 6452
+      }
+    }
+  ],
+  "era_relations": [],
+  "scene_relations": [],
+  "influence_relations": []
+}

@@ -1,9 +1,0 @@
-TEST_CODE_ROOT=C:\Users\33994\.codex\worktrees\coldchain-p2-integration\MoodFlow\ai-service\app\__init__.py
-bringing up nodes...
-bringing up nodes...
-
-........................................................................ [ 34%]
-........................................................................ [ 69%]
-...............................................................          [100%]
-207 passed, 151 warnings in 54.93s
-VALIDATION_EXIT_CODE=0

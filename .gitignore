@@ -28,8 +28,32 @@ build/
 .env
 .env.*
 !.env.example
+!.env.*.example
 deployment-artifacts/
 
 # ===== OS =====
 .DS_Store
 Thumbs.db
+
+# ===== Local verification and generated reports =====
+.pytest_cache/
+.ruff_cache/
+.deepeval/
+.venv-*/
+/workspace/
+/visual-qa/
+/docs/reports/
+/docs/plans/
+/docs/superpowers/
+/docs/project-summary/
+/docs/deployment-preparation/
+/ai-service/evals/reports/
+/*_report.md
+/*-report.md
+/foundation_subgraph_e2e_acceptance.md
+/tool-retry-*.md
+/gate1b-delete.ps1
+
+# Evaluation datasets and report-generating source code remain versioned.
+/ai-service/evals/**/*.md
+!/ai-service/evals/**/README.md

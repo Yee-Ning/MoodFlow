@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .http_client import RawHttpResponse
 from .models import CandidateSource, RawSnapshotRecord
+from .retry import failure_policy, reason_code
 from .v2_models import DiscoveredCandidate, SourceAttemptRecord, SourceAttemptStatus
 from .validation import SnapshotValidator
 
@@ -218,6 +219,17 @@ class SourceCorpusReporter:
             self._failure_category(record.reason or "")
             for record in attempts
             if record.status is SourceAttemptStatus.FETCH_FAILED
+            and failure_policy(record.reason).category == "failure"
+        )
+        rate_limits = Counter(
+            reason_code(record.reason) for record in attempts
+            if record.status is SourceAttemptStatus.FETCH_FAILED
+            and failure_policy(record.reason).category == "rate_limited"
+        )
+        policy_denials = sum(
+            record.status is SourceAttemptStatus.FETCH_FAILED
+            and failure_policy(record.reason).category == "policy_denied"
+            for record in attempts
         )
         covered_topics = sorted(
             self.config.required_topics.intersection(topic_counts)
@@ -283,7 +295,10 @@ class SourceCorpusReporter:
             ],
             "fetch_attempted": fetch_attempted,
             "fetch_success": attempt_counts[SourceAttemptStatus.SNAPSHOT_VALID.value],
-            "fetch_failed": attempt_counts[SourceAttemptStatus.FETCH_FAILED.value],
+            "fetch_failed": sum(failure_types.values()),
+            "rate_limited": sum(rate_limits.values()),
+            "rate_limit_distribution": dict(sorted(rate_limits.items())),
+            "robots_denied": policy_denials,
             "replacement_success": len(replacement_records),
             "unresolved_source_gap": len(
                 {
@@ -325,6 +340,9 @@ class SourceCorpusReporter:
 
     @staticmethod
     def _failure_category(reason: str) -> str:
+        code = reason_code(reason)
+        if code != "unknown_failure":
+            return code
         normalized = reason.casefold()
         if "robots" in normalized:
             return "robots_denied"
@@ -410,6 +428,7 @@ class SourceCorpusReporter:
             "## Fetch and validation outcomes",
             "",
             f"Attempted: {report['fetch_attempted']}; successful V2 snapshots: {report['fetch_success']}; failed attempts: {report['fetch_failed']}; replacement successes: {report['replacement_success']}.",
+            f"Rate-limited attempts: {report['rate_limited']}; robots policy denials: {report['robots_denied']} (excluded from failed attempts).",
             "",
             "| Failure category | Attempts |",
             "| --- | ---: |",

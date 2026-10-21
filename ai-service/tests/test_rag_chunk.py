@@ -415,6 +415,7 @@ class ChunkPipelineServiceTests(unittest.TestCase):
                         "document_id": cleaned.document_id,
                         "source_id": cleaned.source_id,
                         "cleaned_path": cleaned_path.relative_to(root).as_posix(),
+                        "cleaned_sha256": "sha256:" + hashlib.sha256(cleaned_path.read_bytes()).hexdigest(),
                     }
                 )
                 + "\n",

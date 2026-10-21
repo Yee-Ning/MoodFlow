@@ -19,7 +19,10 @@ class ToolCallingState(BaseAgentState):
     tool_results: list[dict[str, Any]]
     client_actions: list[ClientAction]
     tool_call_count: int
+    tool_call_counts_by_phase: NotRequired[dict[str, int]]
+    tool_budget_stop: NotRequired[dict[str, Any]]
     direct_complete: bool
     answer: str | None
     task_result: TaskResult | None
     pack_run_id: NotRequired[str]
+    created_playlist_receipts: NotRequired[list[dict[str, Any]]]

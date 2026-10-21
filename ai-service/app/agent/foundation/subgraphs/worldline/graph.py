@@ -162,6 +162,25 @@ def _visible_content(result: WorldLineResult) -> str:
     return f"{result.narrative}\n\n可继续探索：\n{branch_lines}"
 
 
+def _narrative_failure_detail(error: Exception) -> dict[str, Any]:
+    """Expose bounded validation categories without copying exception text."""
+    from app.agent.structured_output import StructuredOutputError
+    from app.agent.structured_output.errors import ValidationFailure
+
+    detail = {"failure_type": "model_error", "attempts": 0, "validation_code": "unclassified"}
+    codes = {"missing_no_knowledge_disclosure", "citation_order_mismatch", "unknown_citation",
+             "missing_citation", "missing_knowledge_excerpt", "paragraph_missing_citation"}
+    seen = set()
+    while error is not None and id(error) not in seen:
+        seen.add(id(error))
+        if isinstance(error, StructuredOutputError):
+            detail.update(failure_type=error.last_failure_type.value, attempts=error.attempts)
+        if isinstance(error, ValidationFailure) and error.code in codes:
+            detail["validation_code"] = error.code
+        error = error.__cause__
+    return detail
+
+
 def build_worldline_subgraph(
     *,
     music_service: WorldLineMusicService | None = None,
@@ -699,7 +718,10 @@ def build_worldline_subgraph(
                 )
                 narrative = output.narrative
                 citation_ids = output.citation_ids
-        except Exception:
+        except Exception as exc:
+            detail = _narrative_failure_detail(exc)
+            logger.warning("worldline.narrative_rejected failure_type=%s attempts=%s validation_code=%s",
+                           detail["failure_type"], detail["attempts"], detail["validation_code"])
             _log_node(
                 "worldline.generate_narrative",
                 started_at=started_at,
@@ -709,11 +731,14 @@ def build_worldline_subgraph(
                 entity_type=entity.entity_type.value,
                 error_code="narrative_generation_failed",
             )
-            return _failed_result(
+            failed = _failed_result(
                 state,
                 NARRATIVE_UNAVAILABLE_MESSAGE,
                 "narrative_generation_failed",
             )
+            result = failed["task_result"]
+            failed["task_result"] = result.model_copy(update={"data": {**result.data, "generation_failure": detail}})
+            return failed
         _log_node(
             "worldline.generate_narrative",
             started_at=started_at,

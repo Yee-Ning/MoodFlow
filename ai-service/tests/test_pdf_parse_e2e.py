@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 from app.rag.parse_normalize.models import NormalizedDocument, ParseReport, ParseStatus
 from app.rag.parse_normalize.pdf.adapters import (
@@ -66,6 +67,20 @@ def fixture_cascade(cache_root: Path):
 
 
 class PDFParseEndToEndTests(unittest.TestCase):
+    def test_cli_force_bypasses_normalized_and_mineru_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            shutil.copytree(FIXTURE_ROOT, root, dirs_exist_ok=True)
+            parser, runner, _ = fixture_cascade(root / "cache")
+            service = create_default_service(root, raw_manifest_path=root / "sources_manifest.jsonl", pdf_parser=parser)
+            first = service.parse_source("pdf-complex-layout", parser_mode="mineru")
+            self.assertEqual(first.status, OutcomeStatus.PARSED)
+            self.assertEqual(service.parse_source("pdf-complex-layout", parser_mode="mineru").status, OutcomeStatus.SKIPPED)
+            with patch("run_parse.create_default_service", return_value=service), redirect_stdout(io.StringIO()):
+                code = main(["--source-id", "pdf-complex-layout", "--parser", "mineru", "--force"], project_root=root)
+            self.assertEqual(code, 0)
+            self.assertEqual(runner.calls, [("pdf-complex-layout", False), ("pdf-complex-layout", False)])
+
     def test_cli_parser_modes_are_explicit_and_auto_is_default(self) -> None:
         self.assertEqual(parse_args(["--source-id", "pdf-source"]).parser, "auto")
         for mode in ("pymupdf", "mineru", "docling"):

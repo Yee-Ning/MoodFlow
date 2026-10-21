@@ -29,7 +29,7 @@ from app.agent.foundation.context_engineering import (
 from app.agent.foundation.prompt_bindings import bind_prompts
 from app.agent.foundation.routing import RouteTask
 from app.llm.budget_strategy import prepare_sources
-from app.llm.runtime import RuntimeLimitError, active_ledger, active_manifest
+from app.llm.runtime import RuntimeLimitError, active_ledger, active_manifest, bind_context_pack
 from app.rag.chunk.token_counter import TokenCounter, UnicodeHeuristicTokenCounter
 
 
@@ -132,4 +132,5 @@ class AgentPackBuilder:
             manifest = PackManifest.model_validate({**pack.manifest, "agent_context": audit}).model_dump(mode="json")
             pack = ContextPack.model_validate({**pack.__dict__, "manifest": manifest})
         active_manifest.set(pack.manifest)
+        bind_context_pack(pack, selected_policy, self.selector)
         return pack

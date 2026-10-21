@@ -83,6 +83,40 @@ class FixtureDoclingRuntime:
 
 
 class MinerUAdapterTests(unittest.TestCase):
+    def test_corrupt_or_incomplete_cache_is_rebuilt_and_previous_is_retained(self) -> None:
+        parse_input = parse_input_for("complex-layout.pdf", "pdf-cache-repair")
+        inspection = PDFInspector().inspect(parse_input.raw_bytes)
+        for damage in ("json", "missing-image", "missing-marker"):
+            with self.subTest(damage=damage), tempfile.TemporaryDirectory() as directory:
+                runner = FixtureMinerURunner()
+                adapter = MinerUAdapter(Path(directory), runner=runner)
+                original = adapter.parse(parse_input, inspection)
+                cache = adapter._cache_directory(parse_input)
+                if damage == "json":
+                    (cache / "content_list.json").write_text("[", encoding="utf-8")
+                elif damage == "missing-image":
+                    (cache / "images/layout.png").unlink()
+                else:
+                    (cache / "cache_manifest.json").unlink()
+                repaired = adapter.parse(parse_input, inspection)
+                self.assertEqual(runner.calls, [False, False])
+                self.assertEqual(repaired.result, original.result)
+                self.assertTrue(adapter._cache_valid(cache, parse_input))
+                self.assertEqual(len(list(cache.parent.glob(f".{cache.name}.previous-*"))), 1)
+
+    def test_failed_rebuild_does_not_publish_success_marker(self) -> None:
+        class BrokenRunner:
+            def run(self, parse_input, output_directory, allow_ocr):
+                output_directory.mkdir(parents=True)
+                (output_directory / "content_list.json").write_text("[", encoding="utf-8")
+
+        parse_input = parse_input_for("complex-layout.pdf", "pdf-broken-cache")
+        with tempfile.TemporaryDirectory() as directory:
+            adapter = MinerUAdapter(Path(directory), runner=BrokenRunner())
+            with self.assertRaisesRegex(ParserError, "structured_output_invalid"):
+                adapter.parse(parse_input, PDFInspector().inspect(parse_input.raw_bytes))
+            self.assertFalse((adapter._cache_directory(parse_input) / "cache_manifest.json").exists())
+
     def test_structured_output_maps_blocks_tables_images_and_cache(self) -> None:
         parse_input = parse_input_for("complex-layout.pdf", "pdf-complex")
         inspection = PDFInspector().inspect(parse_input.raw_bytes)

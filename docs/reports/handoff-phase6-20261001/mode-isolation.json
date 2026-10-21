@@ -1,8 +1,0 @@
-{
-  "same_external_thread_id": true,
-  "handoff_checkpoint_unchanged": true,
-  "different_session_ids": true,
-  "disjoint_tasks": true,
-  "read_only": true,
-  "passed": true
-}

@@ -30,6 +30,7 @@ class RawHttpResponse:
     content: bytes
     content_type: str
     http_status: int
+    final_url: str | None = None
 
 
 class PolicyAwareHttpClient:
@@ -45,6 +46,7 @@ class PolicyAwareHttpClient:
         client: httpx.Client | None = None,
         monotonic: Callable[[], float] = time.monotonic,
         sleeper: Callable[[float], None] = time.sleep,
+        retry_wait: Callable[[str], None] | None = None,
     ) -> None:
         normalized_user_agent = user_agent.strip()
         if not normalized_user_agent:
@@ -69,6 +71,7 @@ class PolicyAwareHttpClient:
         self._owns_client = client is None
         self._monotonic = monotonic
         self._sleeper = sleeper
+        self.retry_wait = retry_wait
         self._robots_cache: dict[str, Protego | bool] = {}
         self._crawl_delay_by_origin: dict[str, float] = {}
         self._last_request_at: dict[str, float] = {}
@@ -91,6 +94,8 @@ class PolicyAwareHttpClient:
         return f"{parsed.scheme}://{parsed.netloc}"
 
     def _pace(self, origin: str) -> None:
+        if self.retry_wait is not None:
+            self.retry_wait(origin)
         previous = self._last_request_at.get(origin)
         if previous is not None:
             required_interval = max(
@@ -112,17 +117,16 @@ class PolicyAwareHttpClient:
         for _ in range(MAX_REDIRECTS + 1):
             origin = self._origin(current_url)
             self._pace(origin)
-            try:
-                response = self._client.get(
-                    current_url,
-                    headers={
-                        "User-Agent": self.user_agent,
-                        "Accept": "text/plain,*/*;q=0.1",
-                    },
-                    follow_redirects=False,
-                )
-            except httpx.HTTPError:
-                return None
+            # Transport failures must retain their type for the ingestion retry
+            # policy. No source body is fetched until robots can be checked.
+            response = self._client.get(
+                current_url,
+                headers={
+                    "User-Agent": self.user_agent,
+                    "Accept": "text/plain,*/*;q=0.1",
+                },
+                follow_redirects=False,
+            )
             if response.status_code not in REDIRECT_STATUSES:
                 return response
             location = response.headers.get("Location")
@@ -142,6 +146,11 @@ class PolicyAwareHttpClient:
         if response is None:
             self._robots_cache[origin] = False
             return False
+
+        if response.status_code in {408, 429} or response.status_code >= 500:
+            # Fail closed for this attempt without caching a network/server
+            # outage as a permanent robots policy denial.
+            response.raise_for_status()
 
         if response.status_code == 200:
             parser = Protego.parse(response.text)
@@ -215,5 +224,6 @@ class PolicyAwareHttpClient:
                         "Content-Type", "application/octet-stream"
                     ),
                     http_status=response.status_code,
+                    final_url=current_url,
                 )
         raise httpx.TooManyRedirects(f"more than {MAX_REDIRECTS} redirects for {url}")

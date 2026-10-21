@@ -184,7 +184,13 @@ def test_tool_domain_sources_cover_existing_implementations():
     assert {tool.name for tool in all_tool_calling_tools()} == {
         tool.name for tool in [*MUSIC_AGENT_TOOLS, *CLIENT_ACTION_TOOLS]
     }
-    assert len(MUSIC_AGENT_TOOLS) == 12
+    assert len(MUSIC_AGENT_TOOLS) == 13
+    assert {tool.name for tool in MUSIC_AGENT_TOOLS} == {
+        "search_music", "search_entities_tool", "get_song_lyrics", "get_user_playlists",
+        "get_playlist_detail_tool", "get_album_detail_tool", "add_song_to_playlist",
+        "set_song_liked_tool", "create_playlist_tool", "remove_song_from_playlist_tool",
+        "get_liked_songs", "delete_playlist_tool", "get_song_popularity_tool",
+    }
 
 
 def test_only_the_four_planned_edges_are_exposed():

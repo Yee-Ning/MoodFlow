@@ -38,6 +38,20 @@ _CONTEXT_CUES: dict[EntityType, tuple[str, ...]] = {
     EntityType.LABEL: ("唱片公司", "厂牌", "廠牌", "label"),
 }
 
+# Only the shared Jay alias uses these cues; other entities retain their rules.
+_JAY_CONTEXT_WINDOW = 32
+_JAY_ALBUM_CUES = (
+    "专辑", "專輯", "唱片", "发行", "發行", "曲目", "单曲", "單曲",
+    "album", "albums", "record", "records", "release", "released", "releases",
+    "track", "tracks", "single", "singles",
+)
+_JAY_ARTIST_CUES = (
+    "歌手", "艺人", "藝人", "音乐人", "音樂人", "出生", "演唱",
+    "artist", "artists", "singer", "singers", "born", "sang", "singing", "he", "his",
+)
+_JAY_SHORT_NAME = re.compile(r"(?<![A-Za-z0-9])jay(?![A-Za-z0-9])", re.I)
+_JAY_FULL_NAME = re.compile(r"(?<![A-Za-z0-9])jay\s+chou(?![A-Za-z0-9])", re.I)
+
 _METADATA_ENTITY_FIELDS: dict[str, EntityType] = {
     "artist": EntityType.ARTIST,
     "artists": EntityType.ARTIST,
@@ -96,8 +110,15 @@ class EntityLinker:
         linked: dict[str, CanonicalEntity] = {}
         pending: list[_Pending] = []
         for mention in mentions:
-            context_type = self._infer_context_type(chunk.content, mention.text)
-            if context_type is None:
+            is_shared_jay = normalize_alias(mention.text) == "jay" and {
+                item.entity_id for item in self.registry.candidates(mention.text)
+            } == {"artist:jay_chou", "album:jay_2000"}
+            context_type = (
+                self._infer_jay_context_type(chunk.content)
+                if is_shared_jay
+                else self._infer_context_type(chunk.content, mention.text)
+            )
+            if context_type is None and not is_shared_jay:
                 title = str(chunk.metadata.get("title") or "")
                 section_context = " > ".join([title, *chunk.section_path, mention.text])
                 context_type = self._infer_context_type(section_context, mention.text)
@@ -295,6 +316,40 @@ class EntityLinker:
             return EntityType(value.value)
         except ValueError:
             return None
+
+    @staticmethod
+    def _infer_jay_context_type(content: str) -> EntityType | None:
+        decisions: set[EntityType] = set()
+        full_names = list(_JAY_FULL_NAME.finditer(content))
+        for match in _JAY_SHORT_NAME.finditer(content):
+            # Jay within the full name identifies the artist even in album prose.
+            if any(name.start() == match.start() for name in full_names):
+                decisions.add(EntityType.ARTIST)
+                continue
+            start = max(0, match.start() - _JAY_CONTEXT_WINDOW)
+            end = match.end() + _JAY_CONTEXT_WINDOW
+            context = content[start:end].casefold()
+            album = EntityLinker._has_jay_cue(context, _JAY_ALBUM_CUES)
+            artist = (
+                EntityLinker._has_jay_cue(context, _JAY_ARTIST_CUES)
+                # Exclude common non-pronoun uses such as 其他 / 吉他 / 他人.
+                or re.search(r"(?<![其吉])他(?!人)", context) is not None
+                or any(start <= name.start() and name.end() <= end for name in full_names)
+            )
+            if album == artist:
+                return None  # No evidence, or conflicting evidence: keep unresolved.
+            decisions.add(EntityType.ALBUM if album else EntityType.ARTIST)
+        # Mentions are deduplicated per chunk; conflicting occurrences stay pending.
+        return next(iter(decisions)) if len(decisions) == 1 else None
+
+    @staticmethod
+    def _has_jay_cue(context: str, cues: tuple[str, ...]) -> bool:
+        return any(
+            re.search(rf"(?<![a-z0-9]){re.escape(cue)}(?![a-z0-9])", context)
+            if cue.isascii()
+            else cue in context
+            for cue in cues
+        )
 
     @staticmethod
     def _infer_context_type(content: str, mention: str) -> EntityType | None:

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from langchain_core.messages import BaseMessage
-from app.rag.knowledge.entity_linking.registry import EntityRegistry, DEFAULT_ENTITY_REGISTRY_PATH
 
 from app.rag.query_understanding.analyzer import QueryAnalyzer
 from app.rag.query_understanding.config import (
@@ -26,6 +27,7 @@ from app.rag.query_understanding.models import (
     SearchPlan,
 )
 from app.rag.query_understanding.planner import build_search_plan
+from app.rag.query_understanding.registry_binding import load_bound_registry
 from app.schemas.player import PlayerContext
 
 
@@ -38,15 +40,12 @@ class QueryUnderstandingService:
         entity_resolver: QueryEntityResolver | None = None,
         analyzer: QueryAnalyzer | None = None,
         index_profile: IndexProfile | None = None,
+        project_root: Path | None = None,
     ) -> None:
         self.config = config or load_query_understanding_config()
         registry = None
         if index_profile is not None and (context_resolver is None or entity_resolver is None):
-            registry = EntityRegistry.load(DEFAULT_ENTITY_REGISTRY_PATH.with_name(
-                index_profile.registry_version + ".yaml"
-            ))
-            if registry.version != index_profile.registry_version:
-                raise ValueError("query_index_registry_version_mismatch")
+            registry = load_bound_registry(index_profile, project_root)
         self.context_resolver = context_resolver or QueryContextResolver(registry=registry)
         self.entity_resolver = entity_resolver or QueryEntityResolver(registry=registry)
         self.analyzer = analyzer or QueryAnalyzer(self.config)

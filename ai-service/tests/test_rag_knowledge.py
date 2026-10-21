@@ -45,6 +45,7 @@ from app.rag.knowledge import (
 )
 from app.rag.clean.io import atomic_write_json, atomic_write_jsonl
 from app.rag.knowledge.config import DEFAULT_KNOWLEDGE_CONFIG_PATH
+from app.rag.knowledge.config import load_knowledge_config
 from app.rag.knowledge.entity_linking.registry import DEFAULT_ENTITY_REGISTRY_PATH
 from app.rag.knowledge.claims import Claim, ClaimPredicate, ClaimSource, ClaimTime
 from app.rag.knowledge.writer import KnowledgeDatasetWriter
@@ -284,6 +285,91 @@ class EntityLinkingTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual([item.entity_id for item in result.linked_entities], ["album:jay_2000"])
         self.assertFalse(result.unresolved_mentions)
+
+    async def test_jay_album_context_cues(self) -> None:
+        for cue in (
+            "专辑", "專輯", "唱片", "发行", "發行", "曲目", "单曲", "單曲",
+            "album", "records", "released", "tracks", "singles",
+        ):
+            with self.subTest(cue=cue):
+                result = await self.linker.link(_enriched(f"{cue} JAY。"))
+                self.assertEqual(
+                    [item.entity_id for item in result.linked_entities],
+                    ["album:jay_2000"],
+                )
+                self.assertFalse(result.unresolved_mentions)
+
+    async def test_jay_artist_context_cues(self) -> None:
+        for cue in ("他", "歌手", "出生", "演唱", "藝人", "singer", "born", "he"):
+            with self.subTest(cue=cue):
+                result = await self.linker.link(_enriched(f"Jay {cue}。"))
+                self.assertEqual(
+                    [item.entity_id for item in result.linked_entities],
+                    ["artist:jay_chou"],
+                )
+                self.assertFalse(result.unresolved_mentions)
+
+    async def test_jay_full_name_identifies_artist_even_in_album_prose(self) -> None:
+        for content in (
+            "JAY CHOU's albums and songs.",
+            "Jay\nChou released an album.",
+            "Jay 又称 Jay Chou。",
+            "Jay Chou，简称 JAY。",
+        ):
+            with self.subTest(content=content):
+                result = await self.linker.link(_enriched(
+                    content, mentions=[("JAY", EntityTypeHint.UNKNOWN)]
+                ))
+                self.assertEqual(
+                    [item.entity_id for item in result.linked_entities],
+                    ["artist:jay_chou"],
+                )
+                self.assertFalse(result.unresolved_mentions)
+
+    async def test_jay_conflicting_or_missing_context_stays_unresolved(self) -> None:
+        for content in (
+            "Jay 在现场受到欢迎。",
+            "歌手 Jay 的专辑。",
+            "专辑 Jay。" + "。" * 70 + "歌手 JAY。",
+            "Jay Chou 的专辑 JAY。",
+            "Jay 其他吉他他人。",
+            "Jay thesis singlehandedly recordsman。",
+            "Jay" + "。" * 33 + "歌手。",
+            "Jay" + "。" * 33 + "Jay Chou。",
+            "bluejay 歌手。",
+        ):
+            with self.subTest(content=content):
+                result = await self.linker.link(_enriched(
+                    content, mentions=[("Jay", EntityTypeHint.UNKNOWN)]
+                ))
+                self.assertNotIn(
+                    "album:jay_2000", {item.entity_id for item in result.linked_entities}
+                )
+                self.assertEqual(
+                    next(item for item in result.unresolved_mentions
+                         if item.normalized_text == "jay").reason,
+                    "registry_ambiguous",
+                )
+
+    async def test_jay_context_window_boundary_is_32_characters_each_side(self) -> None:
+        for content in ("歌手" + "。" * 30 + "Jay", "Jay" + "。" * 30 + "歌手"):
+            with self.subTest(content=content):
+                result = await self.linker.link(_enriched(content))
+                self.assertEqual(
+                    [item.entity_id for item in result.linked_entities],
+                    ["artist:jay_chou"],
+                )
+                self.assertFalse(result.unresolved_mentions)
+
+    async def test_jay_context_does_not_override_explicit_type_hint(self) -> None:
+        result = await self.linker.link(_enriched(
+            "Jay Chou 演唱。", mentions=[("Jay", EntityTypeHint.SONG)]
+        ))
+        self.assertEqual(
+            next(item for item in result.unresolved_mentions
+                 if item.normalized_text == "jay").reason,
+            "registry_candidate_type_mismatch",
+        )
 
     async def test_unique_artist_alias_is_not_derailed_by_nearby_song_word(self) -> None:
         chunk = _enriched("周杰倫是著名流行歌曲男歌手。")
@@ -1043,6 +1129,26 @@ class KnowledgePipelineTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIn("unchanged_input_and_versions", second.knowledge.quality.warnings)
 
+    async def test_jay_linker_version_invalidates_v4_cache(self) -> None:
+        config = load_knowledge_config().model_copy(update={"llm_enabled": False})
+        self.assertEqual(config.entity_linking_version, "v5")
+        self.assertEqual(KnowledgeConfig().entity_linking_version, "v5")
+        old_config = config.model_copy(update={"entity_linking_version": "v4"})
+        chunk = _enriched("Jay 是歌手。")
+        old = await KnowledgePipeline(old_config).process(chunk)
+        pipeline = KnowledgePipeline(config)
+
+        refreshed = await pipeline.process(chunk, existing=old)
+        cached = await pipeline.process(chunk, existing=refreshed)
+
+        self.assertEqual(refreshed.knowledge.quality.status, KnowledgeStatus.SUCCESS)
+        self.assertEqual(refreshed.knowledge.provenance.entity_linking_version, "v5")
+        self.assertNotEqual(
+            old.knowledge.provenance.knowledge_input_hash,
+            refreshed.knowledge.provenance.knowledge_input_hash,
+        )
+        self.assertEqual(cached.knowledge.quality.status, KnowledgeStatus.SKIPPED)
+
     async def test_batch_failure_is_isolated_to_one_chunk(self) -> None:
         good = _enriched(
             "周杰伦于2000年出道。",
@@ -1260,6 +1366,7 @@ class KnowledgeReleaseTests(unittest.IsolatedAsyncioTestCase):
                     "generation_mode": "rule_only",
                     "rejected_sample_ids": [],
                     "notes": "fixture review",
+                    "release_selection_sha256": sampling["release_selection_sha256"],
                 },
             )
 

@@ -210,6 +210,11 @@ async def execute_owned_task(
             },
         )
     if task.route_key is RouteKey.TOOL_CALLING:
+        from app.agent.handoff.niche_readback import reuse_niche_readback
+
+        verified = reuse_niche_readback(run)
+        if verified is not None:
+            return verified
         from app.agent.handoff.journey_consumer import consume_journey
 
         consumed = await consume_journey(
@@ -220,6 +225,10 @@ async def execute_owned_task(
         )
         if consumed is not None:
             return consumed
+        from app.agent.handoff.journey_seed import read_journey_seed
+        seed = await read_journey_seed(task, run.original_input, state["routing_context"], context_tool)
+        if seed is not None:
+            return seed
         request = curation_request(task.input_text)
         if request is not None:
             return await execute_curation(
@@ -230,6 +239,7 @@ async def execute_owned_task(
         # Bind the same allowlist to model and executor, including the read tool.
         graph = create_tool_calling_subgraph(
             model=instrument_chat_model(curator_model or get_base_chat_model()),
+            niche_request_text=run.original_input,
             tools=scoped_playback_tools(task.input_text, scoped_search_tools(task.input_text, [
                 *(tool_tools if tool_tools is not None else all_tool_calling_tools()),
                 context_tool,

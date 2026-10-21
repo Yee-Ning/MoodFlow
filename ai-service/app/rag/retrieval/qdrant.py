@@ -94,9 +94,19 @@ class QdrantHybridSearchBackend:
         dense = vectors.get(self.config.dense.vector_name)
         if dense is None or dense.size != self.config.dense.dimension:
             raise ValueError("retrieval_qdrant_dense_schema_mismatch")
+        if (
+            dense.distance != models.Distance.COSINE
+            or binding.manifest.dense_distance != "cosine"
+        ):
+            raise ValueError("retrieval_qdrant_dense_distance_mismatch")
         sparse = info.config.params.sparse_vectors or {}
         if self.config.bm25.vector_name not in sparse:
             raise ValueError("retrieval_qdrant_bm25_schema_mismatch")
+        if (
+            sparse[self.config.bm25.vector_name].modifier != models.Modifier.IDF
+            or binding.manifest.bm25_idf_modifier is not True
+        ):
+            raise ValueError("retrieval_qdrant_bm25_idf_mismatch")
         if info.points_count != binding.manifest.projected_count:
             raise ValueError("retrieval_qdrant_point_count_mismatch")
 

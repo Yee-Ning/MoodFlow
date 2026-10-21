@@ -1,4 +1,4 @@
-"""Deterministic KnowledgeEnrichedChildChunk to index document projection."""
+"""Deterministic knowledge chunk to index document projection."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import hashlib
 import json
 import uuid
 
+from app.rag.chunk.models import ChunkType
 from app.rag.knowledge.models import (
     KnowledgeEnrichedChildChunk,
     KnowledgeEnrichedParentChunk,
@@ -40,19 +41,42 @@ class IndexDocumentProjector:
         for item in chunk.knowledge.claims:
             validate_grounding(item, chunk, parent)
         dense_text = chunk.retrieval_content.strip()
+        return self._prepare(chunk, parent, dense_text, source_release_id)
+
+    def project_record(
+        self,
+        parent: KnowledgeEnrichedParentChunk,
+        *,
+        source_release_id: str,
+    ) -> PreparedIndexDocument:
+        # Child absence is checked against the complete corpus by the service.
+        if parent.chunk_type is not ChunkType.STRUCTURED_RECORD:
+            raise ValueError(f"non_record_parent_index_document:{parent.chunk_id}")
+        for item in parent.knowledge.claims:
+            validate_grounding(item, parent, parent)
+        # The atomic Parent already contains the rendered heading and full JSON.
+        return self._prepare(parent, parent, parent.content.strip(), source_release_id)
+
+    def _prepare(
+        self,
+        chunk: KnowledgeEnrichedChildChunk | KnowledgeEnrichedParentChunk,
+        parent: KnowledgeEnrichedParentChunk,
+        dense_text: str,
+        source_release_id: str,
+    ) -> PreparedIndexDocument:
         lexical_terms = self._lexical_terms(chunk)
         bm25_parts = [dense_text]
         if lexical_terms:
             bm25_parts.append("检索词：" + "；".join(lexical_terms))
         bm25_text = "\n\n".join(bm25_parts)
         point_id = str(uuid.uuid5(POINT_NAMESPACE, chunk.chunk_id))
-        payload = self._payload(chunk, parent, point_id, source_release_id)
+        payload = self._payload(chunk, parent, point_id, source_release_id, dense_text)
         input_hash = self._input_hash(chunk, dense_text, bm25_text, payload)
         payload["index_input_hash"] = input_hash
         return PreparedIndexDocument(
             point_id=point_id,
             chunk_id=chunk.chunk_id,
-            parent_id=chunk.parent_id,
+            parent_id=parent.chunk_id,
             doc_id=chunk.doc_id,
             dense_text=dense_text,
             bm25_text=bm25_text,
@@ -60,7 +84,9 @@ class IndexDocumentProjector:
             payload=payload,
         )
 
-    def _lexical_terms(self, chunk: KnowledgeEnrichedChildChunk) -> list[str]:
+    def _lexical_terms(
+        self, chunk: KnowledgeEnrichedChildChunk | KnowledgeEnrichedParentChunk
+    ) -> list[str]:
         candidates: list[str] = []
         candidates.extend(chunk.enrichment.semantic.topics)
         candidates.extend(chunk.enrichment.semantic.keywords)
@@ -79,10 +105,11 @@ class IndexDocumentProjector:
 
     def _payload(
         self,
-        chunk: KnowledgeEnrichedChildChunk,
+        chunk: KnowledgeEnrichedChildChunk | KnowledgeEnrichedParentChunk,
         parent: KnowledgeEnrichedParentChunk,
         point_id: str,
         source_release_id: str,
+        dense_text: str,
     ) -> dict[str, object]:
         entities = chunk.knowledge.entities.linked_entities
         claims = chunk.knowledge.claims
@@ -112,16 +139,20 @@ class IndexDocumentProjector:
         payload: dict[str, object] = {
             **source_payload_provenance(chunk, parent),
             "point_id": point_id,
-            "record_type": "child",
+            "record_type": "child" if chunk.parent_id is not None else "parent",
             "chunk_id": chunk.chunk_id,
-            "parent_id": chunk.parent_id,
+            "parent_id": parent.chunk_id,
             "doc_id": chunk.doc_id,
             "chunk_index": chunk.chunk_index,
             "chunk_type": chunk.chunk_type.value,
             "section_path": chunk.section_path,
             "breadcrumb": chunk.breadcrumb,
             "content": chunk.content,
-            "retrieval_content": chunk.retrieval_content,
+            "retrieval_content": (
+                chunk.retrieval_content
+                if isinstance(chunk, KnowledgeEnrichedChildChunk)
+                else dense_text
+            ),
             "token_count": chunk.token_count,
             "parent_context": {
                 "chunk_id": parent.chunk_id,
@@ -164,6 +195,8 @@ class IndexDocumentProjector:
         }
         if source_contexts:
             payload["source_title"] = source_contexts[0]["title"]
+        if chunk.chunk_type is ChunkType.STRUCTURED_RECORD:
+            payload["record_id"] = chunk.metadata.get("record_id")
         return {key: value for key, value in payload.items() if value is not None}
 
     @staticmethod
@@ -189,7 +222,7 @@ class IndexDocumentProjector:
 
     def _input_hash(
         self,
-        chunk: KnowledgeEnrichedChildChunk,
+        chunk: KnowledgeEnrichedChildChunk | KnowledgeEnrichedParentChunk,
         dense_text: str,
         bm25_text: str,
         payload: dict[str, object],

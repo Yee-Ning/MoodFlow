@@ -1,4 +1,4 @@
-"""Pure deterministic CleanEngine with auditable per-rule changes."""
+"""Pure deterministic CleanEngine executing the new 6-stage architecture."""
 
 from __future__ import annotations
 
@@ -6,10 +6,27 @@ import hashlib
 import re
 import unicodedata
 
+from .config import (
+    ConceptDriftConfig,
+    LanguageDetectionConfig,
+    StructuralCleanConfig,
+    TemplateDeduplicationConfig,
+)
 from .corpus import NormalizedDocumentContext
+from .diff_tracker import calculate_line_diff
+from .drift import ConceptDriftMonitor
 from .guard import SemanticGuard
-from .models import CleanDocumentAudit, CleanedDocument, CleanExecutionResult
+from .language import LanguageDetector
+from .models import (
+    CleanDocumentAudit,
+    CleanDocumentReport,
+    CleanedDocument,
+    CleanExecutionResult,
+    StageMetrics,
+)
 from .registry import CleanRule, RuleAction, RuleRegistry
+from .structural import StructuralCleaner
+from .template_dedup import TemplateDeduplicator
 
 
 class CleanEngine:
@@ -19,14 +36,43 @@ class CleanEngine:
         guard: SemanticGuard,
         *,
         registry_checksum: str,
+        structural_cleaner: StructuralCleaner | None = None,
+        template_deduplicator: TemplateDeduplicator | None = None,
+        language_detector: LanguageDetector | None = None,
+        drift_monitor: ConceptDriftMonitor | None = None,
     ) -> None:
         self.registry = registry
         self.guard = guard
         self.registry_checksum = registry_checksum
+        self.structural_cleaner = structural_cleaner or StructuralCleaner(
+            StructuralCleanConfig()
+        )
+        self.template_deduplicator = template_deduplicator or TemplateDeduplicator(
+            TemplateDeduplicationConfig()
+        )
+        self.language_detector = language_detector or LanguageDetector(
+            LanguageDetectionConfig()
+        )
+        self.drift_monitor = drift_monitor or ConceptDriftMonitor(
+            ConceptDriftConfig()
+        )
 
-    def clean(self, context: NormalizedDocumentContext) -> CleanExecutionResult:
+    def clean(
+        self,
+        context: NormalizedDocumentContext,
+        template_deduplicator: TemplateDeduplicator | None = None,
+    ) -> CleanExecutionResult:
         before = context.document.markdown
         current = before
+        stages: list[StageMetrics] = []
+
+        # Stage 2: Structural Data Cleaning (DOM de-noising & whitelist tables/lists)
+        struct_res = self.structural_cleaner.clean(current)
+        current = struct_res.cleaned_text
+        stages.append(struct_res.stage_metrics)
+
+        # Stage 3: Text Content Cleaning (Rule Registry + SequenceMatcher line diff)
+        stage3_before = current
         applied_rules: list[str] = []
         rule_hits: dict[str, int] = {}
         for rule in self.registry.rules_for(context):
@@ -36,14 +82,57 @@ class CleanEngine:
                 rule_hits[rule.id] = hits
                 current = updated
 
-        warnings = self.guard.evaluate(before, current, context, self.registry)
+        line_diff_stats, diff_sample = calculate_line_diff(stage3_before, current)
+        stage3_metrics = StageMetrics(
+            stage_index=3,
+            stage_name="text_content_cleaning",
+            before_chars=len(stage3_before),
+            after_chars=len(current),
+            removed_chars=max(0, len(stage3_before) - len(current)),
+            removed_blocks=line_diff_stats.deleted_lines,
+            details={
+                "applied_rules": applied_rules,
+                "diff_ratio": line_diff_stats.diff_ratio,
+                "deleted_lines": line_diff_stats.deleted_lines,
+                "added_lines": line_diff_stats.added_lines,
+            },
+        )
+        stages.append(stage3_metrics)
+
+        # Stage 4: Template Deduplication (Boilerplate removal across site documents)
+        active_dedup = template_deduplicator or self.template_deduplicator
+        dedup_res = active_dedup.deduplicate(
+            current,
+            doc_id=context.document.document_id,
+            site=context.source,
+        )
+        current = dedup_res.cleaned_text
+        stages.append(dedup_res.stage_metrics)
+
+        # Stage 5: Language Detection (Metadata annotation only; retains English blocks)
+        lang_annotation, lang_metrics = self.language_detector.detect(current)
+        stages.append(lang_metrics)
+
+        # Guard evaluation & Concept drift check (non-blocking monitoring hook)
+        warnings = list(self.guard.evaluate(before, current, context, self.registry))
+        drift_event = self.drift_monitor.evaluate(
+            before,
+            current,
+            document_id=context.document.document_id,
+            source=context.source,
+        )
         needs_review = bool(warnings)
         removed_chars = max(0, len(before) - len(current))
         removed_ratio = removed_chars / len(before) if before else 0.0
         normalized_hash = "sha256:" + hashlib.sha256(
             before.encode("utf-8")
         ).hexdigest()
+
         document = context.document
+        doc_metadata = dict(document.metadata)
+        doc_metadata["language_detection"] = lang_annotation.model_dump(mode="json")
+        doc_metadata["concept_drift"] = drift_event.model_dump(mode="json")
+
         cleaned = CleanedDocument(
             document_id=document.document_id,
             source_id=document.source_id,
@@ -67,8 +156,9 @@ class CleanEngine:
             needs_review=needs_review,
             normalized_path=context.relative_normalized_path,
             normalized_content_hash=normalized_hash,
-            metadata=document.metadata,
+            metadata=doc_metadata,
         )
+
         audit = CleanDocumentAudit(
             document_id=document.document_id,
             source_id=document.source_id,
@@ -88,11 +178,40 @@ class CleanEngine:
             needs_review=needs_review,
             warnings=warnings,
         )
+
+        single_report = CleanDocumentReport(
+            report_version="v0.2",
+            document_id=document.document_id,
+            source_id=document.source_id,
+            source=context.source,
+            source_type=context.source_type,
+            document_type=context.document_type,
+            clean_version=self.registry.clean_version,
+            rule_registry_checksum=self.registry_checksum,
+            before_length=len(before),
+            after_length=len(current),
+            removed_chars=removed_chars,
+            removed_ratio=round(removed_ratio, 8),
+            changed=current != before,
+            rules_applied=applied_rules,
+            rule_hits=rule_hits,
+            warnings=warnings,
+            needs_review=needs_review,
+            line_diff=line_diff_stats,
+            stages=stages,
+            language=lang_annotation,
+            sample_diff=diff_sample,
+        )
+
         return CleanExecutionResult(
             document=cleaned,
             audit=audit,
             before_text=before,
             after_text=current,
+            line_diff=line_diff_stats,
+            stages=tuple(stages),
+            language_annotation=lang_annotation,
+            single_report=single_report,
         )
 
     def _apply_rule(self, text: str, rule: CleanRule) -> tuple[str, int]:

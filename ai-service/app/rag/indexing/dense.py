@@ -7,12 +7,17 @@ from typing import Protocol, Sequence
 from .config import DenseEmbeddingConfig
 
 
+DENSE_POOLING = "last_token"
+
+
 class DenseEncoder(Protocol):
     def encode_documents(self, texts: Sequence[str]) -> list[list[float]]: ...
 
 
 class QwenDenseEncoder:
     """Encode documents only; query instructions belong to the online pipeline."""
+
+    pooling = DENSE_POOLING
 
     def __init__(self, config: DenseEmbeddingConfig) -> None:
         self.config = config

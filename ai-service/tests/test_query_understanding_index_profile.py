@@ -5,6 +5,7 @@ from contextlib import redirect_stdout
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
+from hashlib import sha256
 
 from app.rag.indexing.models import IndexBuildManifest
 from app.rag.query_understanding import load_index_profile
@@ -13,6 +14,7 @@ from app.rag.retrieval import (
     load_retrieval_index_binding,
 )
 from run_query_understanding import main as run_query_understanding_main
+from tests.test_query_registry_binding import bound_registry_hashes, copy_bound_registry, REGISTRY
 
 
 def manifest(*, ready: bool = True) -> IndexBuildManifest:
@@ -38,9 +40,12 @@ def manifest(*, ready: bool = True) -> IndexBuildManifest:
         dense_dimension=32,
         dense_distance="cosine",
         dense_normalized=True,
+        dense_max_length=8192,
+        dense_pooling="last_token",
         bm25_vector_name="bm25",
         bm25_model="qdrant/bm25",
         bm25_options={},
+        bm25_idf_modifier=True,
         hnsw_m=16,
         hnsw_ef_construct=100,
         parent_count=1,
@@ -58,6 +63,7 @@ def manifest(*, ready: bool = True) -> IndexBuildManifest:
 
 
 def write_release(root: Path, value: IndexBuildManifest) -> Path:
+    copy_bound_registry(root)
     release_path = root / value.source_release_manifest_path
     release_path.parent.mkdir(parents=True)
     release_path.write_text(
@@ -65,12 +71,19 @@ def write_release(root: Path, value: IndexBuildManifest) -> Path:
             {
                 "release_id": value.source_release_id,
                 "component_versions": {"entity_registry": "v3"},
+                "source": {"entity_registry_files": [
+                    {"path": path, "sha256": digest}
+                    for path, digest in bound_registry_hashes().items()
+                ]},
             }
         ),
         encoding="utf-8",
     )
     manifest_path = root / "data/indexing/v1/manifest.json"
     manifest_path.parent.mkdir(parents=True)
+    value = value.model_copy(update={
+        "source_release_manifest_fingerprint": "sha256:" + sha256(release_path.read_bytes()).hexdigest(),
+    })
     manifest_path.write_text(value.model_dump_json(), encoding="utf-8")
     return manifest_path
 
@@ -86,6 +99,17 @@ class IndexProfileTests(unittest.TestCase):
             self.assertEqual(profile.collection_name, "music_knowledge_test")
             self.assertEqual(profile.source_release_id, "knowledge-v2-testrelease")
             self.assertEqual(profile.registry_version, "v3")
+            self.assertEqual(profile.registry_file_hashes, bound_registry_hashes())
+
+    def test_release_hash_drift_is_rejected_before_trusting_registry_hashes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            value = manifest()
+            path = write_release(root, value)
+            release = root / value.source_release_manifest_path
+            release.write_bytes(release.read_bytes() + b"\n")
+            with self.assertRaisesRegex(ValueError, "release_hash_mismatch"):
+                load_index_profile(root, path)
 
     def test_non_ready_manifest_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -127,6 +151,49 @@ class IndexProfileTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "runtime_mismatch"):
                 load_retrieval_index_binding(root, path, load_retrieval_config())
 
+    def test_encoding_identity_rejects_mismatch_and_missing_legacy_fields(self) -> None:
+        from app.rag.retrieval.binding import _validate_manifest_matches_runtime
+
+        config = load_retrieval_config()
+        selected = manifest().model_copy(update={
+            "dense_model": config.dense.model_name,
+            "dense_model_revision": config.dense.model_revision,
+            "dense_dimension": config.dense.dimension,
+            "bm25_options": config.bm25.query_options(),
+        })
+        _validate_manifest_matches_runtime(selected, config)
+        for field, value in (("dense_max_length", 4096), ("dense_pooling", "mean"),
+                             ("dense_max_length", None), ("dense_pooling", None),
+                             ("bm25_idf_modifier", None)):
+            with self.subTest(field=field, value=value):
+                with self.assertRaisesRegex(ValueError, "runtime_mismatch:.*" + field):
+                    _validate_manifest_matches_runtime(
+                        selected.model_copy(update={field: value}), config,
+                    )
+        changed_query = config.model_copy(update={
+            "dense": config.dense.model_copy(update={"max_length": 4096}),
+        })
+        with self.assertRaisesRegex(ValueError, "runtime_mismatch:.*dense_max_length"):
+            _validate_manifest_matches_runtime(selected, changed_query)
+        for limit in (32, 8192, 32768):
+            with self.subTest(limit=limit):
+                runtime = config.model_copy(update={
+                    "dense": config.dense.model_copy(update={"max_length": limit}),
+                })
+                _validate_manifest_matches_runtime(
+                    selected.model_copy(update={"dense_max_length": limit}), runtime,
+                )
+
+    def test_legacy_manifest_does_not_invent_encoding_identity(self) -> None:
+        payload = manifest().model_dump()
+        for field in ("dense_max_length", "dense_pooling", "bm25_idf_modifier"):
+            payload.pop(field)
+        payload["manifest_version"] = "v2"
+        restored = IndexBuildManifest.model_validate(payload)
+        self.assertIsNone(restored.dense_max_length)
+        self.assertIsNone(restored.dense_pooling)
+        self.assertIsNone(restored.bm25_idf_modifier)
+
     def test_manifest_outside_project_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as project, tempfile.TemporaryDirectory() as other:
             path = write_release(Path(other), manifest())
@@ -148,6 +215,20 @@ class IndexProfileTests(unittest.TestCase):
             payload["search_plan"]["entities"][0]["knowledge_entity_id"],
             "song:qing_tian",
         )
+
+    def test_cli_verifies_registry_under_the_bound_project_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = write_release(root, manifest())
+            args = ["歌曲《晴天》的创作背景", "--no-llm", "--index-manifest", str(path)]
+            with redirect_stdout(StringIO()):
+                self.assertEqual(run_query_understanding_main(args, project_root=root), 0)
+            selected = root / REGISTRY / "v3.yaml"
+            selected.write_bytes(selected.read_bytes() + b"\n# changed in the bound project\n")
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(run_query_understanding_main(args, project_root=root), 1)
+            self.assertEqual(json.loads(output.getvalue())["error"], "query_index_registry_hash_mismatch")
 
 
 if __name__ == "__main__":

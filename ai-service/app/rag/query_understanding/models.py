@@ -268,6 +268,7 @@ class IndexProfile(BaseModel):
     index_schema_version: str = Field(pattern=r"^v\d+$")
     projection_version: str = Field(pattern=r"^v\d+$")
     registry_version: str = Field(pattern=r"^v\d+$")
+    registry_file_hashes: dict[str, str] = Field(default_factory=dict)
 
 
 class SearchPlan(BaseModel):

@@ -1,0 +1,4 @@
+# Preserve the exact bytes and recorded SHA256 of the Gold V5 freeze and Ragas view.
+rag_eval_gold_v5.frozen.jsonl text eol=lf
+rag_eval_gold_v5.ragas.jsonl text eol=lf
+rag_eval_gold_v5_3.frozen.jsonl -text

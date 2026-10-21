@@ -33,6 +33,37 @@ from app.llm.runtime import active_ledger, active_manifest
 
 active_stage_context = ContextVar("explorer_stage_context", default=None)
 active_evidence = ContextVar("explorer_stage_evidence", default=None)
+active_narrative_input = ContextVar("explorer_narrative_input", default=None)
+
+
+@dataclass
+class NarrativeInputState:
+    invocation_id: str = ""
+    attempt: int = 0
+    boundary_context: object = None
+
+
+@contextmanager
+def narrative_input_scope():
+    token = active_narrative_input.set(NarrativeInputState())
+    try:
+        yield
+    finally:
+        active_narrative_input.reset(token)
+
+
+def reset_narrative_input(invocation_id, attempt):
+    state = active_narrative_input.get()
+    if state is not None:
+        state.invocation_id, state.attempt, state.boundary_context = invocation_id, attempt, None
+
+
+def record_narrative_input(sent):
+    from .narrative_boundary import boundary_context_from_input
+    state = active_narrative_input.get()
+    if state is not None:
+        state.boundary_context = boundary_context_from_input(
+            sent, invocation_id=state.invocation_id, attempt=state.attempt)
 
 
 def raise_hard_source_failure(error):

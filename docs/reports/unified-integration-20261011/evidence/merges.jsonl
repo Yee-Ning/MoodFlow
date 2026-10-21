@@ -1,7 +1,0 @@
-{"source":"codex/redis-infra","merge":"76528aa3a4af55be4c78016b70dc71fe5b41efa4","regression":"redis_infra_accepted","passed":229}
-{"source":"codex/longhorizon-foundation-projection","merge":"c655597aeb1cf6c63a44fe86135eac4e6541b595","regression":"foundation_projection_regression","passed":97}
-{"source":"codex/longhorizon-query-drilldown","merge":"a7db3dec18a96f647e4f4e2d34802f31bc69f64a","regression":"query_drilldown_accepted","passed":100}
-{"source":"codex/memory-hardening","merge":"488deb261d3be1c6accd31e2902a2b250d854552","regression":"memory_hardening_accepted","passed":122,"frontend":"lint + build + test:memory + synthetic browser desktop/mobile"}
-{"source":"codex/agent-pack-relay-migration","merge":"d8b58e1c4ebb7fd1952fdf7af25b22bd084a81ec","regression":"relay_migration_final","passed":293}
-{"source":"codex/agent-integration-chains","merge":"acf828951f688d3b7569e049c0da72b3fc8f6ce6","regression":"chains_combination_regression","passed":404,"subtests":2,"prompt_anchor_tests":48}
-{"source":"codex/context-agent-pack-design","merge":"c60ade8d5dd3ade954d2b034ea105c2ad9d2db30","validation":"historical design compared with current implementation; git diff --check"}

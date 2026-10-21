@@ -11,6 +11,7 @@ from app.agent.foundation.routing import RouteKey
 from app.agent.foundation.subgraphs.current_song.graph import _previous_action_target
 from app.agent.foundation.subgraphs.worldline.entity_resolver import (
     _QUOTED_ENTITY,
+    _normalized_name,
     parse_entity_query,
 )
 from app.agent.foundation.subgraphs.worldline.graph import create_worldline_subgraph
@@ -29,6 +30,7 @@ from app.agent.handoff.journey import (
     ListeningJourney,
     build_listening_journey,
     render_journey,
+    MAX_JOURNEY_NODES,
 )
 from app.agent.handoff.explorer_session import (
     get_explorer_sessions,
@@ -44,6 +46,8 @@ from app.agent.handoff.explorer_preferences import (
 from app.agent.handoff.explorer_roots import root_guidance
 from app.agent.foundation.subgraphs.worldline.service import WorldLineExecutionError
 from app.rag.query_understanding.context import _CURRENT_SONG_REFERENCE
+
+_NODE_COUNT = re.compile(r"(?<![第0-9一二三四五六七八九十两])([0-9]+|[一二三四五六七八九十两])\s*(?:个\s*)?节点")
 
 
 @lru_cache
@@ -77,6 +81,45 @@ def journey_query(text: str) -> str:
     )
 
 
+def journey_node_limit(text):
+    matches = _NODE_COUNT.findall(text)
+    if not matches:
+        return MAX_JOURNEY_NODES
+    chinese = dict(zip("一二三四五六七八九十两", (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 2), strict=True))
+    values = {int(value) if value.isascii() else chinese[value] for value in matches}
+    if len(values) != 1 or 0 in values:
+        raise ValueError("journey node count is ambiguous or nonpositive")
+    return min(values.pop(), MAX_JOURNEY_NODES)
+
+
+def scoped_journey_query(text, original_input):
+    """Carry one literal root from this request into a rootless child task."""
+    if _QUOTED_ENTITY.search(text) or _CURRENT_SONG_REFERENCE.search(text) or is_branch_followup(text):
+        return text
+    if not re.search(r"旅程|路径|世界线|探索", text):
+        return text
+    roots = {match.group("name").strip() for match in _QUOTED_ENTITY.finditer(original_input)}
+    if len(roots) != 1:
+        return text
+    try:
+        parsed = parse_entity_query(original_input)
+    except ValueError:
+        return text
+    label = {EntityType.SONG: "歌曲", EntityType.ARTIST: "歌手", EntityType.ALBUM: "专辑"}.get(parsed.expected_entity_type, "")
+    if re.search(r"\bsong_id\s*[=:]", original_input):
+        label = "歌曲"
+    return f"{text}；本轮起点为{label}《{parsed.query}》"
+
+
+def explicit_journey_song_id(text, original_input):
+    root = _QUOTED_ENTITY.search(text)
+    roots = {match.group("name").strip() for match in _QUOTED_ENTITY.finditer(original_input)}
+    if root is None or roots != {root.group("name").strip()}:
+        return None
+    ids = set(re.findall(r"\bsong_id\s*[=:]\s*([1-9][0-9]*)(?=$|[\s，,;；。)）])", original_input, re.ASCII))
+    return int(ids.pop()) if len(ids) == 1 else None
+
+
 def clarification(task, code, content):
     return TaskResult(
         task_id=task.task_id,
@@ -93,7 +136,7 @@ def clarification(task, code, content):
     )
 
 
-async def decorate_journey(result, world, snapshots, runtime):
+async def decorate_journey(result, world, snapshots, runtime, *, node_limit=MAX_JOURNEY_NODES):
     likes, receipt = await read_likes(runtime)
     weights, reasons, ids = preference_weights(world, snapshots, likes)
     journey = build_listening_journey(
@@ -103,6 +146,7 @@ async def decorate_journey(result, world, snapshots, runtime):
         node_priorities=weights,
         recommendation_reasons=reasons,
         preference_song_ids=ids,
+        node_limit=node_limit,
     )
     return result.model_copy(
         update={
@@ -126,6 +170,16 @@ async def execute_exploration(
 ) -> TaskResult:
     task = run.pending_tasks[0]
     text = _ground_same_turn_artist_reference(view, task)
+    text = scoped_journey_query(text, run.original_input)
+    limit_source = text
+    root = _QUOTED_ENTITY.search(text)
+    original_roots = {match.group("name").strip() for match in _QUOTED_ENTITY.finditer(run.original_input)}
+    if not _NODE_COUNT.search(text) and root is not None and original_roots == {root.group("name").strip()}:
+        limit_source = run.original_input
+    try:
+        node_limit = journey_node_limit(limit_source)
+    except ValueError:
+        return clarification(task, "invalid_journey_node_count", "请给出一个明确、正整数的旅程节点数量。")
     owner = owner_key(view, runtime)
     if is_branch_followup(text):
         if owner is None:
@@ -151,7 +205,7 @@ async def execute_exploration(
                 "explorer_followup_mode": mode,
             },
         )
-        result = await decorate_journey(result, world, snapshots, runtime)
+        result = await decorate_journey(result, world, snapshots, runtime, node_limit=node_limit)
         if mode == "explain_selected":
             node = next(
                 (
@@ -185,6 +239,20 @@ async def execute_exploration(
     if guidance:
         return clarification(task, "explorer_topic_root_guidance", guidance)
     target = None
+    requested_song_id = explicit_journey_song_id(text, run.original_input)
+    routing = view["routing_context"]
+    if requested_song_id is not None and routing.has_current_song and routing.current_song_id == requested_song_id:
+        read = SongContextRead.model_validate_json(await invoke_song_context(context_tool, {}))
+        if read.status is not TaskStatus.SUCCESS:
+            return TaskResult(task_id=task.task_id, route_key=RouteKey.WORLDLINE, status=read.status,
+                              content=read.message, error=read.message if read.status is TaskStatus.FAILED else None,
+                              data={"reason": read.reason})
+        root = _QUOTED_ENTITY.search(text).group("name")
+        if read.song.song_id != requested_song_id or _normalized_name(read.song.name) != _normalized_name(root):
+            return clarification(task, "explicit_song_target_mismatch", "本轮起点与歌曲资料不一致，请核对歌曲名称和 ID。")
+        target = ResolvedEntity(entity_id=catalog_entity_id(EntityType.SONG, requested_song_id),
+                                entity_type=EntityType.SONG, name=read.song.name, artist=read.song.artist or None,
+                                album=read.song.album or None, source="netease")
     # Explicit titles follow the existing catalog/query-resolution workflow.
     if _CURRENT_SONG_REFERENCE.search(text) and not _QUOTED_ENTITY.search(text):
         played_id, pending = _previous_action_target(list(run.results))
@@ -253,6 +321,8 @@ async def execute_exploration(
         world = WorldLineResult.model_validate(result.data["worldline_result"])
         if target is not None and world.root_entity.entity_id != target.entity_id:
             raise ValueError("Explorer changed the trusted song target")
+        if requested_song_id is not None and world.root_entity.entity_id != catalog_entity_id(EntityType.SONG, requested_song_id):
+            return clarification(task, "explicit_song_target_mismatch", "目录结果与本轮指定的歌曲 ID 不一致，请核对起点。")
         raw_facts = output.get("entity_facts")
         facts = (
             MusicEntityFacts.model_validate(raw_facts)
@@ -273,7 +343,7 @@ async def execute_exploration(
                 }
             )
         result = await decorate_journey(
-            result, world, [facts] if facts else [], runtime
+            result, world, [facts] if facts else [], runtime, node_limit=node_limit
         )
         if response is not None:
             result = result.model_copy(

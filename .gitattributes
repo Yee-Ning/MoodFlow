@@ -58,3 +58,31 @@ ai-service/evals/semantic_relations_review.py text eol=lf
 ai-service/evals/semantic_relations_runner.py text eol=lf
 ai-service/evals/tests/semantic_relations_fixtures.py text eol=lf
 ai-service/evals/tests/test_semantic_relations_evaluation.py text eol=lf
+# Preserve H0's raw evidence bytes and hashed source files on every checkout.
+workspace/moodflow-review/rag-h0-abstention-gate1-20261017/** text eol=crlf
+ai-service/app/agent/foundation/subgraphs/worldline/generation.py text eol=crlf
+ai-service/app/agent/foundation/subgraphs/worldline/prompts.py text eol=crlf
+ai-service/evals/rag_h0_v5.py text eol=lf
+ai-service/evals/rag_h0_v5_report.py text eol=lf
+ai-service/tests/test_worldline_h0_abstention.py text eol=lf
+ai-service/tests/test_rag_h0_v5.py text eol=lf
+ai-service/tests/test_rag_h0_v5_report.py text eol=lf
+# H0 round 2 source snapshots keep their measured checkout bytes.
+ai-service/app/agent/structured_output/service.py text eol=crlf
+ai-service/app/agent/foundation/subgraphs/worldline/stage_pack.py text eol=crlf
+ai-service/app/agent/foundation/subgraphs/worldline/narrative_boundary.py text eol=lf
+ai-service/app/agent/foundation/subgraphs/worldline/narrative_normalization.py text eol=lf
+ai-service/tests/test_worldline_h0_round2.py text eol=lf
+ai-service/tests/test_rag_h0_round2_v5.py text eol=lf
+ai-service/evals/rag_h0_round2_v5.py text eol=lf
+ai-service/evals/rag_h0_round2_v5_report.py text eol=lf
+ai-service/tests/test_rag_h0_round2_report.py text eol=lf
+# Preserve the approved V5.2 freeze and its reproducible evidence bytes.
+ai-service/evals/datasets/rag_eval_gold_v5_2.frozen.jsonl -text
+ai-service/tools/gold_release_freeze_v5_2/** text eol=lf
+workspace/moodflow-review/gold-v5-2-phase2-20261019/** text eol=lf
+# Keep V5.2 H2 baseline code and frozen run evidence byte stable.
+ai-service/evals/rag_v52_h2_baseline.py text eol=lf
+ai-service/tests/test_rag_v52_h2_baseline.py text eol=lf
+workspace/moodflow-review/v5-2-h2-baseline-20261019/** text eol=lf
+ai-service/tools/v52_offline_runtime/** text eol=lf

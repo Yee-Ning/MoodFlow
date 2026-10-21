@@ -31,6 +31,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--tokenizer-name-or-path")
     parser.add_argument("--tokenizer-local-files-only", action="store_true")
     parser.add_argument("--validate-only", action="store_true")
+    parser.add_argument("--include-manual-review", action="store_true")
     return parser.parse_args(argv)
 
 
@@ -62,7 +63,7 @@ def main(
             cleaned_root=cleaned_root,
             cleaned_manifest_path=_resolve(root, args.manifest),
             output_root=_resolve(root, args.output_root),
-        ).run(validate_only=args.validate_only)
+        ).run(validate_only=args.validate_only, include_manual_review=args.include_manual_review)
         payload = {
             **outcome.summary,
             "manifest": (

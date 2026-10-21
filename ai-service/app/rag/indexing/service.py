@@ -9,11 +9,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Sequence, TypeVar
 
-from app.rag.knowledge.models import KnowledgeStatus
+from app.rag.chunk.models import ChunkType
+from app.rag.knowledge.models import KnowledgeEnrichedParentChunk, KnowledgeStatus
 
+from .cache import LocalEmbeddingCache
 from .config import IndexingConfig
 from .corpus import IndexCorpusReader
-from .dense import DenseEncoder, QwenDenseEncoder
+from .dense import DENSE_POOLING, DenseEncoder, QwenDenseEncoder
 from .models import (
     IndexBuildManifest,
     IndexFailure,
@@ -102,7 +104,13 @@ class OfflineIndexingService:
             )
         all_eligible_chunks = []
         excluded_count = 0
-        for chunk in corpus.children:
+        parents_with_children = {chunk.parent_id for chunk in corpus.children}
+        for chunk in corpus.chunks:
+            if isinstance(chunk, KnowledgeEnrichedParentChunk) and (
+                chunk.chunk_type is not ChunkType.STRUCTURED_RECORD
+                or chunk.chunk_id in parents_with_children
+            ):
+                continue
             status = chunk.knowledge.quality.status
             eligible = status in {KnowledgeStatus.SUCCESS, KnowledgeStatus.SKIPPED}
             if status is KnowledgeStatus.PARTIAL:
@@ -120,11 +128,16 @@ class OfflineIndexingService:
         documents: list[PreparedIndexDocument] = []
         for chunk in eligible_chunks:
             try:
-                document = projector.project(
-                    chunk,
-                    corpus.parents[chunk.parent_id],
-                    source_release_id=release.release_id,
-                )
+                if isinstance(chunk, KnowledgeEnrichedParentChunk):
+                    document = projector.project_record(
+                        chunk, source_release_id=release.release_id
+                    )
+                else:
+                    document = projector.project(
+                        chunk,
+                        corpus.parents[chunk.parent_id],
+                        source_release_id=release.release_id,
+                    )
                 validator.validate_document(document)
                 documents.append(document)
             except Exception as exc:
@@ -150,6 +163,9 @@ class OfflineIndexingService:
                     excluded_count=excluded_count,
                     indexed_count=0,
                     skipped_count=0,
+                    embedding_cache_path=None,
+                    embedding_cache_hit_count=0,
+                    embedding_computed_count=0,
                     failed_count=len(failures),
                     pruned_count=0,
                     collection_point_count=None,
@@ -173,21 +189,34 @@ class OfflineIndexingService:
         projection_path, projection_fingerprint = writer.write_projection(documents)
 
         store = self.store or QdrantIndexStore(config)
-        encoder = self.encoder or QwenDenseEncoder(config.dense)
         self._retry(store.ensure_collection)
-        existing = self._retry(
-            lambda: store.existing_hashes([item.point_id for item in documents])
+        cache_path = (
+            self.project_root / "data" / "indexing" / "embedding_cache" / "v1"
+            / "embeddings.sqlite3"
         )
-        pending = [
-            item for item in documents if existing.get(item.point_id) != item.input_hash
-        ]
-        skipped_count = len(documents) - len(pending)
-        points, embedding_failures = self._embed(pending, encoder, validator)
+        with LocalEmbeddingCache(cache_path) as cache:
+            # Look locally first; Qdrant hashes still decide whether to upsert.
+            cached = self._cached_points(documents, cache, validator)
+            existing = self._retry(
+                lambda: store.existing_hashes([item.point_id for item in documents])
+            )
+            pending = [
+                item for item in documents if existing.get(item.point_id) != item.input_hash
+            ]
+            skipped_count = len(documents) - len(pending)
+            uncached = [item for item in pending if item.input_hash not in cached]
+            computed: list[IndexPoint] = []
+            embedding_failures: list[IndexFailure] = []
+            if uncached:
+                encoder = self.encoder or QwenDenseEncoder(config.dense)
+                computed, embedding_failures = self._embed(uncached, encoder, validator, cache)
+            points = [cached[item.input_hash] for item in pending if item.input_hash in cached]
+            points.extend(computed)
+        warnings = list(cache.warnings)
         failures.extend(embedding_failures)
         indexed_count, upsert_failures = self._upsert(points, store)
         failures.extend(upsert_failures)
 
-        warnings: list[str] = []
         pruned_count = 0
         if should_prune and not failures:
             stale = sorted(
@@ -243,9 +272,12 @@ class OfflineIndexingService:
             dense_dimension=config.dense.dimension,
             dense_distance=config.dense.distance,
             dense_normalized=config.dense.normalize,
+            dense_max_length=config.dense.max_length,
+            dense_pooling=DENSE_POOLING,
             bm25_vector_name=config.bm25.vector_name,
             bm25_model=config.bm25.model_name,
             bm25_options=config.bm25.document_options(),
+            bm25_idf_modifier=config.bm25.idf_modifier,
             hnsw_m=config.qdrant.hnsw_m,
             hnsw_ef_construct=config.qdrant.hnsw_ef_construct,
             parent_count=len(corpus.parents),
@@ -257,6 +289,9 @@ class OfflineIndexingService:
             limited_to=limit,
             indexed_count=indexed_count,
             skipped_count=skipped_count,
+            embedding_cache_path=self._relative(cache_path),
+            embedding_cache_hit_count=len(cached),
+            embedding_computed_count=len(computed),
             failed_count=len(failures),
             pruned_count=pruned_count,
             collection_point_count=collection_count,
@@ -276,10 +311,14 @@ class OfflineIndexingService:
                 excluded_count=manifest.excluded_count,
                 indexed_count=manifest.indexed_count,
                 skipped_count=manifest.skipped_count,
+                embedding_cache_path=manifest.embedding_cache_path,
+                embedding_cache_hit_count=manifest.embedding_cache_hit_count,
+                embedding_computed_count=manifest.embedding_computed_count,
                 failed_count=manifest.failed_count,
                 pruned_count=manifest.pruned_count,
                 collection_point_count=manifest.collection_point_count,
                 config=config,
+                warnings=manifest.warnings,
             ),
             projection_path=projection_path,
             manifest_path=manifest_path,
@@ -287,11 +326,31 @@ class OfflineIndexingService:
             failures=failures,
         )
 
+    @staticmethod
+    def _cached_points(
+        documents: list[PreparedIndexDocument],
+        cache: LocalEmbeddingCache,
+        validator: IndexingValidator,
+    ) -> dict[str, IndexPoint]:
+        points: dict[str, IndexPoint] = {}
+        for document in documents:
+            vector = cache.get(document.input_hash)
+            if vector is None:
+                continue
+            try:
+                point = IndexPoint(document=document, dense_vector=vector)
+                validator.validate_point(point)
+                points[document.input_hash] = point
+            except ValueError:
+                cache.invalidate(document.input_hash)
+        return points
+
     def _embed(
         self,
         documents: list[PreparedIndexDocument],
         encoder: DenseEncoder,
         validator: IndexingValidator,
+        cache: LocalEmbeddingCache,
     ) -> tuple[list[IndexPoint], list[IndexFailure]]:
         points: list[IndexPoint] = []
         failures: list[IndexFailure] = []
@@ -302,7 +361,10 @@ class OfflineIndexingService:
                         [item.dense_text for item in batch]
                     )
                 )
-                points.extend(self._validated_points(batch, vectors, validator))
+                validated = self._validated_points(batch, vectors, validator)
+                # Persist each successful batch before the next model call or upsert.
+                cache.put(validated)
+                points.extend(validated)
             except Exception as batch_error:
                 if len(batch) == 1:
                     item = batch[0]
@@ -322,9 +384,9 @@ class OfflineIndexingService:
                                 [item.dense_text]
                             )
                         )
-                        points.extend(
-                            self._validated_points([item], vectors, validator)
-                        )
+                        validated = self._validated_points([item], vectors, validator)
+                        cache.put(validated)
+                        points.extend(validated)
                     except Exception as exc:
                         failures.append(
                             IndexFailure(

@@ -5,6 +5,9 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+
+from scripts import source_ingestion_v2
 
 from app.rag.source_ingestion.manifest import write_candidates
 from app.rag.source_ingestion.models import CandidateSource
@@ -15,6 +18,25 @@ CLI_PATH = AI_SERVICE_ROOT / "scripts/source_ingestion_v2.py"
 
 
 class SourceIngestionV2CliTests(unittest.TestCase):
+    def test_reopen_flag_defaults_off_and_reaches_service(self) -> None:
+        self.assertFalse(source_ingestion_v2.parse_args(["run"]).reopen_failed)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            candidates = root / "candidates.json"
+            discovery = root / "discovery.json"
+            write_candidates(candidates, [])
+            discovery.write_text("[]", encoding="utf-8")
+            with patch.object(source_ingestion_v2, "AutoSourceIngestionService") as service:
+                service.return_value.run.return_value.model_dump.return_value = {}
+                with patch.object(source_ingestion_v2, "PolicyAwareHttpClient"):
+                    source_ingestion_v2.main([
+                        "run", "--project-root", str(root), "--candidate-manifest", str(candidates),
+                        "--discovery-manifest", str(discovery), "--reopen-failed",
+                    ])
+            self.assertTrue(service.return_value.run.call_args.kwargs["reopen_failed"])
+            self.assertTrue(service.call_args.kwargs["retry_config"].enabled)
+            self.assertEqual(service.call_args.kwargs["retry_config"].max_source_attempts, 3)
+
     def test_validate_does_not_require_a_discovery_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)

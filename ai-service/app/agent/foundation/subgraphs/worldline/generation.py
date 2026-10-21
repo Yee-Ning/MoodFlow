@@ -3,6 +3,7 @@ import logging
 from contextlib import nullcontext
 from types import SimpleNamespace
 from typing import Any, Protocol
+from uuid import uuid4
 
 from app.agent.foundation.model_input import prepare_model_input
 from app.agent.foundation.routing import RouteKey
@@ -32,6 +33,8 @@ from app.agent.foundation.subgraphs.worldline.prompts import (
     EXPLORATION_BRANCH_BASE_V1,
     EXPLORATION_BRANCH_RULE_V1,
     NARRATIVE_SYSTEM_PROMPT,
+    NARRATIVE_EXTRA_FIELD_RETRY_RULE,
+    NARRATIVE_UNKNOWN_CITATION_RETRY_RULE,
     WORLDLINE_RETRY_RULE_V1,
 )
 from app.agent.structured_output import (
@@ -41,6 +44,7 @@ from app.agent.structured_output import (
     StructuredOutputService,
 )
 from app.agent.structured_output.parser import model_output_from_response
+from .narrative_normalization import normalize_narrative
 from app.llm.client import create_generation_response
 
 
@@ -76,7 +80,7 @@ class ProviderWorldLineRuntime:
         if retry:
             instructions += "\n" + WORLDLINE_RETRY_RULE_V1
         stage = {"worldline_narrative": "narrative", "worldline_branches": "branches"}.get(schema_name)
-        from .stage_pack import evidence_row, prepare_explorer_input, record_selected_evidence
+        from .stage_pack import evidence_row, prepare_explorer_input, record_selected_evidence, record_narrative_input
         # The graph and facts are structured constraints; existing RAG sources
         # are selected independently before the provider sees this one call.
         source_rows = payload.get("sources", [])
@@ -142,6 +146,7 @@ class ProviderWorldLineRuntime:
                     trace_context=trace_context)
                 if stage == "narrative":
                     sent = json.loads(model_input.input_items[0]["content"])
+                    record_narrative_input(sent)
                     record_selected_evidence(sent["sources"], knowledge_available=sent.get("knowledge_available", False))
             else:
                 model_input = await prepare_model_input(RouteKey.WORLDLINE, schema=schema, schema_name=schema_name,
@@ -231,7 +236,11 @@ class StructuredWorldLineGenerator:
             )
             payload["focus_entity"] = payload["root_entity"]
         disclosure = "当前未检索到补充音乐知识，以下内容仅基于音乐目录事实。"
-        from .stage_pack import active_evidence, raise_hard_source_failure, selected_evidence_scope
+        from .stage_pack import (
+            active_evidence, active_narrative_input, narrative_input_scope,
+            raise_hard_source_failure, reset_narrative_input, selected_evidence_scope,
+        )
+        invocation_id = str(uuid4())
 
         def knowledge_available():
             selected = active_evidence.get()
@@ -250,7 +259,12 @@ class StructuredWorldLineGenerator:
             try:
                 selected = active_evidence.get()
                 actual_sources = selected.sources if selected is not None and selected.sources is not None else sources
-                self._grounding_validator.validate(output, actual_sources)
+                state = active_narrative_input.get()
+                boundary = state.boundary_context if state is not None else None
+                if boundary is None:
+                    self._grounding_validator.validate(output, actual_sources)
+                else:
+                    self._grounding_validator.validate(output, actual_sources, boundary_context=boundary)
             except WorldLineGroundingError as exc:
                 raise SemanticValidationError(exc.code) from exc
 
@@ -266,12 +280,19 @@ class StructuredWorldLineGenerator:
         service = StructuredOutputService(
             "worldline_narrative", NarrativeDraft,
             semantic_validator=validate, repair=repair,
+            normalizer=lambda raw, attempt: normalize_narrative(raw, attempt,
+                invocation_id=invocation_id, allowed_keys=NarrativeDraft.model_fields),
         )
 
         async def generate(attempt: int, feedback: str | None) -> str | ModelOutput:
+            reset_narrative_input(invocation_id, attempt)
             instructions = NARRATIVE_SYSTEM_PROMPT
             if feedback:
                 instructions += f"\n{feedback}"
+                if "Validation code: extra_forbidden:" in feedback:
+                    instructions += "\n" + NARRATIVE_EXTRA_FIELD_RETRY_RULE
+                elif "Validation code: unknown_citation." in feedback:
+                    instructions += "\n" + NARRATIVE_UNKNOWN_CITATION_RETRY_RULE
             return await self._runtime.generate(
                 payload,
                 instructions=instructions,
@@ -281,7 +302,8 @@ class StructuredWorldLineGenerator:
             )
 
         try:
-            with selected_evidence_scope() if active_evidence.get() is None else nullcontext():
+            with (narrative_input_scope(),
+                  selected_evidence_scope() if active_evidence.get() is None else nullcontext()):
                 draft = await service.run(generate)
         except StructuredOutputError as exc:
             raise_hard_source_failure(exc)

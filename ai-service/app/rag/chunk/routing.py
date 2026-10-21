@@ -11,7 +11,7 @@ from app.rag.parse_normalize.models import (
     NormalizedDocument,
 )
 
-from .internal import NarrativePart, NarrativeRun, RoutedTable
+from .internal import NarrativePart, NarrativeRun, RoutedRecord, RoutedTable
 
 
 class ChunkRoutingError(ValueError):
@@ -23,6 +23,7 @@ class ChunkRoutes:
     narrative_runs: tuple[NarrativeRun, ...]
     tables: tuple[RoutedTable, ...]
     active_table_ids: frozenset[str]
+    records: tuple[RoutedRecord, ...] = ()
 
 
 class ChunkRouter:
@@ -39,6 +40,9 @@ class ChunkRouter:
         pending: list[NarrativePart] = []
         pending_path: tuple[str, ...] | None = None
         fallback_headings: dict[int, str] = {}
+        record_parts: dict[str, list[NarrativePart]] = {}
+        record_paths: dict[str, tuple[str, ...]] = {}
+        previous_record_id = None
 
         def flush() -> None:
             nonlocal pending, pending_path
@@ -54,6 +58,29 @@ class ChunkRouter:
             pending_path = None
 
         for block in document.blocks:
+            record_id = block.metadata.get("record_id")
+            if record_id is not None:
+                if not isinstance(record_id, str) or not record_id.strip():
+                    raise ChunkRoutingError("structured_record_id_invalid")
+                if block.block_type is BlockType.TABLE:
+                    raise ChunkRoutingError("structured_record_contains_table_block")
+                flush()
+                if record_id in record_parts and previous_record_id != record_id:
+                    raise ChunkRoutingError(f"structured_record_noncontiguous:{record_id}")
+                content = projected.get(block.block_id, "").strip()
+                if not content:
+                    raise ChunkRoutingError(f"structured_record_projection_missing:{record_id}")
+                record_paths.setdefault(record_id, self._section_path(
+                    block, block_by_id, fallback_headings, projected
+                ))
+                record_parts.setdefault(record_id, []).append(NarrativePart(
+                    order_index=block.order_index, block_id=block.block_id,
+                    block_type=block.block_type.value, content=content,
+                    metadata=block.metadata,
+                ))
+                previous_record_id = record_id
+                continue
+            previous_record_id = None
             if block.block_type is BlockType.HEADING:
                 flush()
                 if projected.get(block.block_id, "").strip():
@@ -125,6 +152,10 @@ class ChunkRouter:
             narrative_runs=tuple(narrative_runs),
             tables=tuple(routed_tables),
             active_table_ids=frozenset(active_table_ids),
+            records=tuple(RoutedRecord(
+                order_index=parts[0].order_index, record_id=record_id,
+                section_path=record_paths[record_id], parts=tuple(parts),
+            ) for record_id, parts in record_parts.items()),
         )
 
     @classmethod
@@ -152,6 +183,8 @@ class ChunkRouter:
         fallback_headings: dict[int, str],
         projected: dict[str, str],
     ) -> tuple[str, ...]:
+        if block.metadata.get("heading_assignment") == "position_unavailable":
+            return ()
         explicit: list[DocumentBlock] = []
         seen: set[str] = set()
         parent_id = block.parent_block_id

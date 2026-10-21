@@ -22,8 +22,20 @@ class RuntimeLimitError(Exception):
 active_ledger: ContextVar = ContextVar("active_request_ledger", default=None)
 active_agent: ContextVar = ContextVar("active_budget_agent", default=None)
 active_manifest: ContextVar = ContextVar("active_call_manifest", default=None)
+active_context_pack: ContextVar = ContextVar("active_context_pack", default=None)
 logger = logging.getLogger(__name__)
 BUDGET_LIMIT_MESSAGE = "本次任务的 token 预算已用完，已停止继续调用模型。现有结果已保留；请缩小请求范围后重试。"
+
+
+def bind_context_pack(pack, policy, selector):
+    """Keep this call's selected view, never recollect it as a later source."""
+    active_context_pack.set((pack, policy, selector))
+
+
+def replace_context_pack(before, after):
+    selected = active_context_pack.get()
+    if selected is not None and selected[0] is before:
+        active_context_pack.set((after, selected[1], selected[2]))
 
 
 def estimate_tokens(value):
@@ -466,13 +478,24 @@ class AccountedChatModel:
             output_tokens=self.output_tokens,
         )
 
-    async def ainvoke(self, messages, *args, **kwargs):
+    def request_payload(self, messages):
         schemas = ([tool.tool_call_schema.model_json_schema() for tool in self.tools]
                    if self.tools else getattr(self.model, "kwargs", {}).get("tools", []))
+        return {"messages": messages, "tools": schemas}
+
+    async def ainvoke(self, messages, *args, **kwargs):
         kwargs["max_tokens"] = min(kwargs.get("max_tokens", self.output_tokens), self.output_tokens)
+        selected = active_context_pack.get()
+        active_context_pack.set(None)
+        if selected is not None and messages is selected[0].messages:
+            from app.agent.foundation.chat_input import fit_chat_pack
+            pack = fit_chat_pack(*selected, payload=self.request_payload,
+                                 output_tokens=kwargs["max_tokens"])
+            messages = pack.messages
+            active_manifest.set(pack.manifest)
         return await accounted_call(
             lambda: self.model.ainvoke(messages, *args, **kwargs),
-            {"messages": messages, "tools": schemas},
+            self.request_payload(messages),
             output_tokens=kwargs["max_tokens"],
             model=self.model_name,
         )

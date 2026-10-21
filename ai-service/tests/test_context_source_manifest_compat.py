@@ -13,10 +13,8 @@ from tests.test_context_rag_source import collected, pack, source
 
 @pytest.fixture
 def legacy_pack():
-    report = Path(__file__).resolve().parents[2] / (
-        "docs/reports/context-engineering-phase2-20261005/manifest-example.json"
-    )
-    manifest = json.loads(report.read_text(encoding="utf-8"))["manifest"]
+    fixture = Path(__file__).with_name("fixtures") / "legacy_call_manifest.json"
+    manifest = json.loads(fixture.read_text(encoding="utf-8"))["manifest"]
     return {key: manifest[key] for key in ("tokens", "budget", "sources")}
 
 

@@ -14,6 +14,7 @@ from app.rag.source_ingestion.manifest import load_candidates
 from app.rag.source_ingestion.models import CandidateSource, ReviewStatus
 
 from .base import BaseParser, ParseNormalizeError
+from .cache_identity import identity_hash
 from .detection import FileTypeDetector
 from .manifest import RawSnapshotLoader, RawSnapshotNotFoundError
 from .models import (
@@ -128,7 +129,13 @@ class ParseNormalizeService:
                 "parser_override_only_supported_for_pdf",
                 started,
             )
-        parse_fingerprint = parser.fingerprint(parser_mode)
+        candidate = self._candidate(source_id)
+        parse_fingerprint = identity_hash({
+            "parser": parser.fingerprint(parser_mode),
+            "snapshot": loaded.record.model_dump(mode="json"),
+            "source_metadata": loaded.source_metadata,
+            "candidate": candidate.model_dump(mode="json") if candidate else None,
+        })
         if not force and self.writer.fingerprint_matches(
             source_id,
             raw_content_hash=loaded.record.content_hash,
@@ -143,13 +150,13 @@ class ParseNormalizeService:
                 detail="matching_parse_fingerprint",
             )
 
-        candidate = self._candidate(source_id)
         try:
             execution = parser.execute(
                 ParseInput(
                     snapshot=loaded.record,
                     raw_bytes=loaded.raw_bytes,
                     candidate=candidate,
+                    force_reparse=force,
                 ),
                 parser_mode=parser_mode,
             )
@@ -194,6 +201,7 @@ class ParseNormalizeService:
                 loaded.source_metadata,
                 parse_fingerprint,
             )
+            document = document.model_copy(update={"metadata": {**document.metadata, "parse_status": report.status.value}})
             output = self.writer.write(
                 document, report, artifacts=execution.artifacts
             )

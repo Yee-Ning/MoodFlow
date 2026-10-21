@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+import re
 
 from pydantic import JsonValue
 
@@ -170,8 +171,11 @@ class TableChunker:
                 children.append(
                     ChildDraft(
                         content=child_content,
-                        metadata=dict(metadata),
+                        metadata={**metadata, "table_paraphrase_version": "v1"},
                         table_data=child_data,
+                        retrieval_description=self._paraphrase(
+                            headers, child_rows, state, compact_header=compact_header
+                        ),
                     )
                 )
             parents.append(
@@ -230,7 +234,9 @@ class TableChunker:
             children.append(
                 ChildDraft(
                     content=prefix + piece,
-                    metadata={**metadata, "oversized_table_row_fragment": True},
+                    metadata={**metadata, "oversized_table_row_fragment": True,
+                              "table_paraphrase_version": "v1"},
+                    retrieval_description=self._fragment_description(fragment),
                     table_data=TableChunkData(
                         table_id=table.table_id,
                         header_state=state,
@@ -334,8 +340,10 @@ class TableChunker:
                 children.append(
                     ChildDraft(
                         content=prefix + fragment.content,
-                        metadata={**metadata, "oversized_table_row_fragment": True},
+                        metadata={**metadata, "oversized_table_row_fragment": True,
+                                  "table_paraphrase_version": "v1"},
                         table_data=child_data,
+                        retrieval_description=self._fragment_description(fragment),
                     )
                 )
             parents.append(
@@ -352,6 +360,48 @@ class TableChunker:
                 )
             )
         return parents
+
+    @staticmethod
+    def _fragment_description(fragment: TableRowFragment) -> str:
+        return (
+            f"表格第{fragment.source_row_index + 1}行的文本片段"
+            f"（第{fragment.fragment_index + 1}/{fragment.fragment_count}段）：{fragment.content}"
+        )
+
+    @staticmethod
+    def _paraphrase(
+        headers: list[str], rows: list[list[str]], state: TableHeaderState,
+        *, compact_header: bool = False,
+    ) -> str:
+        # Compact/headerless mode keeps the existing schema policy: do not
+        # re-expand huge headers or infer column semantics from row values.
+        labels = headers if state is not TableHeaderState.NONE and not compact_header else []
+        sentences = []
+        for row in rows:
+            fields = []
+            named = {}
+            for index in range(max(len(labels), len(row))):
+                label = labels[index].strip() if index < len(labels) else ""
+                value = row[index].strip() if index < len(row) else ""
+                fields.append(f"{label or f'第{index + 1}列'}为{value or '未提供值'}")
+                if label and value:
+                    named[label.lower()] = value
+            if not fields:
+                continue
+            normalized_labels = [label.strip().lower() for label in labels if label.strip()]
+            if state is TableHeaderState.EXPLICIT and len(set(normalized_labels)) == len(normalized_labels):
+                def unique_value(keys):
+                    values = [named[key] for key in keys if key in named]
+                    return values[0] if len(values) == 1 else None
+                album = unique_value(("专辑", "专辑名", "album"))
+                artist = unique_value(("艺人", "歌手", "artist"))
+                year = unique_value(("发行年份", "发行年", "release_year"))
+                if album and artist and year and re.fullmatch(r"\d{4}年?", year):
+                    title = album if album.startswith("《") and album.endswith("》") else f"《{album}》"
+                    sentences.append(f"{title}是{artist}于{year.removesuffix('年')}年发行的专辑。")
+            prefix = "按推定表头的表格记录" if state is TableHeaderState.INFERRED else "表格记录"
+            sentences.append(prefix + "：" + "；".join(fields) + "。")
+        return "\n".join(sentences)
 
     def _merge_text_fragments(
         self,

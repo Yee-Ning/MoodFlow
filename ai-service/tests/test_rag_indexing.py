@@ -213,11 +213,16 @@ def _child(
     return KnowledgeEnrichedChildChunk(**enriched.model_dump(), knowledge=knowledge)
 
 
-def _write_corpus(root: Path, children: list[KnowledgeEnrichedChildChunk]) -> Path:
+def _write_corpus(
+    root: Path,
+    children: list[KnowledgeEnrichedChildChunk],
+    *,
+    parents: list[KnowledgeEnrichedParentChunk] | None = None,
+) -> Path:
     release_root = root / "v2"
     release_root.mkdir(parents=True, exist_ok=True)
     path = release_root / "knowledge_enriched_chunks.jsonl"
-    rows = [_parent(), *children]
+    rows = [*([_parent()] if parents is None else parents), *children]
     path.write_text(
         "".join(
             json.dumps(row.model_dump(mode="json"), ensure_ascii=False) + "\n"
@@ -513,6 +518,28 @@ class KnowledgeReleaseTests(unittest.TestCase):
                     root, knowledge_path=knowledge_path
                 ).validate()
 
+    def test_explicit_manifest_rejects_different_selected_file_with_same_count(self) -> None:
+        with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary:
+            root = Path(temporary)
+            approved = _write_corpus(root / "approved", [_child()])
+            selected = _write_corpus(root / "working", [_child(content="不同的未批准内容。")])
+            with self.assertRaisesRegex(KnowledgeReleaseError, "selected_corpus_hash_mismatch"):
+                OfflineIndexingService(
+                    root, _config(), knowledge_path=selected,
+                    release_manifest_path=approved.parent / "knowledge_release_manifest.json",
+                ).run(validate_only=True)
+
+    def test_explicit_manifest_accepts_byte_identical_selected_file(self) -> None:
+        with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary:
+            root = Path(temporary)
+            approved = _write_corpus(root / "approved", [_child()])
+            selected = _write_corpus(root / "working", [_child()])
+            release = KnowledgeReleaseValidator(
+                root, knowledge_path=selected,
+                manifest_path=approved.parent / "knowledge_release_manifest.json",
+            ).validate()
+            self.assertEqual(release.release_id, RELEASE_ID)
+
     def test_collection_name_is_bound_to_release_and_projection_versions(
         self,
     ) -> None:
@@ -552,6 +579,11 @@ class OfflineIndexingServiceTests(unittest.TestCase):
                 outcome.manifest_path,
                 root / "data" / "indexing" / "v1" / RELEASE_ID / "v4" / "index_build_manifest.json",
             )
+            recorded = json.loads(outcome.manifest_path.read_text(encoding="utf-8"))
+            self.assertIs(recorded["bm25_idf_modifier"], True)
+            self.assertEqual(recorded["manifest_version"], "v3")
+            self.assertEqual(recorded["dense_max_length"], _config().dense.max_length)
+            self.assertEqual(recorded["dense_pooling"], "last_token")
 
     def test_rerun_skips_unchanged_points_before_embedding(self) -> None:
         with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary:

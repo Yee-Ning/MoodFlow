@@ -25,7 +25,7 @@ from app.agent.foundation.subgraphs.tool_calling import (
     create_tool_calling_subgraph,
 )
 from app.agent.foundation.subgraphs.tool_calling.graph import (
-    MAX_TOOL_CALLS,
+    TOOL_PHASE_LIMITS,
     TOOL_LIMIT_MESSAGE,
     _extract_entities,
     _track_matches_reference,
@@ -91,7 +91,20 @@ def scripted_assistant(
             )
         if not queue:
             raise AssertionError("Scripted assistant ran more times than expected")
-        return queue.pop(0)
+        response = queue.pop(0)
+        if any(call["name"] in {"create_playlist_tool", "add_song_to_playlist"}
+               for call in response.tool_calls):
+            from app.agent.foundation.agent_history_source import bind_produced_message
+            from app.agent.foundation.subgraphs.tool_calling.playlist_inheritance import (
+                current_invocation, producer_state,
+            )
+
+            # Simulated producer binding, not a claim of a real service receipt.
+            # Never derive the scope from replayed history or fixture text.
+            state = producer_state.get()
+            assert state is not None
+            response = bind_produced_message(response, current_invocation(state))
+        return response
 
     return assistant
 
@@ -1002,7 +1015,7 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
                 f"search-{index}",
                 {"keyword": f"测试 {index}"},
             )
-            for index in range(MAX_TOOL_CALLS + 1)
+            for index in range(TOOL_PHASE_LIMITS["retrieval"] + 1)
         ]
         graph = create_tool_calling_subgraph(
             tools=[search_tool()],
@@ -1014,7 +1027,8 @@ class ToolCallingSubgraphTests(unittest.IsolatedAsyncioTestCase):
         task = result["task_result"]
         self.assertEqual(task.status, TaskStatus.FAILED)
         self.assertEqual(task.content, TOOL_LIMIT_MESSAGE)
-        self.assertEqual(task.data["tool_calls"], MAX_TOOL_CALLS)
+        self.assertEqual(task.data["tool_calls"], TOOL_PHASE_LIMITS["retrieval"])
+        self.assertEqual(task.data["tool_budget_stop"]["budget"], "retrieval")
 
 
 if __name__ == "__main__":

@@ -152,6 +152,42 @@ class RetrievalLegAndFusionTests(unittest.TestCase):
 
 
 class QdrantHybridSearchBackendTests(unittest.IsolatedAsyncioTestCase):
+    async def test_binding_checks_live_metric_and_idf_against_manifest(self) -> None:
+        config = load_retrieval_config()
+        client = AsyncMock()
+        client.info.return_value = SimpleNamespace(version="1.19.0")
+        dense = models.VectorParams(size=1024, distance=models.Distance.COSINE)
+        sparse = models.SparseVectorParams(modifier=models.Modifier.IDF)
+        client.get_collection.return_value = SimpleNamespace(
+            points_count=2,
+            config=SimpleNamespace(params=SimpleNamespace(
+                vectors={"dense": dense}, sparse_vectors={"bm25": sparse},
+            )),
+        )
+        selected = binding()
+        selected.manifest = SimpleNamespace(
+            projected_count=2, dense_distance="cosine", bm25_idf_modifier=True,
+        )
+        backend = QdrantHybridSearchBackend(config, client=client)
+        await backend.validate_binding(selected)
+
+        for actual, recorded in ((models.Distance.DOT, "cosine"),
+                                 (models.Distance.COSINE, "dot")):
+            with self.subTest(actual=actual, recorded=recorded):
+                dense.distance = actual
+                selected.manifest.dense_distance = recorded
+                with self.assertRaisesRegex(ValueError, "dense_distance_mismatch"):
+                    await backend.validate_binding(selected)
+        dense.distance = models.Distance.COSINE
+        selected.manifest.dense_distance = "cosine"
+        for actual, recorded in ((None, True), (models.Modifier.IDF, False),
+                                 (models.Modifier.IDF, None)):
+            with self.subTest(actual=actual, recorded=recorded):
+                sparse.modifier = actual
+                selected.manifest.bm25_idf_modifier = recorded
+                with self.assertRaisesRegex(ValueError, "bm25_idf_mismatch"):
+                    await backend.validate_binding(selected)
+
     async def test_batch_query_uses_dense_and_core_bm25_contracts(self) -> None:
         config = load_retrieval_config()
         client = AsyncMock()
@@ -243,7 +279,9 @@ class QdrantHybridSearchBackendTests(unittest.IsolatedAsyncioTestCase):
                 projection_version="v2",
                 registry_version="v3",
             ),
-            manifest=SimpleNamespace(projected_count=2),
+            manifest=SimpleNamespace(
+                projected_count=2, dense_distance="cosine", bm25_idf_modifier=True,
+            ),
         )
         point_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
         payloads = [

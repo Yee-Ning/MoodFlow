@@ -48,7 +48,7 @@ def project_source_contexts(chunk, parent, claims: list[dict]) -> list[dict]:
                     **capture.model_dump(),
                     context_id=context_id,
                     source_id=source.source_id,
-                    document_id=chunk.parent_id,
+                    document_id=parent.chunk_id,
                     chunk_id=chunk.chunk_id,
                     claim_id=claim["claim_id"],
                     source_content_sha256=sha256(chunk.content.encode()).hexdigest(),
@@ -66,7 +66,7 @@ def project_source_contexts(chunk, parent, claims: list[dict]) -> list[dict]:
     if len(titles) > 1:
         raise ValueError("index_source_context_title_mismatch")
     document = SimpleNamespace(
-        id=chunk.parent_id,
+        id=parent.chunk_id,
         content=chunk.content,
         title=next(iter(titles), chunk.breadcrumb),
         source=source.source_name or source.source_id,

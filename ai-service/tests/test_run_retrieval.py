@@ -12,6 +12,7 @@ from app.rag.query_understanding.models import IndexProfile
 from app.rag.reranking import RerankedCandidate, RerankResult, RerankStatus
 from app.rag.retrieval import RetrievalResult, RetrievalStatus
 from tests.reranking_helpers import candidate
+from tests.test_query_registry_binding import bound_registry_hashes, copy_bound_registry
 
 
 def profile() -> IndexProfile:
@@ -21,6 +22,7 @@ def profile() -> IndexProfile:
         index_schema_version="v2",
         projection_version="v2",
         registry_version="v3",
+        registry_file_hashes=bound_registry_hashes(),
     )
 
 
@@ -78,6 +80,7 @@ class RunRetrievalTests(unittest.TestCase):
             return retriever
 
         with tempfile.TemporaryDirectory() as temporary:
+            copy_bound_registry(Path(temporary))
             output = StringIO()
             with (
                 patch.object(
@@ -129,6 +132,7 @@ class RunRetrievalTests(unittest.TestCase):
     def test_cli_can_apply_reranker_at_the_candidate_pool_boundary(self) -> None:
         retriever = FakeCandidatePoolRetriever(with_candidates=True)
         with tempfile.TemporaryDirectory() as temporary:
+            copy_bound_registry(Path(temporary))
             output = StringIO()
             with (
                 patch.object(

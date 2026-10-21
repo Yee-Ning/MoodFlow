@@ -48,7 +48,7 @@ async def _run(args: argparse.Namespace, project_root: Path) -> tuple[int, str]:
         if args.index_manifest is not None
         else None
     )
-    service = QueryUnderstandingService(config=config, index_profile=profile)
+    service = QueryUnderstandingService(config=config, index_profile=profile, project_root=project_root)
     graph = create_query_understanding_graph(service=service)
     current_song_id = args.current_song_id
     routing_context = PlayerContext(

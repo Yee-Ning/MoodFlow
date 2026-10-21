@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 from pathlib import Path
 
 from app.rag.indexing.models import IndexBuildManifest
 from app.rag.query_understanding.models import IndexProfile
+from .registry_binding import registry_file_hashes
 
 
 def _within(root: Path, candidate: Path) -> Path:
@@ -43,6 +45,8 @@ def load_index_profile(project_root: Path, manifest_path: Path) -> IndexProfile:
 
     release_path = _within(root, root / manifest.source_release_manifest_path)
     release = _load_object(release_path)
+    if "sha256:" + sha256(release_path.read_bytes()).hexdigest() != manifest.source_release_manifest_fingerprint:
+        raise ValueError("query_index_release_hash_mismatch")
     if release.get("release_id") != manifest.source_release_id:
         raise ValueError("query_index_release_id_mismatch")
     components = release.get("component_versions")
@@ -57,4 +61,5 @@ def load_index_profile(project_root: Path, manifest_path: Path) -> IndexProfile:
         index_schema_version=manifest.schema_version,
         projection_version=manifest.projection_version,
         registry_version=registry_version,
+        registry_file_hashes=registry_file_hashes(release),
     )

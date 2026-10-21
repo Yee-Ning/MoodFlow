@@ -14,7 +14,7 @@ from app.agent.foundation.source_errors import SourceIntegrityError
 from app.agent.handoff.hop_context import active_hop
 from app.agent.handoff.registry import CAPABILITY_OWNERS
 from app.llm.budget_strategy import prepare_sources
-from app.llm.runtime import active_agent, active_ledger, active_manifest
+from app.llm.runtime import active_agent, active_ledger, active_manifest, replace_context_pack
 
 
 def business_invocation(route, text, *, phase, prompt_refs, inputs, route_task_id=None, invocation_run_id=None):
@@ -92,6 +92,7 @@ def _audit(pack, invocation):
     manifest = projection.model_copy(update={"agent_context": audit}).model_dump(mode="json")
     result = ContextPack.model_validate({**pack.__dict__, "items": items, "manifest": manifest})
     active_manifest.set(result.manifest)
+    replace_context_pack(pack, result)
     return result
 
 
