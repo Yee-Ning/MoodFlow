@@ -1,6 +1,8 @@
 """Check the actual Git index and ignore rules before publishing the project."""
 
 from pathlib import Path
+import hashlib
+import json
 import subprocess
 import unittest
 
@@ -15,6 +17,16 @@ def git(*args, input=None):
 
 
 class RepositoryHygieneTests(unittest.TestCase):
+    def test_model_checksums_match_versioned_bytes_after_git_filters(self):
+        directory = "ai-service/artifacts/intent_model/"
+        manifest = json.loads((ROOT / directory / "manifest.json").read_text(encoding="utf-8"))
+        for relative, expected in manifest["files"].items():
+            if relative.endswith(".safetensors"):
+                continue  # LFS content is independently checked by setup.py.
+            with self.subTest(path=relative):
+                versioned = git("show", ":" + directory + relative)
+                self.assertEqual(hashlib.sha256(versioned).hexdigest(), expected)
+
     def test_index_excludes_local_reports_and_sensitive_files(self):
         forbidden = (
             "workspace/", "visual-qa/", "docs/reports/", "docs/plans/",
