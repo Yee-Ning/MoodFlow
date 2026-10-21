@@ -1,0 +1,22 @@
+name: moodflow-tests
+services:
+  postgres:
+    image: pgvector/pgvector:pg16-trixie@sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports: ["127.0.0.1:${MOODFLOW_TEST_PG_PORT:-55432}:5432"]
+    tmpfs: [/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD, pg_isready, -U, postgres]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:8@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6
+    command: [redis-server, --save, "", --appendonly, "no", --maxmemory-policy, noeviction]
+    ports: ["127.0.0.1:${MOODFLOW_TEST_REDIS_PORT:-56379}:6379"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 2s
+      timeout: 3s
+      retries: 30

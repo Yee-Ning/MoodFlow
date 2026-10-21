@@ -1,62 +1,57 @@
 # MoodFlow
 
-MoodFlow 是一个音乐播放与 AI 音乐助手项目，包含 React 前端、Spring Boot 后端、FastAPI / LangGraph AI 服务，以及网易云音乐 API 子模块。
+音乐播放与 AI 音乐助手。React 前端、Spring Boot 音乐后端、FastAPI / LangGraph AI 服务通过同一个网页入口运行，支持音乐搜索、播放、对话和音乐关系探索。
 
-| 模块 | 目录 | 默认开发端口 |
-| --- | --- | ---: |
-| React / TypeScript / Vite 前端 | `soul-music-room` | 5173 |
-| Spring Boot 后端 | `music-backend` | 8080 |
-| Python AI 服务 | `ai-service` | 8001 |
-| 网易云音乐 API | `netease-music-api` | 3000 |
+## 本地运行
 
-## 获取项目
+需要 Git、[Git LFS](https://git-lfs.com/)、Python 3.12 和支持 Linux 容器的 Docker Compose。建议至少为 Docker 分配 8 GB 内存，并预留 15 GB 磁盘空间。
 
 ```bash
+git lfs install
 git clone --recurse-submodules https://github.com/Yee-Ning/MoodFlow.git
 cd MoodFlow
+python scripts/setup.py
 ```
 
-如果已经克隆项目，补齐子模块：
+脚本会获取子模块和必要的分类模型，校验模型文件，并在缺少 `.env` 时从示例创建。已有 `.env` 会保留。
+
+编辑根目录 `.env`，填写自己的 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL` 和 `LLM_GENERATION_MODEL`。模型服务需要同时支持 OpenAI 兼容的 **Chat Completions** 和 **Responses API（JSON Schema 结构化输出）**。仅支持 Chat Completions 的服务不足以运行全部 AI 功能。
 
 ```bash
-git submodule update --init --recursive
+docker compose up --build -d
+docker compose ps -a
 ```
 
-## 本地开发
+全部服务就绪后访问 [localhost:8088](http://localhost:8088)。首次运行会下载 CPU PyTorch 和 Qwen 检索模型，并从仓库内的审核语料建立本地索引；根据网络和 CPU 性能可能需要较长时间：
 
-需要 JDK 21、Maven、Node.js、npm 和 Python。先安装各模块依赖：
-
-```powershell
-npm --prefix soul-music-room ci
-npm --prefix netease-music-api install
-python -m venv ai-service/.venv
-ai-service/.venv/Scripts/python.exe -m pip install -r ai-service/requirements.txt
+```bash
+docker compose logs -f prepare-index ai-service
+python scripts/smoke.py
 ```
 
-参考根目录和 `ai-service` 中的 `.env.example` 配置本地环境，实际密钥与密码只保存在本地。AI 服务的模型、数据库和检索配置见 [AI 服务说明](ai-service/README.md)。启用 PostgreSQL 时，启动前按 [开发说明](DEVELOPMENT.md) 执行数据库迁移。模型权重、向量数据库、原始网页语料、生产部署数据和真实账号配置需另外准备。
+`python scripts/smoke.py --chat` 会额外发送一次真实 AI 请求，使用你配置的模型服务。网易云登录、曲库和歌曲可播放性取决于账号、地区和上游服务。
 
-在项目根目录用 PowerShell 启动或停止服务：
-
-```powershell
-.\start-dev.ps1
-.\stop-dev.ps1
+```bash
+docker compose down
 ```
 
-前端入口为 <http://localhost:5173>。环境检查和启动说明见 [DEVELOPMENT.md](DEVELOPMENT.md)，生产部署说明见 [部署文档](docs/ecs-ubuntu2204-deployment.md)。
+此命令停止服务并保留数据库、知识索引和模型缓存。配置、日志、缓存和安装依赖不会提交到 Git。更新代码后重新运行 `python scripts/setup.py` 和启动命令即可。
 
-## 验证
+## 目录
 
-```powershell
-python scripts/test-repo-hygiene.py
-npm --prefix soul-music-room run build
-npm --prefix soul-music-room run lint
-mvn -f music-backend/pom.xml verify
-cd ai-service
-.venv/Scripts/python.exe -m pytest tests
-```
+| 目录 | 内容 |
+| --- | --- |
+| `soul-music-room/` | React / TypeScript / Vite 前端 |
+| `music-backend/` | Java 21 / Spring Boot 音乐 API |
+| `ai-service/app/` | 对话、路由、工具和知识检索 |
+| `ai-service/tests/` | 当前功能测试与必要回归样本 |
+| `ai-service/artifacts/intent_model/` | 分类模型推理文件与校验清单，权重使用 Git LFS |
+| `ai-service/data/` | 知识语料、审核清单及数据处理测试样本 |
+| `netease-music-api/` | 固定版本的网易云 API 子模块 |
+| `deploy/`、`scripts/` | 容器构建、本地初始化和验证工具 |
 
-前端另有 `package.json` 中的 `test:*` 交互契约测试。当前功能的回归样本随 tests/fixtures 提供。历史评测、审阅副本和一次性修复工具保存在 archive/research-20261021 标签中，不属于当前运行依赖。
+开发和测试命令见 [DEVELOPMENT.md](DEVELOPMENT.md)，AI 模块说明见 [ai-service/README.md](ai-service/README.md)。历史评测、一次性审查工具及旧部署方案保存在 Git 标签 `archive/research-20261021`，不参与当前启动。
 
-## 仓库内容
+## 许可与来源
 
-仓库保留源码、测试、依赖清单、必要配置示例、数据集与技术文档。开发报告、截图、工作区审查材料、运行日志、依赖安装目录和真实环境配置不纳入版本控制；生成报告的程序仍保留在源码中。
+项目使用 [GPL-3.0-only](LICENSE)。第三方代码、模型和知识来源保留各自的许可与署名：分类编码器基于 [BAAI/bge-small-zh-v1.5](https://huggingface.co/BAAI/bge-small-zh-v1.5)，其 MIT 许可随模型保存；检索模型使用 [Qwen/Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B)。前端原有来源说明见 [前端 README](soul-music-room/README.md)，网易云 API 的许可见其子模块。

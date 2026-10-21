@@ -161,7 +161,7 @@ def test_checkpoint_probe_cannot_report_memory_as_postgres(monkeypatch, tmp_path
 def test_worldline_v4_config_isolated_and_matches_query_embedding():
     from pathlib import Path
 
-    config = load_indexing_config(Path("app/rag/indexing/config/worldline_v4.yaml"))
+    config = load_indexing_config(Path(__file__).resolve().parents[1] / "app/rag/indexing/config/worldline_v4.yaml")
     retrieval = load_retrieval_config()
     assert config.projection_version == "v4"
     assert config.qdrant.collection_name == "worldline_knowledge_v4"

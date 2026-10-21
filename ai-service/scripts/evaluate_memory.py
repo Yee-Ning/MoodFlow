@@ -12,7 +12,7 @@ from app.agent.memory.retriever import MemoryRetriever
 from app.agent.memory.service import MemoryService
 from app.agent.memory.store import InMemoryMemoryStore
 
-DATASET = Path(__file__).resolve().parents[1] / "evals" / "datasets" / "memory_policy_v1.json"
+DATASET = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "memory_policy_v1.json"
 
 
 def evaluate(path=DATASET):

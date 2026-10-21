@@ -90,3 +90,56 @@ def test_diagnostic_urls_strip_credentials_and_queries():
     assert wheel.public_url("https://user:secret@download-r2.pytorch.org/path?token=secret") == (
         "https://download-r2.pytorch.org/path"
     )
+
+
+def test_truncated_range_resumes_from_actual_bytes_and_still_verifies_hash(tmp_path):
+    body = b"PK\x03\x04a-complete-wheel"
+    sha = hashlib.sha256(body).hexdigest()
+    offsets = []
+
+    class RangeOpener:
+        def open(self, request, timeout):
+            if request.full_url == wheel.INDEX_URL:
+                return FakeResponse(index_html(sha).encode(), wheel.INDEX_URL)
+            start, end = map(int, request.get_header("Range")[6:].split("-"))
+            offsets.append(start)
+            end = min(end, len(body) - 1)
+            segment = body[start:end + 1]
+            if len(offsets) == 1:
+                segment = segment[:3]  # Peer closes early despite advertising six bytes.
+            response = FakeResponse(segment, request.full_url)
+            response.status = 206
+            response.headers["Content-Range"] = f"bytes {start}-{end}/{len(body)}"
+            return response
+
+    with patch.object(wheel, "EXPECTED_SHA256", sha), patch.object(wheel, "DOWNLOAD_CHUNK_BYTES", 6), \
+            patch.object(wheel, "build_opener", return_value=RangeOpener()), patch.object(wheel.time, "sleep"):
+        result = wheel.fetch(tmp_path)
+    assert result["integrity_pass"] is True
+    assert offsets[:2] == [0, 3]
+    assert (tmp_path / wheel.WHEEL_NAME).read_bytes() == body
+
+
+def test_misaligned_resume_is_rejected_before_install(tmp_path):
+    part = tmp_path / "partial"
+    opener = MockRangeOpener("bytes 1-2/3", b"abc")
+    with pytest.raises(ValueError, match="Content-Range"):
+        wheel.download_wheel(opener, wheel.INDEX_URL, part, {})
+    assert not (tmp_path / wheel.WHEEL_NAME).exists()
+
+
+class MockRangeOpener:
+    def __init__(self, content_range, body):
+        self.content_range, self.body = content_range, body
+
+    def open(self, request, timeout):
+        response = FakeResponse(self.body, request.full_url)
+        response.status = 206
+        response.headers["Content-Range"] = self.content_range
+        return response
+
+
+def test_stalled_ranges_have_a_bounded_retry_limit(tmp_path):
+    with patch.object(wheel.time, "sleep"):
+        with pytest.raises(OSError, match="three attempts"):
+            wheel.download_wheel(MockRangeOpener("bytes 0-2/3", b""), wheel.INDEX_URL, tmp_path / "partial", {})

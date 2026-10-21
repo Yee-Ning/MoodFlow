@@ -1,49 +1,32 @@
 FROM python:3.12.10-slim-bookworm@sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db AS dependencies
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 HF_HOME=/models \
-    HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
-WORKDIR /app
-COPY ai-service/requirements.txt ./
-COPY deploy/requirements.production.txt ./requirements.production.txt
-COPY --from=wheelhouse /torch-2.14.0+cpu-cp312-cp312-manylinux_2_28_x86_64.whl /tmp/wheelhouse/torch-2.14.0+cpu-cp312-cp312-manylinux_2_28_x86_64.whl
-RUN printf '%s  %s\n' 'a09987c95ec4cffdb6df798d3d641558110a334cfccce22f2f046d83142bc260' '/tmp/wheelhouse/torch-2.14.0+cpu-cp312-cp312-manylinux_2_28_x86_64.whl' | sha256sum -c - \
-    && printf '%s\n' 'torch==2.14.0+cpu --hash=sha256:a09987c95ec4cffdb6df798d3d641558110a334cfccce22f2f046d83142bc260' > /tmp/torch-requirement.txt \
-    && python -m pip --isolated install --no-cache-dir --no-index --no-deps --find-links=/tmp/wheelhouse --require-hashes -r /tmp/torch-requirement.txt \
-    && python -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple -r requirements.production.txt -r requirements.txt \
-    && python -m pip check \
-    && rm -rf /tmp/wheelhouse /tmp/torch-requirement.txt
-
-COPY ai-service/requirements.redis.txt ./requirements.redis.txt
-RUN python -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple -r requirements.redis.txt \
+WORKDIR /build
+COPY deploy/fetch_torch_wheel.py ./
+RUN python fetch_torch_wheel.py --output-dir /tmp/wheelhouse --report /tmp/wheel.json \
+    && python -m pip --isolated install --no-cache-dir --no-deps /tmp/wheelhouse/*.whl
+COPY ai-service/requirements.lock.txt ./
+RUN python -m pip --isolated install --no-cache-dir -r requirements.lock.txt \
+    && python -m pip --isolated install --no-cache-dir redis==5.2.1 \
     && python -m pip check
 
-# The copied wheel belongs only to the dependency stage; the runtime image
-# receives installed packages without carrying the wheel archive layer.
 FROM python:3.12.10-slim-bookworm@sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 HF_HOME=/models \
-    HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
-WORKDIR /app
+    TOKENIZERS_PARALLELISM=false PYTHONPATH=/workspace:/workspace/ai-service
 COPY --from=dependencies /usr/local /usr/local
-COPY --from=dependencies /app/requirements.txt ./requirements.txt
-COPY --from=dependencies /app/requirements.production.txt ./requirements.production.txt
-COPY --from=dependencies /app/requirements.redis.txt ./requirements.redis.txt
-RUN python -m pip check
+WORKDIR /workspace/ai-service
 COPY ai-service/app/ app/
-COPY ai-service/app/agent/decision/jev/config/router_capability_contract.json app/agent/decision/jev/config/router_capability_contract.json
-COPY ai-service/app/agent/decision/jev/config/jev_multi_frozen_strategy_v3.json app/agent/decision/jev/config/jev_multi_frozen_strategy_v3.json
-COPY ai-service/data/intent/taxonomy.json data/intent/taxonomy.json
+COPY ai-service/artifacts/intent_model/ artifacts/intent_model/
+COPY ai-service/data/intent/ data/intent/
+COPY ai-service/data/knowledge/releases/worldline-final-native-release-20260927/v2/ data/knowledge/releases/worldline-final-native-release-20260927/v2/
 COPY ai-service/migrations/ migrations/
-COPY ai-service/scripts/migrate_agent_postgres.py scripts/migrate_agent_postgres.py
-COPY ai-service/scripts/reconcile_redis_budget.py scripts/reconcile_redis_budget.py
-COPY ai-service/scripts/flush_redis_playcounts.py scripts/flush_redis_playcounts.py
-COPY deploy/*.py deploy/
-COPY deploy/frozen-artifacts.json deploy/frozen-artifacts.json
-COPY deploy/model-cache-manifest.json deploy/model-cache-manifest.json
-# Generate transport-only configuration inside the image, preserving source YAML.
-RUN printf '%s  %s\n' 'a60027b108e744d2baa457b6221572b9720d6f1ba377ef0350dbe014002bc63a' '/app/data/intent/taxonomy.json' | sha256sum -c - \
-    && python -m deploy.runtime configure \
-    && useradd --system --uid 10001 app && chown -R app:app /app
+COPY deploy/local_runtime.py /workspace/deploy/local_runtime.py
+COPY scripts/setup.py /workspace/scripts/setup.py
+COPY ai-service/scripts/worldline_environment_readiness.py /workspace/scripts/worldline_environment_readiness.py
+RUN useradd --system --uid 10001 app \
+    && mkdir -p /models data/local \
+    && chown -R app:app /workspace /models
 USER app
+RUN python -m deploy.local_runtime verify-models
 EXPOSE 8001
-ENTRYPOINT ["python", "-m", "deploy.runtime"]
+ENTRYPOINT ["python", "-m", "deploy.local_runtime"]
 CMD ["serve"]
-HEALTHCHECK --interval=30s --timeout=20s --start-period=180s --retries=5 CMD python -m deploy.runtime health
+HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=10 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health',timeout=3)"

@@ -66,7 +66,7 @@ class RepositoryHygieneTests(unittest.TestCase):
             "README.md", "DEVELOPMENT.md", "soul-music-room/package.json",
             "soul-music-room/package-lock.json", "music-backend/pom.xml",
             "ai-service/requirements.txt", "ai-service/app/main.py",
-            "netease-music-api", "docker-compose.production.yml",
+            "netease-music-api", "compose.yaml", "LICENSE",
         } <= paths)
         modules = git("config", "-f", ".gitmodules", "--get-regexp", r"submodule\..*\.path").decode().splitlines()
         self.assertEqual(modules, ["submodule.netease-music-api.path netease-music-api"])

@@ -29,6 +29,7 @@ from tests.test_worldline_graph import (
     FakeGenerator, FakeMusicService, FailingRetriever, entity,
 )
 from tests.test_worldline_retrieval_adapter import FakeReranker, candidate, profile
+from tests.test_query_registry_binding import bound_registry_hashes
 
 
 class FixedRouter:
@@ -316,7 +317,8 @@ class FoundationE2EAcceptanceTests(unittest.TestCase):
         subgraph = create_worldline_subgraph(
             music_service=FakeMusicService(root),
             retriever=retriever,
-            query_understanding=QueryUnderstandingService(index_profile=profile()),
+            query_understanding=QueryUnderstandingService(index_profile=profile().model_copy(
+                update={"registry_file_hashes": bound_registry_hashes()})),
             generator=FakeGenerator(grounded=True),
         )
 

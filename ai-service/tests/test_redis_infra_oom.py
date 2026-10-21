@@ -44,7 +44,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def pressure_server():
     docker = shutil.which('docker')
     assert docker, 'Linux Redis infra acceptance requires Docker'
-    compose = yaml.safe_load((ROOT / 'docker-compose.production.yml').read_text(encoding='utf-8'))
+    compose = yaml.safe_load((ROOT / 'compose.yaml').read_text(encoding='utf-8'))
     image = compose['services']['redis']['image']
     name = 'moodflow-redis-oom-' + uuid4().hex
     result = subprocess.run([docker, 'run', '-d', '--name', name, '--label', 'codex.task=redis-infra-oom',

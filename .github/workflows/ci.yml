@@ -1,0 +1,84 @@
+name: CI
+on:
+  push:
+    branches: [main, "codex/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: soul-music-room
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: soul-music-room/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint
+      - run: |
+          npm run test:ai-layout
+          npm run test:ai-stream
+          npm run test:music-assets
+          npm run test:search
+          npm run test:memory
+          npm run test:ai-trigger
+          npm run test:worldline
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: music-backend/pom.xml
+      - run: mvn -B -f music-backend/pom.xml verify
+
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16-trixie@sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: [5432:5432]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+      redis:
+        image: redis:8@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6
+        ports: [6379:6379]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres@127.0.0.1:5432/postgres
+      BUDGET_TEST_REDIS_URL: redis://127.0.0.1:6379/0
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+          submodules: recursive
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: |
+            ai-service/requirements.lock.txt
+            ai-service/requirements-dev.txt
+      - name: Install verified CPU Torch and pinned runtime
+        run: |
+          python deploy/fetch_torch_wheel.py --output-dir /tmp/moodflow-wheel --report /tmp/moodflow-wheel.json
+          python -m pip install --no-deps /tmp/moodflow-wheel/*.whl
+          python -m pip install -r ai-service/requirements.lock.txt -r ai-service/requirements-dev.txt
+          python -m pip check
+      - run: python scripts/test-repo-hygiene.py
+      - run: python -m ruff check scripts/setup.py scripts/smoke.py scripts/tests deploy/local_runtime.py deploy/tests
+      - run: python -m pytest -q

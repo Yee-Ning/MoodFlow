@@ -1,0 +1,130 @@
+name: ${COMPOSE_PROJECT_NAME:-moodflow}
+
+x-ai: &ai
+  image: moodflow/ai-service:local
+  platform: linux/amd64
+  build:
+    context: .
+    dockerfile: deploy/ai.Dockerfile
+  init: true
+  environment:
+    LLM_API_KEY: ${LLM_API_KEY:-}
+    LLM_BASE_URL: ${LLM_BASE_URL:-https://your-compatible-api.example/v1}
+    LLM_MODEL: ${LLM_MODEL:-your-model-id}
+    LLM_GENERATION_MODEL: ${LLM_GENERATION_MODEL:-your-generation-model-id}
+    LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-60}
+    LLM_MAX_OUTPUT_TOKENS: ${LLM_MAX_OUTPUT_TOKENS:-4096}
+    SPRING_BOOT_BASE_URL: http://java:8080
+    SPRING_BOOT_TIMEOUT_SECONDS: "15"
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-moodflow-local-only}
+    CHECKPOINT_BACKEND: postgres
+    PERSISTENCE_BACKEND: postgres
+    MEMORY_BACKEND: postgres
+    AI_AGENT_GRAPH_MODE: foundation
+    AI_RAG_RETRIEVAL_MODE: hybrid
+    AI_RAG_RERANK_MODE: "off"
+    AI_RAG_INDEX_MANIFEST: data/local/index/index_build_manifest.json
+    QDRANT_URL: http://qdrant:6333
+    HF_ENDPOINT: ${HF_ENDPOINT:-https://huggingface.co}
+    JEV_ENABLED: "false"
+    JEV_ROUTER_V5_SHADOW_ENABLED: "false"
+    REDIS_URL: redis://redis:6379/0
+  volumes:
+    - local_knowledge:/workspace/ai-service/data/local
+    - model_cache:/models
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16-trixie@sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b
+    environment:
+      POSTGRES_USER: moodflow
+      POSTGRES_DB: moodflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-moodflow-local-only}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U moodflow -d moodflow]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:8@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6
+    command: [redis-server, --maxmemory, 512mb, --maxmemory-policy, noeviction, --save, "", --appendonly, "no"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.19.0
+    volumes: [qdrant_data:/qdrant/storage]
+    restart: unless-stopped
+
+  migrate:
+    <<: *ai
+    command: [migrate]
+    healthcheck: {disable: true}
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  prepare-index:
+    <<: *ai
+    command: [prepare-index]
+    healthcheck: {disable: true}
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      qdrant: {condition: service_started}
+
+  netease:
+    build:
+      context: .
+      dockerfile: deploy/netease.Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOST: 0.0.0.0
+      ENABLE_PROXY: "false"
+    init: true
+    restart: unless-stopped
+
+  java:
+    build:
+      context: .
+      dockerfile: deploy/java.Dockerfile
+    environment:
+      NETEASE_API_BASE_URL: http://netease:3000
+      SERVER_SERVLET_SESSION_COOKIE_SECURE: "false"
+      SERVER_SERVLET_SESSION_COOKIE_HTTP_ONLY: "true"
+      SERVER_SERVLET_SESSION_COOKIE_SAME_SITE: lax
+    depends_on:
+      netease: {condition: service_healthy}
+    init: true
+    restart: unless-stopped
+
+  ai-service:
+    <<: *ai
+    command: [serve]
+    depends_on:
+      prepare-index: {condition: service_completed_successfully}
+      java: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/frontend.Dockerfile
+    ports: ["${MOODFLOW_BIND:-127.0.0.1}:${MOODFLOW_PORT:-8088}:80"]
+    depends_on:
+      ai-service: {condition: service_healthy}
+      java: {condition: service_healthy}
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  model_cache:
+  local_knowledge:

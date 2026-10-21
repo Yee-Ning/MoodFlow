@@ -1,32 +1,11 @@
-# Preserve phase5 frozen datasets and evidence hashes across platforms.
+# Cross-platform source, signed data and inference model storage.
 .gitattributes text eol=lf
-# Keep byte-hashed routing contracts and semantic freeze documentation stable on Windows.
 ai-service/app/agent/decision/jev/config/*.json text eol=lf
-ai-service/evals/semantic_relations_v1/README.md text eol=lf
-ai-service/evals/datasets/router_e2e_blind_v5.jsonl text eol=lf
-ai-service/evals/datasets/handoff_guard_v1.jsonl text eol=lf
-ai-service/evals/datasets/handoff_guard_confirmation_v1.jsonl text eol=lf
-ai-service/evals/handoff_jev.py text eol=lf
-ai-service/evals/tests/test_handoff_jev.py text eol=lf
-docs/architecture/handoff-runtime-phase5.md text eol=lf
-docs/reports/handoff-phase5-20261001/** text eol=lf
-# Preserve phase6 acceptance evidence without transforming browser screenshots.
 ai-service/scripts/handoff_acceptance.py text eol=lf
 ai-service/scripts/handoff_checkpoint_acceptance.py text eol=lf
 ai-service/tests/test_handoff_acceptance.py text eol=lf
 ai-service/tests/test_handoff_checkpoint_acceptance.py text eol=lf
 ai-service/tests/test_handoff_network.py text eol=lf
-docs/architecture/handoff-runtime-phase6.md text eol=lf
-docs/reports/handoff-phase6-20261001/*.md text eol=lf
-docs/reports/handoff-phase6-20261001/*.json text eol=lf
-docs/reports/handoff-phase6-20261001/*.jsonl text eol=lf
-docs/reports/handoff-phase6-20261001/*.jpg -text
-# Preserve repair replay evidence hashes across platforms.
-docs/architecture/handoff-repair-and-canary.md text eol=lf
-docs/reports/handoff-repair-20261001/*.md text eol=lf
-docs/reports/handoff-repair-20261001/*.json text eol=lf
-docs/reports/handoff-repair-20261001/*.jsonl text eol=lf
-# Preserve unchanged byte-hashed evaluation and runtime files across Windows checkouts.
 ai-service/app/agent/foundation/subgraphs/worldline/__init__.py text eol=lf
 ai-service/app/agent/foundation/subgraphs/worldline/conflict_semantics.py text eol=lf
 ai-service/app/agent/foundation/subgraphs/worldline/entity_bridge.py text eol=lf
@@ -42,50 +21,17 @@ ai-service/app/agent/foundation/subgraphs/worldline/state.py text eol=lf
 ai-service/app/rag/query_understanding/config/v1.yaml text eol=lf
 ai-service/app/rag/reranking/config/v1.yaml text eol=lf
 ai-service/app/rag/retrieval/config/v1.yaml text eol=lf
-ai-service/evals/datasets/multi_blind_test_v3.jsonl text eol=lf
-ai-service/evals/datasets/multi_dev_v3.jsonl text eol=lf
-ai-service/evals/datasets/router_e2e_blind_v4.jsonl text eol=lf
-ai-service/evals/datasets/router_eval_gold_v2.jsonl text eol=lf
-ai-service/evals/datasets/router_eval_v2.jsonl text eol=lf
-ai-service/evals/datasets/single_blind_v3.jsonl text eol=lf
-ai-service/evals/datasets/worldline_eval_v0.jsonl text eol=lf
-ai-service/evals/reports/jev_multi_dev_v3_results.jsonl text eol=lf
-ai-service/evals/reports/jev_router_baseline_v1_results.jsonl text eol=lf
-ai-service/evals/semantic_relations_context_inputs.py text eol=lf
-ai-service/evals/semantic_relations_metrics.py text eol=lf
-ai-service/evals/semantic_relations_models.py text eol=lf
-ai-service/evals/semantic_relations_review.py text eol=lf
-ai-service/evals/semantic_relations_runner.py text eol=lf
-ai-service/evals/tests/semantic_relations_fixtures.py text eol=lf
-ai-service/evals/tests/test_semantic_relations_evaluation.py text eol=lf
-# Preserve H0's raw evidence bytes and hashed source files on every checkout.
-workspace/moodflow-review/rag-h0-abstention-gate1-20261017/** text eol=crlf
 ai-service/app/agent/foundation/subgraphs/worldline/generation.py text eol=crlf
 ai-service/app/agent/foundation/subgraphs/worldline/prompts.py text eol=crlf
-ai-service/evals/rag_h0_v5.py text eol=lf
-ai-service/evals/rag_h0_v5_report.py text eol=lf
 ai-service/tests/test_worldline_h0_abstention.py text eol=lf
-ai-service/tests/test_rag_h0_v5.py text eol=lf
-ai-service/tests/test_rag_h0_v5_report.py text eol=lf
-# H0 round 2 source snapshots keep their measured checkout bytes.
 ai-service/app/agent/structured_output/service.py text eol=crlf
 ai-service/app/agent/foundation/subgraphs/worldline/stage_pack.py text eol=crlf
 ai-service/app/agent/foundation/subgraphs/worldline/narrative_boundary.py text eol=lf
 ai-service/app/agent/foundation/subgraphs/worldline/narrative_normalization.py text eol=lf
 ai-service/tests/test_worldline_h0_round2.py text eol=lf
-ai-service/tests/test_rag_h0_round2_v5.py text eol=lf
-ai-service/evals/rag_h0_round2_v5.py text eol=lf
-ai-service/evals/rag_h0_round2_v5_report.py text eol=lf
-ai-service/tests/test_rag_h0_round2_report.py text eol=lf
-# Preserve the approved V5.2 freeze and its reproducible evidence bytes.
-ai-service/evals/datasets/rag_eval_gold_v5_2.frozen.jsonl -text
-ai-service/tools/gold_release_freeze_v5_2/** text eol=lf
-workspace/moodflow-review/gold-v5-2-phase2-20261019/** text eol=lf
-# Keep V5.2 H2 baseline code and frozen run evidence byte stable.
-ai-service/evals/rag_v52_h2_baseline.py text eol=lf
-ai-service/tests/test_rag_v52_h2_baseline.py text eol=lf
-workspace/moodflow-review/v5-2-h2-baseline-20261019/** text eol=lf
-ai-service/tools/v52_offline_runtime/** text eol=lf
-
-# Runtime routing regression fixtures retain their frozen byte hashes.
 ai-service/tests/fixtures/routing/*.jsonl -text
+ai-service/artifacts/intent_model/encoder/model.safetensors filter=lfs diff=lfs merge=lfs -text
+ai-service/artifacts/intent_model/*.json text eol=lf
+ai-service/artifacts/intent_model/encoder/*.json text eol=lf
+*.py text eol=lf
+ai-service/data/** -text

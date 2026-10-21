@@ -6,7 +6,20 @@
 __pycache__/
 .pytest_cache/
 *.py[cod]
-artifacts/intent_model/
+# Ship only the immutable inference bundle; training outputs remain local.
+artifacts/intent_model/*
+!artifacts/intent_model/encoder/
+artifacts/intent_model/encoder/*
+!artifacts/intent_model/encoder/config.json
+!artifacts/intent_model/encoder/model.safetensors
+!artifacts/intent_model/encoder/tokenizer.json
+!artifacts/intent_model/encoder/tokenizer_config.json
+!artifacts/intent_model/classifier_head.pt
+!artifacts/intent_model/label_mapping.json
+!artifacts/intent_model/thresholds.json
+!artifacts/intent_model/training_config.json
+!artifacts/intent_model/manifest.json
+!artifacts/intent_model/LICENSE
 data/raw/html/*
 !data/raw/html/.gitkeep
 data/raw/pdf/*
@@ -26,5 +39,6 @@ data/clean/**
 data/cleaned/**
 data/indexing/**
 tmp/
+data/local/
 evals/artifacts/
 evals/local/

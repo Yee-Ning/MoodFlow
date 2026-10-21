@@ -7,9 +7,12 @@ import hashlib
 import html.parser
 import json
 import os
+import re
 from pathlib import Path
 import platform
 import sys
+import time
+from http.client import IncompleteRead
 from urllib.error import HTTPError
 from urllib.parse import unquote, urldefrag, urljoin, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -18,6 +21,7 @@ INDEX_URL = "https://download.pytorch.org/whl/cpu/torch/"
 WHEEL_NAME = "torch-2.14.0+cpu-cp312-cp312-manylinux_2_28_x86_64.whl"
 EXPECTED_SHA256 = "a09987c95ec4cffdb6df798d3d641558110a334cfccce22f2f046d83142bc260"
 ALLOWED_HOSTS = {"download.pytorch.org", "download-r2.pytorch.org"}
+DOWNLOAD_CHUNK_BYTES = 16 * 1024 * 1024
 
 
 def public_url(url: str) -> str:
@@ -67,6 +71,61 @@ def official_wheel_url(index_html: str) -> str:
     return clean_url
 
 
+def download_wheel(opener, url: str, part: Path, headers: dict[str, str]):
+    """Resume bounded HTTP ranges after a truncated transfer; never trust partial bytes."""
+    part.write_bytes(b"")
+    total = None
+    failures = 0
+    for attempt in range(1, 65):
+        offset = part.stat().st_size
+        request = Request(url, headers={**headers, "Range": f"bytes={offset}-{offset + DOWNLOAD_CHUNK_BYTES - 1}"})
+        try:
+            response = opener.open(request, timeout=120)
+            with response:
+                status = response.status
+                final_url = public_url(response.url)
+                content_type = response.headers.get("Content-Type", "")
+                if status == 206:
+                    match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+)", response.headers.get("Content-Range", ""))
+                    if not match:
+                        raise ValueError("missing or invalid Content-Range")
+                    start, end, size = map(int, match.groups())
+                    if start != offset or end < start or end >= size or (total is not None and total != size):
+                        raise ValueError("Content-Range does not match the resumed download")
+                    total = size
+                    expected_end = end + 1
+                elif status == 200 and offset == 0:
+                    length = response.headers.get("Content-Length")
+                    total = int(length) if length is not None else None
+                    expected_end = total
+                else:
+                    raise ValueError("server ignored a resumed range or returned an unexpected HTTP status")
+                with part.open("ab") as target:
+                    try:
+                        while chunk := response.read(1024 * 1024):
+                            target.write(chunk)
+                    except IncompleteRead as exc:
+                        target.write(exc.partial)
+            current = part.stat().st_size
+            if total is not None and current > total:
+                raise ValueError("download exceeds advertised wheel size")
+            if total is None or current == total:
+                return status, content_type, total, final_url, attempt
+            if expected_end is not None and current > expected_end:
+                raise ValueError("range response exceeds advertised segment")
+            failures = failures + 1 if current == offset else 0
+        except HTTPError as exc:
+            if exc.code not in {408, 429, 500, 502, 503, 504}:
+                raise
+            failures += 1
+        except OSError:
+            failures += 1
+        if failures >= 3:
+            raise OSError("wheel download stalled after three attempts")
+        time.sleep(.2)
+    raise OSError("wheel download exceeded its bounded retry limit")
+
+
 def fetch(output_dir: Path) -> dict[str, object]:
     output_dir.mkdir(parents=True, exist_ok=True)
     redirects = RecordingRedirects()
@@ -78,10 +137,8 @@ def fetch(output_dir: Path) -> dict[str, object]:
         wheel_url = official_wheel_url(response.read().decode("utf-8"))
     redirects.chain.clear()
     part = output_dir / (WHEEL_NAME + ".partial")
-    digest = hashlib.sha256()
-    size = 0
     try:
-        response = opener.open(Request(wheel_url, headers=headers), timeout=120)
+        status, content_type, content_length, final_url, attempts = download_wheel(opener, wheel_url, part, headers)
     except HTTPError as exc:
         body = exc.read()
         return {
@@ -98,15 +155,11 @@ def fetch(output_dir: Path) -> dict[str, object]:
             "actual_sha256": hashlib.sha256(body).hexdigest(),
             "integrity_error": "wheel request returned HTTP error; body was not installed",
         }
-    with response, part.open("wb") as target:
-        status = response.status
-        content_type = response.headers.get("Content-Type", "")
-        content_length = response.headers.get("Content-Length")
-        final_url = public_url(response.url)
-        while chunk := response.read(1024 * 1024):
-            target.write(chunk)
+    digest = hashlib.sha256()
+    with part.open("rb") as source:
+        while chunk := source.read(1024 * 1024):
             digest.update(chunk)
-            size += len(chunk)
+    size = part.stat().st_size
     actual_sha256 = digest.hexdigest()
     with part.open("rb") as wheel_file:
         zip_header = wheel_file.read(4).hex()
@@ -123,10 +176,11 @@ def fetch(output_dir: Path) -> dict[str, object]:
         "expected_sha256": EXPECTED_SHA256,
         "actual_sha256": actual_sha256,
         "zip_header": zip_header,
+        "download_attempts": attempts,
     }
     if content_length is not None and size != int(content_length):
         result["integrity_error"] = "HTTP Content-Length mismatch"
-    elif status != 200 or actual_sha256 != EXPECTED_SHA256:
+    elif status not in {200, 206} or actual_sha256 != EXPECTED_SHA256:
         result["integrity_error"] = "wheel SHA256 mismatch"
     elif zip_header != "504b0304":
         result["integrity_error"] = "not a ZIP wheel"

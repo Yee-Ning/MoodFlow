@@ -353,6 +353,7 @@ class PostgresPersistenceTests(unittest.TestCase):
                 task_id,
             ],
             env=environment,
+            cwd=Path(__file__).resolve().parents[1],
             capture_output=True,
             text=True,
         )
