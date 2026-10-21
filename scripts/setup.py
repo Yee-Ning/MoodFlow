@@ -61,6 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         run(["docker", "compose", "version"], ROOT)
         run(["docker", "info", "--format", "{{.OSType}}"], ROOT)
         if not args.check:
+            run(["git", "submodule", "sync", "--recursive"], ROOT)
             run(["git", "submodule", "update", "--init", "--recursive"], ROOT)
             run(["git", "lfs", "pull"], ROOT)
         if not (ROOT / "netease-music-api/app.js").is_file():

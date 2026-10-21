@@ -1,3 +1,4 @@
 [submodule "netease-music-api"]
 	path = netease-music-api
-	url = https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced.git
+	url = https://github.com/Yee-Ning/MoodFlow.git
+	branch = codex/netease-api-runtime

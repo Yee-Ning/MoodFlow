@@ -70,6 +70,8 @@ class RepositoryHygieneTests(unittest.TestCase):
         } <= paths)
         modules = git("config", "-f", ".gitmodules", "--get-regexp", r"submodule\..*\.path").decode().splitlines()
         self.assertEqual(modules, ["submodule.netease-music-api.path netease-music-api"])
+        self.assertEqual(git("config", "-f", ".gitmodules", "--get", "submodule.netease-music-api.url").decode().strip(),
+                         "https://github.com/Yee-Ning/MoodFlow.git")
         self.assertTrue(git("ls-files", "--stage", "netease-music-api").startswith(b"160000 "))
 
     def test_core_regression_samples_are_tracked_without_report_dependencies(self):

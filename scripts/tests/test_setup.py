@@ -68,3 +68,21 @@ def test_check_mode_is_read_only_and_reports_missing_prerequisites(tmp_path, mon
     assert all(call.args[0][0] == "docker" for call in run.call_args_list)
     monkeypatch.setattr(setup.shutil, "which", lambda _: None)
     assert setup.main(["--check"]) == 1
+
+
+def test_setup_syncs_published_submodule_before_update_and_lfs(tmp_path, monkeypatch):
+    bundle(tmp_path)
+    (tmp_path / "netease-music-api").mkdir()
+    (tmp_path / "netease-music-api/app.js").write_text("// fixture")
+    (tmp_path / ".env.example").write_text("LLM_API_KEY=\n")
+    monkeypatch.setattr(setup, "ROOT", tmp_path)
+    monkeypatch.setattr(setup.shutil, "which", lambda _: "executable")
+    run = Mock()
+    monkeypatch.setattr(setup, "run", run)
+    assert setup.main([]) == 0
+    git_commands = [call.args[0] for call in run.call_args_list if call.args[0][0] == "git"]
+    assert git_commands == [
+        ["git", "submodule", "sync", "--recursive"],
+        ["git", "submodule", "update", "--init", "--recursive"],
+        ["git", "lfs", "pull"],
+    ]

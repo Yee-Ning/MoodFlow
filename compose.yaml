@@ -29,7 +29,6 @@ x-ai: &ai
     AI_RAG_INDEX_MANIFEST: data/local/index/index_build_manifest.json
     QDRANT_URL: http://qdrant:6333
     HF_ENDPOINT: ${HF_ENDPOINT:-https://huggingface.co}
-    HF_HUB_DISABLE_XET: "1"
     JEV_ENABLED: "false"
     JEV_ROUTER_V5_SHADOW_ENABLED: "false"
     REDIS_URL: redis://redis:6379/0

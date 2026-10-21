@@ -54,6 +54,8 @@ docker compose down
 
 开发和测试命令见 [DEVELOPMENT.md](DEVELOPMENT.md)，AI 模块说明见 [ai-service/README.md](ai-service/README.md)。历史评测、一次性审查工具及旧部署方案保存在 Git 标签 `archive/research-20261021`，不参与当前启动。
 
+网易云 API 子模块固定到本仓库的 `codex/netease-api-runtime` 依赖分支，保留了歌单写入响应的修复；其上游为 [NeteaseCloudMusicApiEnhanced/api-enhanced](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced)。
+
 ## 许可与来源
 
 项目使用 [GPL-3.0-only](LICENSE)。第三方代码、模型和知识来源保留各自的许可与署名：分类编码器基于 [BAAI/bge-small-zh-v1.5](https://huggingface.co/BAAI/bge-small-zh-v1.5)，其 MIT 许可随模型保存；检索与重排使用 [Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B) 和 [Qwen3-Reranker-0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B)。前端原有来源说明见 [前端 README](soul-music-room/README.md)，网易云 API 的许可见其子模块。
