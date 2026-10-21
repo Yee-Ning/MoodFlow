@@ -86,7 +86,9 @@ class QwenRerankScorer:
         ):
             raise ValueError("rerank_label_token_invalid")
         with torch.inference_mode():
-            logits = self._model(**batch).logits[:, -1, :]
+            # Classification consumes only the final yes/no logits. Computing
+            # vocabulary logits for every document token makes CPU calls huge.
+            logits = self._model(**batch, logits_to_keep=1, use_cache=False).logits[:, -1, :]
             label_logits = torch.stack(
                 [logits[:, false_token_id], logits[:, true_token_id]],
                 dim=1,

@@ -54,6 +54,36 @@ class FakeModel:
 
 
 class QwenRerankScorerTests(unittest.TestCase):
+    def test_last_token_projection_matches_full_qwen_logits_without_sequence_allocation(self) -> None:
+        from transformers import Qwen3Config, Qwen3ForCausalLM
+
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(7)
+            model = Qwen3ForCausalLM(Qwen3Config(
+                vocab_size=128, hidden_size=16, intermediate_size=32,
+                num_hidden_layers=1, num_attention_heads=2,
+                num_key_value_heads=1, head_dim=8,
+            )).eval()
+        tokenizer = FakeTokenizer()
+        scorer = QwenRerankScorer(load_rerank_config().model, tokenizer=tokenizer,
+            model=model, torch_module=torch, device="cpu")
+        inputs = build_rerank_inputs(plan(), candidate_pool(2), load_rerank_config())
+        batch = tokenizer.pad({"input_ids": [scorer._encode_pair(item) for item in inputs]},
+            padding=True, return_attention_mask=True, return_tensors="pt")
+        with torch.inference_mode():
+            full = model(**batch, logits_to_keep=0, use_cache=False).logits[:, -1, :]
+            expected = torch.softmax(full[:, [1, 2]].float(), dim=1)[:, 1]
+        projected_lengths = []
+        hook = model.lm_head.register_forward_pre_hook(
+            lambda module, args: projected_lengths.append(args[0].shape[1]))
+        try:
+            actual = torch.tensor(scorer.score(inputs))
+        finally:
+            hook.remove()
+        torch.testing.assert_close(actual, expected)
+        self.assertEqual(projected_lengths, [1])
+        self.assertGreater(batch["input_ids"].shape[1], 1)
+
     def test_prepare_accepts_a_complete_injected_runtime(self) -> None:
         scorer = QwenRerankScorer(
             load_rerank_config().model,
