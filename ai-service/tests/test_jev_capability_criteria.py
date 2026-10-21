@@ -91,5 +91,5 @@ def test_production_image_includes_single_contract_file():
     root = Path(__file__).resolve().parents[2]
     dockerignore = (root / ".dockerignore").read_text(encoding="utf-8")
     dockerfile = (root / "deploy/ai.Dockerfile").read_text(encoding="utf-8")
-    assert "!ai-service/evals/config/router_capability_contract.json" in dockerignore
-    assert "COPY ai-service/evals/config/router_capability_contract.json evals/config/router_capability_contract.json" in dockerfile
+    assert "!ai-service/app/agent/decision/jev/config/router_capability_contract.json" in dockerignore
+    assert "COPY ai-service/app/agent/decision/jev/config/router_capability_contract.json app/agent/decision/jev/config/router_capability_contract.json" in dockerfile

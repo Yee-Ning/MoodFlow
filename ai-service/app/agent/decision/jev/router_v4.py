@@ -23,7 +23,7 @@ from app.agent.foundation.routing import (
 from .capability_criteria import CONTRACT_PATH, ROUTER_QUESTION_INSTRUCTIONS, router_criteria
 from .client import DecisionClient, DecisionResponse, JevDecisionError
 
-_FROZEN_CONFIG = Path(__file__).resolve().parents[4] / "evals/config/jev_multi_frozen_strategy_v3.json"
+_FROZEN_CONFIG = Path(__file__).with_name("config") / "jev_multi_frozen_strategy_v3.json"
 _ROUTES = tuple(router_criteria())
 _FROZEN_THRESHOLDS = {
     "current_song": .30, "tool_calling": .25,

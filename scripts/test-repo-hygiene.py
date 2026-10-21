@@ -19,7 +19,7 @@ class RepositoryHygieneTests(unittest.TestCase):
         forbidden = (
             "workspace/", "visual-qa/", "docs/reports/", "docs/plans/",
             "docs/superpowers/", "docs/project-summary/",
-            "docs/deployment-preparation/", "ai-service/evals/reports/",
+            "docs/deployment-preparation/", "ai-service/evals/", "ai-service/tools/",
         )
         for path in git("ls-files", "-z").decode().split("\0"):
             if not path:
@@ -45,14 +45,15 @@ class RepositoryHygieneTests(unittest.TestCase):
         ignored = [
             "workspace/new-review/result.json", "visual-qa/screen.png",
             "docs/reports/new/result.md", "ai-service/evals/reports/result.json",
+            "ai-service/evals/old_benchmark.py", "ai-service/tools/old_repair.py",
             "new_report.md", "ai-service/.env", "ai-service/.env.production",
             "soul-music-room/node_modules/example/index.js", ".pytest_cache/state",
         ]
         kept = [
             ".env.example", "ai-service/.env.example",
             "ai-service/.env.worldline-online.example", "README.md",
-            "ai-service/evals/README.md", "ai-service/evals/jev_shadow_report.py",
-            "ai-service/evals/datasets/gold.jsonl", "ai-service/tests/test_example.py",
+            "ai-service/app/agent/decision/jev/config/router_capability_contract.json",
+            "ai-service/tests/test_example.py",
         ]
         output = git(
             "check-ignore", "--no-index", "--stdin", input=("\n".join(ignored + kept) + "\n").encode()

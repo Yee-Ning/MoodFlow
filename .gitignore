@@ -54,6 +54,6 @@ Thumbs.db
 /tool-retry-*.md
 /gate1b-delete.ps1
 
-# Evaluation datasets and report-generating source code remain versioned.
-/ai-service/evals/**/*.md
-!/ai-service/evals/**/README.md
+# Historical evaluation and one-off repair code lives in archive/research-20261021.
+/ai-service/evals/
+/ai-service/tools/

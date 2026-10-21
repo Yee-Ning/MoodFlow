@@ -52,10 +52,10 @@ npm --prefix soul-music-room run build
 npm --prefix soul-music-room run lint
 mvn -f music-backend/pom.xml verify
 cd ai-service
-.venv/Scripts/python.exe -m pytest tests evals/tests
+.venv/Scripts/python.exe -m pytest tests
 ```
 
-前端另有 `package.json` 中的 `test:*` 交互契约测试。部分历史评测依赖本地语料、模型或历史运行产物，执行前需要准备对应数据。
+前端另有 `package.json` 中的 `test:*` 交互契约测试。当前功能的回归样本随 tests/fixtures 提供。历史评测、审阅副本和一次性修复工具保存在 archive/research-20261021 标签中，不属于当前运行依赖。
 
 ## 仓库内容
 

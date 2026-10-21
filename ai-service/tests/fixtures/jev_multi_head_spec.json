@@ -1,0 +1,4 @@
+{
+  "NOUL_FALSE": "No distinct affirmative supported task for this route; mere mentions, negations and unresolved entities do not count.",
+  "HEAD_INSTRUCTIONS": "Does this request contain a distinct affirmative supported intent for {route}? Judge this route independently of the other three; a separate unsupported request does not create a supported route."
+}

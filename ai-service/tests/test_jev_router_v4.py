@@ -73,8 +73,19 @@ async def test_multi_uses_frozen_noul_and_constructs_ordered_tasks():
     assert trace.decision.tasks[1].depends_on == [trace.decision.tasks[0].task_id]
     head_call = next(questions for _, questions in client.calls
                      if set(questions) == set(frozen_thresholds()))
-    from evals.jev_multi_benchmark_v3 import multi_questions
-    frozen_heads = multi_questions("noul")
+    from pathlib import Path
+    from typesafe_sdk import Noul
+    from app.agent.decision.jev.capability_criteria import router_criteria
+    specification = json.loads(
+        (Path(__file__).with_name("fixtures") / "jev_multi_head_spec.json").read_text(encoding="utf-8")
+    )
+    frozen_heads = {
+        route: Noul(
+            instructions=specification["HEAD_INSTRUCTIONS"].format(route=route),
+            criteria={"true": description, "false": specification["NOUL_FALSE"]},
+        )
+        for route, description in router_criteria().items()
+    }
     assert {name: (head_call[name].instructions, head_call[name].criteria)
             for name in head_call} == {
                 name: (frozen_heads[name].instructions, frozen_heads[name].criteria)
@@ -195,7 +206,7 @@ def test_v3_multi_thresholds_are_semantically_frozen():
 
 
 def test_frozen_v4_gold_has_grounded_tasks_and_no_v3_query_overlap():
-    dataset_dir = Path(__file__).resolve().parents[1] / "evals/datasets"
+    dataset_dir = Path(__file__).with_name("fixtures") / "routing"
     rows = [json.loads(line) for line in (dataset_dir / "router_e2e_blind_v4.jsonl")
             .read_text(encoding="utf-8").splitlines()]
     earlier = {json.loads(line)["query"]

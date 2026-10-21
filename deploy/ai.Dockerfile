@@ -28,8 +28,8 @@ COPY --from=dependencies /app/requirements.production.txt ./requirements.product
 COPY --from=dependencies /app/requirements.redis.txt ./requirements.redis.txt
 RUN python -m pip check
 COPY ai-service/app/ app/
-COPY ai-service/evals/config/router_capability_contract.json evals/config/router_capability_contract.json
-COPY ai-service/evals/config/jev_multi_frozen_strategy_v3.json evals/config/jev_multi_frozen_strategy_v3.json
+COPY ai-service/app/agent/decision/jev/config/router_capability_contract.json app/agent/decision/jev/config/router_capability_contract.json
+COPY ai-service/app/agent/decision/jev/config/jev_multi_frozen_strategy_v3.json app/agent/decision/jev/config/jev_multi_frozen_strategy_v3.json
 COPY ai-service/data/intent/taxonomy.json data/intent/taxonomy.json
 COPY ai-service/migrations/ migrations/
 COPY ai-service/scripts/migrate_agent_postgres.py scripts/migrate_agent_postgres.py

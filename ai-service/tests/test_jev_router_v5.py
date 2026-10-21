@@ -225,7 +225,7 @@ def test_v5_gold_is_frozen_and_new():
     import hashlib
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[1] / "evals/datasets"
+    root = Path(__file__).with_name("fixtures") / "routing"
     path = root / "router_e2e_blind_v5.jsonl"
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
         "24d190d630614a611f19ac2ea1b7fc61cbf529b4222dfe826ec1b2b64f5e6daf"

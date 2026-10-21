@@ -1,7 +1,7 @@
 # Preserve phase5 frozen datasets and evidence hashes across platforms.
 .gitattributes text eol=lf
 # Keep byte-hashed routing contracts and semantic freeze documentation stable on Windows.
-ai-service/evals/config/router_capability_contract.json text eol=lf
+ai-service/app/agent/decision/jev/config/*.json text eol=lf
 ai-service/evals/semantic_relations_v1/README.md text eol=lf
 ai-service/evals/datasets/router_e2e_blind_v5.jsonl text eol=lf
 ai-service/evals/datasets/handoff_guard_v1.jsonl text eol=lf
@@ -86,3 +86,6 @@ ai-service/evals/rag_v52_h2_baseline.py text eol=lf
 ai-service/tests/test_rag_v52_h2_baseline.py text eol=lf
 workspace/moodflow-review/v5-2-h2-baseline-20261019/** text eol=lf
 ai-service/tools/v52_offline_runtime/** text eol=lf
+
+# Runtime routing regression fixtures retain their frozen byte hashes.
+ai-service/tests/fixtures/routing/*.jsonl -text

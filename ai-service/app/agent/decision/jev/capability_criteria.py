@@ -8,10 +8,7 @@ from pathlib import Path
 
 from app.agent.foundation.routing import RouteKey
 
-CONTRACT_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "evals/config/router_capability_contract.json"
-)
+CONTRACT_PATH = Path(__file__).with_name("config") / "router_capability_contract.json"
 ROUTER_QUESTION_INSTRUCTIONS = "Which MoodFlow subgraph should handle this single user request?"
 _CRITERION_FIELDS = (
     ("Core", "core_capabilities"),
