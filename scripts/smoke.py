@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from urllib.error import HTTPError
-from urllib.request import Request, urlopen
+from urllib.request import ProxyHandler, Request, build_opener
 from uuid import uuid4
 
 
@@ -13,7 +13,9 @@ def request(base: str, path: str, payload=None):
     data = json.dumps(payload, ensure_ascii=False).encode() if payload is not None else None
     query = Request(base.rstrip("/") + path, data=data, headers={"Content-Type": "application/json"})
     try:
-        with urlopen(query, timeout=120) as response:
+        # These probes target the local stack, including when Git/downloads use
+        # an ambient proxy that cannot route back to the developer's localhost.
+        with build_opener(ProxyHandler({})).open(query, timeout=120) as response:
             return response.status, response.read()
     except HTTPError as error:
         return error.code, error.read()

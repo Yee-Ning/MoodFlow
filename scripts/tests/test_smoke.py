@@ -1,9 +1,42 @@
 import json
 from unittest.mock import Mock
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Thread
 
 import pytest
 
 from scripts import smoke
+
+
+def test_local_probe_bypasses_ambient_proxy_and_preserves_http_errors(monkeypatch):
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"ok")
+
+        def do_POST(self):
+            self.send_response(422)
+            self.end_headers()
+
+    for key in ("HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"):
+        monkeypatch.setenv(key, "http://127.0.0.1:1")
+    for key in ("NO_PROXY", "no_proxy"):
+        monkeypatch.setenv(key, "")
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    worker = Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    try:
+        base = f"http://127.0.0.1:{server.server_port}"
+        assert smoke.request(base, "/healthz") == (200, b"ok")
+        assert smoke.request(base, "/api/ai/foundation", {"message": ""})[0] == 422
+    finally:
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=5)
 
 
 def probe(monkeypatch, *, chat_status="success", endpoint_status=200):
