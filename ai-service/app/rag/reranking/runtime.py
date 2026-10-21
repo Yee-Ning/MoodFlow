@@ -154,9 +154,11 @@ class QwenRerankScorer:
         model_kwargs = {
             "revision": self.config.revision,
             "local_files_only": self.config.local_files_only,
+            # The published BF16 default is emulated on AVX2-only CPUs.
+            "dtype": torch.float32,
         }
         if device == "cuda":
-            model_kwargs["torch_dtype"] = (
+            model_kwargs["dtype"] = (
                 torch.bfloat16
                 if torch.cuda.is_bf16_supported()
                 else torch.float16

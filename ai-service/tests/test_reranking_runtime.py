@@ -1,5 +1,6 @@
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import torch
 
@@ -54,6 +55,18 @@ class FakeModel:
 
 
 class QwenRerankScorerTests(unittest.TestCase):
+    def test_model_loading_uses_native_cpu_float32_and_supported_cuda_precision(self) -> None:
+        for device, bf16, expected in (("cpu", False, torch.float32),
+                ("cuda", False, torch.float16), ("cuda", True, torch.bfloat16)):
+            with self.subTest(device=device, bf16=bf16), \
+                    patch("transformers.AutoTokenizer.from_pretrained"), \
+                    patch("transformers.AutoModelForCausalLM.from_pretrained") as load, \
+                    patch("torch.cuda.is_bf16_supported", return_value=bf16):
+                scorer = QwenRerankScorer(load_rerank_config().model.model_copy(update={"device": device}))
+                scorer.prepare()
+                self.assertEqual(load.call_args.kwargs["dtype"], expected)
+                load.return_value.to.assert_called_once_with(device)
+
     def test_last_token_projection_matches_full_qwen_logits_without_sequence_allocation(self) -> None:
         from transformers import Qwen3Config, Qwen3ForCausalLM
 
